@@ -1,0 +1,1105 @@
+Directory structure:
+└── backend/
+    ├── docker-compose.yml
+    ├── package.json
+    ├── server.js
+    ├── core/
+    │   ├── auth/
+    │   │   ├── keycloak.config.js
+    │   │   ├── middleware.js
+    │   │   └── setupKeycloak.js
+    │   ├── database/
+    │   │   ├── db.config.js
+    │   │   └── models.js
+    │   └── utils/
+    │       ├── logger.js
+    │       └── route-loader.js
+    ├── docs/
+    │   └── erp_dcat_mcd[1].loo
+    ├── keycloak-setup/
+    │   ├── keycloak-setup.js
+    │   └── realm-config.json
+    └── modules/
+        ├── accounting/
+        │   ├── controllers/
+        │   │   └── accounting.controller.js
+        │   ├── routes/
+        │   │   └── accounting.routes.js
+        │   ├── services/
+        │   └── tests/
+        ├── clients/
+        │   ├── controllers/
+        │   │   └── clients.controller.js
+        │   ├── routes/
+        │   │   └── clients.routes.js
+        │   └── services/
+        ├── dashboard/
+        │   ├── controllers/
+        │   │   └── dashboard.controller.js
+        │   ├── routes/
+        │   │   └── dashboard.routes.js
+        │   ├── services/
+        │   └── tests/
+        ├── interventions/
+        │   ├── controllers/
+        │   │   └── interventions.controller.js
+        │   ├── routes/
+        │   │   └── interventions.routes.js
+        │   ├── services/
+        │   │   └── interventions.service.js
+        │   └── tests/
+        │       └── interventions.mock.js
+        ├── projects/
+        │   ├── controllers/
+        │   │   └── projects.controller.js
+        │   ├── models/
+        │   │   └── projects.model.js
+        │   ├── routes/
+        │   │   └── projects.routes.js
+        │   └── services/
+        ├── stocks/
+        │   ├── controllers/
+        │   │   └── stocks.controller.js
+        │   ├── routes/
+        │   │   └── stocks.routes.js
+        │   └── services/
+        └── users/
+            ├── controllers/
+            │   └── users.controller.js
+            ├── routes/
+            │   └── users.routes.js
+            └── services/
+
+================================================
+File: docker-compose.yml
+================================================
+version: '3.8'
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1.4
+    container_name: keycloak
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: localhost
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./keycloak-setup:/opt/keycloak/data/import
+    command: 
+      - start-dev
+      - --import-realm
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: dcat_postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-dcat_db}
+      POSTGRES_USER: ${DB_USER:-dcat_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dcat_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - dcat_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dcat_user}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # api:
+  #   build: .
+  #   container_name: api
+  #   environment:
+  #     - NODE_ENV=development
+  #     - KEYCLOAK_URL=http://keycloak:8080
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - .:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     - keycloak
+  #   restart: unless-stopped
+
+
+================================================
+File: package.json
+================================================
+{
+  "dependencies": {
+    "@keycloak/keycloak-admin-client": "^26.1.4",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "keycloak-connect": "^26.1.1",
+    "winston": "^3.17.0"
+  }
+}
+
+
+
+================================================
+File: server.js
+================================================
+ï»¿// // Importations requises
+// const express = require('express');
+// const path = require('path');
+// const { memoryStore, keycloak } = require('./core/auth/keycloak.config');
+// const { initKeycloak, protect } = require('./core/auth/middleware');
+// const logger = require('./core/utils/logger');
+// require('dotenv').config();
+
+// // Initialisation Express
+// const app = express();
+
+// // =============================================
+// // CONFIGURATION DE BASE
+// // =============================================
+
+// // Configuration de session
+// app.use(require('./core/auth/setupKeycloak').sessionConfig);
+
+// // Middleware Keycloak
+// app.use(initKeycloak());
+
+// // Middlewares de base
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
+
+// // =============================================
+// // FAKE DATA - DonnÃ©es de test
+// // =============================================
+// const fakeUsers = [
+//   { id: 1, name: "Jean Dupont", email: "jean@example.com", role: "admin" },
+//   { id: 2, name: "Marie Martin", email: "marie@example.com", role: "user" },
+//   { id: 3, name: "Pierre Durand", email: "pierre@example.com", role: "user" }
+// ];
+
+// const fakeInterventions = [
+//   { id: 1, title: "Panne Ã©lectrique", client: "Client A", status: "en cours" },
+//   { id: 2, title: "Installation logiciel", client: "Client B", status: "terminÃ©" }
+// ];
+
+// let fakeProjects = [
+//   { id: 1, name: "Site Web Corporate", budget: 15000, client: "Client X" },
+//   { id: 2, name: "Application Mobile", budget: 35000, client: "Client Y" }
+// ];
+
+// // =============================================
+// // ROUTES PUBLIQUES (FAKE DATA)
+// // =============================================
+
+
+
+// // Route de santÃ©
+// app.get('/health', (req, res) => {
+//   res.json({
+//     status: 'OK',
+//     keycloak: {
+//       realm: keycloak.config.realm,
+//       url: keycloak.config['auth-server-url'],
+//       clientId: keycloak.config.resource
+//     }
+//   });
+// });
+
+
+// const loadRoutes = require('./core/utils/route-loader');
+// loadRoutes(app);
+
+// // // Fake Users API
+// // app.get('/api/fake/users', (req, res) => {
+// //   res.json({
+// //     success: true,
+// //     count: fakeUsers.length,
+// //     users: fakeUsers
+// //   });
+// // });
+
+// // app.get('/api/fake/users/:id', (req, res) => {
+// //   const user = fakeUsers.find(u => u.id === parseInt(req.params.id));
+// //   if (!user) return res.status(404).json({ error: "User not found" });
+// //   res.json(user);
+// // });
+
+// // Fake Interventions API
+// // app.get('/api/fake/interventions', (req, res) => {
+// //   res.json({
+// //     success: true,
+// //     count: fakeInterventions.length,
+// //     interventions: fakeInterventions
+// //   });
+// // });
+
+// // app.post('/api/fake/interventions', (req, res) => {
+// //   const newIntervention = {
+// //     id: fakeInterventions.length + 1,
+// //     ...req.body,
+// //     status: "nouveau",
+// //     createdAt: new Date()
+// //   };
+// //   fakeInterventions.push(newIntervention);
+// //   res.status(201).json(newIntervention);
+// // });
+
+// // // Fake Projects API
+// // app.get('/api/fake/projects', (req, res) => {
+// //   res.json({
+// //     success: true,
+// //     count: fakeProjects.length,
+// //     projects: fakeProjects
+// //   });
+// // });
+
+// // app.post('/api/fake/projects', (req, res) => {
+// //   const newProject = {
+// //     id: fakeProjects.length + 1,
+// //     ...req.body,
+// //     createdAt: new Date()
+// //   };
+// //   fakeProjects.push(newProject);
+// //   res.status(201).json(newProject);
+// // });
+
+// // =============================================
+// // ROUTES PROTÃ‰GÃ‰ES (Keycloak)
+// // =============================================
+
+// // Route protÃ©gÃ©e basique
+// // app.get('/api/protected', protect(), (req, res) => {
+// //   res.json({
+// //     message: 'Protected endpoint',
+// //     user: req.kauth.grant.access_token.content
+// //   });
+// // });
+
+// // // Fake Data protÃ©gÃ©e
+// // app.get('/api/protected/financial-report', protect(), (req, res) => {
+// //   res.json({
+// //     message: 'DonnÃ©es financiÃ¨res protÃ©gÃ©es',
+// //     report: {
+// //       year: 2023,
+// //       revenue: 1250000,
+// //       expenses: 850000,
+// //       profit: 400000
+// //     },
+// //     currentUser: req.kauth.grant.access_token.content.preferred_username
+// //   });
+// // });
+
+// // // Admin-only route
+// // app.get('/api/protected/admin-only', protect(['admin']), (req, res) => {
+// //   res.json({
+// //     message: 'Vous avez accÃ¨s car vous Ãªtes admin',
+// //     secretData: {
+// //       totalUsers: 42,
+// //       serverStatus: 'optimal',
+// //       upcomingMaintenance: '2023-12-25'
+// //     }
+// //   });
+// // });
+
+// // =============================================
+// // GESTION DES ERREURS
+// // =============================================
+
+// // 404 - Not Found
+// app.use((req, res) => {
+//   res.status(404).json({ error: 'Endpoint not found' });
+// });
+
+// // 500 - Internal Server Error
+// app.use((err, req, res, next) => {
+//   logger.error(err.stack);
+//   res.status(500).json({ error: 'Internal Server Error' });
+// });
+
+// // =============================================
+// // DÃ‰MARRAGE DU SERVEUR
+// // =============================================
+// const PORT = process.env.PORT || 3000;
+// app.listen(PORT, () => {
+//   logger.info(`Server running on port ${PORT}`);
+//   logger.info(`Keycloak configured for realm: ${keycloak.config.realm}`);
+//   logger.info('Available public routes:');
+//   logger.info(`- GET http://localhost:${PORT}/health`);
+//   logger.info(`- GET http://localhost:${PORT}/api/fake/users`);
+//   logger.info(`- GET http://localhost:${PORT}/api/fake/interventions`);
+//   logger.info('Protected routes (need Keycloak token):');
+//   logger.info(`- GET http://localhost:${PORT}/api/protected`);
+//   logger.info(`- GET http://localhost:${PORT}/api/protected/financial-report`);
+// });
+
+
+// // Importations requises
+// const express = require('express');
+// const path = require('path');
+// const { memoryStore, keycloak } = require('./core/auth/keycloak.config');
+// const { initKeycloak, protect } = require('./core/auth/middleware');
+// const logger = require('./core/utils/logger');
+// require('dotenv').config();
+
+// // Initialisation Express
+// const app = express();
+
+// // =============================================
+// // CONFIGURATION DE BASE
+// // =============================================
+
+// // Configuration de session
+// app.use(require('./core/auth/setupKeycloak').sessionConfig);
+
+// // Middleware Keycloak
+// app.use(initKeycloak());
+
+// // Middlewares de base
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
+
+// // =============================================
+// // CHARGEMENT DU MODULE INTERVENTIONS
+// // =============================================
+// const interventionsRouter = require('./modules/interventions/routes/interventions.routes');
+// app.use('/api/interventions', interventionsRouter);
+
+// // =============================================
+// // ROUTES PUBLIQUES
+// // =============================================
+
+// // Route de santÃ©
+// app.get('/health', (req, res) => {
+//   res.json({
+//     status: 'OK',
+//     keycloak: {
+//       realm: keycloak.config.realm,
+//       url: keycloak.config['auth-server-url'],
+//       clientId: keycloak.config.resource
+//     }
+//   });
+// });
+
+// // =============================================
+// // ROUTES PROTÃ‰GÃ‰ES (Exemple supplÃ©mentaire)
+// // =============================================
+
+// // Route protÃ©gÃ©e basique
+// app.get('/api/protected', protect(), (req, res) => {
+//   res.json({
+//     message: 'Protected endpoint',
+//     user: req.kauth.grant.access_token.content
+//   });
+// });
+
+// // =============================================
+// // GESTION DES ERREURS
+// // =============================================
+
+// // 404 - Not Found
+// app.use((req, res) => {
+//   res.status(404).json({ error: 'Endpoint not found' });
+// });
+
+// // 500 - Internal Server Error
+// app.use((err, req, res, next) => {
+//   logger.error(err.stack);
+//   res.status(500).json({ error: 'Internal Server Error' });
+// });
+
+// // =============================================
+// // DÃ‰MARRAGE DU SERVEUR
+// // =============================================
+// const PORT = process.env.PORT || 3000;
+// app.listen(PORT, () => {
+//   logger.info(`Server running on port ${PORT}`);
+//   logger.info(`Keycloak configured for realm: ${keycloak.config.realm}`);
+//   logger.info('Available routes:');
+//   logger.info(`- GET http://localhost:${PORT}/health (public)`);
+//   logger.info(`- GET http://localhost:${PORT}/api/interventions (public)`);
+//   logger.info(`- POST http://localhost:${PORT}/api/interventions (protected)`);
+//   logger.info(`- GET http://localhost:${PORT}/api/protected (protected)`);
+// });
+
+
+
+// Importations requises
+const express = require('express');
+const path = require('path');
+const { memoryStore, keycloak } = require('./core/auth/keycloak.config');
+const { initKeycloak, protect } = require('./core/auth/middleware');
+const logger = require('./core/utils/logger');
+require('dotenv').config();
+
+// Initialisation Express
+const app = express();
+
+// =============================================
+// CONFIGURATION DE BASE
+// =============================================
+
+// Configuration de session
+app.use(require('./core/auth/setupKeycloak').sessionConfig);
+
+// Middleware Keycloak
+app.use(initKeycloak());
+
+// Middlewares de base
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// =============================================
+// CHARGEMENT DES MODULES
+// =============================================
+
+// Module Interventions
+const interventionsRouter = require('./modules/interventions/routes/interventions.routes');
+app.use('/api/interventions', interventionsRouter);
+
+// Module Stocks
+const stocksRouter = require('./modules/stocks/routes/stocks.routes');
+app.use('/api/stocks', stocksRouter);
+
+// =============================================
+// ROUTES PUBLIQUES
+// =============================================
+
+// Route de santÃ©
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK',
+    keycloak: {
+      realm: keycloak.config.realm,
+      url: keycloak.config['auth-server-url'],
+      clientId: keycloak.config.resource
+    }
+  });
+});
+
+// =============================================
+// ROUTES PROTÃ‰GÃ‰ES GLOBALES
+// =============================================
+
+app.get('/api/protected', protect(), (req, res) => {
+  res.json({ 
+    message: 'Protected endpoint',
+    user: req.kauth.grant.access_token.content 
+  });
+});
+
+// =============================================
+// GESTION DES ERREURS
+// =============================================
+
+app.use((req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
+});
+
+app.use((err, req, res, next) => {
+  logger.error(err.stack);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+
+// =============================================
+// DÃ‰MARRAGE DU SERVEUR
+// =============================================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  logger.info(`Server running on port ${PORT}`);
+  logger.info(`Keycloak configured for realm: ${keycloak.config.realm}`);
+  logger.info('Available routes:');
+  logger.info(`Public:`);
+  logger.info(`- GET  http://localhost:${PORT}/health`);
+  logger.info(`- GET  http://localhost:${PORT}/api/interventions`);
+  logger.info(`- GET  http://localhost:${PORT}/api/stocks`);
+  logger.info(`Protected:`);
+  logger.info(`- POST http://localhost:${PORT}/api/interventions`);
+  logger.info(`- POST http://localhost:${PORT}/api/stocks`);
+  logger.info(`- GET  http://localhost:${PORT}/api/protected`);
+});
+
+
+================================================
+File: core/auth/keycloak.config.js
+================================================
+ï»¿const Keycloak = require('keycloak-connect');
+const session = require('express-session');
+const logger = require('../utils/logger');
+require('dotenv').config();
+
+const memoryStore = new session.MemoryStore();
+
+const keycloakConfig = {
+  realm: process.env.KEYCLOAK_REALM,
+  'auth-server-url': process.env.KEYCLOAK_URL,
+  'ssl-required': 'external',
+  resource: process.env.KEYCLOAK_CLIENT_ID,
+  'public-client': false,
+  'confidential-port': 0,
+  credentials: {
+    secret: process.env.KEYCLOAK_CLIENT_SECRET
+  }
+};
+
+logger.info('Keycloak Config:', {
+  realm: keycloakConfig.realm,
+  authServer: keycloakConfig['auth-server-url'],
+  clientId: keycloakConfig.resource
+});
+
+const keycloak = new Keycloak(
+  { store: memoryStore },
+  keycloakConfig
+);
+
+module.exports = {
+  keycloak,
+  memoryStore,
+  keycloakConfig
+};
+
+
+console.log('Configuration Keycloak chargÃ©e:', {
+  realm: process.env.KEYCLOAK_REALM,
+  url: process.env.KEYCLOAK_URL,
+  clientId: process.env.KEYCLOAK_CLIENT_ID,
+  hasSecret: !!process.env.KEYCLOAK_CLIENT_SECRET
+});
+
+
+================================================
+File: core/auth/middleware.js
+================================================
+const { keycloak, memoryStore } = require('./keycloak.config');
+const logger = require('../utils/logger');
+
+const initKeycloak = () => {
+  logger.info('Initializing Keycloak middleware');
+  return keycloak.middleware({
+    admin: '/admin',
+    logout: '/logout'
+  });
+};
+
+const protect = (roles = []) => {
+  if (roles.length === 0) {
+    return keycloak.protect();
+  }
+  return keycloak.protect(roles.join(','));
+};
+
+module.exports = {
+  keycloak,
+  memoryStore,
+  initKeycloak,
+  protect
+};
+
+
+================================================
+File: core/auth/setupKeycloak.js
+================================================
+// const KeycloakAdminClient = require('keycloak-admin');
+
+// const kcAdminClient = new KeycloakAdminClient({
+//   baseUrl: 'http://localhost:8080',
+//   realmName: 'master',
+// });
+
+// (async () => {
+//   await kcAdminClient.auth({
+//     username: 'admin',
+//     password: 'admin',
+//     grantType: 'password',
+//     clientId: 'admin-cli',
+//   });
+
+//   // CrÃ©ation du realm
+//   await kcAdminClient.realms.create({
+//     realm: 'erp-crm',
+//     enabled: true,
+//   });
+
+//   // CrÃ©ation des clients, rÃ´les, etc.
+//   // ...
+// })();
+
+
+
+const session = require('express-session');
+const { memoryStore } = require('./keycloak.config');
+
+const sessionConfig = session({
+  secret: process.env.SESSION_SECRET || 'your-strong-secret-here',
+  resave: false,
+  saveUninitialized: true,
+  store: memoryStore
+});
+
+module.exports = {
+  sessionConfig
+};
+
+
+================================================
+File: core/database/db.config.js
+================================================
+ï»¿module.exports = {
+  HOST: process.env.DB_HOST || "postgres", 
+  USER: process.env.DB_USER || "dcat_user",
+  PASSWORD: process.env.DB_PASSWORD || "dcat_password",
+  DB: process.env.DB_NAME || "dcat_db",
+  dialect: "postgres",
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  }
+};
+
+
+================================================
+File: core/database/models.js
+================================================
+
+
+
+================================================
+File: core/utils/logger.js
+================================================
+const winston = require('winston');
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.simple()
+    })
+  ]
+});
+
+// Fonction pour formatter les messages d'erreur
+logger.formatError = (error) => {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      stack: error.stack,
+      ...error
+    };
+  }
+  return error;
+};
+
+module.exports = logger;
+
+
+================================================
+File: core/utils/route-loader.js
+================================================
+// const fs = require('fs');
+// const path = require('path');
+
+// module.exports = (app) => {
+//   // Parcours tous les modules
+//   const modulesPath = path.join(__dirname, '../../modules');
+//   const modules = fs.readdirSync(modulesPath);
+  
+//   modules.forEach(moduleName => {
+//     const routesPath = path.join(modulesPath, moduleName, 'routes');
+    
+//     if (fs.existsSync(routesPath)) {
+//       fs.readdirSync(routesPath).forEach(file => {
+//         if (file.endsWith('.routes.js')) {
+//           const routePath = `/${moduleName}`;
+//           const routeFile = require(path.join(routesPath, file));
+//           app.use(`/api/${moduleName}`, routeFile);
+//           console.log(`Route chargée: /api${routePath} -> ${file}`);
+//         }
+//       });
+//     }
+//   });
+// };
+
+
+
+const fs = require('fs');
+const path = require('path');
+
+module.exports = (app) => {
+  const modulesPath = path.join(__dirname, '../../modules');
+  
+  fs.readdirSync(modulesPath).forEach(moduleName => {
+    const routeFile = path.join(modulesPath, moduleName, 'routes', `${moduleName}.routes.js`);
+    
+    if (fs.existsSync(routeFile)) {
+      try {
+        const router = require(routeFile);
+        
+        // Vérification améliorée
+        if (!router || Object.keys(router).length === 0) {
+          console.warn(`⚠️  Module ${moduleName} a un fichier de routes vide - ignoré`);
+          return;
+        }
+        
+        if (typeof router === 'function' && router.name === 'router') {
+          app.use(`/api/${moduleName}`, router);
+          console.log(`✓ Route chargée: /api/${moduleName}`);
+        } else {
+          console.warn(`⚠️  Format invalide dans ${moduleName}.routes.js - doit exporter un routeur Express`);
+        }
+      } catch (err) {
+        console.error(`❌ Erreur dans ${moduleName}.routes.js:`, err.message);
+      }
+    }
+  });
+};
+
+
+================================================
+File: docs/erp_dcat_mcd[1].loo
+================================================
+[Non-text file]
+
+
+================================================
+File: keycloak-setup/keycloak-setup.js
+================================================
+const KeycloakAdminClient = require('@keycloak/keycloak-admin-client').default;
+const fs = require('fs');
+const path = require('path');
+const logger = require('../core/utils/logger');
+
+const adminClient = new KeycloakAdminClient({
+  baseUrl: 'http://localhost:8080',
+  realmName: 'master',
+});
+
+async function setupKeycloak() {
+  try {
+    // Authentification
+    await adminClient.auth({
+      username: 'admin',
+      password: 'admin',
+      grantType: 'password',
+      clientId: 'admin-cli',
+    });
+
+    // VÃ©rification si le realm existe dÃ©jÃ 
+    const realms = await adminClient.realms.find();
+    if (!realms.some(r => r.realm === 'erp-crm')) {
+      // CrÃ©ation du realm
+      await adminClient.realms.create({
+        realm: 'erp-crm',
+        enabled: true,
+      });
+      logger.info('Realm erp-crm crÃ©Ã© avec succÃ¨s');
+    }
+
+    // Configuration supplÃ©mentaire
+    // ...
+
+    logger.info('Configuration Keycloak terminÃ©e avec succÃ¨s');
+  } catch (error) {
+    logger.error('Erreur lors de la configuration Keycloak:', error);
+    process.exit(1);
+  }
+}
+
+setupKeycloak();
+
+
+================================================
+File: keycloak-setup/realm-config.json
+================================================
+{
+  "realm": "erp-crm",
+  "enabled": true,
+  "clients": [
+    {
+      "clientId": "erp-crm-backend",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "secret": "your-client-secret",
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {
+        "client.secret.creation.time": "0"
+      }
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Administrator role"
+      },
+      {
+        "name": "user",
+        "description": "Regular user role"
+      }
+    ]
+  },
+  "users": [
+    {
+      "username": "api-admin",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123"
+        }
+      ],
+      "realmRoles": ["admin"]
+    }
+  ]
+}
+
+
+================================================
+File: modules/accounting/controllers/accounting.controller.js
+================================================
+ï»¿
+
+
+================================================
+File: modules/accounting/routes/accounting.routes.js
+================================================
+ï»¿
+
+
+
+
+================================================
+File: modules/clients/controllers/clients.controller.js
+================================================
+ï»¿const db = require('../../core/database');
+const Model = db.models.Clients;
+
+exports.getAll = async (req, res) => {
+    try {
+        const data = await Model.findAll();
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.create = async (req, res) => {
+    try {
+        const newItem = await Model.create(req.body);
+        res.status(201).json(newItem);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+// Ajoutez ici les autres mÃƒÂ©thodes CRUD...
+
+
+
+================================================
+File: modules/clients/routes/clients.routes.js
+================================================
+ï»¿
+
+
+
+================================================
+File: modules/dashboard/controllers/dashboard.controller.js
+================================================
+ï»¿
+
+
+================================================
+File: modules/dashboard/routes/dashboard.routes.js
+================================================
+ï»¿
+
+
+
+
+================================================
+File: modules/interventions/controllers/interventions.controller.js
+================================================
+ï»¿// modules/interventions/controllers/interventions.controller.js
+const { protect } = require('../../../core/auth/middleware'); // Chemin relatif corrigÃ©
+const service = require('../services/interventions.service');
+
+module.exports = {
+  getAll: (req, res) => res.json(service.getAll()),
+  getById: (req, res) => {
+    const intervention = service.getById(parseInt(req.params.id));
+    if (!intervention) return res.status(404).json({ error: "Intervention not found" });
+    res.json(intervention);
+  },
+  create: [
+    protect(), // Middleware Keycloak
+    (req, res) => res.status(201).json(service.create(req.body))
+  ]
+};
+
+
+================================================
+File: modules/interventions/routes/interventions.routes.js
+================================================
+ï»¿const express = require('express');
+const router = express.Router();
+const controller = require('../controllers/interventions.controller');
+
+// Route publique
+router.get('/', controller.getAll);
+
+// Route publique
+router.get('/:id', controller.getById);
+
+// Route protÃ©gÃ©e
+router.post('/', ...controller.create);
+
+module.exports = router;
+
+
+================================================
+File: modules/interventions/services/interventions.service.js
+================================================
+const { interventions } = require('../tests/interventions.mock');
+
+module.exports = {
+  getAll: () => interventions,
+  getById: (id) => interventions.find(i => i.id === id),
+  create: (data) => {
+    const newIntervention = {
+      id: interventions.length + 1,
+      ...data,
+      status: "nouveau",
+      createdAt: new Date().toISOString()
+    };
+    interventions.push(newIntervention);
+    return newIntervention;
+  }
+};
+
+
+================================================
+File: modules/interventions/tests/interventions.mock.js
+================================================
+module.exports = {
+  interventions: [
+    {
+      id: 1,
+      title: "Panne Ã©lectrique",
+      client: "Client A",
+      status: "en cours",
+      technician: "Jean Dupont",
+      createdAt: "2023-01-15"
+    },
+    {
+      id: 2,
+      title: "Installation logiciel",
+      client: "Client B",
+      status: "terminÃ©",
+      technician: "Marie Martin",
+      createdAt: "2023-01-10"
+    }
+  ]
+};
+
+
+================================================
+File: modules/projects/controllers/projects.controller.js
+================================================
+ï»¿
+
+
+================================================
+File: modules/projects/models/projects.model.js
+================================================
+ï»¿
+
+
+================================================
+File: modules/projects/routes/projects.routes.js
+================================================
+ï»¿
+
+
+
+================================================
+File: modules/stocks/controllers/stocks.controller.js
+================================================
+ï»¿
+
+
+================================================
+File: modules/stocks/routes/stocks.routes.js
+================================================
+ï»¿
+
+
+
+================================================
+File: modules/users/controllers/users.controller.js
+================================================
+ï»¿const logger = require('../../../core/utils/logger');
+
+class UsersController {
+  async getAllUsers(req, res) {
+    try {
+      logger.info('AccÃ¨s Ã  la liste des utilisateurs');
+      res.json([{ id: 1, name: 'Test User' }]);
+    } catch (error) {
+      logger.error('Erreur:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+
+  async createUser(req, res) {
+    try {
+      logger.info('CrÃ©ation d\'un utilisateur');
+      res.status(201).json({ id: 2, ...req.body });
+    } catch (error) {
+      logger.error('Erreur:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+}
+
+// Exportez une instance de la classe
+module.exports = new UsersController();
+
+
+================================================
+File: modules/users/routes/users.routes.js
+================================================
+ï»¿const express = require('express');
+const router = express.Router();
+const { keycloak } = require('../../../core/auth/middleware');
+const UsersController = require('../controllers/users.controller');
+
+// Routes publiques
+router.get('/public', (req, res) => {
+  res.json({ message: 'Public user endpoint' });
+});
+
+// Routes protÃ©gÃ©es
+router.get('/', keycloak.protect('user'), UsersController.getAllUsers);
+router.post('/', keycloak.protect('admin'), UsersController.createUser);
+
+// Exportez explicitement le routeur
+module.exports = router;
+
+
