@@ -1,5 +1,5 @@
 {
-  "id": "60a7fe76-d3bd-4cc2-9dac-29414985c309",
+  "id": "09d479d9-a482-4482-949a-3fcf0da679fa",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -398,7 +398,7 @@
         },
         "quantite": {
           "name": "quantite",
-          "type": "varchar(20)",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         }
@@ -453,7 +453,7 @@
         },
         "quantite": {
           "name": "quantite",
-          "type": "varchar(20)",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -737,6 +737,69 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.contrat": {
+      "name": "contrat",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nom": {
+          "name": "nom",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duree": {
+          "name": "duree",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_debut": {
+          "name": "date_debut",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_fin": {
+          "name": "date_fin",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "partenaire_id": {
+          "name": "partenaire_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "contrat_partenaire_id_partenaire_id_fk": {
+          "name": "contrat_partenaire_id_partenaire_id_fk",
+          "tableFrom": "contrat",
+          "tableTo": "partenaire",
+          "columnsFrom": [
+            "partenaire_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.intervention": {
       "name": "intervention",
       "schema": "",
@@ -749,19 +812,19 @@
         },
         "date": {
           "name": "date",
-          "type": "varchar(25)",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
         },
         "cause_defaillance": {
           "name": "cause_defaillance",
-          "type": "varchar(500)",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
         },
         "rapport_intervention": {
           "name": "rapport_intervention",
-          "type": "varchar(1000)",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
         },
@@ -779,7 +842,7 @@
         },
         "superviseur": {
           "name": "superviseur",
-          "type": "varchar(100)",
+          "type": "varchar(75)",
           "primaryKey": false,
           "notNull": false
         },
@@ -797,12 +860,18 @@
         },
         "lieu": {
           "name": "lieu",
-          "type": "varchar(200)",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
         },
-        "sollicitation_id": {
-          "name": "sollicitation_id",
+        "contrat_id": {
+          "name": "contrat_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "demande_id": {
+          "name": "demande_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -810,12 +879,25 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "intervention_sollicitation_id_sollicitation_id_fk": {
-          "name": "intervention_sollicitation_id_sollicitation_id_fk",
+        "intervention_contrat_id_contrat_id_fk": {
+          "name": "intervention_contrat_id_contrat_id_fk",
           "tableFrom": "intervention",
-          "tableTo": "sollicitation",
+          "tableTo": "contrat",
           "columnsFrom": [
-            "sollicitation_id"
+            "contrat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "intervention_demande_id_demande_id_fk": {
+          "name": "intervention_demande_id_demande_id_fk",
+          "tableFrom": "intervention",
+          "tableTo": "demande",
+          "columnsFrom": [
+            "demande_id"
           ],
           "columnsTo": [
             "id"
@@ -825,15 +907,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "intervention_sollicitation_id_unique": {
-          "name": "intervention_sollicitation_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "sollicitation_id"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -992,7 +1066,7 @@
         },
         "quantite": {
           "name": "quantite",
-          "type": "varchar(20)",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -1112,11 +1186,9 @@
         },
         "etat": {
           "name": "etat",
-          "type": "etat_exemplaire",
-          "typeSchema": "public",
+          "type": "varchar(50)",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'disponible'"
+          "notNull": false
         },
         "livraison_id": {
           "name": "livraison_id",
@@ -1371,7 +1443,7 @@
         },
         "quantite": {
           "name": "quantite",
-          "type": "varchar(20)",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -1545,8 +1617,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.intervention_enployer": {
-      "name": "intervention_enployer",
+    "public.intervention_employer": {
+      "name": "intervention_employer",
       "schema": "",
       "columns": {
         "employe_id": {
@@ -1564,9 +1636,9 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "intervention_enployer_employe_id_employes_id_fk": {
-          "name": "intervention_enployer_employe_id_employes_id_fk",
-          "tableFrom": "intervention_enployer",
+        "intervention_employer_employe_id_employes_id_fk": {
+          "name": "intervention_employer_employe_id_employes_id_fk",
+          "tableFrom": "intervention_employer",
           "tableTo": "employes",
           "columnsFrom": [
             "employe_id"
@@ -1577,9 +1649,9 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "intervention_enployer_intervention_id_intervention_id_fk": {
-          "name": "intervention_enployer_intervention_id_intervention_id_fk",
-          "tableFrom": "intervention_enployer",
+        "intervention_employer_intervention_id_intervention_id_fk": {
+          "name": "intervention_employer_intervention_id_intervention_id_fk",
+          "tableFrom": "intervention_employer",
           "tableTo": "intervention",
           "columnsFrom": [
             "intervention_id"
@@ -1592,8 +1664,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "intervention_enployer_employe_id_intervention_id_pk": {
-          "name": "intervention_enployer_employe_id_intervention_id_pk",
+        "intervention_employer_employe_id_intervention_id_pk": {
+          "name": "intervention_employer_employe_id_intervention_id_pk",
           "columns": [
             "employe_id",
             "intervention_id"
@@ -1639,6 +1711,21 @@
           ],
           "columnsTo": [
             "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "produit_intervention_produit_id_produit_code_produit_id_code_fk": {
+          "name": "produit_intervention_produit_id_produit_code_produit_id_code_fk",
+          "tableFrom": "produit_intervention",
+          "tableTo": "produit",
+          "columnsFrom": [
+            "produit_id",
+            "produit_code"
+          ],
+          "columnsTo": [
+            "id",
+            "code"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -1691,10 +1778,10 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "effectuer_demande_id_sollicitation_id_fk": {
-          "name": "effectuer_demande_id_sollicitation_id_fk",
+        "effectuer_demande_id_demande_id_fk": {
+          "name": "effectuer_demande_id_demande_id_fk",
           "tableFrom": "effectuer",
-          "tableTo": "sollicitation",
+          "tableTo": "demande",
           "columnsFrom": [
             "demande_id"
           ],

@@ -67,7 +67,7 @@ CREATE TABLE "piece_rechange" (
 	"designation" varchar(200),
 	"reference" varchar(50),
 	"marque" varchar(100),
-	"quantite" varchar(20)
+	"quantite" integer
 );
 --> statement-breakpoint
 CREATE TABLE "produit" (
@@ -77,7 +77,7 @@ CREATE TABLE "produit" (
 	"description" varchar(500),
 	"type" varchar(50),
 	"image" varchar(255),
-	"quantite" varchar(20),
+	"quantite" integer,
 	"modele_id" integer NOT NULL,
 	"categorie_id" integer NOT NULL,
 	"famille_id" integer NOT NULL,
@@ -108,19 +108,28 @@ CREATE TABLE "partenaire" (
 	CONSTRAINT "partenaire_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
+CREATE TABLE "contrat" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"nom" varchar(50),
+	"duree" varchar(50),
+	"date_debut" varchar(50),
+	"date_fin" varchar(50),
+	"partenaire_id" integer NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "intervention" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"date" varchar(25),
-	"cause_defaillance" varchar(500),
-	"rapport_intervention" varchar(1000),
+	"date" varchar(50),
+	"cause_defaillance" varchar(50),
+	"rapport_intervention" varchar(50),
 	"type_maintenance" varchar(50),
 	"type_defaillance" varchar(50),
-	"superviseur" varchar(100),
+	"superviseur" varchar(75),
 	"duree" varchar(50),
 	"numero" varchar(50),
-	"lieu" varchar(200),
-	"sollicitation_id" integer NOT NULL,
-	CONSTRAINT "intervention_sollicitation_id_unique" UNIQUE("sollicitation_id")
+	"lieu" varchar(50),
+	"contrat_id" integer NOT NULL,
+	"demande_id" integer NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "projet" (
@@ -145,7 +154,7 @@ CREATE TABLE "livraison" (
 	"dedouanement" varchar(50),
 	"prix_transport" varchar(50),
 	"date_livraison" varchar(25),
-	"quantite" varchar(20),
+	"quantite" integer,
 	"partenaire_id" integer NOT NULL
 );
 --> statement-breakpoint
@@ -162,7 +171,7 @@ CREATE TABLE "exemplaire" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"num_serie" varchar(100),
 	"prix" varchar(50),
-	"etat" "etat_exemplaire" DEFAULT 'disponible' NOT NULL,
+	"etat" varchar(50),
 	"livraison_id" integer NOT NULL,
 	"produit_id" integer NOT NULL,
 	"produit_code" varchar(50) NOT NULL
@@ -193,7 +202,7 @@ CREATE TABLE "exemplaire_acheter" (
 	"exemplaire_id" integer NOT NULL,
 	"partenaire_id" integer NOT NULL,
 	"lieu_livraison" varchar(200),
-	"quantite" varchar(20),
+	"quantite" integer,
 	"date_achat" varchar(25),
 	CONSTRAINT "exemplaire_acheter_exemplaire_id_partenaire_id_pk" PRIMARY KEY("exemplaire_id","partenaire_id")
 );
@@ -210,10 +219,10 @@ CREATE TABLE "intervention_piece" (
 	CONSTRAINT "intervention_piece_intervention_id_piece_id_pk" PRIMARY KEY("intervention_id","piece_id")
 );
 --> statement-breakpoint
-CREATE TABLE "intervention_enployer" (
+CREATE TABLE "intervention_employer" (
 	"employe_id" integer NOT NULL,
 	"intervention_id" integer NOT NULL,
-	CONSTRAINT "intervention_enployer_employe_id_intervention_id_pk" PRIMARY KEY("employe_id","intervention_id")
+	CONSTRAINT "intervention_employer_employe_id_intervention_id_pk" PRIMARY KEY("employe_id","intervention_id")
 );
 --> statement-breakpoint
 CREATE TABLE "produit_intervention" (
@@ -239,7 +248,9 @@ ALTER TABLE "produit" ADD CONSTRAINT "produit_sollicitation_id_sollicitation_id_
 ALTER TABLE "documents" ADD CONSTRAINT "documents_employe_id_employes_id_fk" FOREIGN KEY ("employe_id") REFERENCES "public"."employes"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "documents" ADD CONSTRAINT "documents_type_doc_id_type_doc_id_fk" FOREIGN KEY ("type_doc_id") REFERENCES "public"."type_doc"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "partenaire" ADD CONSTRAINT "partenaire_entite_id_entite_id_fk" FOREIGN KEY ("entite_id") REFERENCES "public"."entite"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "intervention" ADD CONSTRAINT "intervention_sollicitation_id_sollicitation_id_fk" FOREIGN KEY ("sollicitation_id") REFERENCES "public"."sollicitation"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "contrat" ADD CONSTRAINT "contrat_partenaire_id_partenaire_id_fk" FOREIGN KEY ("partenaire_id") REFERENCES "public"."partenaire"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "intervention" ADD CONSTRAINT "intervention_contrat_id_contrat_id_fk" FOREIGN KEY ("contrat_id") REFERENCES "public"."contrat"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "intervention" ADD CONSTRAINT "intervention_demande_id_demande_id_fk" FOREIGN KEY ("demande_id") REFERENCES "public"."demande"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "projet" ADD CONSTRAINT "projet_partenaire_id_partenaire_id_fk" FOREIGN KEY ("partenaire_id") REFERENCES "public"."partenaire"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "projet" ADD CONSTRAINT "projet_famille_id_famille_id_fk" FOREIGN KEY ("famille_id") REFERENCES "public"."famille"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "livraison" ADD CONSTRAINT "livraison_partenaire_id_partenaire_id_fk" FOREIGN KEY ("partenaire_id") REFERENCES "public"."partenaire"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -256,8 +267,9 @@ ALTER TABLE "mission_employes" ADD CONSTRAINT "mission_employes_employe_id_emplo
 ALTER TABLE "mission_employes" ADD CONSTRAINT "mission_employes_mission_id_mission_id_fk" FOREIGN KEY ("mission_id") REFERENCES "public"."mission"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "intervention_piece" ADD CONSTRAINT "intervention_piece_intervention_id_intervention_id_fk" FOREIGN KEY ("intervention_id") REFERENCES "public"."intervention"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "intervention_piece" ADD CONSTRAINT "intervention_piece_piece_id_piece_rechange_id_fk" FOREIGN KEY ("piece_id") REFERENCES "public"."piece_rechange"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "intervention_enployer" ADD CONSTRAINT "intervention_enployer_employe_id_employes_id_fk" FOREIGN KEY ("employe_id") REFERENCES "public"."employes"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "intervention_enployer" ADD CONSTRAINT "intervention_enployer_intervention_id_intervention_id_fk" FOREIGN KEY ("intervention_id") REFERENCES "public"."intervention"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "intervention_employer" ADD CONSTRAINT "intervention_employer_employe_id_employes_id_fk" FOREIGN KEY ("employe_id") REFERENCES "public"."employes"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "intervention_employer" ADD CONSTRAINT "intervention_employer_intervention_id_intervention_id_fk" FOREIGN KEY ("intervention_id") REFERENCES "public"."intervention"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "produit_intervention" ADD CONSTRAINT "produit_intervention_intervention_id_intervention_id_fk" FOREIGN KEY ("intervention_id") REFERENCES "public"."intervention"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "produit_intervention" ADD CONSTRAINT "produit_intervention_produit_id_produit_code_produit_id_code_fk" FOREIGN KEY ("produit_id","produit_code") REFERENCES "public"."produit"("id","code") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "effectuer" ADD CONSTRAINT "effectuer_partenaire_id_partenaire_id_fk" FOREIGN KEY ("partenaire_id") REFERENCES "public"."partenaire"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "effectuer" ADD CONSTRAINT "effectuer_demande_id_sollicitation_id_fk" FOREIGN KEY ("demande_id") REFERENCES "public"."sollicitation"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "effectuer" ADD CONSTRAINT "effectuer_demande_id_demande_id_fk" FOREIGN KEY ("demande_id") REFERENCES "public"."demande"("id") ON DELETE no action ON UPDATE no action;
