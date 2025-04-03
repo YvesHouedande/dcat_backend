@@ -1,36 +1,66 @@
-const KeycloakAdminClient = require('@keycloak/keycloak-admin-client').default;
-const fs = require('fs');
-const path = require('path');
-const logger = require('../core/utils/logger');
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' }); // Charge le fichier .env à la racine
 
-const adminClient = new KeycloakAdminClient({
+const KeycloakAdminClient = require('@keycloak/keycloak-admin-client').default;
+const logger = require('../core/utils/logger');
+
+// Configuration validation
+const REQUIRED_ENV_VARS = [
+  'KEYCLOAK_URL',
+  'KEYCLOAK_ADMIN',
+  'KEYCLOAK_ADMIN_PASSWORD',
+  'KEYCLOAK_REALM',
+  'KEYCLOAK_CLIENT_ID',
+  'KEYCLOAK_CLIENT_SECRET'
+];
+
+// Verify all required variables are present
+for (const envVar of REQUIRED_ENV_VARS) {
+  if (!process.env[envVar]) {
+    logger.error(`❌ Missing environment variable: ${envVar}`);
+    process.exit(1);
+  }
+}
+
+const keycloakConfig = {
   baseUrl: process.env.KEYCLOAK_URL,
-  realmName: 'master',
-});
+  realmName: 'master'
+};
+
+const adminClient = new KeycloakAdminClient(keycloakConfig);
 
 async function setupKeycloak() {
   try {
-    // Authentification
+    logger.info('🔑 Authenticating to Keycloak...');
+    
     await adminClient.auth({
-      username: 'admin',
-      password: 'admin', // À remplacer par les variables d'environnement si nécessaire
+      username: process.env.KEYCLOAK_ADMIN,
+      password: process.env.KEYCLOAK_ADMIN_PASSWORD,
       grantType: 'password',
-      clientId: 'admin-cli',
+      clientId: 'admin-cli'
     });
 
-    // Vérification si le realm existe déjà
-    const realms = await adminClient.realms.find();
-    if (!realms.some(r => r.realm === process.env.KEYCLOAK_REALM)) {
-      // Création du realm
+    logger.info('✅ Successfully authenticated');
+
+    // Realm setup
+    logger.info(`🔄 Checking realm ${process.env.KEYCLOAK_REALM}...`);
+    const realmExists = (await adminClient.realms.find())
+      .some(r => r.realm === process.env.KEYCLOAK_REALM);
+
+    if (!realmExists) {
       await adminClient.realms.create({
         realm: process.env.KEYCLOAK_REALM,
         enabled: true,
+        displayName: `${process.env.KEYCLOAK_REALM} Realm`,
+        loginTheme: "keycloak",
+        accountTheme: "keycloak"
       });
-      logger.info(`Realm ${process.env.KEYCLOAK_REALM} créé avec succès`);
+      logger.info(`✨ Created realm: ${process.env.KEYCLOAK_REALM}`);
+    } else {
+      logger.info(`ℹ️ Realm ${process.env.KEYCLOAK_REALM} already exists`);
     }
 
-    // Configuration du client
+    // Client setup
+    logger.info(`🔍 Checking client ${process.env.KEYCLOAK_CLIENT_ID}...`);
     const clients = await adminClient.clients.find({
       realm: process.env.KEYCLOAK_REALM,
       clientId: process.env.KEYCLOAK_CLIENT_ID
@@ -41,20 +71,31 @@ async function setupKeycloak() {
         realm: process.env.KEYCLOAK_REALM,
         clientId: process.env.KEYCLOAK_CLIENT_ID,
         secret: process.env.KEYCLOAK_CLIENT_SECRET,
-        redirectUris: [process.env.KEYCLOAK_CALLBACK_URL],
+        redirectUris: [process.env.KEYCLOAK_CALLBACK_URL || 'http://localhost:3000/*'],
+        webOrigins: ['*'],
         publicClient: false,
+        standardFlowEnabled: true,
         directAccessGrantsEnabled: true,
         serviceAccountsEnabled: true,
-        enabled: true
+        authorizationServicesEnabled: true,
+        enabled: true,
+        protocol: 'openid-connect',
+        attributes: {
+          'post.logout.redirect.uris': '+',
+          'exclude.session.state.from.auth.response': 'false'
+        }
       });
-      logger.info(`Client ${process.env.KEYCLOAK_CLIENT_ID} créé avec succès`);
+      logger.info(`🎯 Created client: ${process.env.KEYCLOAK_CLIENT_ID}`);
+    } else {
+      logger.info(`ℹ️ Client ${process.env.KEYCLOAK_CLIENT_ID} already exists`);
     }
 
-    logger.info('Configuration Keycloak terminée avec succès');
+    logger.info('🏁 Keycloak setup completed successfully');
   } catch (error) {
-    logger.error('Erreur lors de la configuration Keycloak:', error);
+    logger.error('💥 Keycloak setup failed:', error);
     process.exit(1);
   }
 }
 
+// Execute setup
 setupKeycloak();
