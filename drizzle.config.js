@@ -5,7 +5,7 @@ module.exports = {
   out: "./core/database/migrations",
   dialect: "postgresql", 
   dbCredentials: {
-  url: `postgresql://${process.env.APP_DB_USER}:${process.env.APP_DB_PASSWORD}@localhost:${process.env.DB_PORT}/${process.env.APP_DB_NAME}`
+  url: `postgresql://${process.env.APP_DB_USER}:${process.env.APP_DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.APP_DB_NAME}`
   },
   verbose: true,
   strict: true,
