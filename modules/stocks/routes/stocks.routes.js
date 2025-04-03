@@ -1,12 +1,13 @@
-﻿const express = require('express');
+﻿const express = require("express");
 const router = express.Router();
-const controller = require('../controllers/stocks.controller');
-const { protect } = require('../../../core/auth/middleware');
 
-// Route publique
-router.get('/', protect(), controller.getAll);
+// Import des sous-routes
+const familleRoutes = require("./famille.routes");
 
-// Route protégée avec rôle spécifique
-router.post('/', protect(), controller.create);
+// Montage des routes
+router.use("/familles", familleRoutes);
+
+// Vous pourriez ajouter d'autres routes ici
+// router.use("/articles", articleRoutes);
 
 module.exports = router;
