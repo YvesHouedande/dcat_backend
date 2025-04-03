@@ -3,11 +3,10 @@ const router = express.Router();
 
 // Import des sous-routes
 const familleRoutes = require("./famille.routes");
+const categorieRoutes = require("./categorie.routes");
 
 // Montage des routes
 router.use("/familles", familleRoutes);
-
-// Vous pourriez ajouter d'autres routes ici
-// router.use("/articles", articleRoutes);
+router.use("/categories", categorieRoutes);
 
 module.exports = router;
