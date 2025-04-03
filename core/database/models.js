@@ -41,6 +41,7 @@ const fonction = pgTable("fonction", {
 const employes = pgTable("employes", {
   id: serial("id").primaryKey(),
   nom: varchar("nom", { length: 50 }),
+  keycloak_id: varchar("keycloak_id", { length: 36 }).unique().notNull(),
   prenom: varchar("prenom", { length: 50 }),
   email: varchar("email", { length: 100 }),
   contact: varchar("contact", { length: 20 }),
