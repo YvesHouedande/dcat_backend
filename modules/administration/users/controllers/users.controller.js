@@ -1,26 +1,35 @@
-﻿const logger = require('../../../core/utils/logger');
+﻿const logger = require('../../../../core/utils/logger');
+const { employes } = require('../../../../core/database/models');
 
-class UsersController {
-  async getAllUsers(req, res) {
-    try {
-      logger.info('Accès à la liste des utilisateurs');
-      res.json([{ id: 1, name: 'Test User' }]);
-    } catch (error) {
-      logger.error('Erreur:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
+const getAllEmployes = async (req, res) => {
+  try {
+    const employe = await employes.findAll();
+    res.json(employe);
+  } catch (error) {
+    logger.error('Erreur lors de la récupération des utilisateurs:', error);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
   }
+};
 
-  async createUser(req, res) {
-    try {
-      logger.info('Création d\'un utilisateur');
-      res.status(201).json({ id: 2, ...req.body });
-    } catch (error) {
-      logger.error('Erreur:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
+module.exports = {
+  getAllEmployes,
+};
+
+
+const createEmployes = async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+
+    const employe = await employes.create({ username, email, password });
+    res.status(201).json(user);
+  } catch (error) {
+    logger.error('Erreur lors de la création de l\'utilisateur:', error);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
   }
-}
+};
 
-// Exportez une instance de la classe
-module.exports = new UsersController();
+module.exports = {
+  getAllUsers,
+  createUser,
+};
+  
