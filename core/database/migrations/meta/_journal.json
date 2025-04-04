@@ -5,25 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1743613115214,
-      "tag": "0000_absurd_daredevil",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-<<<<<<< HEAD
-      "when": 1743699042540,
-      "tag": "0001_adorable_ben_parker",
-=======
-<<<<<<< HEAD
-      "when": 1743688458161,
-      "tag": "0001_flawless_elektra",
-=======
-      "when": 1743684900616,
-      "tag": "0001_worried_nebula",
->>>>>>> ec71e5dd1951976064062c09816816ed21896c60
->>>>>>> d580e153170f8fe9b2b6f478a92db1e6413a66ff
+      "when": 1743780812683,
+      "tag": "0000_futuristic_paper_doll",
       "breakpoints": true
     }
   ]
