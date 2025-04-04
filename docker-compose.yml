@@ -1,32 +1,207 @@
+# # # # # services:
+# # # # #   app:
+# # # # #     build: .
+# # # # #     ports:
+# # # # #       - "3000:3000"
+# # # # #     environment:
+# # # # #       NODE_ENV: production
+# # # # #       DB_HOST: postgres
+# # # # #       KEYCLOAK_URL: http://keycloak:8080
+# # # # #     depends_on:
+# # # # #       - postgres
+# # # # #       - keycloak
+# # # # #     networks:
+# # # # #       - backend
+# # # # #   keycloak:
+# # # # #     image: quay.io/keycloak/keycloak:26.1.4
+# # # # #     container_name: keycloak
+# # # # #     environment:
+# # # # #       KC_BOOTSTRAP_ADMIN_USERNAME: admin
+# # # # #       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+# # # # #       KEYCLOAK_ADMIN: admin
+# # # # #       KEYCLOAK_ADMIN_PASSWORD: admin
+# # # # #       KC_HOSTNAME: localhost
+# # # # #       KC_HTTP_ENABLED: "true"
+# # # # #       KC_PROXY: edge
+# # # # #       KC_DB: postgres
+# # # # #       KC_DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-dcat_db}
+# # # # #       KC_DB_USERNAME: ${DB_USER:-dcat_user}
+# # # # #       KC_DB_PASSWORD: ${DB_PASSWORD:-dcat_password}
+# # # # #     ports:
+# # # # #       - "8080:8080"
+# # # # #     volumes:
+# # # # #       - ./keycloak-setup:/opt/keycloak/data/import
+# # # # #     depends_on:
+# # # # #       postgres:
+# # # # #         condition: service_healthy
+# # # # #     command: 
+# # # # #       - start-dev
+# # # # #       - --import-realm
+# # # # #     networks:
+# # # # #       - dcat_network
+
+# # # # #   postgres:
+# # # # #     image: postgres:15-alpine
+# # # # #     container_name: dcat_postgres
+# # # # #     environment:
+# # # # #       POSTGRES_DB: ${DB_NAME:-dcat_db}
+# # # # #       POSTGRES_USER: ${DB_USER:-dcat_user}
+# # # # #       POSTGRES_PASSWORD: ${DB_PASSWORD:-dcat_password}
+# # # # #     volumes:
+# # # # #       - postgres_data:/var/lib/postgresql/data
+# # # # #       - ./init-db:/docker-entrypoint-initdb.d
+# # # # #     ports:
+# # # # #       - "${DB_PORT:-5432}:5432"
+# # # # #     networks:
+# # # # #       - dcat_network
+# # # # #     healthcheck:
+# # # # #       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dcat_user} -d ${DB_NAME:-dcat_db}"]
+# # # # #       interval: 5s
+# # # # #       timeout: 5s
+# # # # #       retries: 5
+
+# # # # # networks:
+# # # # #   dcat_network:
+# # # # #     driver: bridge
+
+# # # # # volumes:
+# # # # #   postgres_data:
+
+# # # #   # api:
+# # # #   #   build: .
+# # # #   #   container_name: api
+# # # #   #   environment:
+# # # #   #     - NODE_ENV=development
+# # # #   #     - KEYCLOAK_URL=http://keycloak:8080
+# # # #   #   ports:
+# # # #   #     - "3000:3000"
+# # # #   #   volumes:
+# # # #   #     - .:/app
+# # # #   #     - /app/node_modules
+# # # #   #   depends_on:
+# # # #   #     - keycloak
+# # # #   #   restart: unless-stopped
+
+
+
+# # # # version: '3.8'
+
+# # # # services:
+# # # #   app:
+# # # #     build: .
+# # # #     container_name: dcat_backend
+# # # #     ports:
+# # # #       - "${PORT:-2000}:${PORT:-2000}"  # Utilise le PORT depuis .env
+# # # #     env_file:
+# # # #       - .env  # Charge toutes les variables depuis .env
+# # # #     environment:
+# # # #       NODE_ENV: ${NODE_ENV:-production}
+# # # #       DB_HOST: postgres  # Nom du service, pas localhost
+# # # #       # KEYCLOAK_URL: http://keycloak:8080  # Communication interne entre containers
+# # # #     depends_on:
+# # # #       - postgres
+# # # #       - keycloak
+# # # #     networks:
+# # # #       - dcat_network
+
+# # # #   keycloak:
+# # # #     image: quay.io/keycloak/keycloak:26.1.4
+# # # #     container_name: keycloak
+# # # #     env_file:
+# # # #       - .env  # Partage les mêmes variables
+# # # #     environment:
+# # # #       KC_BOOTSTRAP_ADMIN_USERNAME: admin
+# # # #       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}  # À sécuriser en prod
+# # # #       KC_HOSTNAME: localhost
+# # # #       KC_HTTP_ENABLED: "true"
+# # # #       KC_PROXY: edge
+# # # #       KC_DB: postgres
+# # # #       KC_DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-dcat_db}
+# # # #       KC_DB_USERNAME: ${DB_USER:-dcat_user}
+# # # #       KC_DB_PASSWORD: ${DB_PASSWORD:-dcat_password}
+# # # #       KEYCLOAK_ADMIN: admin
+# # # #       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+# # # #     ports:
+# # # #       - "8080:8080"  # Expose Keycloak sur le port standard
+# # # #     volumes:
+# # # #       - ./keycloak-setup:/opt/keycloak/data/import
+# # # #     depends_on:
+# # # #       postgres:
+# # # #         condition: service_healthy
+# # # #     command: 
+# # # #       - start-dev
+# # # #       - --import-realm
+# # # #     networks:
+# # # #       - dcat_network
+
+# # # #   postgres:
+# # # #     image: postgres:15-alpine
+# # # #     container_name: dcat_postgres
+# # # #     env_file:
+# # # #       - .env  # Utilise les variables DB_* depuis .env
+# # # #     environment:
+# # # #       POSTGRES_DB: ${DB_NAME:-dcat_db}
+# # # #       POSTGRES_USER: ${DB_USER:-dcat_user}
+# # # #       POSTGRES_PASSWORD: ${DB_PASSWORD:-dcat_password}
+# # # #     volumes:
+# # # #       - postgres_data:/var/lib/postgresql/data
+# # # #       - ./init-db:/docker-entrypoint-initdb.d
+# # # #     ports:
+# # # #       - "${DB_PORT:-5432}:5432"
+# # # #     networks:
+# # # #       - dcat_network
+# # # #     healthcheck:
+# # # #       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dcat_user} -d ${DB_NAME:-dcat_db}"]
+# # # #       interval: 5s
+# # # #       timeout: 5s
+# # # #       retries: 5
+
+# # # # networks:
+# # # #   dcat_network:
+# # # #     driver: bridge
+
+# # # # volumes:
+# # # #   postgres_data:
+
+
+
+# version: '3.8'
+
 # services:
 #   app:
 #     build: .
+#     container_name: dcat_backend
 #     ports:
-#       - "3000:3000"
+#       - "2000:2000"
+#     env_file:
+#       - .env
 #     environment:
-#       NODE_ENV: production
 #       DB_HOST: postgres
-#       KEYCLOAK_URL: http://keycloak:8080
+#       DB_NAME: ${APP_DB_NAME:-app_db_name}
+#       DB_USER: ${APP_DB_USER:-app_db_user}
+#       DB_PASSWORD: ${APP_DB_PASSWORD:-app_db_password}
 #     depends_on:
 #       - postgres
 #       - keycloak
 #     networks:
-#       - backend
+#       - dcat_network
+
 #   keycloak:
 #     image: quay.io/keycloak/keycloak:26.1.4
 #     container_name: keycloak
+#     env_file:
+#       - .env
 #     environment:
-#       KC_BOOTSTRAP_ADMIN_USERNAME: admin
-#       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-#       KEYCLOAK_ADMIN: admin
-#       KEYCLOAK_ADMIN_PASSWORD: admin
 #       KC_HOSTNAME: localhost
 #       KC_HTTP_ENABLED: "true"
 #       KC_PROXY: edge
 #       KC_DB: postgres
-#       KC_DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-dcat_db}
-#       KC_DB_USERNAME: ${DB_USER:-dcat_user}
-#       KC_DB_PASSWORD: ${DB_PASSWORD:-dcat_password}
+#       KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB_NAME}
+#       KC_DB_USERNAME: ${KEYCLOAK_DB_USER}
+#       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+#       KEYCLOAK_ADMIN: admin
+#       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+#       KC_HEALTH_ENABLED: "true"
 #     ports:
 #       - "8080:8080"
 #     volumes:
@@ -34,9 +209,12 @@
 #     depends_on:
 #       postgres:
 #         condition: service_healthy
-#     command: 
-#       - start-dev
-#       - --import-realm
+#     command: ["start-dev"]
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 3
 #     networks:
 #       - dcat_network
 
@@ -44,21 +222,24 @@
 #     image: postgres:15-alpine
 #     container_name: dcat_postgres
 #     environment:
-#       POSTGRES_DB: ${DB_NAME:-dcat_db}
-#       POSTGRES_USER: ${DB_USER:-dcat_user}
-#       POSTGRES_PASSWORD: ${DB_PASSWORD:-dcat_password}
+#       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+#       POSTGRES_USER: postgres
+#       POSTGRES_DB: postgres
+#       POSTGRES_MULTIPLE_DATABASES: ${KEYCLOAK_DB_NAME},${APP_DB_NAME}
+#       POSTGRES_MULTIPLE_USERS: ${KEYCLOAK_DB_USER}:${KEYCLOAK_DB_PASSWORD},${APP_DB_USER}:${APP_DB_PASSWORD}
 #     volumes:
 #       - postgres_data:/var/lib/postgresql/data
 #       - ./init-db:/docker-entrypoint-initdb.d
+#       - ./.env:/tmp/.env:ro
 #     ports:
 #       - "${DB_PORT:-5432}:5432"
-#     networks:
-#       - dcat_network
 #     healthcheck:
-#       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dcat_user} -d ${DB_NAME:-dcat_db}"]
+#       test: ["CMD-SHELL", "pg_isready -U postgres"]
 #       interval: 5s
 #       timeout: 5s
 #       retries: 5
+#     networks:
+#       - dcat_network
 
 # networks:
 #   dcat_network:
@@ -67,98 +248,143 @@
 # volumes:
 #   postgres_data:
 
-  # api:
-  #   build: .
-  #   container_name: api
-  #   environment:
-  #     - NODE_ENV=development
-  #     - KEYCLOAK_URL=http://keycloak:8080
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - .:/app
-  #     - /app/node_modules
-  #   depends_on:
-  #     - keycloak
-  #   restart: unless-stopped
 
+# # version: '3.8'
+
+# # services:
+# #   postgres:
+# #     image: postgres:15-alpine
+# #     container_name: dcat_postgres
+# #     environment:
+# #       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+# #       POSTGRES_USER: postgres
+# #       POSTGRES_DB: postgres
+# #     volumes:
+# #       - postgres_data:/var/lib/postgresql/data
+# #       - ./init-db:/docker-entrypoint-initdb.d
+# #     healthcheck:
+# #       test: ["CMD-SHELL", "pg_isready -U postgres"]
+# #       interval: 5s
+# #       timeout: 5s
+# #       retries: 5
+
+# #   keycloak:
+# #     image: quay.io/keycloak/keycloak:26.1.4
+# #     container_name: keycloak
+# #     depends_on:
+# #       postgres:
+# #         condition: service_healthy
+# #     environment:
+# #       KC_DB: postgres
+# #       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak_db
+# #       KC_DB_USERNAME: keycloak_user
+# #       KC_DB_PASSWORD: keycloak123
+# #       KEYCLOAK_ADMIN: admin
+# #       KEYCLOAK_ADMIN_PASSWORD: admin123
+# #       KC_HOSTNAME: localhost
+# #       KC_HTTP_ENABLED: "true"
+# #       KC_PROXY: edge
+# #     ports:
+# #       - "8080:8080"
+# #     volumes:
+# #       - ./keycloak-setup:/opt/keycloak/data/import
+# #     command: ["start-dev"]
+
+# # volumes:
+# #   postgres_data:
+
+
+# # version: '3.8'
+
+# # services:
+# #   postgres:
+# #     image: postgres:15-alpine
+# #     container_name: dcat_postgres
+# #     environment:
+# #       POSTGRES_PASSWORD: postgres123
+# #       POSTGRES_USER: postgres
+# #       POSTGRES_DB: postgres
+# #     volumes:
+# #       - postgres_data:/var/lib/postgresql/data
+# #       - ./init-db:/docker-entrypoint-initdb.d
+# #       - ./.env:/tmp/.env:ro
+# #     ports:
+# #       - "${DB_PORT:-5432}:5432"
+# #     healthcheck:
+# #       test: ["CMD-SHELL", "pg_isready -U postgres"]
+# #       interval: 5s
+# #       timeout: 5s
+# #       retries: 5
+
+# #   keycloak:
+# #     image: quay.io/keycloak/keycloak:26.1.4
+# #     container_name: keycloak
+# #     depends_on:
+# #       postgres:
+# #         condition: service_healthy
+# #     environment:
+# #       KC_DB: postgres
+# #       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak_db
+# #       KC_DB_USERNAME: keycloak_user
+# #       KC_DB_PASSWORD: keycloak123
+# #       KEYCLOAK_ADMIN: admin
+# #       KEYCLOAK_ADMIN_PASSWORD: admin123
+# #       KC_HOSTNAME: localhost
+# #       KC_HTTP_ENABLED: "true"
+# #       KC_PROXY: edge
+# #     ports:
+# #       - "8080:8080"
+# #     volumes:
+# #       - ./keycloak-setup:/opt/keycloak/data/import
+# #     command: ["start-dev"]
+
+# # volumes:
+# #   postgres_data:
 
 
 version: '3.8'
 
 services:
-  app:
-    build: .
-    container_name: dcat_backend
-    ports:
-      - "${PORT:-2000}:${PORT:-2000}"  # Utilise le PORT depuis .env
-    env_file:
-      - .env  # Charge toutes les variables depuis .env
-    environment:
-      NODE_ENV: ${NODE_ENV:-production}
-      DB_HOST: postgres  # Nom du service, pas localhost
-      # KEYCLOAK_URL: http://keycloak:8080  # Communication interne entre containers
-    depends_on:
-      - postgres
-      - keycloak
-    networks:
-      - dcat_network
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.1.4
-    container_name: keycloak
-    env_file:
-      - .env  # Partage les mêmes variables
-    environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}  # À sécuriser en prod
-      KC_HOSTNAME: localhost
-      KC_HTTP_ENABLED: "true"
-      KC_PROXY: edge
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-dcat_db}
-      KC_DB_USERNAME: ${DB_USER:-dcat_user}
-      KC_DB_PASSWORD: ${DB_PASSWORD:-dcat_password}
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
-    ports:
-      - "8080:8080"  # Expose Keycloak sur le port standard
-    volumes:
-      - ./keycloak-setup:/opt/keycloak/data/import
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: 
-      - start-dev
-      - --import-realm
-    networks:
-      - dcat_network
-
   postgres:
     image: postgres:15-alpine
     container_name: dcat_postgres
-    env_file:
-      - .env  # Utilise les variables DB_* depuis .env
+    env_file: .env
     environment:
-      POSTGRES_DB: ${DB_NAME:-dcat_db}
-      POSTGRES_USER: ${DB_USER:-dcat_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-dcat_password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-default_postgres_password}
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db:/docker-entrypoint-initdb.d
+      - ./.env:/tmp/.env:ro
     ports:
       - "${DB_PORT:-5432}:5432"
-    networks:
-      - dcat_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dcat_user} -d ${DB_NAME:-dcat_db}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-networks:
-  dcat_network:
-    driver: bridge
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1.4
+    container_name: keycloak
+    env_file: .env
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB_NAME:-keycloak_db}
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak_user}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak123}
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
+      KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["start-dev"]
 
 volumes:
   postgres_data:

@@ -1,0 +1,1821 @@
+{
+  "id": "09d479d9-a482-4482-949a-3fcf0da679fa",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.famille": {
+      "name": "famille",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "libelle": {
+          "name": "libelle",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.categorie": {
+      "name": "categorie",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "libelle": {
+          "name": "libelle",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.modele": {
+      "name": "modele",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "libelle": {
+          "name": "libelle",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.marque": {
+      "name": "marque",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "libelle": {
+          "name": "libelle",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.fonction": {
+      "name": "fonction",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nom": {
+          "name": "nom",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "fonction_nom_unique": {
+          "name": "fonction_nom_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "nom"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.employes": {
+      "name": "employes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nom": {
+          "name": "nom",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prenom": {
+          "name": "prenom",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contact": {
+          "name": "contact",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "adresse": {
+          "name": "adresse",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fonction_id": {
+          "name": "fonction_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "employes_fonction_id_fonction_id_fk": {
+          "name": "employes_fonction_id_fonction_id_fk",
+          "tableFrom": "employes",
+          "tableTo": "fonction",
+          "columnsFrom": [
+            "fonction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sollicitation": {
+      "name": "sollicitation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "etat": {
+          "name": "etat",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.demande": {
+      "name": "demande",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "date_debut": {
+          "name": "date_debut",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_fin": {
+          "name": "date_fin",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "motif": {
+          "name": "motif",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "employe_id": {
+          "name": "employe_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "demande_employe_id_employes_id_fk": {
+          "name": "demande_employe_id_employes_id_fk",
+          "tableFrom": "demande",
+          "tableTo": "employes",
+          "columnsFrom": [
+            "employe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.type_doc": {
+      "name": "type_doc",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "libelle": {
+          "name": "libelle",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.entite": {
+      "name": "entite",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "libelle": {
+          "name": "libelle",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.piece_rechange": {
+      "name": "piece_rechange",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "designation": {
+          "name": "designation",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reference": {
+          "name": "reference",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "marque": {
+          "name": "marque",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quantite": {
+          "name": "quantite",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.produit": {
+      "name": "produit",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nom": {
+          "name": "nom",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image": {
+          "name": "image",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quantite": {
+          "name": "quantite",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "modele_id": {
+          "name": "modele_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "categorie_id": {
+          "name": "categorie_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "famille_id": {
+          "name": "famille_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "marque_id": {
+          "name": "marque_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sollicitation_id": {
+          "name": "sollicitation_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "produit_modele_id_modele_id_fk": {
+          "name": "produit_modele_id_modele_id_fk",
+          "tableFrom": "produit",
+          "tableTo": "modele",
+          "columnsFrom": [
+            "modele_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "produit_categorie_id_categorie_id_fk": {
+          "name": "produit_categorie_id_categorie_id_fk",
+          "tableFrom": "produit",
+          "tableTo": "categorie",
+          "columnsFrom": [
+            "categorie_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "produit_famille_id_famille_id_fk": {
+          "name": "produit_famille_id_famille_id_fk",
+          "tableFrom": "produit",
+          "tableTo": "famille",
+          "columnsFrom": [
+            "famille_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "produit_marque_id_marque_id_fk": {
+          "name": "produit_marque_id_marque_id_fk",
+          "tableFrom": "produit",
+          "tableTo": "marque",
+          "columnsFrom": [
+            "marque_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "produit_sollicitation_id_sollicitation_id_fk": {
+          "name": "produit_sollicitation_id_sollicitation_id_fk",
+          "tableFrom": "produit",
+          "tableTo": "sollicitation",
+          "columnsFrom": [
+            "sollicitation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "produit_id_code_pk": {
+          "name": "produit_id_code_pk",
+          "columns": [
+            "id",
+            "code"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "produit_sollicitation_id_unique": {
+          "name": "produit_sollicitation_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "sollicitation_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.documents": {
+      "name": "documents",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "titre": {
+          "name": "titre",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fichier": {
+          "name": "fichier",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_ajout": {
+          "name": "date_ajout",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "employe_id": {
+          "name": "employe_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type_doc_id": {
+          "name": "type_doc_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "documents_employe_id_employes_id_fk": {
+          "name": "documents_employe_id_employes_id_fk",
+          "tableFrom": "documents",
+          "tableTo": "employes",
+          "columnsFrom": [
+            "employe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "documents_type_doc_id_type_doc_id_fk": {
+          "name": "documents_type_doc_id_type_doc_id_fk",
+          "tableFrom": "documents",
+          "tableTo": "type_doc",
+          "columnsFrom": [
+            "type_doc_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.partenaire": {
+      "name": "partenaire",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nom": {
+          "name": "nom",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "telephone": {
+          "name": "telephone",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "specialite": {
+          "name": "specialite",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "localisation": {
+          "name": "localisation",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "entite_id": {
+          "name": "entite_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "partenaire_entite_id_entite_id_fk": {
+          "name": "partenaire_entite_id_entite_id_fk",
+          "tableFrom": "partenaire",
+          "tableTo": "entite",
+          "columnsFrom": [
+            "entite_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "partenaire_email_unique": {
+          "name": "partenaire_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.contrat": {
+      "name": "contrat",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nom": {
+          "name": "nom",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duree": {
+          "name": "duree",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_debut": {
+          "name": "date_debut",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_fin": {
+          "name": "date_fin",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "partenaire_id": {
+          "name": "partenaire_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "contrat_partenaire_id_partenaire_id_fk": {
+          "name": "contrat_partenaire_id_partenaire_id_fk",
+          "tableFrom": "contrat",
+          "tableTo": "partenaire",
+          "columnsFrom": [
+            "partenaire_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.intervention": {
+      "name": "intervention",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cause_defaillance": {
+          "name": "cause_defaillance",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rapport_intervention": {
+          "name": "rapport_intervention",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type_maintenance": {
+          "name": "type_maintenance",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type_defaillance": {
+          "name": "type_defaillance",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "superviseur": {
+          "name": "superviseur",
+          "type": "varchar(75)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duree": {
+          "name": "duree",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "numero": {
+          "name": "numero",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lieu": {
+          "name": "lieu",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contrat_id": {
+          "name": "contrat_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "demande_id": {
+          "name": "demande_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "intervention_contrat_id_contrat_id_fk": {
+          "name": "intervention_contrat_id_contrat_id_fk",
+          "tableFrom": "intervention",
+          "tableTo": "contrat",
+          "columnsFrom": [
+            "contrat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "intervention_demande_id_demande_id_fk": {
+          "name": "intervention_demande_id_demande_id_fk",
+          "tableFrom": "intervention",
+          "tableTo": "demande",
+          "columnsFrom": [
+            "demande_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.projet": {
+      "name": "projet",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nom": {
+          "name": "nom",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "devis": {
+          "name": "devis",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_debut": {
+          "name": "date_debut",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_fin": {
+          "name": "date_fin",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duree": {
+          "name": "duree",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "etat": {
+          "name": "etat",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "partenaire_id": {
+          "name": "partenaire_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "famille_id": {
+          "name": "famille_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "projet_partenaire_id_partenaire_id_fk": {
+          "name": "projet_partenaire_id_partenaire_id_fk",
+          "tableFrom": "projet",
+          "tableTo": "partenaire",
+          "columnsFrom": [
+            "partenaire_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "projet_famille_id_famille_id_fk": {
+          "name": "projet_famille_id_famille_id_fk",
+          "tableFrom": "projet",
+          "tableTo": "famille",
+          "columnsFrom": [
+            "famille_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.livraison": {
+      "name": "livraison",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "autres_frais": {
+          "name": "autres_frais",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "periode_achat": {
+          "name": "periode_achat",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prix_achat": {
+          "name": "prix_achat",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dedouanement": {
+          "name": "dedouanement",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prix_transport": {
+          "name": "prix_transport",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_livraison": {
+          "name": "date_livraison",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quantite": {
+          "name": "quantite",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "partenaire_id": {
+          "name": "partenaire_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "livraison_partenaire_id_partenaire_id_fk": {
+          "name": "livraison_partenaire_id_partenaire_id_fk",
+          "tableFrom": "livraison",
+          "tableTo": "partenaire",
+          "columnsFrom": [
+            "partenaire_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.mission": {
+      "name": "mission",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nom": {
+          "name": "nom",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "statut": {
+          "name": "statut",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lieu": {
+          "name": "lieu",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "projet_id": {
+          "name": "projet_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "mission_projet_id_projet_id_fk": {
+          "name": "mission_projet_id_projet_id_fk",
+          "tableFrom": "mission",
+          "tableTo": "projet",
+          "columnsFrom": [
+            "projet_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.exemplaire": {
+      "name": "exemplaire",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "num_serie": {
+          "name": "num_serie",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prix": {
+          "name": "prix",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "etat": {
+          "name": "etat",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "livraison_id": {
+          "name": "livraison_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "produit_id": {
+          "name": "produit_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "produit_code": {
+          "name": "produit_code",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "exemplaire_livraison_id_livraison_id_fk": {
+          "name": "exemplaire_livraison_id_livraison_id_fk",
+          "tableFrom": "exemplaire",
+          "tableTo": "livraison",
+          "columnsFrom": [
+            "livraison_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "exemplaire_produit_id_produit_code_produit_id_code_fk": {
+          "name": "exemplaire_produit_id_produit_code_produit_id_code_fk",
+          "tableFrom": "exemplaire",
+          "tableTo": "produit",
+          "columnsFrom": [
+            "produit_id",
+            "produit_code"
+          ],
+          "columnsTo": [
+            "id",
+            "code"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tache": {
+      "name": "tache",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nom": {
+          "name": "nom",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "statut": {
+          "name": "statut",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_debut": {
+          "name": "date_debut",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_fin": {
+          "name": "date_fin",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "responsable": {
+          "name": "responsable",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mission_id": {
+          "name": "mission_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tache_mission_id_mission_id_fk": {
+          "name": "tache_mission_id_mission_id_fk",
+          "tableFrom": "tache",
+          "tableTo": "mission",
+          "columnsFrom": [
+            "mission_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.projet_exemplaire_employes": {
+      "name": "projet_exemplaire_employes",
+      "schema": "",
+      "columns": {
+        "exemplaire_id": {
+          "name": "exemplaire_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "projet_id": {
+          "name": "projet_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "employe_id": {
+          "name": "employe_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date_utilisation": {
+          "name": "date_utilisation",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_fin": {
+          "name": "date_fin",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_debut": {
+          "name": "date_debut",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "projet_exemplaire_employes_exemplaire_id_exemplaire_id_fk": {
+          "name": "projet_exemplaire_employes_exemplaire_id_exemplaire_id_fk",
+          "tableFrom": "projet_exemplaire_employes",
+          "tableTo": "exemplaire",
+          "columnsFrom": [
+            "exemplaire_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "projet_exemplaire_employes_projet_id_projet_id_fk": {
+          "name": "projet_exemplaire_employes_projet_id_projet_id_fk",
+          "tableFrom": "projet_exemplaire_employes",
+          "tableTo": "projet",
+          "columnsFrom": [
+            "projet_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "projet_exemplaire_employes_employe_id_employes_id_fk": {
+          "name": "projet_exemplaire_employes_employe_id_employes_id_fk",
+          "tableFrom": "projet_exemplaire_employes",
+          "tableTo": "employes",
+          "columnsFrom": [
+            "employe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "projet_exemplaire_employes_exemplaire_id_projet_id_employe_id_pk": {
+          "name": "projet_exemplaire_employes_exemplaire_id_projet_id_employe_id_pk",
+          "columns": [
+            "exemplaire_id",
+            "projet_id",
+            "employe_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.exemplaire_acheter": {
+      "name": "exemplaire_acheter",
+      "schema": "",
+      "columns": {
+        "exemplaire_id": {
+          "name": "exemplaire_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "partenaire_id": {
+          "name": "partenaire_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lieu_livraison": {
+          "name": "lieu_livraison",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quantite": {
+          "name": "quantite",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_achat": {
+          "name": "date_achat",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "exemplaire_acheter_exemplaire_id_exemplaire_id_fk": {
+          "name": "exemplaire_acheter_exemplaire_id_exemplaire_id_fk",
+          "tableFrom": "exemplaire_acheter",
+          "tableTo": "exemplaire",
+          "columnsFrom": [
+            "exemplaire_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "exemplaire_acheter_partenaire_id_partenaire_id_fk": {
+          "name": "exemplaire_acheter_partenaire_id_partenaire_id_fk",
+          "tableFrom": "exemplaire_acheter",
+          "tableTo": "partenaire",
+          "columnsFrom": [
+            "partenaire_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "exemplaire_acheter_exemplaire_id_partenaire_id_pk": {
+          "name": "exemplaire_acheter_exemplaire_id_partenaire_id_pk",
+          "columns": [
+            "exemplaire_id",
+            "partenaire_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.mission_employes": {
+      "name": "mission_employes",
+      "schema": "",
+      "columns": {
+        "employe_id": {
+          "name": "employe_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mission_id": {
+          "name": "mission_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "mission_employes_employe_id_employes_id_fk": {
+          "name": "mission_employes_employe_id_employes_id_fk",
+          "tableFrom": "mission_employes",
+          "tableTo": "employes",
+          "columnsFrom": [
+            "employe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "mission_employes_mission_id_mission_id_fk": {
+          "name": "mission_employes_mission_id_mission_id_fk",
+          "tableFrom": "mission_employes",
+          "tableTo": "mission",
+          "columnsFrom": [
+            "mission_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "mission_employes_employe_id_mission_id_pk": {
+          "name": "mission_employes_employe_id_mission_id_pk",
+          "columns": [
+            "employe_id",
+            "mission_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.intervention_piece": {
+      "name": "intervention_piece",
+      "schema": "",
+      "columns": {
+        "intervention_id": {
+          "name": "intervention_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "piece_id": {
+          "name": "piece_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "intervention_piece_intervention_id_intervention_id_fk": {
+          "name": "intervention_piece_intervention_id_intervention_id_fk",
+          "tableFrom": "intervention_piece",
+          "tableTo": "intervention",
+          "columnsFrom": [
+            "intervention_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "intervention_piece_piece_id_piece_rechange_id_fk": {
+          "name": "intervention_piece_piece_id_piece_rechange_id_fk",
+          "tableFrom": "intervention_piece",
+          "tableTo": "piece_rechange",
+          "columnsFrom": [
+            "piece_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "intervention_piece_intervention_id_piece_id_pk": {
+          "name": "intervention_piece_intervention_id_piece_id_pk",
+          "columns": [
+            "intervention_id",
+            "piece_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.intervention_employer": {
+      "name": "intervention_employer",
+      "schema": "",
+      "columns": {
+        "employe_id": {
+          "name": "employe_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "intervention_id": {
+          "name": "intervention_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "intervention_employer_employe_id_employes_id_fk": {
+          "name": "intervention_employer_employe_id_employes_id_fk",
+          "tableFrom": "intervention_employer",
+          "tableTo": "employes",
+          "columnsFrom": [
+            "employe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "intervention_employer_intervention_id_intervention_id_fk": {
+          "name": "intervention_employer_intervention_id_intervention_id_fk",
+          "tableFrom": "intervention_employer",
+          "tableTo": "intervention",
+          "columnsFrom": [
+            "intervention_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "intervention_employer_employe_id_intervention_id_pk": {
+          "name": "intervention_employer_employe_id_intervention_id_pk",
+          "columns": [
+            "employe_id",
+            "intervention_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.produit_intervention": {
+      "name": "produit_intervention",
+      "schema": "",
+      "columns": {
+        "produit_id": {
+          "name": "produit_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "produit_code": {
+          "name": "produit_code",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "intervention_id": {
+          "name": "intervention_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "produit_intervention_intervention_id_intervention_id_fk": {
+          "name": "produit_intervention_intervention_id_intervention_id_fk",
+          "tableFrom": "produit_intervention",
+          "tableTo": "intervention",
+          "columnsFrom": [
+            "intervention_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "produit_intervention_produit_id_produit_code_produit_id_code_fk": {
+          "name": "produit_intervention_produit_id_produit_code_produit_id_code_fk",
+          "tableFrom": "produit_intervention",
+          "tableTo": "produit",
+          "columnsFrom": [
+            "produit_id",
+            "produit_code"
+          ],
+          "columnsTo": [
+            "id",
+            "code"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "produit_intervention_produit_id_produit_code_intervention_id_pk": {
+          "name": "produit_intervention_produit_id_produit_code_intervention_id_pk",
+          "columns": [
+            "produit_id",
+            "produit_code",
+            "intervention_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.effectuer": {
+      "name": "effectuer",
+      "schema": "",
+      "columns": {
+        "partenaire_id": {
+          "name": "partenaire_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "demande_id": {
+          "name": "demande_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "effectuer_partenaire_id_partenaire_id_fk": {
+          "name": "effectuer_partenaire_id_partenaire_id_fk",
+          "tableFrom": "effectuer",
+          "tableTo": "partenaire",
+          "columnsFrom": [
+            "partenaire_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "effectuer_demande_id_demande_id_fk": {
+          "name": "effectuer_demande_id_demande_id_fk",
+          "tableFrom": "effectuer",
+          "tableTo": "demande",
+          "columnsFrom": [
+            "demande_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "effectuer_partenaire_id_demande_id_pk": {
+          "name": "effectuer_partenaire_id_demande_id_pk",
+          "columns": [
+            "partenaire_id",
+            "demande_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
