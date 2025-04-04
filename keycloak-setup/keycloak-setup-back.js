@@ -71,7 +71,7 @@ async function setupKeycloak() {
         realm: process.env.KEYCLOAK_REALM,
         clientId: process.env.KEYCLOAK_CLIENT_ID,
         secret: process.env.KEYCLOAK_CLIENT_SECRET,
-        redirectUris: [process.env.KEYCLOAK_CALLBACK_URL || 'http://localhost:3000/*'],
+        redirectUris: [process.env.KEYCLOAK_CALLBACK_URL || 'http://localhost:2000/*'],
         webOrigins: ['*'],
         publicClient: false,
         standardFlowEnabled: true,

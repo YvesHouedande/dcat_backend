@@ -18,6 +18,9 @@ const router = express.Router();
 const { protect } = require('../../../core/auth/middleware');
 const { syncUser, getAllUsers } = require('../controllers/users.controller');
 
+
+router.get('/test', (req, res) => res.send('Test OK'));
+
 // Debug: Vérifiez que les fonctions sont bien importées
 console.log('Controller methods:', { syncUser, getAllUsers });
 

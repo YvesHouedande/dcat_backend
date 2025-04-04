@@ -63,7 +63,7 @@ async function setupKeycloak() {
         clientId: config.clientId,
         publicClient: true,
         redirectUris: [
-          'http://localhost:3000/*',
+          'http://localhost:2000/*',
           'http://localhost:5173/*',
           `${process.env.APP_URL}/*` || ''
         ].filter(Boolean),
