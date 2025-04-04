@@ -1,8 +1,8 @@
-const modeleService = require("../services/modele.service");
+const entiteService = require("../services/entite.service");
 
-const createModele = async (req, res) => {
+const createEntite = async (req, res) => {
   try {
-    const result = await modeleService.createModele(req.body);
+    const result = await entiteService.createEntite(req.body);
     return res.status(201).json(result);
   } catch (error) {
     res
@@ -11,9 +11,9 @@ const createModele = async (req, res) => {
   }
 };
 
-const getModeles = async (req, res) => {
+const getEntites = async (req, res) => {
   try {
-    const result = await modeleService.getModeles();
+    const result = await entiteService.getEntites();
     return res.status(200).json(result || []);
   } catch (error) {
     res
@@ -22,13 +22,13 @@ const getModeles = async (req, res) => {
   }
 };
 
-const getModeleById = async (req, res) => {
+const getEntiteById = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    const result = await modeleService.getModeleById(Number(id));
+    const result = await entiteService.getEntiteById(Number(id));
     return res.json(result);
   } catch (error) {
     res
@@ -37,13 +37,13 @@ const getModeleById = async (req, res) => {
   }
 };
 
-const updateModele = async (req, res) => {
+const updateEntite = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    const result = await modeleService.updateModele(id);
+    const result = await entiteService.updateEntite(id);
     return res.json(result);
   } catch (error) {
     res
@@ -52,13 +52,13 @@ const updateModele = async (req, res) => {
   }
 };
 
-const deleteModele = async (req, res) => {
+const deleteEntite = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    const result = await modeleService.deleteModele(id);
+    const result = await entiteService.deleteEntite(id);
     return res.json(result);
   } catch (error) {
     res
@@ -68,9 +68,9 @@ const deleteModele = async (req, res) => {
 };
 
 module.exports = {
-  createModele,
-  getModeles,
-  getModeleById,
-  updateModele,
-  deleteModele,
+  createEntite,
+  getEntites,
+  getEntiteById,
+  updateEntite,
+  deleteEntite,
 };

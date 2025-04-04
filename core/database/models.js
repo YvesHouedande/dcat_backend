@@ -85,14 +85,6 @@ const entite = pgTable("entite", {
   libelle: varchar("libelle", { length: 100 }),
 });
 
-// PieceRechange
-const pieceRechange = pgTable("piece_rechange", {
-  id: serial("id").primaryKey(),
-  designation: varchar("designation", { length: 200 }),
-  reference: varchar("reference", { length: 50 }),
-  marque: varchar("marque", { length: 100 }),
-  quantite: varchar("quantite", { length: 20 }),
-});
 
 // Produit (avec clé primaire composée id + code)
 const produit = pgTable(
@@ -324,18 +316,18 @@ const missionEmployes = pgTable(
   })
 );
 
-const interventionPiece = pgTable(
-  "intervention_piece",
+const interventionProduit = pgTable(
+  "intervention_exemplaire",
   {
     interventionId: integer("intervention_id")
       .notNull()
       .references(() => intervention.id),
-    pieceId: integer("piece_id")
+      exemplaireId: integer("exemplaire_id")
       .notNull()
-      .references(() => pieceRechange.id),
+      .references(() => exemplaire.id),
   },
   (table) => ({
-    pk: primaryKey({ columns: [table.interventionId, table.pieceId] }),
+    pk: primaryKey({ columns: [table.interventionId, table.exemplaireId] }),
   })
 );
 
@@ -401,7 +393,6 @@ module.exports = {
   demande,
   typeDoc,
   entite,
-  pieceRechange,
   produit,
   documents,
   partenaire,
@@ -415,7 +406,7 @@ module.exports = {
   projetExemplaireEmployes,
   exemplaireAcheter,
   missionEmployes,
-  interventionPiece,
+  interventionProduit,
   interventionEmploye,
   produitIntervention,
   effectuer,
