@@ -1,3 +1,4 @@
+const { text } = require("drizzle-orm/gel-core");
 const {
   pgTable,
   serial,
@@ -41,30 +42,23 @@ const fonction = pgTable("fonction", {
 const employes = pgTable("employes", {
   id: serial("id").primaryKey(),
   nom: varchar("nom", { length: 50 }),
-  keycloak_id: varchar("keycloak_id", { length: 36 }).unique().notNull(),
   prenom: varchar("prenom", { length: 50 }),
   email: varchar("email", { length: 100 }),
   contact: varchar("contact", { length: 20 }),
   adresse: varchar("adresse", { length: 200 }),
-  status: varchar("status", { length: 50 }),
+  status: varchar("status", { length: 20 }),
+  missions: varchar("missions", { length: 100 }),
+  poste: varchar("poste", { length: 50 }),
   fonctionId: integer("fonction_id")
     .notNull()
     .references(() => fonction.id),
-});
-
-// Sollicitation
-const sollicitation = pgTable("sollicitation", {
-  id: serial("id").primaryKey(),
-  description: varchar("description", { length: 500 }),
-  etat: varchar("etat", { length: 50 }),
-  type: varchar("type", { length: 50 }),
 });
 
 // Demande
 const demande = pgTable("demande", {
   id: serial("id").primaryKey(),
   dateDebut: varchar("date_debut", { length: 25 }),
-  status: varchar("status", { length: 50 }),
+  status: varchar("status", { length: 20 }),
   dateFin: varchar("date_fin", { length: 25 }),
   motif: varchar("motif", { length: 200 }),
   type: varchar("type", { length: 50 }),
@@ -85,7 +79,6 @@ const entite = pgTable("entite", {
   libelle: varchar("libelle", { length: 100 }),
 });
 
-
 // Produit (avec clé primaire composée id + code)
 const produit = pgTable(
   "produit",
@@ -93,7 +86,7 @@ const produit = pgTable(
     id: serial("id").notNull(),
     code: varchar("code", { length: 50 }).notNull(),
     nom: varchar("nom", { length: 100 }),
-    description: varchar("description", { length: 500 }),
+    description: text("description"),
     type: varchar("type", { length: 50 }),
     image: varchar("image", { length: 255 }),
     quantite: varchar("quantite", { length: 20 }),
@@ -109,10 +102,6 @@ const produit = pgTable(
     marqueId: integer("marque_id")
       .notNull()
       .references(() => marque.id),
-    sollicitationId: integer("sollicitation_id")
-      .notNull()
-      .references(() => sollicitation.id)
-      .unique(),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.id, table.code] }),
@@ -148,10 +137,11 @@ const partenaire = pgTable("partenaire", {
 // Contrat
 const contrat = pgTable("contrat", {
   id: serial("id").primaryKey(),
-  nom: varchar("nom", { length: 50 }),
+  nom: varchar("nom", { length: 100 }),
   duree: varchar("duree", { length: 50 }),
-  dateDebut: varchar("date_debut", { length: 50 }),
-  dateFin: varchar("date_fin", { length: 50 }),
+  dateDebut: varchar("date_debut", { length: 25 }),
+  dateFin: varchar("date_fin", { length: 25 }),
+  lien: text("lien"),
   partenaireId: integer("partenaire_id")
     .notNull()
     .references(() => partenaire.id),
@@ -160,21 +150,18 @@ const contrat = pgTable("contrat", {
 // Intervention
 const intervention = pgTable("intervention", {
   id: serial("id").primaryKey(),
-  date: varchar("date", { length: 50 }),
-  causeDefaillance: varchar("cause_defaillance", { length: 50 }),
-  rapport: varchar("rapport_intervention", { length: 50 }),
+  date: varchar("date", { length: 25 }),
+  causeDefaillance: varchar("cause_defaillance", { length: 100 }),
+  rapport: varchar("rapport", { length: 255 }),
   typeMaintenance: varchar("type_maintenance", { length: 50 }),
   typeDefaillance: varchar("type_defaillance", { length: 50 }),
-  superviseur: varchar("superviseur", { length: 75 }),
-  duree: varchar("duree", { length: 50 }),
+  superviseur: varchar("superviseur", { length: 100 }),
+  duree: varchar("duree", { length: 20 }),
   numero: varchar("numero", { length: 50 }),
-  lieu: varchar("lieu", { length: 50 }),
+  lieu: varchar("lieu", { length: 100 }),
   contratId: integer("contrat_id")
     .notNull()
     .references(() => contrat.id),
-  demandeId: integer("demande_id")
-    .notNull()
-    .references(() => sollicitation.id),
 });
 
 // Projet
@@ -187,7 +174,7 @@ const projet = pgTable("projet", {
   dateFin: varchar("date_fin", { length: 25 }),
   duree: varchar("duree", { length: 50 }),
   description: varchar("description", { length: 1000 }),
-  etat: varchar("etat", { length: 50 }),
+  etat: varchar("etat", { length: 20 }),
   partenaireId: integer("partenaire_id")
     .notNull()
     .references(() => partenaire.id),
@@ -215,22 +202,22 @@ const livraison = pgTable("livraison", {
 const mission = pgTable("mission", {
   id: serial("id").primaryKey(),
   nom: varchar("nom", { length: 100 }),
-  description: varchar("description", { length: 500 }),
-  statut: varchar("statut", { length: 50 }),
+  description: text("description"),
+  statut: varchar("statut", { length: 20 }),
   lieu: varchar("lieu", { length: 200 }),
   projetId: integer("projet_id")
     .notNull()
     .references(() => projet.id),
 });
 
-// Exemplaire (mise à jour pour référencer correctement la clé composée de produit)
+// Exemplaire
 const exemplaire = pgTable(
   "exemplaire",
   {
     id: serial("id").primaryKey(),
     numSerie: varchar("num_serie", { length: 100 }),
     prix: varchar("prix", { length: 50 }),
-    etat: varchar("etat", { length: 50 }),
+    etat: varchar("etat", { length: 20 }),
     livraisonId: integer("livraison_id")
       .notNull()
       .references(() => livraison.id),
@@ -249,8 +236,8 @@ const exemplaire = pgTable(
 const tache = pgTable("tache", {
   id: serial("id").primaryKey(),
   nom: varchar("nom", { length: 100 }),
-  description: varchar("description", { length: 500 }),
-  statut: varchar("statut", { length: 50 }),
+  description: text("description"),
+  statut: varchar("statut", { length: 20 }),
   dateDebut: varchar("date_debut", { length: 25 }),
   dateFin: varchar("date_fin", { length: 25 }),
   responsable: varchar("responsable", { length: 100 }),
@@ -317,22 +304,22 @@ const missionEmployes = pgTable(
 );
 
 const interventionProduit = pgTable(
-  "intervention_exemplaire",
+  "Intervention_Produits",
   {
+    exemplaireId: integer("exemplaire_id")
+      .notNull()
+      .references(() => exemplaire.id),
     interventionId: integer("intervention_id")
       .notNull()
       .references(() => intervention.id),
-      exemplaireId: integer("exemplaire_id")
-      .notNull()
-      .references(() => exemplaire.id),
   },
   (table) => ({
-    pk: primaryKey({ columns: [table.interventionId, table.exemplaireId] }),
+    pk: primaryKey({ columns: [table.exemplaireId, table.interventionId] }),
   })
 );
 
 const interventionEmploye = pgTable(
-  "intervention_employer",
+  "Intervention_enployer",
   {
     employeId: integer("employe_id")
       .notNull()
@@ -346,20 +333,19 @@ const interventionEmploye = pgTable(
   })
 );
 
-// Mise à jour de produitIntervention pour utiliser la clé composée
-const produitIntervention = pgTable(
-  "produit_intervention",
+const sollicitationProduits = pgTable(
+  "Sollicitation_Produits",
   {
     produitId: integer("produit_id").notNull(),
     produitCode: varchar("produit_code", { length: 50 }).notNull(),
-    interventionId: integer("intervention_id")
+    partenaireId: integer("partenaire_id")
       .notNull()
-      .references(() => intervention.id),
+      .references(() => partenaire.id),
+    etat: varchar("etat", { length: 20 }),
+    description: text("description"),
   },
   (table) => ({
-    pk: primaryKey({
-      columns: [table.produitId, table.produitCode, table.interventionId],
-    }),
+    pk: primaryKey({ columns: [table.produitId, table.produitCode, table.partenaireId] }),
     fk: foreignKey({
       columns: [table.produitId, table.produitCode],
       foreignColumns: [produit.id, produit.code],
@@ -367,18 +353,20 @@ const produitIntervention = pgTable(
   })
 );
 
-const effectuer = pgTable(
-  "effectuer",
+const sollicitationInterventions = pgTable(
+  "Sollicitation_Interventions",
   {
     partenaireId: integer("partenaire_id")
       .notNull()
       .references(() => partenaire.id),
-    demandeId: integer("demande_id")
+    interventionId: integer("intervention_id")
       .notNull()
-      .references(() => sollicitation.id),
+      .references(() => intervention.id),
+    etat: varchar("etat", { length: 20 }),
+    description: text("description"),
   },
   (table) => ({
-    pk: primaryKey({ columns: [table.partenaireId, table.demandeId] }),
+    pk: primaryKey({ columns: [table.partenaireId, table.interventionId] }),
   })
 );
 
@@ -389,7 +377,6 @@ module.exports = {
   marque,
   fonction,
   employes,
-  sollicitation,
   demande,
   typeDoc,
   entite,
@@ -408,6 +395,6 @@ module.exports = {
   missionEmployes,
   interventionProduit,
   interventionEmploye,
-  produitIntervention,
-  effectuer,
+  sollicitationProduits,
+  sollicitationInterventions,
 };
