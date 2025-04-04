@@ -42,13 +42,12 @@ const fonction = pgTable("fonction", {
 const employes = pgTable("employes", {
   id: serial("id").primaryKey(),
   nom: varchar("nom", { length: 50 }),
+  keycloak_id: varchar("keycloak_id", { length: 36 }).unique().notNull(),
   prenom: varchar("prenom", { length: 50 }),
   email: varchar("email", { length: 100 }),
   contact: varchar("contact", { length: 20 }),
   adresse: varchar("adresse", { length: 200 }),
-  status: varchar("status", { length: 20 }),
-  missions: varchar("missions", { length: 100 }),
-  poste: varchar("poste", { length: 50 }),
+  status: varchar("status", { length: 50 }),
   fonctionId: integer("fonction_id")
     .notNull()
     .references(() => fonction.id),
@@ -345,7 +344,9 @@ const sollicitationProduits = pgTable(
     description: text("description"),
   },
   (table) => ({
-    pk: primaryKey({ columns: [table.produitId, table.produitCode, table.partenaireId] }),
+    pk: primaryKey({
+      columns: [table.produitId, table.produitCode, table.partenaireId],
+    }),
     fk: foreignKey({
       columns: [table.produitId, table.produitCode],
       foreignColumns: [produit.id, produit.code],
