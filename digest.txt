@@ -45,11 +45,12 @@ Directory structure:
     │   └── keycloak-setup-front.js
     └── modules/
         ├── administration/
-        │   └── accounting/
-        │       ├── controllers/
-        │       │   └── accounting.controller.js
-        │       └── routes/
-        │           └── accounting.routes.js
+        │   ├── controllers/
+        │   │   └── accounting.controller.js
+        |       └── accounting.controller.js
+        │   └── routes/
+        │       └── accounting.routes.js
+        |       └── accounting.routes.js
         ├── clients/
         │   ├── controllers/
         │   │   └── clients.controller.js

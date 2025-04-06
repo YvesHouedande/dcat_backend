@@ -4,6 +4,8 @@ const path = require('path');
 const { memoryStore, keycloak } = require('./core/auth/keycloak.config');
 const { initKeycloak, protect } = require('./core/auth/middleware');
 const logger = require('./core/utils/logger');
+const adminRoutes = require('./modules/administration/routes/partner.route');
+
 require('dotenv').config();
 
 // Initialisation Express
@@ -41,8 +43,7 @@ function loadModule(moduleName) {
 app.use('/api/interventions', loadModule('interventions'));
 app.use('/api/stocks', loadModule('stocks'));
 app.use('/api/users', loadModule('users')); //erreur quand je cahreg ici
-
-
+app.use('/api/partner',adminRoutes);
 
 // =============================================
 // ROUTES PUBLIQUES
