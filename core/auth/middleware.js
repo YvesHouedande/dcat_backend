@@ -1,116 +1,61 @@
-// const { keycloak, memoryStore } = require('./keycloak.config');
-// const logger = require('../utils/logger');
-
-// const initKeycloak = () => {
-//   logger.info('Initializing Keycloak middleware');
-//   return keycloak.middleware({
-//     admin: '/admin',
-//     logout: '/logout'
-//   });
-// };
-
-// const protect = (roles = []) => {
-//   if (roles.length === 0) {
-//     return keycloak.protect();
-//   }
-//   return keycloak.protect(roles.join(','));
-// };
-
-// module.exports = {
-//   keycloak,
-//   memoryStore,
-//   initKeycloak,
-//   protect
-// };
-
-
-
-
-
-const { keycloak, memoryStore } = require('./keycloak.config');
-const logger = require('../utils/logger');
-const { employes } = require('../database/models');
-const { jwtVerify } = require('jose');
+const { keycloak } = require('./keycloak.config');
 const { getKeycloakPublicKey } = require('./setupKeycloak');
+const { jwtVerify } = require('jose');
+const logger = require('../utils/logger');
+const { db } = require('../../core/database/config');
+const { employes } = require('../../core/database/models');
+const { eq } = require('drizzle-orm');
 
-// Initialisation standard
+// Middleware d'initialisation Keycloak
 const initKeycloak = () => {
-  logger.info('Initializing Keycloak middleware');
-  return keycloak.middleware({
-    admin: '/admin',
-    logout: '/logout'
-  });
+  logger.info('Middleware Keycloak initialisé (mode bearer-only)');
+  return keycloak.middleware();
 };
 
-// Protection de base avec vérification de rôle
-const protect = (roles = []) => {
+// Protection de base
+const protect = (requiredRoles = []) => {
   return [
-    keycloak.protect(roles.join(',')),
-    checkUserSync // Ajout de la vérification de synchronisation
+    keycloak.protect(),
+    async (req, res, next) => {
+      if (requiredRoles.length === 0) return next();
+      
+      const token = req.kauth.grant.access_token;
+      const hasRole = requiredRoles.some(role => token.hasRole(role));
+      
+      if (!hasRole) {
+        logger.warn(`Accès refusé - Rôles manquants`, {
+          user: token.content.sub,
+          requiredRoles,
+          actualRoles: token.content.realm_access?.roles
+        });
+        return res.status(403).json({ error: 'Permissions insuffisantes' });
+      }
+      next();
+    }
   ];
 };
 
-// Middleware de vérification de synchronisation
-const checkUserSync = async (req, res, next) => {
-  try {
-    // 1. Récupère le token décodé depuis Keycloak
-    const token = req.kauth?.grant?.access_token;
-    
-    if (!token) {
-      logger.warn('Aucun token Keycloak trouvé');
-      return res.status(401).json({ error: 'Non authentifié' });
-    }
-
-    // 2. Vérifie la synchronisation en base
-    const user = await employes.findOne({ 
-      where: { keycloak_id: token.content.sub }
-    });
-
-    if (!user) {
-      logger.warn(`Utilisateur non synchronisé: ${token.content.sub}`);
-      
-      // 3. Auto-synchronisation si endpoint disponible
-      if (req.path !== '/api/users/sync') {
-        return res.status(403).json({ 
-          error: 'Compte non synchronisé',
-          action: 'POST /api/users/sync'
-        });
-      }
-    }
-
-    // 4. Attache l'utilisateur à la requête
-    req.employee = user;
-    next();
-  } catch (error) {
-    logger.error('Erreur vérification synchronisation:', error);
-    next(error);
-  }
-};
-
-// Middleware pour la validation JWT directe
+// Validation JWT autonome
 const validateJWT = async (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Token manquant' });
-    }
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Authorization header manquant' });
+  }
 
+  try {
     const token = authHeader.split(' ')[1];
     const { payload } = await jwtVerify(token, await getKeycloakPublicKey());
-
     req.userToken = payload;
     next();
   } catch (error) {
-    logger.error('Erreur validation JWT:', error);
+    logger.error('Échec de validation JWT', error);
     res.status(401).json({ error: 'Token invalide' });
   }
 };
 
 module.exports = {
-  keycloak,
-  memoryStore,
   initKeycloak,
   protect,
-  checkUserSync,
-  validateJWT
+  validateJWT,
+  keycloak
 };
