@@ -7,6 +7,7 @@ router.post("/", controller.createLivraison);
 router.get("/", controller.getLivraisons);
 router.get("/:id", controller.getLivraisonById);
 router.put("/:id", controller.updateLivraison);
-router.delete("/{:id}", controller.deleteLivraison);
+router.delete("/:id", controller.deleteLivraison);
+// router.delete("/livraisons/:id/exemplaires", controller.deleteLivraison); //Voir les exemplaires ajoutés lors d’une livraison
 
 module.exports = router;

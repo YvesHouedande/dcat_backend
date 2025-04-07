@@ -15,7 +15,7 @@
 
 const { eq } = require("drizzle-orm");
 const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
-const { livraison } = require("../../../core/database/models");
+const { livraison, exemplaire } = require("../../../core/database/models");
 
 // CRUD complet avec Drizzle
 const createLivraison = async (data) => {
@@ -28,7 +28,10 @@ const getLivraisons = async () => {
 };
 
 const getLivraisonById = async (id) => {
-  const [result] = await db.select().from(livraison).where(eq(livraison.id, id));
+  const [result] = await db
+    .select()
+    .from(livraison)
+    .where(eq(livraison.id, id));
   return result;
 };
 
@@ -49,10 +52,23 @@ const deleteLivraison = async (id) => {
   return result;
 };
 
+// [GET] /livraisons → Liste des livraisons
+// [POST] /livraisons → Ajouter une livraison (avec des exemplaires entrants)
+
+// Voir les exemplaires ajoutés lors d’une livraison
+const getLivraisonExemplaire = async (livraisonId) => {
+  const [result] = await db
+    .select(exemplaire)
+    .where(eq(exemplaire.livraisonId, livraisonId));
+
+  return result;
+};
+
 module.exports = {
   createLivraison,
   getLivraisons,
   getLivraisonById,
   updateLivraison,
   deleteLivraison,
+  getLivraisonExemplaire,
 };

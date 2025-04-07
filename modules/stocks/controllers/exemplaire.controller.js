@@ -67,10 +67,65 @@ const deleteExemplaire = async (req, res) => {
   }
 };
 
+// obtenir tout les exemplaires d'un produit
+const getAllExemplaireProduit = async (req, res) => {
+  try {
+    const { id, code } = req.params;
+
+    // Vérifie que les deux paramètres sont présents
+    if (!id || !code) {
+      return res.status(400).json({ message: "id et code requis" });
+    }
+
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+
+    const result = await exemplaireService.getAllExemplaireProduit(
+      parseInt(id),
+      code
+    );
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+//acheter un exemplaire de produit(un client qui vient acheter)
+
+const purchaseExemplaire = async (req, res) => {
+  try {
+    const { exemplaireId, partenaireId } = req.params;
+    const { lieuLivraison, quantite, dateAchat } = req.body;
+
+    // Vérifie que les deux paramètres sont présents
+    if (!exemplaireId || !partenaireId) {
+      return res.status(400).json({ message: "données manquantes dans l'url" });
+    }
+
+    if (isNaN(exemplaireId) || isNaN(partenaireId)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+
+    const result = await exemplaireService.purchaseExemplaire(
+      {exemplaireId,partenaireId,lieuLivraison,quantite,dateAchat}
+    );
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
 module.exports = {
   createExemplaire,
   getExemplaires,
   getExemplaireById,
   updateExemplaire,
   deleteExemplaire,
+  getAllExemplaireProduit,
+  purchaseExemplaire
 };

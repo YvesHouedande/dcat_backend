@@ -67,10 +67,45 @@ const deleteCategorie = async (req, res) => {
   }
 };
 
+//recupérer tout les produits d'une catégorie
+const getAllCategorieProduit = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await categorieService.getAllCategorieProduit(id);
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+
+//recupérer toutes les familles d'une catégorie
+const getAllCategorieFamille = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await categorieService.getAllCategorieFamille(id);
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
 module.exports = {
   createCategorie,
   getCategories,
   getCategorieById,
   updateCategorie,
   deleteCategorie,
+  getAllCategorieProduit,
+  getAllCategorieFamille
 };
