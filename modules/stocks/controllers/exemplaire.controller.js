@@ -67,10 +67,34 @@ const deleteExemplaire = async (req, res) => {
   }
 };
 
+// obtenir tout les exemplaires d'un produit
+const getAllExemplaireProduit = async (req, res) => {
+  try {
+    const { id, code } = req.params;
+
+    // Vérifie que les deux paramètres sont présents
+    if (!id || !code) {
+      return res.status(400).json({ message: "id et code requis" });
+    }
+
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+
+    const result = await exemplaireService.getAllExemplaireProduit(parseInt(id), code);
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
 module.exports = {
   createExemplaire,
   getExemplaires,
   getExemplaireById,
   updateExemplaire,
   deleteExemplaire,
+  getAllExemplaireProduit,
 };

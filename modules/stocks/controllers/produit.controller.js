@@ -67,10 +67,12 @@ const deleteProduit = async (req, res) => {
   }
 };
 
+
+
 module.exports = {
   createProduit,
   getProduits,
   getProduitById,
   updateProduit,
-  deleteProduit,
+  deleteProduit
 };

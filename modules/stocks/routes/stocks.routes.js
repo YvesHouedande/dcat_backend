@@ -8,6 +8,7 @@ const marqueRoutes = require("./marque.routes");
 const modeleRoutes = require("./modele.routes");
 const entiteRoutes = require("./entite.routes");
 const produitRoutes = require("./produit.routes");
+const exemplaireRoutes = require("./exemplaire.routes");
 const partenaireRoutes = require("./partenaire.routes");
 const livraisonRoutes = require("./livraison.routes");
 
@@ -18,6 +19,7 @@ router.use("/marques", marqueRoutes);
 router.use("/modeles", modeleRoutes);
 router.use("/entites", entiteRoutes);
 router.use("/produits", produitRoutes);
+router.use("/exemplaires", exemplaireRoutes);
 router.use("/partenaires", partenaireRoutes);
 router.use("/livraisons", livraisonRoutes);
 
