@@ -6,6 +6,8 @@ const { initKeycloak, protect } = require('./core/auth/middleware');
 const logger = require('./core/utils/logger');
 require('dotenv').config();
 
+const backendSoro = require('./modules/flutter_backend/routes/index_routes');
+
 // Initialisation Express
 const app = express();
 
@@ -38,9 +40,17 @@ function loadModule(moduleName) {
 }
 
 // Chargement des modules
-app.use('/api/interventions', loadModule('interventions'));
 app.use('/api/stocks', loadModule('stocks'));
 app.use('/api/users', loadModule('users')); //erreur quand je cahreg ici
+
+
+// CHARGEMENT DES ROUTES DES PROJETS ET INTERVENTIONS
+
+app.use('/api/interventions', backendSoro.interventions);
+app.use('/api/contrats', backendSoro.contrats);
+app.use('/api/missions', backendSoro.missions);
+
+
 
 
 // =============================================
@@ -85,7 +95,8 @@ app.use((err, req, res, next) => {
 // =============================================
 // DÉMARRAGE DU SERVEUR
 // =============================================
-const PORT = process.env.PORT || 3000;
+// const PORT = process.env.PORT || 3000;
+const PORT = 2000;
 app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Keycloak configured for realm: ${keycloak.config.realm}`);
@@ -97,3 +108,4 @@ app.listen(PORT, () => {
   logger.info(`- POST http://localhost:${PORT}/api/stocks (protected, requires inventory-manager role)`);
   logger.info(`- GET  http://localhost:${PORT}/api/protected (protected)`);
 });
+
