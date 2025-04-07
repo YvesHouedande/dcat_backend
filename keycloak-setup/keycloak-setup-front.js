@@ -6,7 +6,7 @@ const KeycloakAdminClient = require('@keycloak/keycloak-admin-client').default;
 const config = {
   url: process.env.VITE_KEYCLOAK_URL || process.env.KEYCLOAK_URL || 'http://localhost:8080',
   realm: process.env.VITE_KEYCLOAK_REALM || 'dcat_realm', // On utilise le realm existant
-  clientId: process.env.VITE_KEYCLOAK_CLIENTID || 'frontend_cli_id',
+  clientId: 'frontend_cli_id',
   adminUser: process.env.KEYCLOAK_ADMIN || 'admin',
   adminPass: process.env.KEYCLOAK_ADMIN_PASSWORD || 'admin',
   appUser: process.env.APP_USER || 'frontend_user',
