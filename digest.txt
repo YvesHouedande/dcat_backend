@@ -36,11 +36,9 @@ Directory structure:
         ├── administration/
         │   └── accounting/
         │       ├── controllers/
-        │       │   ├── accounting.controller.js
-        │       │   └── partner.controller.js
+        │       │   └── accounting.controller.js
         │       └── routes/
-        │           ├── accounting.routes.js
-        │           └── partner.route.js
+        │           └── accounting.routes.js
         ├── clients/
         │   ├── controllers/
         │   │   └── clients.controller.js

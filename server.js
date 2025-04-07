@@ -1,93 +1,102 @@
-﻿const express = require('express');
+﻿// Importations requises
+const express = require('express');
 const path = require('path');
-const helmet = require('helmet');
-const { keycloak } = require('./core/auth/keycloak.config');
+const { memoryStore, keycloak } = require('./core/auth/keycloak.config');
 const { initKeycloak, protect } = require('./core/auth/middleware');
 const logger = require('./core/utils/logger');
+const adminRoutes = require('./modules/administration/routes/partner.route');
+
 require('dotenv').config();
 
+// Initialisation Express
 const app = express();
 
-// =============== MIDDLEWARES DE BASE ===============
-app.use(helmet());
-app.disable('x-powered-by');
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+// =============================================
+// CONFIGURATION DE BASE
+// =============================================
 
-// =============== KEYCLOAK ===============
+// Configuration de session
+app.use(require('./core/auth/setupKeycloak').sessionConfig);
+
+// Middleware Keycloak
 app.use(initKeycloak());
 
-// =============== CHARGEMENT DES MODULES ===============
+// Middlewares de base
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// =============================================
+// CHARGEMENT DES MODULES
+// =============================================
+
 function loadModule(moduleName) {
   try {
     const modulePath = path.join(__dirname, 'modules', moduleName, 'routes', `${moduleName}.routes.js`);
-    const router = require(modulePath);
-    logger.info(`Module chargé: ${moduleName}`);
-    return router;
-  } catch (error) {
-    logger.error(`Échec du chargement du module ${moduleName}`, error);
+    return require(modulePath);
+  } catch (err) {
+    logger.error(`Failed to load ${moduleName} module:`, err);
     process.exit(1);
   }
 }
 
+// Chargement des modules
 app.use('/api/interventions', loadModule('interventions'));
 app.use('/api/stocks', loadModule('stocks'));
-app.use('/api/users', loadModule('users'));
+app.use('/api/users', loadModule('users')); //erreur quand je cahreg ici
+app.use('/api/partner',adminRoutes);
 
-// =============== ROUTES PUBLIQUES ===============
+// =============================================
+// ROUTES PUBLIQUES
+// =============================================
+
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK',
-    // auth: 'bearer-only',
+    auth: 'bearer-only',
     keycloak: {
       realm: keycloak.config.realm,
+      url: keycloak.config['auth-server-url'],
       clientId: keycloak.config.resource
     }
   });
 });
 
-// =============== ROUTES PROTÉGÉES ===============
+// =============================================
+// ROUTES PROTÉGÉES
+// =============================================
+
 app.get('/api/protected', protect(), (req, res) => {
   res.json({ 
-    message: 'Accès autorisé',
+    message: 'Protected endpoint',
     user: req.kauth.grant.access_token.content 
   });
 });
 
-// =============== GESTION DES ERREURS ===============
+// =============================================
+// GESTION DES ERREURS
+// =============================================
+
 app.use((req, res) => {
-  res.status(404).json({ 
-    error: 'Endpoint non trouvé',
-    path: req.path 
-  });
+  res.status(404).json({ error: 'Endpoint not found' });
 });
 
 app.use((err, req, res, next) => {
-  const status = err.status || 500;
-  logger.error({
-    status,
-    message: err.message,
-    path: req.path,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-  });
-  res.status(status).json({ 
-    error: status === 500 ? 'Erreur interne' : err.message 
-  });
+  logger.error(err.stack);
+  res.status(500).json({ error: 'Internal Server Error' });
 });
 
-// =============== DÉMARRAGE ===============
+// =============================================
+// DÉMARRAGE DU SERVEUR
+// =============================================
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => {
-  logger.info(`Serveur démarré sur http://localhost:${PORT} [${process.env.NODE_ENV || 'development'}]`);
-});
-
-// Gestion propre des arrêts
-['SIGINT', 'SIGTERM'].forEach(signal => {
-  process.on(signal, () => {
-    logger.info(`Reçu ${signal}, arrêt du serveur...`);
-    server.close(() => {
-      logger.info('Serveur arrêté proprement');
-      process.exit(0);
-    });
-  });
+app.listen(PORT, () => {
+  logger.info(`Server running on port ${PORT}`);
+  logger.info(`Keycloak configured for realm: ${keycloak.config.realm}`);
+  logger.info('Available routes:');
+  logger.info(`- GET  http://localhost:${PORT}/health`);
+  logger.info(`- GET  http://localhost:${PORT}/api/interventions`);
+  logger.info(`- POST http://localhost:${PORT}/api/interventions (protected)`);
+  logger.info(`- GET  http://localhost:${PORT}/api/stocks`);
+  logger.info(`- POST http://localhost:${PORT}/api/stocks (protected, requires inventory-manager role)`);
+  logger.info(`- GET  http://localhost:${PORT}/api/protected (protected)`);
 });

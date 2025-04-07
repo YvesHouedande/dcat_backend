@@ -7,6 +7,6 @@ router.post("/", controller.createFamille);
 router.get("/", controller.getFamilles);
 router.get("/:id", controller.getFamilleById);
 router.put("/:id", controller.updateFamille);
-router.delete("/:id", controller.deleteFamille);
+router.delete("/{:id}", controller.deleteFamille);
 
 module.exports = router;
