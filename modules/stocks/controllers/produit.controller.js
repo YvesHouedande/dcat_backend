@@ -67,12 +67,44 @@ const deleteProduit = async (req, res) => {
   }
 };
 
+//sollicitation de  produit : un client peut faire une demande pour voir si le produit existe
 
+const sollicitationProduit = async (req, res) => {
+  try {
+    const { produitId, produitCode, partenaireId } = req.params;
+    const { etat, description } = req.body;
+
+    // Vérifie que les deux paramètres sont présents
+    if (!produitId || !produitCode || !partenaireId) {
+      return res
+        .status(400)
+        .json({ message: "Certains paramètres sont manquant" });
+    }
+
+    if (isNaN(produitId) || isNaN(partenaireId)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+
+    const result = await exemplaireService.purchaseExemplaire({
+      produitId,
+      produitCode,
+      partenaireId,
+      etat,
+      description,
+    });
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
 
 module.exports = {
   createProduit,
   getProduits,
   getProduitById,
   updateProduit,
-  deleteProduit
+  deleteProduit,
+  sollicitationProduit,
 };

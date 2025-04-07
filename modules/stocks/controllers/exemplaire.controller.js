@@ -74,7 +74,7 @@ const getAllExemplaireProduit = async (req, res) => {
 
     // Vérifie que les deux paramètres sont présents
     if (!id || !code) {
-      return res.status(400).json({ message: "id et code requis" });
+      return res.status(400).json({ message: "certains paramètres sont manquant" });
     }
 
     if (isNaN(id)) {

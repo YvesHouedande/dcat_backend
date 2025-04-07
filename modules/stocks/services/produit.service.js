@@ -1,6 +1,9 @@
 const { eq } = require("drizzle-orm");
 const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
-const { produit } = require("../../../core/database/models");
+const {
+  produit,
+  sollicitationProduits,
+} = require("../../../core/database/models");
 
 const createProduit = async (data) => {
   const [result] = await db.insert(produit).values(data).returning();
@@ -33,6 +36,14 @@ const deleteProduit = async (id) => {
   return result;
 };
 
+//sollicitation de  produit : un client peut faire une demande pour voir si le produit existe
+const sollicitationProduit = async (data) => {
+  const [result] = await db
+    .insert(sollicitationProduits)
+    .values(data)
+    .returning();
+  return result;
+};
 
 module.exports = {
   createProduit,
@@ -40,4 +51,5 @@ module.exports = {
   getProduitById,
   updateProduit,
   deleteProduit,
+  sollicitationProduit,
 };
