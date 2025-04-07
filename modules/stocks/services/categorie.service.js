@@ -27,6 +27,9 @@ const deleteCategorie=async(id)=>{
     return result
 }
 
+//recupérer tout les produits d'une catégorie
+// const getAllCategorieProduit=
+
 module.exports={
     createCategorie,
     getCategories, 
