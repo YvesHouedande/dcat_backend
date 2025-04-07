@@ -1,11 +1,28 @@
 const { db } = require('../../../core/database/config');
-const { employes } = require('../../../core/database/models');
+const { employes, fonction } = require('../../../core/database/models');
 const { eq } = require('drizzle-orm');
 
 module.exports = {
-  /**
-   * Récupère tous les utilisateurs avec pagination
-   */
+  getUserByKeycloakId: async (keycloakId) => {
+    return await db.query.employes.findFirst({
+      where: eq(employes.keycloak_id, keycloakId),
+      with: {
+        fonction: true // Jointure avec la table 
+      }
+    });
+  },
+
+  updateUserProfile: async (keycloakId, data) => {
+    const allowedFields = ["tel", "adresse"];
+    const updates = Object.keys(data)
+      .filter(key => allowedFields.includes(key))
+      .reduce((obj, key) => ({ ...obj, [key]: data[key] }), {});
+
+    await db.update(employes)
+      .set(updates)
+      .where(eq(employes.keycloak_id, keycloakId));
+  },
+
   getAllUsers: async (page = 1, limit = 10) => {
     try {
       return await db.select({
@@ -13,7 +30,8 @@ module.exports = {
         email: employes.email,
         prenom: employes.prenom,
         nom: employes.nom,
-        status: employes.status
+        status: employes.status,
+        // service: employes.service
       })
       .from(employes)
       .orderBy(employes.nom)
@@ -23,5 +41,5 @@ module.exports = {
     } catch (error) {
       throw new Error(`Échec de récupération des utilisateurs: ${error.message}`);
     }
-  }
+  },
 };

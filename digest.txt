@@ -9,6 +9,7 @@ Directory structure:
     ├── server.js
     ├── core/
     │   ├── auth/
+    │   │   ├── digest.txt
     │   │   ├── keycloak.config.js
     │   │   ├── middleware.js
     │   │   └── setupKeycloak.js
@@ -35,9 +36,11 @@ Directory structure:
         ├── administration/
         │   └── accounting/
         │       ├── controllers/
-        │       │   └── accounting.controller.js
+        │       │   ├── accounting.controller.js
+        │       │   └── partner.controller.js
         │       └── routes/
-        │           └── accounting.routes.js
+        │           ├── accounting.routes.js
+        │           └── partner.route.js
         ├── clients/
         │   ├── controllers/
         │   │   └── clients.controller.js
@@ -97,6 +100,7 @@ Directory structure:
         └── users/
             ├── digest.txt
             ├── controllers/
+            │   ├── sync.controller.js
             │   └── users.controller.js
             ├── routes/
             │   └── users.routes.js
@@ -589,6 +593,7 @@ File: package.json
     "drizzle-orm": "^0.41.0",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
+    "helmet": "^8.1.0",
     "jose": "^6.0.10",
     "keycloak-connect": "^26.1.1",
     "nodemon": "^3.1.9",
@@ -606,111 +611,114 @@ File: package.json
 ================================================
 File: server.js
 ================================================
-ï»¿// Importations requises
-const express = require('express');
+ï»¿const express = require('express');
 const path = require('path');
-const { memoryStore, keycloak } = require('./core/auth/keycloak.config');
+const helmet = require('helmet');
+const { keycloak } = require('./core/auth/keycloak.config');
 const { initKeycloak, protect } = require('./core/auth/middleware');
 const logger = require('./core/utils/logger');
 require('dotenv').config();
 
-// Initialisation Express
 const app = express();
 
-// =============================================
-// CONFIGURATION DE BASE
-// =============================================
+// =============== MIDDLEWARES DE BASE ===============
+app.use(helmet());
+app.disable('x-powered-by');
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// Configuration de session
-app.use(require('./core/auth/setupKeycloak').sessionConfig);
-
-// Middleware Keycloak
+// =============== KEYCLOAK ===============
 app.use(initKeycloak());
 
-// Middlewares de base
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// =============================================
-// CHARGEMENT DES MODULES
-// =============================================
-
+// =============== CHARGEMENT DES MODULES ===============
 function loadModule(moduleName) {
   try {
     const modulePath = path.join(__dirname, 'modules', moduleName, 'routes', `${moduleName}.routes.js`);
-    return require(modulePath);
-  } catch (err) {
-    logger.error(`Failed to load ${moduleName} module:`, err);
+    const router = require(modulePath);
+    logger.info(`Module chargÃ©: ${moduleName}`);
+    return router;
+  } catch (error) {
+    logger.error(`Ã‰chec du chargement du module ${moduleName}`, error);
     process.exit(1);
   }
 }
 
-// Chargement des modules
 app.use('/api/interventions', loadModule('interventions'));
 app.use('/api/stocks', loadModule('stocks'));
-app.use('/api/users', loadModule('users')); //erreur quand je cahreg ici
+app.use('/api/users', loadModule('users'));
 
-
-// =============================================
-// ROUTES PUBLIQUES
-// =============================================
-
+// =============== ROUTES PUBLIQUES ===============
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK',
+    auth: 'bearer-only',
     keycloak: {
       realm: keycloak.config.realm,
-      url: keycloak.config['auth-server-url'],
       clientId: keycloak.config.resource
     }
   });
 });
 
-// =============================================
-// ROUTES PROTÃ‰GÃ‰ES
-// =============================================
-
+// =============== ROUTES PROTÃ‰GÃ‰ES ===============
 app.get('/api/protected', protect(), (req, res) => {
   res.json({ 
-    message: 'Protected endpoint',
+    message: 'AccÃ¨s autorisÃ©',
     user: req.kauth.grant.access_token.content 
   });
 });
 
-// =============================================
-// GESTION DES ERREURS
-// =============================================
-
+// =============== GESTION DES ERREURS ===============
 app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
+  res.status(404).json({ 
+    error: 'Endpoint non trouvÃ©',
+    path: req.path 
+  });
 });
 
 app.use((err, req, res, next) => {
-  logger.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
+  const status = err.status || 500;
+  logger.error({
+    status,
+    message: err.message,
+    path: req.path,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+  res.status(status).json({ 
+    error: status === 500 ? 'Erreur interne' : err.message 
+  });
 });
 
-// =============================================
-// DÃ‰MARRAGE DU SERVEUR
-// =============================================
+// =============== DÃ‰MARRAGE ===============
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
-  logger.info(`Keycloak configured for realm: ${keycloak.config.realm}`);
-  logger.info('Available routes:');
-  logger.info(`- GET  http://localhost:${PORT}/health`);
-  logger.info(`- GET  http://localhost:${PORT}/api/interventions`);
-  logger.info(`- POST http://localhost:${PORT}/api/interventions (protected)`);
-  logger.info(`- GET  http://localhost:${PORT}/api/stocks`);
-  logger.info(`- POST http://localhost:${PORT}/api/stocks (protected, requires inventory-manager role)`);
-  logger.info(`- GET  http://localhost:${PORT}/api/protected (protected)`);
+const server = app.listen(PORT, () => {
+  logger.info(`Serveur dÃ©marrÃ© sur http://localhost:${PORT} [${process.env.NODE_ENV || 'development'}]`);
+});
+
+// Gestion propre des arrÃªts
+['SIGINT', 'SIGTERM'].forEach(signal => {
+  process.on(signal, () => {
+    logger.info(`ReÃ§u ${signal}, arrÃªt du serveur...`);
+    server.close(() => {
+      logger.info('Serveur arrÃªtÃ© proprement');
+      process.exit(0);
+    });
+  });
 });
 
 
 ================================================
-File: core/auth/keycloak.config.js
+File: core/auth/digest.txt
 ================================================
-ï»¿const Keycloak = require('keycloak-connect');
+Directory structure:
+â””â”€â”€ auth/
+    â”œâ”€â”€ keycloak.config.js
+    â”œâ”€â”€ middleware.js
+    â””â”€â”€ setupKeycloak.js
+
+================================================
+File: keycloak.config.js
+================================================
+Ã¯Â»Â¿const Keycloak = require('keycloak-connect');
 const session = require('express-session');
 const logger = require('../utils/logger');
 require('dotenv').config();
@@ -747,7 +755,7 @@ module.exports = {
 };
 
 
-console.log('Configuration Keycloak chargÃ©e:', {
+console.log('Configuration Keycloak chargÃƒÂ©e:', {
   realm: process.env.KEYCLOAK_REALM,
   url: process.env.KEYCLOAK_URL,
   clientId: process.env.KEYCLOAK_CLIENT_ID,
@@ -756,15 +764,18 @@ console.log('Configuration Keycloak chargÃ©e:', {
 
 
 ================================================
-File: core/auth/middleware.js
+File: middleware.js
 ================================================
+
 const { keycloak, memoryStore } = require('./keycloak.config');
 const logger = require('../utils/logger');
-const { employes } = require('../database/models');
+const { db } = require('../../core/database/config');
+const { employes } = require('../../core/database/models');
+const { eq } = require('drizzle-orm');
 const { jwtVerify } = require('jose');
 const { getKeycloakPublicKey } = require('./setupKeycloak');
 
-// Initialisation standard
+// Initialisation Keycloak
 const initKeycloak = () => {
   logger.info('Initializing Keycloak middleware');
   return keycloak.middleware({
@@ -773,62 +784,28 @@ const initKeycloak = () => {
   });
 };
 
-// Protection de base avec vÃ©rification de rÃ´le
-const protect = (roles = []) => {
+// Middleware de protection avec rÃƒÂ´les
+const protect = (requiredRoles = []) => {
   return [
-    keycloak.protect(roles.join(',')),
-    checkUserSync // Ajout de la vÃ©rification de synchronisation
+    keycloak.protect(),
+    (req, res, next) => {
+      const token = req.kauth.grant.access_token;
+      if (requiredRoles.length && !requiredRoles.some(r => token.hasRole(r))) {
+        return res.status(403).json({ error: 'Permissions insuffisantes' });
+      }
+      next();
+    }
   ];
 };
 
-// Middleware de vÃ©rification de synchronisation
-const checkUserSync = async (req, res, next) => {
-  try {
-    // 1. RÃ©cupÃ¨re le token dÃ©codÃ© depuis Keycloak
-    const token = req.kauth?.grant?.access_token;
-    
-    if (!token) {
-      logger.warn('Aucun token Keycloak trouvÃ©');
-      return res.status(401).json({ error: 'Non authentifiÃ©' });
-    }
-
-    // 2. VÃ©rifie la synchronisation en base
-    const user = await employes.findOne({ 
-      where: { keycloak_id: token.content.sub }
-    });
-
-    if (!user) {
-      logger.warn(`Utilisateur non synchronisÃ©: ${token.content.sub}`);
-      
-      // 3. Auto-synchronisation si endpoint disponible
-      if (req.path !== '/api/users/sync') {
-        return res.status(403).json({ 
-          error: 'Compte non synchronisÃ©',
-          action: 'POST /api/users/sync'
-        });
-      }
-    }
-
-    // 4. Attache l'utilisateur Ã  la requÃªte
-    req.employee = user;
-    next();
-  } catch (error) {
-    logger.error('Erreur vÃ©rification synchronisation:', error);
-    next(error);
-  }
-};
-
-// Middleware pour la validation JWT directe
+// Validation JWT directe
 const validateJWT = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Token manquant' });
-    }
+    if (!authHeader) return res.status(401).json({ error: 'Token manquant' });
 
     const token = authHeader.split(' ')[1];
     const { payload } = await jwtVerify(token, await getKeycloakPublicKey());
-
     req.userToken = payload;
     next();
   } catch (error) {
@@ -837,18 +814,94 @@ const validateJWT = async (req, res, next) => {
   }
 };
 
+// Synchronisation utilisateur optimisÃƒÂ©e
+const syncUserOnLogin = async (req, res, next) => {
+  if (!req.kauth?.grant?.access_token?.content) {
+    return next();
+  }
+
+  const keycloakUser = req.kauth.grant.access_token.content;
+  
+  if (!keycloakUser?.sub) {
+    logger.warn('Token Keycloak invalide: sub manquant');
+    return next();
+  }
+
+  try {
+    // Solution avec UPSERT (INSERT ON CONFLICT UPDATE)
+    await db.insert(employes)
+      .values({
+        keycloak_id: keycloakUser.sub,
+        email: keycloakUser.email || `${keycloakUser.sub}@temp.dcat`,
+        nom: keycloakUser.given_name || 'Ãƒâ‚¬ complÃƒÂ©ter',
+        prenom: keycloakUser.family_name || 'Ãƒâ‚¬ complÃƒÂ©ter',
+        status: 'actif',
+        fonctionId: 1,
+        contact: '',
+        adresse: ''
+      })
+      .onConflictDoUpdate({
+        target: employes.keycloak_id,
+        set: { 
+          email: keycloakUser.email,
+          nom: keycloakUser.given_name || db.sql`excluded.nom`,
+          prenom: keycloakUser.family_name || db.sql`excluded.prenom`,
+          status: 'actif'
+        }
+      })
+      .execute();
+
+    logger.info(`Utilisateur synchronisÃƒÂ©: ${keycloakUser.sub}`);
+    next();
+  } catch (error) {
+    logger.error('Erreur synchronisation utilisateur', {
+      error: error.message,
+      userId: keycloakUser.sub,
+      stack: error.stack
+    });
+    next(error);
+  }
+};
+
+// Middleware de dÃƒÂ©connexion complet
+const handleLogout = async (req, res, next) => {
+  try {
+    if (!req.kauth?.grant) {
+      return res.status(200).send('DÃƒÂ©connectÃƒÂ©');
+    }
+
+    // 1. RÃƒÂ©voquer le token Keycloak
+    await keycloak.grantManager.revoke(req.kauth.grant);
+    
+    // 2. DÃƒÂ©truire la session
+    req.session.destroy(err => {
+      if (err) logger.error('Erreur destruction session:', err);
+      
+      // 3. Nettoyer les cookies
+      res.clearCookie('connect.sid');
+      res.clearCookie('keycloak_token');
+      
+      res.status(200).send('DÃƒÂ©connectÃƒÂ© avec succÃƒÂ¨s');
+    });
+  } catch (error) {
+    logger.error('Erreur lors de la dÃƒÂ©connexion:', error);
+    next(error);
+  }
+};
+
 module.exports = {
+  syncUserOnLogin,
   keycloak,
   memoryStore,
   initKeycloak,
   protect,
-  checkUserSync,
-  validateJWT
+  validateJWT,
+  handleLogout
 };
 
 
 ================================================
-File: core/auth/setupKeycloak.js
+File: setupKeycloak.js
 ================================================
 const session = require('express-session');
 const { memoryStore, keycloak } = require('./keycloak.config');
@@ -862,7 +915,7 @@ const sessionConfig = session({
   store: memoryStore
 });
 
-// Fonction pour obtenir les clÃ©s publiques Keycloak
+// Fonction pour obtenir les clÃƒÂ©s publiques Keycloak
 async function getKeycloakPublicKey() {
   const keycloakIssuer = await Issuer.discover(
     `${keycloak.config['auth-server-url']}/realms/${keycloak.config.realm}`
@@ -875,6 +928,132 @@ async function getKeycloakPublicKey() {
 module.exports = {
   sessionConfig,
   getKeycloakPublicKey // Exportez la nouvelle fonction
+};
+
+
+
+
+================================================
+File: core/auth/keycloak.config.js
+================================================
+ï»¿const Keycloak = require('keycloak-connect');
+const logger = require('../utils/logger');
+require('dotenv').config();
+
+const keycloakConfig = {
+  realm: process.env.KEYCLOAK_REALM,
+  'auth-server-url': process.env.KEYCLOAK_URL,
+  'ssl-required': 'external',
+  resource: process.env.KEYCLOAK_CLIENT_ID,
+  'bearer-only': true,
+  'verify-token-audience': true,
+  credentials: {
+    secret: process.env.KEYCLOAK_CLIENT_SECRET
+  }
+};
+
+// Validation de la configuration
+if (!process.env.KEYCLOAK_CLIENT_SECRET) {
+  logger.error('Configuration Keycloak incomplÃ¨te : KEYCLOAK_CLIENT_SECRET manquant');
+  process.exit(1);
+}
+
+const keycloak = new Keycloak({}, keycloakConfig);
+
+module.exports = {
+  keycloak,
+  keycloakConfig
+};
+
+
+================================================
+File: core/auth/middleware.js
+================================================
+const { keycloak } = require('./keycloak.config');
+const { getKeycloakPublicKey } = require('./setupKeycloak');
+const { jwtVerify } = require('jose');
+const logger = require('../utils/logger');
+const { db } = require('../../core/database/config');
+const { employes } = require('../../core/database/models');
+const { eq } = require('drizzle-orm');
+
+// Middleware d'initialisation Keycloak
+const initKeycloak = () => {
+  logger.info('Middleware Keycloak initialisÃ© (mode bearer-only)');
+  return keycloak.middleware();
+};
+
+// Protection de base
+const protect = (requiredRoles = []) => {
+  return [
+    keycloak.protect(),
+    async (req, res, next) => {
+      if (requiredRoles.length === 0) return next();
+      
+      const token = req.kauth.grant.access_token;
+      const hasRole = requiredRoles.some(role => token.hasRole(role));
+      
+      if (!hasRole) {
+        logger.warn(`AccÃ¨s refusÃ© - RÃ´les manquants`, {
+          user: token.content.sub,
+          requiredRoles,
+          actualRoles: token.content.realm_access?.roles
+        });
+        return res.status(403).json({ error: 'Permissions insuffisantes' });
+      }
+      next();
+    }
+  ];
+};
+
+// Validation JWT autonome
+const validateJWT = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Authorization header manquant' });
+  }
+
+  try {
+    const token = authHeader.split(' ')[1];
+    const { payload } = await jwtVerify(token, await getKeycloakPublicKey());
+    req.userToken = payload;
+    next();
+  } catch (error) {
+    logger.error('Ã‰chec de validation JWT', error);
+    res.status(401).json({ error: 'Token invalide' });
+  }
+};
+
+module.exports = {
+  initKeycloak,
+  protect,
+  validateJWT,
+  keycloak
+};
+
+
+================================================
+File: core/auth/setupKeycloak.js
+================================================
+const { keycloak } = require('./keycloak.config');
+const { createRemoteJWKSet } = require('jose');
+const { Issuer } = require('openid-client');
+const logger = require('../utils/logger');
+
+async function getKeycloakPublicKey() {
+  try {
+    const issuer = await Issuer.discover(
+      `${keycloak.config['auth-server-url']}/realms/${keycloak.config.realm}`
+    );
+    return createRemoteJWKSet(new URL(issuer.metadata.jwks_uri));
+  } catch (error) {
+    logger.error('Erreur de rÃ©cupÃ©ration des clÃ©s Keycloak', error);
+    throw new Error('Service d\'authentification indisponible');
+  }
+}
+
+module.exports = {
+  getKeycloakPublicKey
 };
 
 
@@ -3723,9 +3902,119 @@ File: modules/administration/accounting/controllers/accounting.controller.js
 
 
 ================================================
+File: modules/administration/accounting/controllers/partner.controller.js
+================================================
+import { partenaire } from "../../../../core/database/models";
+import logger from "../../../core/logger";
+
+export const createPartner = async (req, res) => {
+  const { nom, telephone, email, specialite, localisation, type, entiteId} = req.body;
+  try {
+    const partner = await partenaire.create({
+      nom,
+      telephone,
+      email,
+      specialite,
+      localisation,
+      type,
+      entiteId,
+    });
+    res.status(201).json(partner);
+  } catch (error) {
+    logger.error(error);
+    res.status(500).json({ message: "Erreur lors de la crÃ©ation du partenaire" });
+  }
+};
+
+
+export const getPartners = async (req, res) => {
+  try {
+    const partners = await partenaire.findMany();
+    res.json(partners);
+  } catch (error) {
+    logger.error(error);
+    res.status(500).json({ message: "Erreur lors de la rÃ©cupÃ©ration des partenaires" });
+  }
+}; 
+
+
+export const getPartnerById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const partner = await partenaire.findUnique({ where: { id } });
+    res.json(partner);
+  } catch (error) {
+    logger.error(error);
+    res.status(500).json({ message: "Erreur lors de la rÃ©cupÃ©ration du partenaire" });
+  }
+};     
+
+
+export const updatePartner = async (req, res) => {
+  const { id } = req.params;
+  const { nom, telephone, email, specialite, localisation, type, entiteId } = req.body;
+  try {
+    const partner = await partenaire.update({ where: { id }, data: { nom, telephone, email, specialite, localisation, type, entiteId } });
+    res.json(partner);
+  } catch (error) {
+    logger.error(error);
+    res.status(500).json({ message: "Erreur lors de la mise Ã  jour du partenaire" });
+  }
+};
+
+
+export const deletePartner = async (req, res) => {
+  const { id } = req.params;
+  try {
+    await partenaire.delete({ where: { id } });
+    res.json({ message: "Partenaire supprimÃ© avec succÃ¨s" });
+  } catch (error) {
+    logger.error(error);
+    res.status(500).json({ message: "Erreur lors de la suppression du partenaire" });
+  }
+};
+
+module.exports = {
+  createPartner,
+  getPartners,
+  getPartnerById,
+  updatePartner,
+  deletePartner,
+};
+
+
+
+================================================
 File: modules/administration/accounting/routes/accounting.routes.js
 ================================================
 ï»¿
+
+
+================================================
+File: modules/administration/accounting/routes/partner.route.js
+================================================
+import { express } from "express";
+import { createPartner,
+         getPartners, 
+         getPartnerById, 
+         updatePartner, 
+         deletePartner } from "../controllers/partner.controller";
+
+
+const router = express.Router();
+
+router.post('/', createPartner);
+router.get('/', getPartners); 
+router.get('/:id', getPartnerById);
+router.put('/:id', updatePartner);
+router.delete('/:id', deletePartner); 
+
+export default router;
+
+
+
+
+
 
 
 ================================================
@@ -4783,6 +5072,7 @@ File: modules/users/digest.txt
 Directory structure:
 â””â”€â”€ users/
     â”œâ”€â”€ controllers/
+    â”‚   â”œâ”€â”€ sync.controller.js
     â”‚   â””â”€â”€ users.controller.js
     â”œâ”€â”€ routes/
     â”‚   â””â”€â”€ users.routes.js
@@ -4791,42 +5081,123 @@ Directory structure:
     â””â”€â”€ tests/
 
 ================================================
+File: controllers/sync.controller.js
+================================================
+const { db } = require('../../../core/database/config');
+const { employes } = require('../../../core/database/models');
+const { eq } = require('drizzle-orm');
+const logger = require('../../../core/utils/logger');
+
+module.exports = {
+  syncUser: async (req, res) => {
+    const token = req.kauth.grant.access_token;
+    const { email } = req.body; // On ne reÃƒÂ§oit plus que l'email (le reste est en BD mÃƒÂ©tier)
+
+    // Validation email cohÃƒÂ©rent
+    if (token.content.email !== email) {
+      logger.warn('IncohÃƒÂ©rence email/token', {
+        tokenEmail: token.content.email,
+        providedEmail: email
+      });
+      return res.status(400).json({ error: "Email ne correspond pas au token" });
+    }
+
+    try {
+      // Upsert : CrÃƒÂ©e ou met ÃƒÂ  jour UNIQUEMENT l'ID Keycloak + email
+      await db.insert(employes)
+        .values({
+          keycloak_id: token.content.sub, // Lien avec Keycloak
+          email: token.content.email,
+          status: 'actif' // Valeur par dÃƒÂ©faut
+        })
+        .onConflictDoUpdate({
+          target: employes.keycloak_id,
+          set: { email: token.content.email } // MAJ email si changÃƒÂ© dans Keycloak
+        });
+
+      res.status(204).end();
+    } catch (error) {
+      logger.error('Erreur de synchronisation', error);
+      res.status(500).json({ error: "Ãƒâ€°chec de la synchronisation" });
+    }
+  }
+};
+
+
+================================================
 File: controllers/users.controller.js
 ================================================
-Ã¯Â»Â¿const logger = require('../../../core/utils/logger');
+const logger = require('../../../core/utils/logger');
 const userService = require('../services/users.service');
 
 module.exports = {
   /**
-   * RÃƒÂ©cupÃƒÂ¨re tous les utilisateurs
+   * RÃƒÂ©cupÃƒÂ¨re tous les utilisateurs (pour admin)
    */
   getAllUsers: async (req, res, next) => {
     try {
-      const users = await userService.getAllUsers();
+      const { page = 1, limit = 10 } = req.query;
+      const users = await userService.getAllUsers(parseInt(page), parseInt(limit));
+      logger.info(`RÃƒÂ©cupÃƒÂ©ration de ${users.length} utilisateurs`);
       res.json(users);
     } catch (error) {
-      logger.error('Ãƒâ€°chec de rÃƒÂ©cupÃƒÂ©ration des utilisateurs :', error);
+      logger.error('Ãƒâ€°chec de rÃƒÂ©cupÃƒÂ©ration des utilisateurs:', error);
       next(error);
     }
   },
 
   /**
-   * Synchronise l'utilisateur avec Keycloak
+   * RÃƒÂ©cupÃƒÂ¨re le profil de l'utilisateur connectÃƒÂ©
    */
-  syncUser: async (req, res, next) => {
+  getMyProfile: async (req, res) => {
+    const { sub } = req.kauth.grant.access_token.content; // ID Keycloak
+
     try {
-      const token = req.headers.authorization?.split(' ')[1];
-      if (!token) {
-        return res.status(401).json({ 
-          error: 'Token d\'autorisation manquant' 
-        });
+      const user = await userService.getUserByKeycloakId(sub);
+      if (!user) return res.status(404).json({ error: "Utilisateur non trouvÃƒÂ©" });
+
+      // Ne renvoie que les donnÃƒÂ©es autorisÃƒÂ©es
+      res.json({
+        email: user.email,
+        nom: user.nom,
+        prenom: user.prenom,
+        service: user.service // Champ mÃƒÂ©tier
+      });
+    } catch (error) {
+      logger.error('Erreur lors de la rÃƒÂ©cupÃƒÂ©ration du profil', {
+        error: error.message,
+        userId: sub
+      });
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  },
+
+  /**
+   * Met ÃƒÂ  jour le profil de l'utilisateur connectÃƒÂ©
+   */
+  updateMyProfile: async (req, res) => {
+    const { sub } = req.kauth.grant.access_token.content;
+    const updates = req.body;
+
+    try {
+      // Liste des champs autorisÃƒÂ©s ÃƒÂ  ÃƒÂªtre modifiÃƒÂ©s
+      const allowedFields = ["tel", "adresse"];
+      const filteredUpdates = Object.keys(updates)
+        .filter(key => allowedFields.includes(key))
+        .reduce((obj, key) => ({ ...obj, [key]: updates[key] }), {});
+
+      if (Object.keys(filteredUpdates).length === 0) {
+        return res.status(400).json({ error: "Aucun champ modifiable fourni" });
       }
 
-      const result = await userService.syncUserFromToken(token);
-      res.status(result.created ? 201 : 200).json(result.user);
+      await userService.updateUserProfile(sub, filteredUpdates);
+      res.status(204).end();
     } catch (error) {
-      logger.error('Ãƒâ€°chec de synchronisation :', error);
-      next(error);
+      logger.error('Ãƒâ€°chec de la mise ÃƒÂ  jour du profil', {
+        error: error.message,
+        userId: sub
+      });
+      res.status(500).json({ error: "Ãƒâ€°chec de la mise ÃƒÂ  jour" });
     }
   }
 };
@@ -4835,22 +5206,27 @@ module.exports = {
 ================================================
 File: routes/users.routes.js
 ================================================
-Ã¯Â»Â¿const express = require('express');
+Ã¯Â»Â¿//
+
+
+const express = require('express');
 const router = express.Router();
 const { protect } = require('../../../core/auth/middleware');
 const UsersController = require('../controllers/users.controller');
+const SyncController = require('../controllers/sync.controller');
 
-// Route publique
-router.post('/sync', UsersController.syncUser);
+// Synchronisation Keycloak Ã¢â€ â€™ BD MÃƒÂ©tier
+router.post('/sync', protect(), SyncController.syncUser);
 
-// Routes protÃƒÂ©gÃƒÂ©es
-// router.get('/', protect(), UsersController.getAllUsers);
-// router.get('/', UsersController.getAllUsers);// je vais la proteger plus tard
-// Version explicite avec logging
-router.get('/', protect(['admin']), (req, res, next) => {
-  console.log('User accÃƒÂ©dant ÃƒÂ  la route:', req.user);
-  UsersController.getAllUsers(req, res, next);
-});
+// RÃƒÂ©cupÃƒÂ©ration du profil utilisateur
+router.get('/me', protect(), UsersController.getMyProfile);
+
+// Mise ÃƒÂ  jour du profil (ex: tÃƒÂ©lÃƒÂ©phone)
+router.patch('/me', protect(), UsersController.updateMyProfile);
+
+// RÃƒÂ©cupÃƒÂ©ration de tous les utilisateurs (avec pagination)
+// router.get('/', protect(['admin']), UsersController.getAllUsers);
+router.get('/', protect(), UsersController.getAllUsers);
 
 
 module.exports = router;
@@ -4859,88 +5235,144 @@ module.exports = router;
 ================================================
 File: services/users.service.js
 ================================================
-const { jwtVerify } = require('jose');
-const { getKeycloakPublicKey } = require('../../../core/auth/setupKeycloak');
 const { db } = require('../../../core/database/config');
 const { employes } = require('../../../core/database/models');
 const { eq } = require('drizzle-orm');
 
 module.exports = {
-  /**
-   * RÃƒÂ©cupÃƒÂ¨re tous les utilisateurs
-   */
-  getAllUsers: async () => {
+  // RÃƒÂ©cupÃƒÂ¨re un utilisateur par son ID Keycloak
+  getUserByKeycloakId: async (keycloakId) => {
+    return await db.query.employes.findFirst({
+      where: eq(employes.keycloak_id, keycloakId)
+    });
+  },
+
+  // Met ÃƒÂ  jour les donnÃƒÂ©es modifiables (ex: tÃƒÂ©lÃƒÂ©phone)
+  updateUserProfile: async (keycloakId, data) => {
+    const allowedFields = ["tel", "adresse"]; // Champs autorisÃƒÂ©s
+    const updates = Object.keys(data)
+      .filter(key => allowedFields.includes(key))
+      .reduce((obj, key) => ({ ...obj, [key]: data[key] }), {});
+
+    await db.update(employes)
+      .set(updates)
+      .where(eq(employes.keycloak_id, keycloakId));
+  },
+
+  getAllUsers: async (page = 1, limit = 10) => {
     try {
-      const result = await db.select({
+      return await db.select({
         id: employes.id,
         email: employes.email,
         prenom: employes.prenom,
         nom: employes.nom,
-        status: employes.status
+        status: employes.status,
+        // service: employes.service
       })
       .from(employes)
       .orderBy(employes.nom)
+      .limit(limit)
+      .offset((page - 1) * limit)
       .execute();
-
-      return result;
     } catch (error) {
-      console.error('Erreur dans getAllUsers:', error);
-      throw error;
+      throw new Error(`Ãƒâ€°chec de rÃƒÂ©cupÃƒÂ©ration des utilisateurs: ${error.message}`);
     }
   },
-
-  /**
-   * Synchronise un utilisateur ÃƒÂ  partir d'un token Keycloak
-   */
-  syncUserFromToken: async (token) => {
-    try {
-      const { payload } = await jwtVerify(token, await getKeycloakPublicKey());
-      
-      // VÃƒÂ©rifie si l'utilisateur existe dÃƒÂ©jÃƒÂ 
-      const existing = await db.select()
-        .from(employes)
-        .where(eq(employes.keycloak_id, payload.sub))
-        .execute();
-
-      if (existing.length > 0) {
-        // Mise ÃƒÂ  jour de l'utilisateur existant
-        const [updated] = await db.update(employes)
-          .set({
-            email: payload.email,
-            prenom: payload.given_name || '',
-            nom: payload.family_name || '',
-            status: 'actif'
-          })
-          .where(eq(employes.keycloak_id, payload.sub))
-          .returning()
-          .execute();
-
-        return { user: updated, created: false };
-      } else {
-        // CrÃƒÂ©ation d'un nouvel utilisateur
-        const [created] = await db.insert(employes)
-          .values({
-            keycloak_id: payload.sub,
-            email: payload.email,
-            prenom: payload.given_name || '',
-            nom: payload.family_name || '',
-            status: 'actif',
-            fonctionId: 1 // Valeur par dÃƒÂ©faut ÃƒÂ  adapter
-          })
-          .returning()
-          .execute();
-
-        return { user: created, created: true };
-      }
-    } catch (error) {
-      console.error('Erreur dans syncUserFromToken:', error);
-      throw error;
-    }
-  }
 };
 
 
 
+
+
+================================================
+File: modules/users/controllers/sync.controller.js
+================================================
+const { db } = require('../../../core/database/config');
+const { employes, fonctions } = require('../../../core/database/models');
+const { eq } = require('drizzle-orm');
+const logger = require('../../../core/utils/logger');
+
+module.exports = {
+  syncUser: async (req, res) => {
+    const token = req.kauth.grant.access_token;
+    const { email, firstName, lastName } = req.body;
+
+    // Validation email/token
+    if (!token?.content?.email || !email) {
+      logger.warn('Token ou email manquant', { token, email });
+      return res.status(400).json({ error: "Token ou email invalide" });
+    }
+
+    if (token.content.email !== email) {
+      logger.warn('IncohÃ©rence email/token', {
+        tokenEmail: token.content.email,
+        providedEmail: email,
+        userId: token.content.sub
+      });
+      return res.status(400).json({ error: "Email ne correspond pas au token" });
+    }
+
+    try {
+      // RÃ©cupÃ©ration de l'ID de la fonction Technicien
+      const technicien = await db.select()
+        .from(fonctions)
+        .where(eq(fonctions.nom, 'Technicien'))
+        .limit(1);
+
+      if (!technicien || technicien.length === 0) {
+        throw new Error('La fonction Technicien n\'existe pas en base');
+      }
+
+      const fonctionId = technicien[0].id;
+
+      // DonnÃ©es utilisateur
+      const userData = {
+        keycloak_id: token.content.sub,
+        email: token.content.email,
+        nom: lastName || token.content.family_name || 'Non spÃ©cifiÃ©',
+        prenom: firstName || token.content.given_name || 'Non spÃ©cifiÃ©',
+        status: 'actif',
+        fonction_id: fonctionId,
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+
+      // Upsert
+      await db.insert(employes)
+        .values(userData)
+        .onConflictDoUpdate({
+          target: employes.keycloak_id,
+          set: {
+            email: userData.email,
+            nom: userData.nom,
+            prenom: userData.prenom,
+            fonction_id: fonctionId,
+            updated_at: userData.updated_at
+          }
+        });
+
+      res.status(204).end();
+    } catch (error) {
+      logger.error('Erreur de synchronisation', {
+        error: error.message,
+        userId: token.content.sub,
+        email: token.content.email
+      });
+
+      if (error.message.includes('Technicien')) {
+        res.status(400).json({ 
+          error: "Configuration manquante",
+          details: "La fonction Technicien doit Ãªtre crÃ©Ã©e en base de donnÃ©es"
+        });
+      } else {
+        res.status(500).json({ 
+          error: "Ã‰chec de la synchronisation",
+          details: error.message
+        });
+      }
+    }
+  }
+};
 
 
 ================================================
@@ -4950,36 +5382,67 @@ File: modules/users/controllers/users.controller.js
 const userService = require('../services/users.service');
 
 module.exports = {
-  /**
-   * RÃ©cupÃ¨re tous les utilisateurs
-   */
   getAllUsers: async (req, res, next) => {
     try {
-      const users = await userService.getAllUsers();
-      res.json(users);
+      const { page = 1, limit = 10 } = req.query;
+      const users = await userService.getAllUsers(parseInt(page), parseInt(limit));
+      
+      logger.info(`RÃ©cupÃ©ration de ${users.length} utilisateurs`);
+      res.json(users.map(user => ({
+        ...user,
+        fonction: user.fonction?.nom || 'Non dÃ©fini'
+      })));
     } catch (error) {
-      logger.error('Ã‰chec de rÃ©cupÃ©ration des utilisateurs :', error);
+      logger.error('Ã‰chec de rÃ©cupÃ©ration des utilisateurs:', error);
       next(error);
     }
   },
 
-  /**
-   * Synchronise l'utilisateur avec Keycloak
-   */
-  syncUser: async (req, res, next) => {
+  getMyProfile: async (req, res) => {
+    const { sub } = req.kauth.grant.access_token.content;
+
     try {
-      const token = req.headers.authorization?.split(' ')[1];
-      if (!token) {
-        return res.status(401).json({ 
-          error: 'Token d\'autorisation manquant' 
-        });
+      const user = await userService.getUserByKeycloakId(sub);
+      if (!user) return res.status(404).json({ error: "Utilisateur non trouvÃ©" });
+
+      res.json({
+        email: user.email,
+        nom: user.nom,
+        prenom: user.prenom,
+        service: user.service,
+        fonction: user.fonction?.nom || 'Non dÃ©fini'
+      });
+    } catch (error) {
+      logger.error('Erreur lors de la rÃ©cupÃ©ration du profil', {
+        error: error.message,
+        userId: sub
+      });
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  },
+
+  updateMyProfile: async (req, res) => {
+    const { sub } = req.kauth.grant.access_token.content;
+    const updates = req.body;
+
+    try {
+      const allowedFields = ["tel", "adresse"];
+      const filteredUpdates = Object.keys(updates)
+        .filter(key => allowedFields.includes(key))
+        .reduce((obj, key) => ({ ...obj, [key]: updates[key] }), {});
+
+      if (Object.keys(filteredUpdates).length === 0) {
+        return res.status(400).json({ error: "Aucun champ modifiable fourni" });
       }
 
-      const result = await userService.syncUserFromToken(token);
-      res.status(result.created ? 201 : 200).json(result.user);
+      await userService.updateUserProfile(sub, filteredUpdates);
+      res.status(204).end();
     } catch (error) {
-      logger.error('Ã‰chec de synchronisation :', error);
-      next(error);
+      logger.error('Ã‰chec de la mise Ã  jour du profil', {
+        error: error.message,
+        userId: sub
+      });
+      res.status(500).json({ error: "Ã‰chec de la mise Ã  jour" });
     }
   }
 };
@@ -4988,22 +5451,27 @@ module.exports = {
 ================================================
 File: modules/users/routes/users.routes.js
 ================================================
-ï»¿const express = require('express');
+ï»¿//
+
+
+const express = require('express');
 const router = express.Router();
 const { protect } = require('../../../core/auth/middleware');
 const UsersController = require('../controllers/users.controller');
+const SyncController = require('../controllers/sync.controller');
 
-// Route publique
-router.post('/sync', UsersController.syncUser);
+// Synchronisation Keycloak â†’ BD MÃ©tier
+router.post('/sync', protect(), SyncController.syncUser);
 
-// Routes protÃ©gÃ©es
-// router.get('/', protect(), UsersController.getAllUsers);
-// router.get('/', UsersController.getAllUsers);// je vais la proteger plus tard
-// Version explicite avec logging
-router.get('/', protect(['admin']), (req, res, next) => {
-  console.log('User accÃ©dant Ã  la route:', req.user);
-  UsersController.getAllUsers(req, res, next);
-});
+// RÃ©cupÃ©ration du profil utilisateur
+router.get('/me', protect(), UsersController.getMyProfile);
+
+// Mise Ã  jour du profil (ex: tÃ©lÃ©phone)
+router.patch('/me', protect(), UsersController.updateMyProfile);
+
+// RÃ©cupÃ©ration de tous les utilisateurs (avec pagination)
+// router.get('/', protect(['admin']), UsersController.getAllUsers);
+router.get('/', protect(), UsersController.getAllUsers);
 
 
 module.exports = router;
@@ -5012,82 +5480,54 @@ module.exports = router;
 ================================================
 File: modules/users/services/users.service.js
 ================================================
-const { jwtVerify } = require('jose');
-const { getKeycloakPublicKey } = require('../../../core/auth/setupKeycloak');
 const { db } = require('../../../core/database/config');
-const { employes } = require('../../../core/database/models');
+const { employes, fonctions } = require('../../../core/database/models');
 const { eq } = require('drizzle-orm');
 
 module.exports = {
-  /**
-   * RÃ©cupÃ¨re tous les utilisateurs
-   */
-  getAllUsers: async () => {
-    try {
-      const result = await db.select({
-        id: employes.id,
-        email: employes.email,
-        prenom: employes.prenom,
-        nom: employes.nom,
-        status: employes.status
-      })
-      .from(employes)
-      .orderBy(employes.nom)
-      .execute();
-
-      return result;
-    } catch (error) {
-      console.error('Erreur dans getAllUsers:', error);
-      throw error;
-    }
+  getUserByKeycloakId: async (keycloakId) => {
+    return await db.query.employes.findFirst({
+      where: eq(employes.keycloak_id, keycloakId),
+      with: {
+        fonction: true // Jointure avec la table fonctions
+      }
+    });
   },
 
-  /**
-   * Synchronise un utilisateur Ã  partir d'un token Keycloak
-   */
-  syncUserFromToken: async (token) => {
+  updateUserProfile: async (keycloakId, data) => {
+    const allowedFields = ["tel", "adresse"];
+    const updates = Object.keys(data)
+      .filter(key => allowedFields.includes(key))
+      .reduce((obj, key) => ({ ...obj, [key]: data[key] }), {});
+
+    await db.update(employes)
+      .set(updates)
+      .where(eq(employes.keycloak_id, keycloakId));
+  },
+
+  getAllUsers: async (page = 1, limit = 10) => {
     try {
-      const { payload } = await jwtVerify(token, await getKeycloakPublicKey());
-      
-      // VÃ©rifie si l'utilisateur existe dÃ©jÃ 
-      const existing = await db.select()
-        .from(employes)
-        .where(eq(employes.keycloak_id, payload.sub))
-        .execute();
-
-      if (existing.length > 0) {
-        // Mise Ã  jour de l'utilisateur existant
-        const [updated] = await db.update(employes)
-          .set({
-            email: payload.email,
-            prenom: payload.given_name || '',
-            nom: payload.family_name || '',
-            status: 'actif'
-          })
-          .where(eq(employes.keycloak_id, payload.sub))
-          .returning()
-          .execute();
-
-        return { user: updated, created: false };
-      } else {
-        // CrÃ©ation d'un nouvel utilisateur
-        const [created] = await db.insert(employes)
-          .values({
-            keycloak_id: payload.sub,
-            email: payload.email,
-            prenom: payload.given_name || '',
-            nom: payload.family_name || '',
-            status: 'actif',
-            fonctionId: 1 // Valeur par dÃ©faut Ã  adapter
-          })
-          .returning()
-          .execute();
-
-        return { user: created, created: true };
-      }
+      return await db.query.employes.findMany({
+        columns: {
+          id: true,
+          email: true,
+          prenom: true,
+          nom: true,
+          status: true
+        },
+        with: {
+          fonction: {
+            columns: {
+              nom: true
+            }
+          }
+        },
+        orderBy: [employes.nom],
+        limit: limit,
+        offset: (page - 1) * limit
+      });
     } catch (error) {
-      console.error('Erreur dans syncUserFromToken:', error);
-      throw error;
+      throw new Error(`Ã‰chec de rÃ©cupÃ©ration des utilisateurs: ${error.message}`);
     }
   }
 };

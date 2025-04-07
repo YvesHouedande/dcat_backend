@@ -2,20 +2,67 @@
 const userService = require('../services/users.service');
 
 module.exports = {
-  /**
-   * Récupère tous les utilisateurs
-   */
   getAllUsers: async (req, res, next) => {
     try {
-      const users = await userService.getAllUsers();
+      const { page = 1, limit = 10 } = req.query;
+      const users = await userService.getAllUsers(parseInt(page), parseInt(limit));
+      
       logger.info(`Récupération de ${users.length} utilisateurs`);
-      res.json(users);
+      res.json(users.map(user => ({
+        ...user,
+        fonction: user.fonction?.nom || 'Non défini'
+      })));
     } catch (error) {
-      logger.error('Échec de récupération des utilisateurs:', {
-        error: error.message,
-        stack: error.stack
-      });
+      logger.error('Échec de récupération des utilisateurs:', error);
       next(error);
+    }
+  },
+
+  getMyProfile: async (req, res) => {
+    const { sub } = req.kauth.grant.access_token.content;
+
+    try {
+      const user = await userService.getUserByKeycloakId(sub);
+      if (!user) return res.status(404).json({ error: "Utilisateur non trouvé" });
+
+      res.json({
+        email: user.email,
+        nom: user.nom,
+        prenom: user.prenom,
+        // service: user.service,
+        fonction: user.fonction?.nom || 'Non défini'
+      });
+    } catch (error) {
+      logger.error('Erreur lors de la récupération du profil', {
+        error: error.message,
+        userId: sub
+      });
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  },
+
+  updateMyProfile: async (req, res) => {
+    const { sub } = req.kauth.grant.access_token.content;
+    const updates = req.body;
+
+    try {
+      const allowedFields = ["tel", "adresse"];
+      const filteredUpdates = Object.keys(updates)
+        .filter(key => allowedFields.includes(key))
+        .reduce((obj, key) => ({ ...obj, [key]: updates[key] }), {});
+
+      if (Object.keys(filteredUpdates).length === 0) {
+        return res.status(400).json({ error: "Aucun champ modifiable fourni" });
+      }
+
+      await userService.updateUserProfile(sub, filteredUpdates);
+      res.status(204).end();
+    } catch (error) {
+      logger.error('Échec de la mise à jour du profil', {
+        error: error.message,
+        userId: sub
+      });
+      res.status(500).json({ error: "Échec de la mise à jour" });
     }
   }
 };

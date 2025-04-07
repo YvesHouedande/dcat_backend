@@ -7,7 +7,7 @@ const keycloakConfig = {
   'auth-server-url': process.env.KEYCLOAK_URL,
   'ssl-required': 'external',
   resource: process.env.KEYCLOAK_CLIENT_ID,
-  'bearer-only': true,
+  // 'bearer-only': true,
   'verify-token-audience': true,
   credentials: {
     secret: process.env.KEYCLOAK_CLIENT_SECRET
