@@ -4,7 +4,7 @@ const helmet = require('helmet');
 const { keycloak } = require('./core/auth/keycloak.config');
 const { initKeycloak, protect } = require('./core/auth/middleware');
 const logger = require('./core/utils/logger');
-const adminRoutes = require('./modules/administration/routes/partner.route');
+
 
 require('dotenv').config();
 
@@ -38,7 +38,7 @@ function loadModule(moduleName) {
 // Chargement des modules
 app.use('/api/stocks', loadModule('stocks'));
 app.use('/api/users', loadModule('users'));
-app.use('/api/partner', adminRoutes);
+app.use('/api/partner', loadModule('administration'));
 
 
 // CHARGEMENT DES ROUTES DES PROJETS ET INTERVENTIONS
