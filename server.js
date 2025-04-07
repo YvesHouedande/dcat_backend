@@ -1,9 +1,11 @@
-﻿// Importations requises
-const express = require('express');
+﻿const express = require('express');
 const path = require('path');
-const { memoryStore, keycloak } = require('./core/auth/keycloak.config');
+const helmet = require('helmet');
+const { keycloak } = require('./core/auth/keycloak.config');
 const { initKeycloak, protect } = require('./core/auth/middleware');
 const logger = require('./core/utils/logger');
+const adminRoutes = require('./modules/administration/routes/partner.route');
+
 require('dotenv').config();
 
 const backendSoro = require('./modules/flutter_backend/routes/index_routes');
@@ -11,37 +13,32 @@ const backendSoro = require('./modules/flutter_backend/routes/index_routes');
 // Initialisation Express
 const app = express();
 
-// =============================================
-// CONFIGURATION DE BASE
-// =============================================
+// =============== MIDDLEWARES DE BASE ===============
+app.use(helmet());
+app.disable('x-powered-by');
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// Configuration de session
-app.use(require('./core/auth/setupKeycloak').sessionConfig);
-
-// Middleware Keycloak
+// =============== KEYCLOAK ===============
 app.use(initKeycloak());
 
-// Middlewares de base
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// =============================================
-// CHARGEMENT DES MODULES
-// =============================================
-
+// =============== CHARGEMENT DES MODULES ===============
 function loadModule(moduleName) {
   try {
     const modulePath = path.join(__dirname, 'modules', moduleName, 'routes', `${moduleName}.routes.js`);
-    return require(modulePath);
-  } catch (err) {
-    logger.error(`Failed to load ${moduleName} module:`, err);
+    const router = require(modulePath);
+    logger.info(`Module chargé: ${moduleName}`);
+    return router;
+  } catch (error) {
+    logger.error(`Échec du chargement du module ${moduleName}`, error);
     process.exit(1);
   }
 }
 
 // Chargement des modules
 app.use('/api/stocks', loadModule('stocks'));
-app.use('/api/users', loadModule('users')); //erreur quand je cahreg ici
+app.use('/api/users', loadModule('users'));
+app.use('/api/partner', adminRoutes);
 
 
 // CHARGEMENT DES ROUTES DES PROJETS ET INTERVENTIONS
@@ -60,36 +57,41 @@ app.use('/api/missions', backendSoro.missions);
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK',
+    auth: 'bearer-only',
     keycloak: {
       realm: keycloak.config.realm,
-      url: keycloak.config['auth-server-url'],
       clientId: keycloak.config.resource
     }
   });
 });
 
-// =============================================
-// ROUTES PROTÉGÉES
-// =============================================
-
+// =============== ROUTES PROTÉGÉES ===============
 app.get('/api/protected', protect(), (req, res) => {
   res.json({ 
-    message: 'Protected endpoint',
+    message: 'Accès autorisé',
     user: req.kauth.grant.access_token.content 
   });
 });
 
-// =============================================
-// GESTION DES ERREURS
-// =============================================
-
+// =============== GESTION DES ERREURS ===============
 app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
+  res.status(404).json({ 
+    error: 'Endpoint non trouvé',
+    path: req.path 
+  });
 });
 
 app.use((err, req, res, next) => {
-  logger.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
+  const status = err.status || 500;
+  logger.error({
+    status,
+    message: err.message,
+    path: req.path,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+  res.status(status).json({ 
+    error: status === 500 ? 'Erreur interne' : err.message 
+  });
 });
 
 // =============================================

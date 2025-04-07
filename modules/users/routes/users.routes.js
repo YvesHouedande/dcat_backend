@@ -1,33 +1,24 @@
-﻿// const express = require('express');
-// const router = express.Router();
-// const { protect } = require('../../../core/auth/middleware');
-// const UsersController = require('../controllers/users.controller');
-
-// // Route publique
-// router.post('/sync', UsersController.syncUser);
-
-// // Route protégée - version corrigée
-// router.get('/', protect(['admin']), UsersController.getAllUsers); // Notez les crochets pour créer un tableau
-
-// module.exports = router;
-
+﻿//
 
 
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../../../core/auth/middleware');
-const { syncUser, getAllUsers } = require('../controllers/users.controller');
+const UsersController = require('../controllers/users.controller');
+const SyncController = require('../controllers/sync.controller');
 
+// Synchronisation Keycloak → BD Métier
+router.post('/sync', protect(), SyncController.syncUser);
 
-router.get('/test', (req, res) => res.send('Test OK'));
+// Récupération du profil utilisateur
+router.get('/me', protect(), UsersController.getMyProfile);
 
-// Debug: Vérifiez que les fonctions sont bien importées
-console.log('Controller methods:', { syncUser, getAllUsers });
+// Mise à jour du profil (ex: téléphone)
+router.patch('/me', protect(), UsersController.updateMyProfile);
 
-// Route publique
-router.post('/sync', syncUser);
+// Récupération de tous les utilisateurs (avec pagination)
+// router.get('/', protect(['admin']), UsersController.getAllUsers);
+router.get('/', protect(), UsersController.getAllUsers);
 
-// Route protégée
-router.get('/', protect(['admin']), getAllUsers);
 
 module.exports = router;

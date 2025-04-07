@@ -1,94 +1,68 @@
-﻿// const userService = require('../services/users.service');
-// const { jwtVerify } = require('jose');
-// const { getKeycloakPublicKey } = require('../../../core/auth/setupKeycloak');
+﻿const logger = require('../../../core/utils/logger');
+const userService = require('../services/users.service');
 
-// module.exports = {
-//   getAll: async (req, res, next) => {
-//     try {
-//       const users = await userService.getAllUsers();
-//       res.json(users);
-//     } catch (err) {
-//       next(err);
-//     }
-//   },
-  
-//   create: async (req, res, next) => {
-//     try {
-//       const newUser = await userService.createUser(req.body);
-//       res.status(201).json(newUser);
-//     } catch (err) {
-//       next(err);
-//     }
-//   },
-  
-//   syncUser: async (req, res, next) => {
-//     try {
-//       const token = req.headers.authorization?.split(' ')[1];
-//       if (!token) return res.status(401).json({ error: 'Token manquant' });
-
-//       const { payload } = await jwtVerify(token, await getKeycloakPublicKey());
-//       const { user, created } = await userService.syncUser(
-//         payload.sub,
-//         {
-//           email: payload.email,
-//           prenom: payload.given_name || '',
-//           nom: payload.family_name || '',
-//           status: 'actif'
-//         }
-//       );
-      
-//       res.status(created ? 201 : 200).json(user);
-//     } catch (err) {
-//       next(err);
-//     }
-//   }
-// };
-
-
-
-const logger = require('../../../core/utils/logger');
-const { employes } = require('../../../core/database/models');
-const { jwtVerify } = require('jose');
-const { getKeycloakPublicKey } = require('../../../core/auth/setupKeycloak');
-
-// Méthode de synchronisation
-const syncUser = async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Token manquant' });
-
-    const { payload } = await jwtVerify(token, await getKeycloakPublicKey());
-    
-    const [user, created] = await employes.findOrCreate({
-      where: { keycloak_id: payload.sub },
-      defaults: {
-        email: payload.email,
-        prenom: payload.given_name || '',
-        nom: payload.family_name || '',
-        status: 'actif'
-      }
-    });
-
-    res.status(created ? 201 : 200).json(user);
-  } catch (error) {
-    logger.error('Erreur synchronisation:', error);
-    res.status(500).json({ error: 'Échec de synchronisation' });
-  }
-};
-
-// Méthode de récupération
-const getAllUsers = async (req, res) => {
-  try {
-    const users = await employes.findAll();
-    res.json(users);
-  } catch (error) {
-    logger.error('Erreur récupération utilisateurs:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-};
-
-// Exportez explicitement
 module.exports = {
-  syncUser,
-  getAllUsers
+  getAllUsers: async (req, res, next) => {
+    try {
+      const { page = 1, limit = 10 } = req.query;
+      const users = await userService.getAllUsers(parseInt(page), parseInt(limit));
+      
+      logger.info(`Récupération de ${users.length} utilisateurs`);
+      res.json(users.map(user => ({
+        ...user,
+        fonction: user.fonction?.nom || 'Non défini'
+      })));
+    } catch (error) {
+      logger.error('Échec de récupération des utilisateurs:', error);
+      next(error);
+    }
+  },
+
+  getMyProfile: async (req, res) => {
+    const { sub } = req.kauth.grant.access_token.content;
+
+    try {
+      const user = await userService.getUserByKeycloakId(sub);
+      if (!user) return res.status(404).json({ error: "Utilisateur non trouvé" });
+
+      res.json({
+        email: user.email,
+        nom: user.nom,
+        prenom: user.prenom,
+        // service: user.service,
+        fonction: user.fonction?.nom || 'Non défini'
+      });
+    } catch (error) {
+      logger.error('Erreur lors de la récupération du profil', {
+        error: error.message,
+        userId: sub
+      });
+      res.status(500).json({ error: "Erreur serveur" });
+    }
+  },
+
+  updateMyProfile: async (req, res) => {
+    const { sub } = req.kauth.grant.access_token.content;
+    const updates = req.body;
+
+    try {
+      const allowedFields = ["tel", "adresse"];
+      const filteredUpdates = Object.keys(updates)
+        .filter(key => allowedFields.includes(key))
+        .reduce((obj, key) => ({ ...obj, [key]: updates[key] }), {});
+
+      if (Object.keys(filteredUpdates).length === 0) {
+        return res.status(400).json({ error: "Aucun champ modifiable fourni" });
+      }
+
+      await userService.updateUserProfile(sub, filteredUpdates);
+      res.status(204).end();
+    } catch (error) {
+      logger.error('Échec de la mise à jour du profil', {
+        error: error.message,
+        userId: sub
+      });
+      res.status(500).json({ error: "Échec de la mise à jour" });
+    }
+  }
 };

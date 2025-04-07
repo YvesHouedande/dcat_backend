@@ -1,38 +1,45 @@
 const { db } = require('../../../core/database/config');
-const { employes } = require('../../../core/database/models');
+const { employes, fonction } = require('../../../core/database/models');
+const { eq } = require('drizzle-orm');
 
 module.exports = {
-  getAllUsers: async () => {
-    return await db.select().from(employes);
-  },
-  
-  createUser: async (userData) => {
-    const [newUser] = await db.insert(employes)
-      .values(userData)
-      .returning();
-    return newUser;
-  },
-  
-  syncUser: async (keycloakId, userData) => {
-    const [user, created] = await db.transaction(async (tx) => {
-      const existing = await tx.select()
-        .from(employes)
-        .where(eq(employes.keycloak_id, keycloakId));
-      
-      if (existing.length > 0) {
-        const [updated] = await tx.update(employes)
-          .set(userData)
-          .where(eq(employes.keycloak_id, keycloakId))
-          .returning();
-        return [updated, false];
-      } else {
-        const [created] = await tx.insert(employes)
-          .values({ ...userData, keycloak_id: keycloakId })
-          .returning();
-        return [created, true];
+  getUserByKeycloakId: async (keycloakId) => {
+    return await db.query.employes.findFirst({
+      where: eq(employes.keycloak_id, keycloakId),
+      with: {
+        fonction: true // Jointure avec la table 
       }
     });
-    
-    return { user, created };
-  }
+  },
+
+  updateUserProfile: async (keycloakId, data) => {
+    const allowedFields = ["tel", "adresse"];
+    const updates = Object.keys(data)
+      .filter(key => allowedFields.includes(key))
+      .reduce((obj, key) => ({ ...obj, [key]: data[key] }), {});
+
+    await db.update(employes)
+      .set(updates)
+      .where(eq(employes.keycloak_id, keycloakId));
+  },
+
+  getAllUsers: async (page = 1, limit = 10) => {
+    try {
+      return await db.select({
+        id: employes.id,
+        email: employes.email,
+        prenom: employes.prenom,
+        nom: employes.nom,
+        status: employes.status,
+        // service: employes.service
+      })
+      .from(employes)
+      .orderBy(employes.nom)
+      .limit(limit)
+      .offset((page - 1) * limit)
+      .execute();
+    } catch (error) {
+      throw new Error(`Échec de récupération des utilisateurs: ${error.message}`);
+    }
+  },
 };
