@@ -1,6 +1,6 @@
 const { eq } = require("drizzle-orm");
 const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
-const { exemplaire } = require("../../../core/database/models");
+const { exemplaire,exemplaireAcheter } = require("../../../core/database/models");
 ("../../../");
 
 const createExemplaire = async (data) => {
@@ -62,6 +62,16 @@ const filterExemplairesByEtat = async (etat) => {
   return await db.select().from(exemplaire).where(eq(exemplaire.etat, etat));
 };
 
+
+//acheter des exemplaires de produit
+
+const purchaseExemplaire=async(data)=>{
+  const [result] = await db.insert(exemplaireAcheter).values(data).returning()
+  return result
+}
+
+
+
 module.exports = {
   createExemplaire,
   getExemplaires,
@@ -69,4 +79,5 @@ module.exports = {
   updateExemplaire,
   deleteExemplaire,
   getAllExemplaireProduit,
+  purchaseExemplaire,
 };
