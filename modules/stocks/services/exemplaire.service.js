@@ -70,7 +70,7 @@ const getAllExemplaireProduit = async (produitId, produitCode) => {
 // [GET] /exemplaires/statut/{statut} → Filtrer les exemplaires par statut (en stock, affecté, défectueux...)
 // [DELETE] /affectation/exemplaire/{id} → Retirer un exemplaire affecté
 
-
+0
 
 
 //filtrer les exemplaires par etat

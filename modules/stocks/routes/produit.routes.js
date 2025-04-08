@@ -11,7 +11,10 @@ router.delete("/:id", controller.deleteProduit);
 
 router.post(
   "/sollicitation/:produitId/:produitCode/:partenaireId",
-  controller.sollicitationProduit
+  controller.createSollicitationProduit
 );
+
+router.get("/sollicitation/details/:id", controller.getSollicitationProduit);
+
 
 module.exports = router;

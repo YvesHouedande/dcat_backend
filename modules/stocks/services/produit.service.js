@@ -3,6 +3,8 @@ const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
 const {
   produit,
   sollicitationProduits,
+  partenaire,
+  produit,
 } = require("../../../core/database/models");
 
 const createProduit = async (data) => {
@@ -37,7 +39,7 @@ const deleteProduit = async (id) => {
 };
 
 //sollicitation de  produit : un client peut faire une demande pour voir si le produit existe
-const sollicitationProduit = async (data) => {
+const createSollicitationProduit = async (data) => {
   const [result] = await db
     .insert(sollicitationProduits)
     .values(data)
@@ -45,11 +47,57 @@ const sollicitationProduit = async (data) => {
   return result;
 };
 
+
+//récupérer les details d'une sollicitation
+const getDetailsSollicitationProduit = async (id) => {
+  return await db
+    .select({
+      pivot: sollicitationProduits,
+      produit: {
+        id: produit.id,
+        code: produit.code,
+        nom: produit.nom,
+        description: produit.description,
+        type: produit.type,
+        image: produit.image,
+        quantite: produit.quantite,
+        prix: produit.prix,
+        etat: produit.etat,
+      },
+      partenaire: {
+        id: partenaire.id,
+        nom: partenaire.nom,
+        telephone: partenaire.telephone,
+        email: partenaire.email,
+        specialite: partenaire.specialite,
+        localisation: partenaire.localisation,
+        type: partenaire.type,
+      },
+    })
+    .from(sollicitationProduits)
+    .leftJoin(
+      produit,
+      and(
+        eq(sollicitationProduits.produitId, produit.id),
+        eq(sollicitationProduits.produitCode, produit.code)
+      )
+    )
+    .leftJoin(partenaire, eq(sollicitationProduits.partenaireId, partenaire.id))
+    .where(eq(sollicitationProduits.sollicitationProduits, id));
+};
+
+// supprimer une sollicitation
+
+
+
+
+
 module.exports = {
   createProduit,
   getProduits,
   getProduitById,
   updateProduit,
   deleteProduit,
-  sollicitationProduit,
+  createSollicitationProduit,
+  getDetailsSollicitationProduit
 };
