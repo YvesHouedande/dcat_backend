@@ -6,7 +6,10 @@ const {
   integer,
   primaryKey,
   foreignKey,
+  timestamp 
 } = require("drizzle-orm/pg-core");
+const { sql } = require('drizzle-orm');
+
 
 // Famille
 const famille = pgTable("famille", {
@@ -216,7 +219,7 @@ const exemplaire = pgTable(
     id: serial("id").primaryKey(),
     numSerie: varchar("num_serie", { length: 100 }),
     prix: varchar("prix", { length: 50 }),
-    etat: varchar("etat", { length: 20 }),
+    etat: varchar("etat", { length: 20 }),  // "disponible", "vendu", "reserve", "en maintenance", "retire de la vente", "endommage", "en projet"
     livraisonId: integer("livraison_id")
       .notNull()
       .references(() => livraison.id),
@@ -230,6 +233,110 @@ const exemplaire = pgTable(
     }),
   })
 );
+
+
+// // Table d'historique des exemplaires
+// const exemplaireHistory = pgTable('exemplaire_history', {
+//   id: serial('id').primaryKey(),
+//   exemplaireId: integer('exemplaire_id').notNull(),
+//   numSerie: varchar('num_serie', { length: 100 }),
+//   prix: varchar('prix', { length: 50 }),
+//   etat: varchar('etat', { length: 20 }),
+//   livraisonId: integer('livraison_id').notNull(),
+//   produitId: integer('produit_id').notNull(),
+//   produitCode: varchar('produit_code', { length: 50 }).notNull(),
+//   changedAt: timestamp('changed_at', { withTimezone: true }).defaultNow(),
+//   operation: varchar('operation', { length: 10 }).notNull(),
+//   changedBy: varchar('changed_by', { length: 100 }), // Optionnel
+// });
+
+
+// // Script SQL pour créer le trigger
+// const createHistoryTriggerSQL = `
+// -- Supprime la fonction existante pour éviter les conflits
+// DROP FUNCTION IF EXISTS log_exemplaire_changes() CASCADE;
+
+// -- Crée la fonction de trigger
+// CREATE OR REPLACE FUNCTION log_exemplaire_changes()
+// RETURNS TRIGGER AS $$
+// DECLARE
+//     current_user_text TEXT := NULL;
+// BEGIN
+//     -- Essaie de récupérer l'utilisateur courant (sans erreur si non défini)
+//     BEGIN
+//         current_user_text := current_setting('app.current_user', true);
+//     EXCEPTION WHEN OTHERS THEN
+//         current_user_text := NULL;
+//     END;
+
+//     -- Gestion des différentes opérations
+//     IF (TG_OP = 'DELETE') THEN
+//         INSERT INTO exemplaire_history (
+//             exemplaire_id, num_serie, prix, etat,
+//             livraison_id, produit_id, produit_code,
+//             operation, changed_by, changed_at
+//         ) VALUES (
+//             OLD.id, OLD.num_serie, OLD.prix, OLD.etat,
+//             OLD.livraison_id, OLD.produit_id, OLD.produit_code,
+//             'DELETE', current_user_text, NOW()
+//         );
+//         RETURN OLD;
+    
+//     ELSIF (TG_OP = 'UPDATE') THEN
+//         INSERT INTO exemplaire_history (
+//             exemplaire_id, num_serie, prix, etat,
+//             livraison_id, produit_id, produit_code,
+//             operation, changed_by, changed_at
+//         ) VALUES (
+//             NEW.id, NEW.num_serie, NEW.prix, NEW.etat,
+//             NEW.livraison_id, NEW.produit_id, NEW.produit_code,
+//             'UPDATE', current_user_text, NOW()
+//         );
+//         RETURN NEW;
+    
+//     ELSIF (TG_OP = 'INSERT') THEN
+//         INSERT INTO exemplaire_history (
+//             exemplaire_id, num_serie, prix, etat,
+//             livraison_id, produit_id, produit_code,
+//             operation, changed_by, changed_at
+//         ) VALUES (
+//             NEW.id, NEW.num_serie, NEW.prix, NEW.etat,
+//             NEW.livraison_id, NEW.produit_id, NEW.produit_code,
+//             'INSERT', current_user_text, NOW()
+//         );
+//         RETURN NEW;
+//     END IF;
+    
+//     RETURN NULL;
+// END;
+// $$ LANGUAGE plpgsql;
+
+// -- Supprime le trigger existant s'il existe
+// DROP TRIGGER IF EXISTS exemplaire_changes_trigger ON exemplaire;
+
+// -- Crée le trigger
+// CREATE TRIGGER exemplaire_changes_trigger
+// AFTER INSERT OR UPDATE OR DELETE ON exemplaire
+// FOR EACH ROW EXECUTE FUNCTION log_exemplaire_changes();
+
+// -- Commentaire pour documentation
+// COMMENT ON FUNCTION log_exemplaire_changes() IS 'Trigger pour historiser les changements dans la table exemplaire';
+// COMMENT ON TRIGGER exemplaire_changes_trigger ON exemplaire IS 'Déclencheur pour enregistrer l''historique des modifications';
+// `;
+
+
+
+// // Fonction pour définir l'utilisateur courant
+// function setCurrentUserSQL(userId) {
+//   return sql`SET app.current_user = ${userId}`;
+// }
+
+// // Fonction pour initialiser le système d'historique
+// async function initializeHistorySystem(db) {
+//   await db.execute(sql.raw(createHistoryTriggerSQL));
+//   console.log('Trigger d\'historique pour exemplaire créé avec succès');
+// }
+
 
 // Tache
 const tache = pgTable("tache", {
@@ -279,7 +386,6 @@ const exemplaireAcheter = pgTable(
       .notNull()
       .references(() => partenaire.id),
     lieuLivraison: varchar("lieu_livraison", { length: 200 }),
-    quantite: varchar("quantite", { length: 20 }),
     dateAchat: varchar("date_achat", { length: 25 }),
   },
   (table) => ({

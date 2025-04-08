@@ -4,12 +4,24 @@ const {
   exemplaire,
   exemplaireAcheter,
   projetExemplaireEmployes,
+  produit,
 } = require("../../../core/database/models");
 
 const createExemplaire = async (data) => {
+  const { produitId,produitCode } = data; 
+
+  // 1. Insérer l'exemplaire
   const [result] = await db.insert(exemplaire).values(data).returning();
+
+  // 2. Incrémenter la quantité du produit associé
+  await db
+    .update(produit)
+    .set({ quantite: db.raw('quantite + 1') }) // Incrémente la quantité de 1
+    .where(and(eq(produit.id, produitId),eq(produit.code,produitCode)));
+
   return result;
 };
+
 
 const getExemplaires = async () => {
   return await db.select().from(exemplaire);
@@ -56,15 +68,17 @@ const getAllExemplaireProduit = async (produitId, produitCode) => {
 // [GET] /exemplaires/projet/{id} → Lister les exemplaires affectés à une intervention(mise en place par celui qui s'occupe de cette partie)
 // [GET] /exemplaires/disponibles → Lister les exemplaires disponibles en stock
 // [GET] /exemplaires/statut/{statut} → Filtrer les exemplaires par statut (en stock, affecté, défectueux...)
-
 // [DELETE] /affectation/exemplaire/{id} → Retirer un exemplaire affecté
+
+
+
 
 //filtrer les exemplaires par etat
 const filterExemplairesByEtat = async (etat) => {
   return await db.select().from(exemplaire).where(eq(exemplaire.etat, etat));
 };
 
-// //acheter des exemplaires de produit
+// //acheter des exemplaires de produit    ::::ancienne fonction
 
 // const purchaseExemplaire=async(data)=>{
 
@@ -78,7 +92,10 @@ const filterExemplairesByEtat = async (etat) => {
 //   return result
 // }
 
-//acheter des exemplaires de produit
+
+
+
+//acheter des exemplaires de produit  -> sortie de stock
 const purchaseExemplaire = async ({
   exemplaireId,
   partenaireId,
