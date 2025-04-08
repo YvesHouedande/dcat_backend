@@ -15,7 +15,9 @@ const getProduits = async (req, res) => {
   try {
     const result = await produitService.getProduits();
     return res.status(200).json(result || []);
-  } catch (error) {
+  } catch (error) {23
+
+
     res
       .status(500)
       .json({ error: "une erreur est survenue", details: error.message });
@@ -74,31 +76,46 @@ const sollicitationProduit = async (req, res) => {
     const { produitId, produitCode, partenaireId } = req.params;
     const { etat, description } = req.body;
 
-    // Vérifie que les deux paramètres sont présents
+    // Vérification des paramètres requis
     if (!produitId || !produitCode || !partenaireId) {
-      return res
-        .status(400)
-        .json({ message: "Certains paramètres sont manquant" });
+      return res.status(400).json({
+        error: "PARAM_MISSING",
+        message: "Certains paramètres sont manquants (produitId, produitCode, partenaireId).",
+      });
     }
 
-    if (isNaN(produitId) || isNaN(partenaireId)) {
-      return res.status(400).json({ error: "ID invalide" });
+    // Validation des types (meilleure sécurité)
+    const parsedProduitId = parseInt(produitId, 10);
+    const parsedPartenaireId = parseInt(partenaireId, 10);
+
+    if (isNaN(parsedProduitId) || isNaN(parsedPartenaireId)) {
+      return res.status(400).json({
+        error: "INVALID_ID",
+        message: "Les identifiants doivent être des nombres valides.",
+      });
     }
 
+    // Appel du service
     const result = await exemplaireService.purchaseExemplaire({
-      produitId,
+      produitId: parsedProduitId,
       produitCode,
-      partenaireId,
+      partenaireId: parsedPartenaireId,
       etat,
       description,
     });
-    return res.json(result);
+
+    return res.status(201).json(result); // 201 pour indiquer une création réussie
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "une erreur est survenue", details: error.message });
+    console.error("Erreur dans sollicitationProduit:", error);
+
+    return res.status(500).json({
+      error: "INTERNAL_SERVER_ERROR",
+      message: "Une erreur est survenue lors du traitement de la requête.",
+      details: error.message,
+    });
   }
 };
+
 
 module.exports = {
   createProduit,

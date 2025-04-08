@@ -11,7 +11,7 @@ router.delete("/:id", controller.deleteProduit);
 
 router.post(
   "/sollicitation/:produitId/:produitCode/:partenaireId",
-  controller.deleteProduit
+  controller.sollicitationProduit
 );
 
 module.exports = router;
