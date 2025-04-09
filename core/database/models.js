@@ -6,10 +6,9 @@ const {
   integer,
   primaryKey,
   foreignKey,
-  timestamp 
+  timestamp,
 } = require("drizzle-orm/pg-core");
-const { sql } = require('drizzle-orm');
-
+const { sql } = require("drizzle-orm");
 
 // Famille
 const famille = pgTable("famille", {
@@ -110,18 +109,6 @@ const produit = pgTable(
   })
 );
 
-// Documents
-const documents = pgTable("documents", {
-  id: serial("id").primaryKey(),
-  titre: varchar("titre", { length: 200 }),
-  fichier: varchar("fichier", { length: 255 }),
-  dateAjout: varchar("date_ajout", { length: 25 }),
-  employeId: integer("employe_id").references(() => employes.id),
-  typeDocId: integer("type_doc_id")
-    .notNull()
-    .references(() => typeDoc.id),
-});
-
 // Partenaire
 const partenaire = pgTable("partenaire", {
   id: serial("id").primaryKey(),
@@ -143,10 +130,24 @@ const contrat = pgTable("contrat", {
   duree: varchar("duree", { length: 50 }),
   dateDebut: varchar("date_debut", { length: 25 }),
   dateFin: varchar("date_fin", { length: 25 }),
-  lien: text("lien"),
+  type: varchar("type", { length: 50 }),
   partenaireId: integer("partenaire_id")
     .notNull()
     .references(() => partenaire.id),
+});
+
+// Documents
+const documents = pgTable("documents", {
+  id: serial("id").primaryKey(),
+  titre: varchar("titre", { length: 200 }),
+  fichier: varchar("fichier", { length: 255 }),
+  dateAjout: varchar("date_ajout", { length: 25 }),
+  employeId: integer("employe_id").references(() => employes.id),
+  typeDocId: integer("type_doc_id")
+    .notNull()
+    .references(() => typeDoc.id),
+  demandeId: integer("demande_id").references(() => demande.id),
+  contratId: integer("contrat_id").references(() => contrat.id),
 });
 
 // Intervention
@@ -219,7 +220,7 @@ const exemplaire = pgTable(
     id: serial("id").primaryKey(),
     numSerie: varchar("num_serie", { length: 100 }),
     prix: varchar("prix", { length: 50 }),
-    etat: varchar("etat", { length: 20 }),  // "disponible", "vendu", "reserve", "en maintenance", "retire de la vente", "endommage", "en projet"
+    etat: varchar("etat", { length: 20 }), // "disponible", "vendu", "reserve", "en maintenance", "retire de la vente", "endommage", "en projet"
     livraisonId: integer("livraison_id")
       .notNull()
       .references(() => livraison.id),
@@ -233,7 +234,6 @@ const exemplaire = pgTable(
     }),
   })
 );
-
 
 // // Table d'historique des exemplaires
 // const exemplaireHistory = pgTable('exemplaire_history', {
@@ -249,7 +249,6 @@ const exemplaire = pgTable(
 //   operation: varchar('operation', { length: 10 }).notNull(),
 //   changedBy: varchar('changed_by', { length: 100 }), // Optionnel
 // });
-
 
 // // Script SQL pour créer le trigger
 // const createHistoryTriggerSQL = `
@@ -281,7 +280,7 @@ const exemplaire = pgTable(
 //             'DELETE', current_user_text, NOW()
 //         );
 //         RETURN OLD;
-    
+
 //     ELSIF (TG_OP = 'UPDATE') THEN
 //         INSERT INTO exemplaire_history (
 //             exemplaire_id, num_serie, prix, etat,
@@ -293,7 +292,7 @@ const exemplaire = pgTable(
 //             'UPDATE', current_user_text, NOW()
 //         );
 //         RETURN NEW;
-    
+
 //     ELSIF (TG_OP = 'INSERT') THEN
 //         INSERT INTO exemplaire_history (
 //             exemplaire_id, num_serie, prix, etat,
@@ -306,7 +305,7 @@ const exemplaire = pgTable(
 //         );
 //         RETURN NEW;
 //     END IF;
-    
+
 //     RETURN NULL;
 // END;
 // $$ LANGUAGE plpgsql;
@@ -324,8 +323,6 @@ const exemplaire = pgTable(
 // COMMENT ON TRIGGER exemplaire_changes_trigger ON exemplaire IS 'Déclencheur pour enregistrer l''historique des modifications';
 // `;
 
-
-
 // // Fonction pour définir l'utilisateur courant
 // function setCurrentUserSQL(userId) {
 //   return sql`SET app.current_user = ${userId}`;
@@ -336,7 +333,6 @@ const exemplaire = pgTable(
 //   await db.execute(sql.raw(createHistoryTriggerSQL));
 //   console.log('Trigger d\'historique pour exemplaire créé avec succès');
 // }
-
 
 // Tache
 const tache = pgTable("tache", {
