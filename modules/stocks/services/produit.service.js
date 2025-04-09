@@ -35,6 +35,8 @@ const deleteProduit = async (id) => {
     .where(eq(produit.id, id))
     .returning();
   return result;
+
+  //Ajouter la partie pour retrancher dans la quantité du produit correspondant
 };
 
 //sollicitation de  produit : un client peut faire une demande pour voir si le produit existe
@@ -45,7 +47,6 @@ const createSollicitationProduit = async (data) => {
     .returning();
   return result;
 };
-
 
 //récupérer les details d'une sollicitation
 const getDetailsSollicitationProduit = async (id) => {
@@ -87,10 +88,6 @@ const getDetailsSollicitationProduit = async (id) => {
 
 // supprimer une sollicitation
 
-
-
-
-
 module.exports = {
   createProduit,
   getProduits,
@@ -98,5 +95,5 @@ module.exports = {
   updateProduit,
   deleteProduit,
   createSollicitationProduit,
-  getDetailsSollicitationProduit
+  getDetailsSollicitationProduit,
 };

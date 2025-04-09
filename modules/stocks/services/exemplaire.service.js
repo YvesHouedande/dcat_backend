@@ -1,4 +1,4 @@
-const { eq } = require("drizzle-orm");
+const { eq, sql, and } = require("drizzle-orm");
 const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
 const {
   exemplaire,
@@ -8,7 +8,7 @@ const {
 } = require("../../../core/database/models");
 
 const createExemplaire = async (data) => {
-  const { produitId,produitCode } = data; 
+  const { produitId, produitCode } = data;
 
   // 1. Insérer l'exemplaire
   const [result] = await db.insert(exemplaire).values(data).returning();
@@ -16,12 +16,11 @@ const createExemplaire = async (data) => {
   // 2. Incrémenter la quantité du produit associé
   await db
     .update(produit)
-    .set({ quantite: db.raw('quantite + 1') }) // Incrémente la quantité de 1
-    .where(and(eq(produit.id, produitId),eq(produit.code,produitCode)));
+    .set({ quantite: sql`CAST(${produit.quantite} AS INTEGER) + 1` }) // Incrémente la quantité de 1
+    .where(and(eq(produit.id, produitId), eq(produit.code, produitCode)));
 
   return result;
 };
-
 
 const getExemplaires = async () => {
   return await db.select().from(exemplaire);
@@ -36,15 +35,83 @@ const getExemplaireById = async (id) => {
 };
 
 const updateExemplaire = async (id, data) => {
+  // 1. Récupère l'exemplaire actuel
+  const [currentExemplaire] = await db
+    .select()
+    .from(exemplaire)
+    .where(eq(exemplaire.id, id));
+
+  if (!currentExemplaire) {
+    throw new Error("Exemplaire non trouvé");
+  }
+
+  // 2. Vérifie s'il y a eu un changement de produit
+  const produitChange =
+    data.produitId &&
+    data.produitCode &&
+    (data.produitId !== currentExemplaire.produitId ||
+      data.produitCode !== currentExemplaire.produitCode);
+
+  if (produitChange) {
+    // a) Décrémenter l'ancien produit
+    await db
+      .update(produit)
+      .set({
+        quantite: sql`CAST(${produit.quantite} AS INTEGER) - 1`,
+      })
+      .where(
+        and(
+          eq(produit.id, currentExemplaire.produitId),
+          eq(produit.code, currentExemplaire.produitCode)
+        )
+      );
+
+    // b) Incrémenter le nouveau produit
+    await db
+      .update(produit)
+      .set({
+        quantite: sql`CAST(${produit.quantite} AS INTEGER) + 1`,
+      })
+      .where(
+        and(eq(produit.id, data.produitId), eq(produit.code, data.produitCode))
+      );
+  }
+
+  // 3. Mise à jour de l’exemplaire
   const [result] = await db
     .update(exemplaire)
     .set(data)
     .where(eq(exemplaire.id, id))
     .returning();
+
   return result;
 };
 
 const deleteExemplaire = async (id) => {
+  // 1. Récupérer l'exemplaire à supprimer pour obtenir produitId et produitCode
+  const [exemplaireToDelete] = await db
+    .select()
+    .from(exemplaire)
+    .where(eq(exemplaire.id, id));
+
+  if (!exemplaireToDelete) {
+    throw new Error("Exemplaire non trouvé");
+  }
+
+  // 2. Décrémenter la quantité du produit correspondant
+  await db
+    .update(produit)
+    .set({
+      quantite: sql`CAST(${produit.quantite} AS INTEGER) - 1`,
+    })
+    .where(
+      and(
+        eq(produit.id, exemplaireToDelete.produitId),
+        eq(produit.code, exemplaireToDelete.produitCode)
+      )
+    );
+
+  // 3. Supprimer l'exemplaire
   const [result] = await db
     .delete(exemplaire)
     .where(eq(exemplaire.id, id))
@@ -70,8 +137,7 @@ const getAllExemplaireProduit = async (produitId, produitCode) => {
 // [GET] /exemplaires/statut/{statut} → Filtrer les exemplaires par statut (en stock, affecté, défectueux...)
 // [DELETE] /affectation/exemplaire/{id} → Retirer un exemplaire affecté
 
-0
-
+0;
 
 //filtrer les exemplaires par etat
 const filterExemplairesByEtat = async (etat) => {
@@ -91,9 +157,6 @@ const filterExemplairesByEtat = async (etat) => {
 //   const [result] = await db.insert(exemplaireAcheter).values(data).returning()
 //   return result
 // }
-
-
-
 
 //acheter des exemplaires de produit  -> sortie de stock
 const purchaseExemplaire = async ({

@@ -40,10 +40,18 @@ const getExemplaireById = async (req, res) => {
 const updateExemplaire = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    const data = req.body;
+
+      if (!data || typeof data !== "object") {
+        throw new Error(
+          "Les données à mettre à jour sont invalides ou manquantes."
+        );
+      }
+
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    const result = await exemplaireService.updateExemplaire(id);
+    const result = await exemplaireService.updateExemplaire(id,data);
     return res.json(result);
   } catch (error) {
     res
@@ -59,7 +67,7 @@ const deleteExemplaire = async (req, res) => {
       return res.status(400).json({ error: "ID invalide" });
     }
     const result = await exemplaireService.deleteExemplaire(id);
-    return res.json(result);
+    return res.json({message:"élément supprimé avec succès"});
   } catch (error) {
     res
       .status(500)

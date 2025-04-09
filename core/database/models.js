@@ -90,7 +90,7 @@ const produit = pgTable(
     description: text("description"),
     type: varchar("type", { length: 50 }),
     image: varchar("image", { length: 255 }), // <- revoir la contrainte sur l'image
-    quantite: varchar("quantite", { length: 20 }),
+    quantite: varchar("quantite", { length: 20 }).default(0),
     modeleId: integer("modele_id")
       .notNull()
       .references(() => modele.id),

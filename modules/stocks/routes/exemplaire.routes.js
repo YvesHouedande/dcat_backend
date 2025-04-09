@@ -8,7 +8,7 @@ router.get("/", controller.getExemplaires);
 router.get("/:id", controller.getExemplaireById);
 router.put("/:id", controller.updateExemplaire);
 router.delete("/:id", controller.deleteExemplaire);
-router.delete("/produit/:id/:code", controller.getAllExemplaireProduit); // id et code forme la clé étrangère composée
+router.get("/produit/:id/:code", controller.getAllExemplaireProduit); // id et code forme la clé étrangère composée
 router.post("/purchase/:exemplaireId/:partenaireId", controller.purchaseExemplaire); //achat d'un exemplaire
 router.post("/affectation/:exemplaireId/:projetId/:employeId", controller.assignExemplaire); // Affecter un exemplaire à un employé pour un projet
 
