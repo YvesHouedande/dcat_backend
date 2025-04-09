@@ -1,12 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const controller = require("../controllers/partenaire.controller");
-
+const entiteRoutes = require("./entity.route");
+const partnerRoutes = require("./partner.route");
+const demandRoutes = require("./demand.route");
 // CRUD Routes
-router.post("/", controller.createPartenaire);
-router.get("/", controller.getPartenaires);
-router.get("/:id", controller.getPartenaireById);
-router.put("/:id", controller.updatePartenaire);
-router.delete("/:id", controller.deletePartenaire);
+router.use("/entites", entiteRoutes);
+router.use("/partners", partnerRoutes);
+router.use("/demandes", demandRoutes);
 
 module.exports = router;
