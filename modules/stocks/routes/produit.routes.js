@@ -14,7 +14,7 @@ router.post(
   controller.createSollicitationProduit
 );
 
-router.get("/sollicitation/details/:id", controller.getSollicitationProduit);
+router.get("/sollicitation/details/:id", controller.getDetailsSollicitationProduit);
 
 
 module.exports = router;

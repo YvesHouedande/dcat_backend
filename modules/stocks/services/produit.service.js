@@ -4,7 +4,6 @@ const {
   produit,
   sollicitationProduits,
   partenaire,
-  produit,
 } = require("../../../core/database/models");
 
 const createProduit = async (data) => {
