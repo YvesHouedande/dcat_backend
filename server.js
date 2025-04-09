@@ -6,6 +6,7 @@ const { initKeycloak, protect } = require('./core/auth/middleware');
 const logger = require('./core/utils/logger');
 
 
+
 require('dotenv').config();
 
 const backendSoro = require('./modules/flutter_backend/routes/index_routes');
@@ -38,7 +39,8 @@ function loadModule(moduleName) {
 // Chargement des modules
 app.use('/api/stocks', loadModule('stocks'));
 app.use('/api/users', loadModule('users'));
-app.use('/api/partner', loadModule('administration'));
+app.use('/api/administration', loadModule('administration'));
+
 
 
 // CHARGEMENT DES ROUTES DES PROJETS ET INTERVENTIONS
