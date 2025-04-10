@@ -88,9 +88,10 @@ const produit = pgTable(
     code: varchar("code", { length: 50 }).notNull(),
     nom: varchar("nom", { length: 100 }),
     description: text("description"),
-    type: varchar("type", { length: 50 }),
+    type: varchar("type", { length: 50 }), // Outils : materiel utilisé pour travailler || Equipements : materiel à commercialiser (en vente propre || placement sur un chantier)
     image: varchar("image", { length: 255 }), // <- revoir la contrainte sur l'image
     quantite: varchar("quantite", { length: 20 }).default(0),
+    emplacement: text("emplacement"), //le gestionnaire de stock de DCAT range les produits selon un emplacement Ex : Deva-> Salle technique 2eme tiroir à gauche
     modeleId: integer("modele_id")
       .notNull()
       .references(() => modele.id),
@@ -220,7 +221,7 @@ const exemplaire = pgTable(
     id: serial("id").primaryKey(),
     numSerie: varchar("num_serie", { length: 100 }),
     prix: varchar("prix", { length: 50 }),
-    etat: varchar("etat", { length: 20 }), // "disponible", "vendu", "reserve", "en maintenance", "retire de la vente", "endommage", "en projet"
+    etat: varchar("etat", { length: 50 }), // "disponible", "vendu", "reserve", "en maintenance", "retire de la vente", "endommage", "en projet"
     livraisonId: integer("livraison_id")
       .notNull()
       .references(() => livraison.id),

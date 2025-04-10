@@ -86,7 +86,12 @@ const getDetailsSollicitationProduit = async (id) => {
     .where(eq(sollicitationProduits.sollicitationProduits, id));
 };
 
-// supprimer une sollicitation
+/* 
+  A Implémenter**************
+
+  -supprimer une sollicitation
+  -Faire une séparation entre les outils et les équipements (les 2 types de produits)
+*/
 
 module.exports = {
   createProduit,

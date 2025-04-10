@@ -1,5 +1,13 @@
 const produitService = require("../services/produit.service");
 
+
+/* 
+  A Implémenter**************
+
+  -supprimer une sollicitation
+  -Faire une séparation entre les outils et les équipements (les 2 types de produits)
+*/
+
 const createProduit = async (req, res) => {
   try {
     const result = await produitService.createProduit(req.body);
