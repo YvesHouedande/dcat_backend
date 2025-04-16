@@ -10,6 +10,9 @@ const {
 const createExemplaire = async (data) => {
   const { produitId, produitCode } = data;
 
+
+  
+
   // 1. Insérer l'exemplaire
   const [result] = await db.insert(exemplaire).values(data).returning();
 

@@ -1,504 +1,328 @@
-const { text } = require("drizzle-orm/gel-core");
-const {
-  pgTable,
-  serial,
-  varchar,
-  integer,
-  primaryKey,
-  foreignKey,
-  timestamp,
-} = require("drizzle-orm/pg-core");
-const { sql } = require("drizzle-orm");
+const { pgTable, serial, varchar, integer, date, timestamp, decimal, boolean, text, primaryKey, foreignKey } = require("drizzle-orm/pg-core");
 
-// Famille
-const famille = pgTable("famille", {
-  id: serial("id").primaryKey(),
-  libelle: varchar("libelle", { length: 100 }),
+
+
+// Familles
+const familles = pgTable('familles', {
+  id_famille: serial('id_famille').primaryKey(),
+  libelle_famille: varchar('libelle_famille', { length: 50 }),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
-// Categorie
-const categorie = pgTable("categorie", {
-  id: serial("id").primaryKey(),
-  libelle: varchar("libelle", { length: 100 }),
+// Modeles
+const modeles = pgTable('modeles', {
+  id_modele: serial('id_modele').primaryKey(),
+  libelle_modele: varchar('libelle_modele', { length: 50 }),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
-// Modele
-const modele = pgTable("modele", {
-  id: serial("id").primaryKey(),
-  libelle: varchar("libelle", { length: 100 }),
+// Marques
+const marques = pgTable('marques', {
+  id_marque: serial('id_marque').primaryKey(),
+  libelle_marque: varchar('libelle_marque', { length: 50 }),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
-// Marque
-const marque = pgTable("marque", {
-  id: serial("id").primaryKey(),
-  libelle: varchar("libelle", { length: 100 }),
+// Fonctions
+const fonctions = pgTable('fonctions', {
+  id_fonction: serial('id_fonction').primaryKey(),
+  nom_fonction: varchar('nom_fonction', { length: 50 }),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
-// Fonction
-const fonction = pgTable("fonction", {
-  id: serial("id").primaryKey(),
-  nom: varchar("nom", { length: 50 }).unique(),
+// Employes (gardé au pluriel car déjà correct)
+const employes = pgTable('employes', {
+  id_employes: serial('id_employes').primaryKey(),
+  nom_employes: varchar('nom_employes', { length: 50 }),
+  prenom_employes: varchar('prenom_employes', { length: 50 }),
+  email_employes: varchar('email_employes', { length: 50 }),
+  contact_employes: varchar('contact_employes', { length: 50 }),
+  adresse_employes: varchar('adresse_employes', { length: 50 }),
+  status_employes: varchar('status_employes', { length: 50 }),
+  missions_employes: varchar('missions_employes', { length: 50 }),
+  date_embauche_employes: date('date_embauche_employes'),
+  mot_de_passe_employes: varchar('mot_de_passe_employes', { length: 50 }),
+  id_fonction: integer('id_fonction').notNull().references(() => fonctions.id_fonction),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
-// Employes
-const employes = pgTable("employes", {
-  id: serial("id").primaryKey(),
-  nom: varchar("nom", { length: 50 }),
-  keycloak_id: varchar("keycloak_id", { length: 36 }).unique().notNull(),
-  prenom: varchar("prenom", { length: 50 }),
-  email: varchar("email", { length: 100 }),
-  contact: varchar("contact", { length: 20 }),
-  adresse: varchar("adresse", { length: 200 }),
-  status: varchar("status", { length: 50 }),
-  fonctionId: integer("fonction_id")
-    .notNull()
-    .references(() => fonction.id),
+// Demandes
+const demandes = pgTable('demandes', {
+  id_demande: serial('id_demande').primaryKey(),
+  date_debut_demande: timestamp('date_debut_demande'),
+  status_demande: varchar('status_demande', { length: 50 }),
+  date_fin_demande: timestamp('date_fin_demande'),
+  motif_demande: varchar('motif_demande', { length: 50 }),
+  type_demande: varchar('type_demande', { length: 50 }),
+  duree_demande: varchar('duree_demande', { length: 50 }),
+  id_employes: integer('id_employes').notNull().references(() => employes.id_employes),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
-// Demande
-const demande = pgTable("demande", {
-  id: serial("id").primaryKey(),
-  dateDebut: varchar("date_debut", { length: 25 }),
-  status: varchar("status", { length: 20 }),
-  dateFin: varchar("date_fin", { length: 25 }),
-  motif: varchar("motif", { length: 200 }),
-  type: varchar("type", { length: 50 }),
-  employeId: integer("employe_id")
-    .notNull()
-    .references(() => employes.id),
+// Type_docs
+const type_docs = pgTable('type_docs', {
+  id_typedoc: serial('id_typedoc').primaryKey(),
+  libelle_typedoc: varchar('libelle_typedoc', { length: 50 }),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
-// TypeDoc
-const typeDoc = pgTable("type_doc", {
-  id: serial("id").primaryKey(),
-  libelle: varchar("libelle", { length: 100 }),
+// Clients_en_ligne
+const clients_en_ligne = pgTable('clients_en_ligne', {
+  id_client: serial('id_client').primaryKey(),
+  nom_client: varchar('nom_client', { length: 50 }),
+  email_client: varchar('email_client', { length: 50 }),
+  password_client: varchar('password_client', { length: 50 }),
+  contact_client: varchar('contact_client', { length: 50 }),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
-// Entité
-const entite = pgTable("entite", {
-  id: serial("id").primaryKey(),
-  libelle: varchar("libelle", { length: 100 }),
+// Entites
+const entites = pgTable('entites', {
+  id_entite: serial('id_entite').primaryKey(),
+  libelle_entite: varchar('libelle_entite', { length: 50 }),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
-// Produit (avec clé primaire composée id + code)
-const produit = pgTable(
-  "produit",
-  {
-    id: serial("id").notNull(),
-    code: varchar("code", { length: 50 }).notNull(),
-    nom: varchar("nom", { length: 100 }),
-    description: text("description"),
-    type: varchar("type", { length: 50 }), // Outils : materiel utilisé pour travailler || Equipements : materiel à commercialiser (en vente propre || placement sur un chantier)
-    image: varchar("image", { length: 255 }), // <- revoir la contrainte sur l'image
-    quantite: varchar("quantite", { length: 20 }).default(0),
-    emplacement: text("emplacement"), //le gestionnaire de stock de DCAT range les produits selon un emplacement Ex : Deva-> Salle technique 2eme tiroir à gauche
-    modeleId: integer("modele_id")
-      .notNull()
-      .references(() => modele.id),
-    categorieId: integer("categorie_id")
-      .notNull()
-      .references(() => categorie.id),
-    familleId: integer("famille_id")
-      .notNull()
-      .references(() => famille.id),
-    marqueId: integer("marque_id")
-      .notNull()
-      .references(() => marque.id),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.id, table.code] }),
-  })
-);
-
-// Partenaire
-const partenaire = pgTable("partenaire", {
-  id: serial("id").primaryKey(),
-  nom: varchar("nom", { length: 100 }),
-  telephone: varchar("telephone", { length: 20 }),
-  email: varchar("email", { length: 100 }).unique(),
-  specialite: varchar("specialite", { length: 100 }),
-  localisation: varchar("localisation", { length: 200 }),
-  type: varchar("type", { length: 50 }),
-  entiteId: integer("entite_id")
-    .notNull()
-    .references(() => entite.id),
+// Partenaires
+const partenaires = pgTable('partenaires', {
+  id_partenaire: serial('id_partenaire').primaryKey(),
+  nom_partenaire: varchar('nom_partenaire', { length: 50 }),
+  telephone_partenaire: varchar('telephone_partenaire', { length: 50 }),
+  email_partenaire: varchar('email_partenaire', { length: 50 }),
+  specialite_partenaire: varchar('specialite_partenaire', { length: 50 }),
+  localisation_partenaire: varchar('localisation_partenaire', { length: 50 }),
+  type_partenaire: varchar('type_partenaire', { length: 50 }),
+  id_entite: integer('id_entite').references(() => entites.id_entite),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
-// Contrat
-const contrat = pgTable("contrat", {
-  id: serial("id").primaryKey(),
-  nom: varchar("nom", { length: 100 }),
-  duree: varchar("duree", { length: 50 }),
-  dateDebut: varchar("date_debut", { length: 25 }),
-  dateFin: varchar("date_fin", { length: 25 }),
-  type: varchar("type", { length: 50 }),
-  partenaireId: integer("partenaire_id")
-    .notNull()
-    .references(() => partenaire.id),
+// Commandes
+const commandes = pgTable('commandes', {
+  id_commande: serial('id_commande').primaryKey(),
+  date_commande: date('date_commande'),
+  etat_commande: varchar('etat_commande', { length: 50 }),
+  date_livraison_commande: date('date_livraison_commande'),
+  lieu_livraison_commande: varchar('lieu_livraison_commande', { length: 50 }),
+  id_client: integer('id_client').references(() => clients_en_ligne.id_client),
+  id_partenaire: integer('id_partenaire').references(() => partenaires.id_partenaire),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+});
+
+// Type_produits
+const type_produits = pgTable('type_produits', {
+  id_type_produit: serial('id_type_produit').primaryKey(),
+  libelle_type_produit: varchar('libelle_type_produit', { length: 50 }),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+});
+
+// Prestations
+const prestations = pgTable('prestations', {
+  id_prestation: serial('id_prestation').primaryKey(),
+  date_prestation: timestamp('date_prestation'),
+  type_prestation: varchar('type_prestation', { length: 50 }),
+  description_prestation: text('description_prestation'),
+  responsable_prestation: varchar('responsable_prestation', { length: 50 }),
+  pieces_prestation: varchar('pieces_prestation', { length: 50 }),
+  cout_prestation: decimal('cout_prestation', { precision: 10, scale: 2 }),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+});
+
+// Produits
+const produits = pgTable('produits', {
+  id_produit: serial('id_produit').primaryKey(),
+  code_produit: varchar('code_produit', { length: 50 }),
+  designation_produit: varchar('designation_produit', { length: 50 }),
+  description_produit: text('description_produit'),
+  image_produit: varchar('image_produit', { length: 50 }),
+  quantite_produit: integer('quantite_produit'),
+  emplacement_produit: varchar('emplacement_produit', { length: 50 }),
+  id_type_produit: integer('id_type_produit').references(() => type_produits.id_type_produit),
+  id_modele: integer('id_modele').references(() => modeles.id_modele),
+  id_famille: integer('id_famille').references(() => familles.id_famille),
+  id_marque: integer('id_marque').references(() => marques.id_marque),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+});
+
+// Contrats
+const contrats = pgTable('contrats', {
+  id_contrat: serial('id_contrat').primaryKey(),
+  nom_contrat: varchar('nom_contrat', { length: 50 }),
+  duree_contrat: varchar('duree_contrat', { length: 50 }),
+  date_debut_contrat: date('date_debut_contrat'),
+  date_fin_contrat: date('date_fin_contrat'),
+  reference_contrat: varchar('reference_contrat', { length: 50 }),
+  type_contrat: varchar('type_contrat', { length: 50 }),
+  statut_contrat: varchar('statut_contrat', { length: 50 }),
+  id_partenaire: integer('id_partenaire').notNull().references(() => partenaires.id_partenaire),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+});
+
+// Projets
+const projets = pgTable('projets', {
+  id_projet: serial('id_projet').primaryKey(),
+  nom_projet: varchar('nom_projet', { length: 50 }),
+  type_projet: varchar('type_projet', { length: 50 }),
+  devis_projet: decimal('devis_projet', { precision: 10, scale: 2 }),
+  date_debut_projet: date('date_debut_projet'),
+  date_fin_projet: date('date_fin_projet'),
+  duree_projet: varchar('duree_projet', { length: 50 }),
+  description_projet: text('description_projet'),
+  etat_projet: varchar('etat_projet', { length: 50 }),
+  lieu_projet: varchar('lieu_projet', { length: 50 }),
+  id_partenaire: integer('id_partenaire').notNull().references(() => partenaires.id_partenaire),
+  id_famille: integer('id_famille').notNull().references(() => familles.id_famille),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+});
+
+// Livraisons
+const livraisons = pgTable('livraisons', {
+  id_livraison: serial('id_livraison').primaryKey(),
+  frais_livraison: decimal('frais_livraison', { precision: 10, scale: 2 }),
+  periode_livraison: varchar('periode_livraison', { length: 50 }),
+  prix_achat_livraison: decimal('prix_achat_livraison', { precision: 10, scale: 2 }),
+  dedouanement_livraison: decimal('dedouanement_livraison', { precision: 10, scale: 2 }),
+  transport_livraison: decimal('transport_livraison', { precision: 10, scale: 2 }),
+  date_livraison: date('date_livraison'),
+  quantite_livraison: integer('quantite_livraison'),
+  id_partenaire: integer('id_partenaire').notNull().references(() => partenaires.id_partenaire),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
 // Documents
-const documents = pgTable("documents", {
-  id: serial("id").primaryKey(),
-  titre: varchar("titre", { length: 200 }),
-  fichier: varchar("fichier", { length: 255 }),
-  dateAjout: varchar("date_ajout", { length: 25 }),
-  employeId: integer("employe_id").references(() => employes.id),
-  typeDocId: integer("type_doc_id")
-    .notNull()
-    .references(() => typeDoc.id),
-  demandeId: integer("demande_id").references(() => demande.id),
-  contratId: integer("contrat_id").references(() => contrat.id),
+const documents = pgTable('documents', {
+  id_document: serial('id_document').primaryKey(),
+  titre_document: varchar('titre_document', { length: 50 }),
+  fichier_document: varchar('fichier_document', { length: 50 }),
+  date_document: timestamp('date_document'),
+  id_demande: integer('id_demande').references(() => demandes.id_demande),
+  id_contrat: integer('id_contrat').references(() => contrats.id_contrat),
+  id_employes: integer('id_employes').references(() => employes.id_employes),
+  id_typedoc: integer('id_typedoc').notNull().references(() => type_docs.id_typedoc),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
-// Intervention
-const intervention = pgTable("intervention", {
-  id: serial("id").primaryKey(),
-  date: varchar("date", { length: 25 }),
-  causeDefaillance: varchar("cause_defaillance", { length: 100 }),
-  rapport: varchar("rapport", { length: 255 }),
-  typeMaintenance: varchar("type_maintenance", { length: 50 }),
-  typeDefaillance: varchar("type_defaillance", { length: 50 }),
-  superviseur: varchar("superviseur", { length: 100 }),
-  duree: varchar("duree", { length: 20 }),
-  numero: varchar("numero", { length: 50 }),
-  lieu: varchar("lieu", { length: 100 }),
-  contratId: integer("contrat_id")
-    .notNull()
-    .references(() => contrat.id),
+// Interventions
+const interventions = pgTable('interventions', {
+  id_intervention: serial('id_intervention').primaryKey(),
+  date_intervention: date('date_intervention'),
+  cause_intervention: varchar('cause_intervention', { length: 50 }),
+  rapport_intervention: varchar('rapport_intervention', { length: 50 }),
+  type_intervention: varchar('type_intervention', { length: 50 }),
+  defaillance_intervention: varchar('defaillance_intervention', { length: 50 }),
+  superviseur_intervention: varchar('superviseur_intervention', { length: 50 }),
+  duree_intervention: varchar('duree_intervention', { length: 50 }),
+  numero_intervention: varchar('numero_intervention', { length: 50 }),
+  lieu_intervention: varchar('lieu_intervention', { length: 50 }),
+  statut_intervention: varchar('statut_intervention', { length: 50 }),
+  id_contrat: integer('id_contrat').notNull().references(() => contrats.id_contrat),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
-// Projet
-const projet = pgTable("projet", {
-  id: serial("id").primaryKey(),
-  nom: varchar("nom", { length: 100 }),
-  type: varchar("type", { length: 50 }),
-  devis: varchar("devis", { length: 50 }),
-  dateDebut: varchar("date_debut", { length: 25 }),
-  dateFin: varchar("date_fin", { length: 25 }),
-  duree: varchar("duree", { length: 50 }),
-  description: varchar("description", { length: 1000 }),
-  etat: varchar("etat", { length: 20 }),
-  partenaireId: integer("partenaire_id")
-    .notNull()
-    .references(() => partenaire.id),
-  familleId: integer("famille_id")
-    .notNull()
-    .references(() => famille.id),
+// Taches
+const taches = pgTable('taches', {
+  id_tache: serial('id_tache').primaryKey(),
+  nom_tache: varchar('nom_tache', { length: 50 }),
+  description_tache: text('description_tache'),
+  statut_tache: varchar('statut_tache', { length: 50 }),
+  date_debut_tache: date('date_debut_tache'),
+  date_fin_tache: date('date_fin_tache'),
+  responsable_tache: varchar('responsable_tache', { length: 50 }),
+  priorite_tache: varchar('priorite_tache', { length: 50 }),
+  id_projet: integer('id_projet').notNull().references(() => projets.id_projet),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
-// Livraison
-const livraison = pgTable("livraison", {
-  id: serial("id").primaryKey(),
-  autresFrais: varchar("autres_frais", { length: 50 }),
-  periodeAchat: varchar("periode_achat", { length: 50 }),
-  prixAchat: varchar("prix_achat", { length: 50 }),
-  dedouanement: varchar("dedouanement", { length: 50 }),
-  prixTransport: varchar("prix_transport", { length: 50 }),
-  dateLivraison: varchar("date_livraison", { length: 25 }),
-  quantite: varchar("quantite", { length: 20 }),
-  partenaireId: integer("partenaire_id")
-    .notNull()
-    .references(() => partenaire.id),
+// Exemplaires
+const exemplaires = pgTable('exemplaires', {
+  id_exemplaire: serial('id_exemplaire').primaryKey(),
+  numero_serie: varchar('numero_serie', { length: 50 }),
+  prix_exemplaire: decimal('prix_exemplaire', { precision: 10, scale: 2 }),
+  etat_exemplaire: varchar('etat_exemplaire', { length: 50 }),
+  id_commande: integer('id_commande').references(() => commandes.id_commande),
+  id_livraison: integer('id_livraison').notNull().references(() => livraisons.id_livraison),
+  id_produit: integer('id_produit').notNull().references(() => produits.id_produit),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
-// Mission
-const mission = pgTable("mission", {
-  id: serial("id").primaryKey(),
-  nom: varchar("nom", { length: 100 }),
-  description: text("description"),
-  statut: varchar("statut", { length: 20 }),
-  lieu: varchar("lieu", { length: 200 }),
-  projetId: integer("projet_id")
-    .notNull()
-    .references(() => projet.id),
-});
+// Tables d'association
 
-// Exemplaire
-const exemplaire = pgTable(
-  "exemplaire",
-  {
-    id: serial("id").primaryKey(),
-    numSerie: varchar("num_serie", { length: 100 }),
-    prix: varchar("prix", { length: 50 }),
-    etat: varchar("etat", { length: 50 }), // "disponible", "vendu", "reserve", "en maintenance", "retire de la vente", "endommage", "en projet"
-    livraisonId: integer("livraison_id")
-      .notNull()
-      .references(() => livraison.id),
-    produitId: integer("produit_id").notNull(),
-    produitCode: varchar("produit_code", { length: 50 }).notNull(),
-  },
-  (table) => ({
-    fk: foreignKey({
-      columns: [table.produitId, table.produitCode],
-      foreignColumns: [produit.id, produit.code],
-    }),
-  })
-);
+const intervention_employes = pgTable('intervention_employes', {
+  id_employes: integer('id_employes').notNull().references(() => employes.id_employes),
+  id_intervention: integer('id_intervention').notNull().references(() => interventions.id_intervention),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.id_employes, table.id_intervention] }),
+}));
 
-// // Table d'historique des exemplaires
-// const exemplaireHistory = pgTable('exemplaire_history', {
-//   id: serial('id').primaryKey(),
-//   exemplaireId: integer('exemplaire_id').notNull(),
-//   numSerie: varchar('num_serie', { length: 100 }),
-//   prix: varchar('prix', { length: 50 }),
-//   etat: varchar('etat', { length: 20 }),
-//   livraisonId: integer('livraison_id').notNull(),
-//   produitId: integer('produit_id').notNull(),
-//   produitCode: varchar('produit_code', { length: 50 }).notNull(),
-//   changedAt: timestamp('changed_at', { withTimezone: true }).defaultNow(),
-//   operation: varchar('operation', { length: 10 }).notNull(),
-//   changedBy: varchar('changed_by', { length: 100 }), // Optionnel
-// });
+const usage_exemplaires = pgTable('usage_exemplaires', {
+  id_exemplaire: integer('id_exemplaire').notNull().references(() => exemplaires.id_exemplaire),
+  id_employes: integer('id_employes').notNull().references(() => employes.id_employes),
+  etat_avant_usage: varchar('etat_avant_usage', { length: 50 }),
+  etat_apres_usage: varchar('etat_apres_usage', { length: 50 }),
+  date_sortie_usage: date('date_sortie_usage'),
+  date_retour_usage: date('date_retour_usage'),
+  site_usage: varchar('site_usage', { length: 50 }),
+  motif_usage: varchar('motif_usage', { length: 50 }),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.id_exemplaire, table.id_employes] }),
+}));
 
-// // Script SQL pour créer le trigger
-// const createHistoryTriggerSQL = `
-// -- Supprime la fonction existante pour éviter les conflits
-// DROP FUNCTION IF EXISTS log_exemplaire_changes() CASCADE;
+const prestation_employes = pgTable('prestation_employes', {
+  id_employes: integer('id_employes').notNull().references(() => employes.id_employes),
+  id_prestation: integer('id_prestation').notNull().references(() => prestations.id_prestation),
+  created_at: timestamp('created_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.id_employes, table.id_prestation] }),
+}));
 
-// -- Crée la fonction de trigger
-// CREATE OR REPLACE FUNCTION log_exemplaire_changes()
-// RETURNS TRIGGER AS $$
-// DECLARE
-//     current_user_text TEXT := NULL;
-// BEGIN
-//     -- Essaie de récupérer l'utilisateur courant (sans erreur si non défini)
-//     BEGIN
-//         current_user_text := current_setting('app.current_user', true);
-//     EXCEPTION WHEN OTHERS THEN
-//         current_user_text := NULL;
-//     END;
-
-//     -- Gestion des différentes opérations
-//     IF (TG_OP = 'DELETE') THEN
-//         INSERT INTO exemplaire_history (
-//             exemplaire_id, num_serie, prix, etat,
-//             livraison_id, produit_id, produit_code,
-//             operation, changed_by, changed_at
-//         ) VALUES (
-//             OLD.id, OLD.num_serie, OLD.prix, OLD.etat,
-//             OLD.livraison_id, OLD.produit_id, OLD.produit_code,
-//             'DELETE', current_user_text, NOW()
-//         );
-//         RETURN OLD;
-
-//     ELSIF (TG_OP = 'UPDATE') THEN
-//         INSERT INTO exemplaire_history (
-//             exemplaire_id, num_serie, prix, etat,
-//             livraison_id, produit_id, produit_code,
-//             operation, changed_by, changed_at
-//         ) VALUES (
-//             NEW.id, NEW.num_serie, NEW.prix, NEW.etat,
-//             NEW.livraison_id, NEW.produit_id, NEW.produit_code,
-//             'UPDATE', current_user_text, NOW()
-//         );
-//         RETURN NEW;
-
-//     ELSIF (TG_OP = 'INSERT') THEN
-//         INSERT INTO exemplaire_history (
-//             exemplaire_id, num_serie, prix, etat,
-//             livraison_id, produit_id, produit_code,
-//             operation, changed_by, changed_at
-//         ) VALUES (
-//             NEW.id, NEW.num_serie, NEW.prix, NEW.etat,
-//             NEW.livraison_id, NEW.produit_id, NEW.produit_code,
-//             'INSERT', current_user_text, NOW()
-//         );
-//         RETURN NEW;
-//     END IF;
-
-//     RETURN NULL;
-// END;
-// $$ LANGUAGE plpgsql;
-
-// -- Supprime le trigger existant s'il existe
-// DROP TRIGGER IF EXISTS exemplaire_changes_trigger ON exemplaire;
-
-// -- Crée le trigger
-// CREATE TRIGGER exemplaire_changes_trigger
-// AFTER INSERT OR UPDATE OR DELETE ON exemplaire
-// FOR EACH ROW EXECUTE FUNCTION log_exemplaire_changes();
-
-// -- Commentaire pour documentation
-// COMMENT ON FUNCTION log_exemplaire_changes() IS 'Trigger pour historiser les changements dans la table exemplaire';
-// COMMENT ON TRIGGER exemplaire_changes_trigger ON exemplaire IS 'Déclencheur pour enregistrer l''historique des modifications';
-// `;
-
-// // Fonction pour définir l'utilisateur courant
-// function setCurrentUserSQL(userId) {
-//   return sql`SET app.current_user = ${userId}`;
-// }
-
-// // Fonction pour initialiser le système d'historique
-// async function initializeHistorySystem(db) {
-//   await db.execute(sql.raw(createHistoryTriggerSQL));
-//   console.log('Trigger d\'historique pour exemplaire créé avec succès');
-// }
-
-// Tache
-const tache = pgTable("tache", {
-  id: serial("id").primaryKey(),
-  nom: varchar("nom", { length: 100 }),
-  description: text("description"),
-  statut: varchar("statut", { length: 20 }),
-  dateDebut: varchar("date_debut", { length: 25 }),
-  dateFin: varchar("date_fin", { length: 25 }),
-  responsable: varchar("responsable", { length: 100 }),
-  missionId: integer("mission_id")
-    .notNull()
-    .references(() => mission.id),
-});
-
-// Tables de liaison
-const projetExemplaireEmployes = pgTable(
-  "projet_exemplaire_employes",
-  {
-    exemplaireId: integer("exemplaire_id")
-      .notNull()
-      .references(() => exemplaire.id),
-    projetId: integer("projet_id")
-      .notNull()
-      .references(() => projet.id),
-    employeId: integer("employe_id")
-      .notNull()
-      .references(() => employes.id),
-    dateUtilisation: varchar("date_utilisation", { length: 25 }),
-    dateFin: varchar("date_fin", { length: 25 }),
-    dateDebut: varchar("date_debut", { length: 25 }),
-  },
-  (table) => ({
-    pk: primaryKey({
-      columns: [table.exemplaireId, table.projetId, table.employeId],
-    }),
-  })
-);
-
-const exemplaireAcheter = pgTable(
-  "exemplaire_acheter",
-  {
-    exemplaireId: integer("exemplaire_id")
-      .notNull()
-      .references(() => exemplaire.id),
-    partenaireId: integer("partenaire_id")
-      .notNull()
-      .references(() => partenaire.id),
-    lieuLivraison: varchar("lieu_livraison", { length: 200 }),
-    dateAchat: varchar("date_achat", { length: 25 }),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.exemplaireId, table.partenaireId] }),
-  })
-);
-
-const missionEmployes = pgTable(
-  "mission_employes",
-  {
-    employeId: integer("employe_id")
-      .notNull()
-      .references(() => employes.id),
-    missionId: integer("mission_id")
-      .notNull()
-      .references(() => mission.id),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.employeId, table.missionId] }),
-  })
-);
-
-const interventionProduit = pgTable(
-  "Intervention_Produits",
-  {
-    exemplaireId: integer("exemplaire_id")
-      .notNull()
-      .references(() => exemplaire.id),
-    interventionId: integer("intervention_id")
-      .notNull()
-      .references(() => intervention.id),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.exemplaireId, table.interventionId] }),
-  })
-);
-
-const interventionEmploye = pgTable(
-  "Intervention_enployer",
-  {
-    employeId: integer("employe_id")
-      .notNull()
-      .references(() => employes.id),
-    interventionId: integer("intervention_id")
-      .notNull()
-      .references(() => intervention.id),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.employeId, table.interventionId] }),
-  })
-);
-
-const sollicitationProduits = pgTable(
-  "Sollicitation_Produits",
-  {
-    produitId: integer("produit_id").notNull(),
-    produitCode: varchar("produit_code", { length: 50 }).notNull(),
-    partenaireId: integer("partenaire_id")
-      .notNull()
-      .references(() => partenaire.id),
-    etat: varchar("etat", { length: 20 }),
-    description: text("description"),
-  },
-  (table) => ({
-    pk: primaryKey({
-      columns: [table.produitId, table.produitCode, table.partenaireId],
-    }),
-    fk: foreignKey({
-      columns: [table.produitId, table.produitCode],
-      foreignColumns: [produit.id, produit.code],
-    }),
-  })
-);
-
-const sollicitationInterventions = pgTable(
-  "Sollicitation_Interventions",
-  {
-    partenaireId: integer("partenaire_id")
-      .notNull()
-      .references(() => partenaire.id),
-    interventionId: integer("intervention_id")
-      .notNull()
-      .references(() => intervention.id),
-    etat: varchar("etat", { length: 20 }),
-    description: text("description"),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.partenaireId, table.interventionId] }),
-  })
-);
-
-module.exports = {
-  famille,
-  categorie,
-  modele,
-  marque,
-  fonction,
+module.exports= {
+  familles,
+  modeles,
+  marques,
+  fonctions,
   employes,
-  demande,
-  typeDoc,
-  entite,
-  produit,
+  demandes,
+  type_docs,
+  clients_en_ligne,
+  entites,
+  partenaires,
+  commandes,
+  type_produits,
+  prestations,
+  produits,
+  contrats,
+  projets,
+  livraisons,
   documents,
-  partenaire,
-  contrat,
-  intervention,
-  projet,
-  livraison,
-  mission,
-  exemplaire,
-  tache,
-  projetExemplaireEmployes,
-  exemplaireAcheter,
-  missionEmployes,
-  interventionProduit,
-  interventionEmploye,
-  sollicitationProduits,
-  sollicitationInterventions,
+  interventions,
+  taches,
+  exemplaires,
+  intervention_employes,
+  usage_exemplaires,
+  prestation_employes
 };

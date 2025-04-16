@@ -12,7 +12,7 @@ const createProduit = async (data) => {
 };
 
 const getProduits = async () => {
-  return await db.select().from(produit);
+  return await db.select().from(produit).where(eq(produit.supprime, false)); // exclure les produits supprimé
 };
 
 const getProduitById = async (id) => {
@@ -30,13 +30,17 @@ const updateProduit = async (id, data) => {
 };
 
 const deleteProduit = async (id) => {
+  // const [result] = await db
+  //   .delete(produit)
+  //   .where(eq(produit.id, id))
+  //   .returning();
+
   const [result] = await db
-    .delete(produit)
+    .update(produit)
+    .set({ supprime: true })
     .where(eq(produit.id, id))
     .returning();
   return result;
-
-  //Ajouter la partie pour retrancher dans la quantité du produit correspondant
 };
 
 //sollicitation de  produit : un client peut faire une demande pour voir si le produit existe
