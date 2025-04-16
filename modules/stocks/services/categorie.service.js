@@ -1,6 +1,6 @@
 const { eq } = require("drizzle-orm");
 const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
-const { categorie } = require("../../../core/database/models");
+const { categorie,famille,produit } = require("../../../core/database/models");
 
 const createCategorie=async(data)=>{
     const [result]=await db.insert(categorie).values(data).returning()
@@ -28,12 +28,23 @@ const deleteCategorie=async(id)=>{
 }
 
 //recupérer tout les produits d'une catégorie
-// const getAllCategorieProduit=
+const getAllCategorieProduit=async(id)=>{
+    const [result]=await db.select().from(produit).where(eq(produit.id,id))
+    return result
+}
+//recupérer toutes les familles d'une catégorie
+const getAllCategorieFamille=async(id)=>{
+    const [result]=await db.select().from(famille).where(eq(famille.id,id))
+    return result
+}
+
 
 module.exports={
     createCategorie,
     getCategories, 
     getCategorieById,
     updateCategorie,
-    deleteCategorie
+    deleteCategorie,
+    getAllCategorieProduit,
+    getAllCategorieFamille
 }

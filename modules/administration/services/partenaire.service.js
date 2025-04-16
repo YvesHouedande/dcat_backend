@@ -1,5 +1,5 @@
 const { eq } = require("drizzle-orm");
-const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
+const {db} = require('../../../core/database/config')
 const { partenaire } = require("../../../core/database/models");
 
 const createPartenaire=async(data)=>{

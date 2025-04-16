@@ -3,9 +3,7 @@ const livraisonService = require("../services/livraison.service");
 // CREATE
 const createLivraison = async (req, res) => {
   try {
-    if (!req.body.libelle) {
-      return res.status(400).json({ error: "Le libellé est requis" });
-    }
+
     const result = await livraisonService.createLivraison(req.body);
     res.status(201).json(result);
   } catch (error) {
@@ -28,6 +26,8 @@ const getLivraisons = async (req, res) => {
     });
   }
 };
+
+
 
 // READ ONE
 const getLivraisonById = async (req, res) => {
@@ -90,3 +90,4 @@ module.exports = {
   updateLivraison,
   deleteLivraison
 };
+
