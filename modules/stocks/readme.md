@@ -18,49 +18,52 @@ error: password authentication failed for user "dcat_user"
 ```
 
 ### Solution :
+
 Assurez-vous que les fichiers suivants utilisent bien le format de fin de ligne `LF` et non `CRLF` :
+
 - `init-db/init-multiple-dbs.sh`
 - `.env`
 
 Pour convertir ces fichiers sous Linux/macOS :
+
 ```sh
 dos2unix init-db/init-multiple-dbs.sh .env
 ```
 
 Sous Windows, utilisez un éditeur de texte comme VS Code et modifiez le format de fin de ligne en `LF`.
 
-
 # États des Exemplaires de Produit
 
 Les exemplaires de produits peuvent se trouver dans différents états en fonction de leur disponibilité, utilisation, ou condition. Voici une description de chaque état possible :
 
-## 1. **Disponible**
-- **Description** : L'exemplaire est en stock et prêt à être vendu ou expédié. Il peut être acheté immédiatement par un client.
-- **Utilisation** : Quand un exemplaire est prêt à la vente, il est marqué comme "disponible".
+## 1. **Vendu**
 
-## 2. **Vendu**
 - **Description** : L'exemplaire a été acheté par un client et n'est plus disponible à la vente.
 - **Utilisation** : Ce statut est attribué après qu'un client a finalisé l'achat d'un exemplaire.
 
-## 3. **Reserve**
-- **Description** : L'exemplaire est réservé pour un client ou une commande, mais l'achat n'a pas encore été finalisé.
-- **Utilisation** : Un exemplaire est marqué comme "réservé" lorsqu'il est mis de côté pour une commande en attente de validation.
+## 2. **Disponible**
+
+- **Description** : L'exemplaire est en stock et prêt à être vendu ou expédié. Il peut être acheté immédiatement par un client.
+- **Utilisation** : Quand un exemplaire est prêt à la vente, il est marqué comme "disponible".
+
+## 3. **Utilisation**
+
+- **Description** : L'exemplaire est en cours d'utilisation pour un projet par un employé.
 
 ## 4. **En maintenance**
+
 - **Description** : L'exemplaire est temporairement hors service pour des réparations ou un entretien.
 - **Utilisation** : Ce statut est utilisé lorsqu'un produit nécessite une intervention technique ou un entretien pour fonctionner correctement.
 
-## 5. **Retire de la vente**
-- **Description** : L'exemplaire n'est plus disponible à la vente, généralement à cause d'une mise à jour de modèle, de la fin de la production, ou d'un problème de conformité.
-- **Utilisation** : Ce statut est attribué lorsqu'un produit est retiré du marché, soit de manière temporaire ou définitive.
+## 5. **Endommage**
 
-## 6. **Endommage**
 - **Description** : L'exemplaire a subi des dommages physiques et ne peut plus être vendu dans son état actuel.
 - **Utilisation** : Ce statut est utilisé lorsque le produit est cassé ou endommagé de manière irréparable ou non vendable.
 
-## 7. **En projet**
-- **Description** : L'exemplaire est temporairement alloué à un projet spécifique et ne peut pas être vendu tant qu'il est en cours d'utilisation dans ce projet.
-- **Utilisation** : Ce statut est utilisé lorsque le produit est réservé pour une utilisation dans le cadre d'un projet, qu'il soit interne ou externe, et ne peut être vendu tant que le projet n'est pas terminé.
+## 6. **Reserve**
+
+- **Description** : L'exemplaire est réservé pour un client ou une commande, mais l'achat n'a pas encore été finalisé.
+- **Utilisation** : Un exemplaire est marqué comme "réservé" lorsqu'il est mis de côté pour une commande en attente de validation.
 
 ---
 

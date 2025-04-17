@@ -218,7 +218,6 @@ const produits = pgTable("produits", {
   image_produit: varchar("image_produit", { length: 50 }),
   quantite_produit: integer("quantite_produit").default(0),
   emplacement_produit: text("emplacement_produit"), //le gestionnaire de stock de DCAT range les produits selon un emplacement Ex : Deva-> Salle technique 2eme tiroir à gauche
-  supprime: boolean("supprime").notNull().default(false),
   id_type_produit: integer("id_type_produit").references(
     () => type_produits.id_type_produit
   ),
@@ -435,8 +434,8 @@ const usage_exemplaires = pgTable(
     etat_apres_usage: varchar("etat_apres_usage", { length: 50 }),
     date_sortie_usage: date("date_sortie_usage"),
     date_retour_usage: date("date_retour_usage"),
-    site_usage: varchar("site_usage", { length: 50 }),
-    motif_usage: varchar("motif_usage", { length: 50 }),
+    site_usage: varchar("site_usage", { length: 100 }),
+    motif_usage: varchar("motif_usage", { length: 100 }),
     created_at: timestamp("created_at", { mode: "date", precision: 6 })
       .defaultNow()
       .notNull(),
