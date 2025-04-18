@@ -1,29 +1,29 @@
 const { eq } = require("drizzle-orm");
 const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
-const { modele } = require("../../../core/database/models");
+const { modeles } = require("../../../core/database/models");
 
 const createModele=async(data)=>{
-    const [result]=await db.insert(modele).values(data).returning()
+    const [result]=await db.insert(modeles).values(data).returning()
     return result
 }
 
 const getModeles=async()=>{
-    return await db.select().from(modele);
+    return await db.select().from(modeles);
 
 }
 
 const getModeleById=async(id)=>{
-    const [result]=await db.select().from(modele).where(eq(modele.id,id))
+    const [result]=await db.select().from(modeles).where(eq(modeles.id_modele,id))
     return result
 }
 
 const updateModele=async(id,data)=>{
-    const [result]=await db.update(modele).set(data).where(eq(modele.id,id)).returning()
+    const [result]=await db.update(modeles).set(data).where(eq(modeles.id_modele,id)).returning()
     return result
 }
 
 const deleteModele=async(id)=>{
-    const [result]=await db.delete(modele).where(eq(modele.id,id)).returning()
+    const [result]=await db.delete(modeles).where(eq(modeles.id_modele,id)).returning()
     return result
 }
 

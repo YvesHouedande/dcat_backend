@@ -4,10 +4,14 @@ const helmet = require('helmet');
 const { keycloak } = require('./core/auth/keycloak.config');
 const { initKeycloak, protect } = require('./core/auth/middleware');
 const logger = require('./core/utils/logger');
-const adminRoutes = require('./modules/administration/routes/partner.route');
+
+
 
 require('dotenv').config();
 
+const backendSoro = require('./modules/flutter_backend/routes/index_routes');
+
+// Initialisation Express
 const app = express();
 
 // =============== MIDDLEWARES DE BASE ===============
@@ -32,13 +36,26 @@ function loadModule(moduleName) {
   }
 }
 
-app.use('/api/interventions', loadModule('interventions'));
+// Chargement des modules
 app.use('/api/stocks', loadModule('stocks'));
 app.use('/api/users', loadModule('users'));
-app.use('/api/partner', adminRoutes);
+app.use('/api/administration', loadModule('administration'));
 
 
-// =============== ROUTES PUBLIQUES ===============
+
+// CHARGEMENT DES ROUTES DES PROJETS ET INTERVENTIONS
+
+app.use('/api/interventions', backendSoro.interventions);
+app.use('/api/contrats', backendSoro.contrats);
+app.use('/api/missions', backendSoro.missions);
+
+
+
+
+// =============================================
+// ROUTES PUBLIQUES
+// =============================================
+
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK',
@@ -79,19 +96,20 @@ app.use((err, req, res, next) => {
   });
 });
 
-// =============== DÉMARRAGE ===============
-const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => {
-  logger.info(`Serveur démarré sur http://localhost:${PORT} [${process.env.NODE_ENV || 'development'}]`);
+// =============================================
+// DÉMARRAGE DU SERVEUR
+// =============================================
+// const PORT = process.env.PORT || 3000;
+const PORT = 2000;
+app.listen(PORT, () => {
+  logger.info(`Server running on port ${PORT}`);
+  logger.info(`Keycloak configured for realm: ${keycloak.config.realm}`);
+  logger.info('Available routes:');
+  logger.info(`- GET  http://localhost:${PORT}/health`);
+  logger.info(`- GET  http://localhost:${PORT}/api/interventions`);
+  logger.info(`- POST http://localhost:${PORT}/api/interventions (protected)`);
+  logger.info(`- GET  http://localhost:${PORT}/api/stocks`);
+  logger.info(`- POST http://localhost:${PORT}/api/stocks (protected, requires inventory-manager role)`);
+  logger.info(`- GET  http://localhost:${PORT}/api/protected (protected)`);
 });
 
-// Gestion propre des arrêts
-['SIGINT', 'SIGTERM'].forEach(signal => {
-  process.on(signal, () => {
-    logger.info(`Reçu ${signal}, arrêt du serveur...`);
-    server.close(() => {
-      logger.info('Serveur arrêté proprement');
-      process.exit(0);
-    });
-  });
-});

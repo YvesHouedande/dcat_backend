@@ -1,5 +1,12 @@
 const produitService = require("../services/produit.service");
 
+/* 
+  A Implémenter**************
+
+  -supprimer une sollicitation
+  -Faire une séparation entre les outils et les équipements (les 2 types de produits)
+*/
+
 const createProduit = async (req, res) => {
   try {
     const result = await produitService.createProduit(req.body);
@@ -16,6 +23,8 @@ const getProduits = async (req, res) => {
     const result = await produitService.getProduits();
     return res.status(200).json(result || []);
   } catch (error) {
+    23;
+
     res
       .status(500)
       .json({ error: "une erreur est survenue", details: error.message });
@@ -67,6 +76,9 @@ const deleteProduit = async (req, res) => {
   }
 };
 
+
+
+// Exportation
 module.exports = {
   createProduit,
   getProduits,

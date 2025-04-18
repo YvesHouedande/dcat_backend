@@ -1,0 +1,5 @@
+# Forcer les scripts shell à utiliser LF (fin de ligne Linux)
+init-db/*.sh text eol=lf
+
+# Forcer tous les fichiers .env à utiliser LF
+*.env text eol=lf

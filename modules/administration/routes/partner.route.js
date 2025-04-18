@@ -1,13 +1,11 @@
-const express = require("express");
-const partnerController = require("../controllers/partner.controller");
+const express = require('express');
 const router = express.Router();
+const controller = require('../controllers/partenaire.controller');
 
-router.post('/', partnerController.createPartner);
-router.get('/', partnerController.getAllPartners);
-router.get('/:id', partnerController.getPartner);
-router.put('/:id', partnerController.updatePartner);
-router.delete('/:id', partnerController.deletePartner);
+router.post("/", controller.createPartenaire);
+router.get("/", controller.getPartenaires);
+router.get("/:id", controller.getPartenaireById);
+router.put("/:id", controller.updatePartenaire);
+router.delete("/:id", controller.deletePartenaire);
 
 module.exports = router;
-
-
