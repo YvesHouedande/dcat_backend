@@ -42,7 +42,7 @@ app.use('/api/partner', adminRoutes);
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK',
-    auth: 'bearer-only',
+    // auth: 'bearer-only',
     keycloak: {
       realm: keycloak.config.realm,
       clientId: keycloak.config.resource

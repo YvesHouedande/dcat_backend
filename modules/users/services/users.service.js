@@ -4,16 +4,20 @@ const { eq } = require('drizzle-orm');
 
 module.exports = {
   getUserByKeycloakId: async (keycloakId) => {
-    return await db.query.employes.findFirst({
-      where: eq(employes.keycloak_id, keycloakId),
-      with: {
-        fonction: true // Jointure avec la table 
-      }
-    });
+    const result = await db.select()
+      .from(employes)
+      .leftJoin(fonction, eq(employes.fonctionId, fonction.id)) 
+      .where(eq(employes.keycloak_id, keycloakId))
+      .limit(1);
+
+    return result[0] ? {
+      ...result[0].employes,
+      fonction: result[0].fonction 
+    } : null;
   },
 
   updateUserProfile: async (keycloakId, data) => {
-    const allowedFields = ["tel", "adresse"];
+    const allowedFields = ["contact", "adresse", "prenom", "nom"];
     const updates = Object.keys(data)
       .filter(key => allowedFields.includes(key))
       .reduce((obj, key) => ({ ...obj, [key]: data[key] }), {});
