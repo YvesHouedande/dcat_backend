@@ -5,7 +5,11 @@ module.exports = {
   getAllInterventions: async (req, res, next) => {
     try {
       const interventions = await interventionService.getAllInterventions();
-      res.json(interventions);
+      res.json({
+        success: true,
+        message: "Liste des interventions récupérée avec succès",
+        data: interventions
+      });
     } catch (error) {
       logger.error(`Erreur dans getAllInterventions: ${error.message}`);
       next(error);
@@ -14,9 +18,19 @@ module.exports = {
 
   createIntervention: async (req, res, next) => {
     try {
-      logger.info(`Création d'une nouvelle intervention avec les données: ${JSON.stringify(req.body)}`);
+      logger.info(`Création d'une intervention avec les données: ${JSON.stringify(req.body)}`);
       const newIntervention = await interventionService.createIntervention(req.body);
-      res.status(201).json(newIntervention);
+      res.status(201).json({
+        success: true,
+        message: "Intervention créée avec succès",
+        data: {
+          intervention: newIntervention,
+          details: {
+            dateCreation: new Date().toISOString(),
+            creePar: req.user?.username || 'system'
+          }
+        }
+      });
     } catch (error) {
       logger.error(`Erreur dans createIntervention: ${error.message}`);
       next(error);
@@ -26,7 +40,18 @@ module.exports = {
   updateIntervention: async (req, res, next) => {
     try {
       const updatedIntervention = await interventionService.updateIntervention(req.params.id, req.body);
-      res.json(updatedIntervention);
+      res.json({
+        success: true,
+        message: "Intervention mise à jour avec succès",
+        data: {
+          ancien: req.body,
+          nouveau: updatedIntervention,
+          details: {
+            dateMiseAJour: new Date().toISOString(),
+            modifiePar: req.user?.username || 'system'
+          }
+        }
+      });
     } catch (error) {
       logger.error(`Erreur dans updateIntervention: ${error.message}`);
       next(error);

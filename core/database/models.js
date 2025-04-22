@@ -237,6 +237,7 @@ const interventions = pgTable('interventions', {
   updated_at: timestamp('updated_at', { mode: 'date', precision: 6 }).defaultNow().notNull(),
 });
 
+
 // Taches
 const taches = pgTable('taches', {
   id_tache: serial('id_tache').primaryKey(),

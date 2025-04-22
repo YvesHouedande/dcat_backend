@@ -1,11 +1,11 @@
 const { db } = require('../../../core/database/config');
-const { intervention } = require('../../../core/database/models');
-const { eq } = require('drizzle-orm');
+const { interventions, contrats } = require('../../../core/database/models');
+const { eq, ilike } = require('drizzle-orm');
 
 module.exports = {
   getAllInterventions: async () => {
     try {
-      return await db.select().from(intervention);
+      return await db.select().from(interventions);
     } catch (error) {
       throw new Error(`Erreur lors de la récupération des interventions: ${error.message}`);
     }
@@ -13,7 +13,9 @@ module.exports = {
 
   getInterventionById: async (id) => {
     try {
-      const result = await db.select().from(intervention).where(eq(intervention.id, id));
+      const result = await db.select()
+        .from(interventions)
+        .where(eq(interventions.id_intervention, id));
       return result[0];
     } catch (error) {
       throw new Error(`Erreur lors de la récupération de l'intervention: ${error.message}`);
@@ -22,7 +24,29 @@ module.exports = {
 
   createIntervention: async (interventionData) => {
     try {
-      const result = await db.insert(intervention).values(interventionData);
+      // Vérifier que le contrat existe
+      const contratExists = await db.select()
+        .from(contrats)
+        .where(eq(contrats.id_contrat, interventionData.id_contrat));
+
+      if (contratExists.length === 0) {
+        throw new Error('Contrat non trouvé');
+      }
+
+      const result = await db.insert(interventions).values({
+        date_intervention: interventionData.date_intervention,
+        cause_intervention: interventionData.cause_intervention,
+        rapport_intervention: interventionData.rapport_intervention,
+        type_intervention: interventionData.type_intervention,
+        defaillance_intervention: interventionData.defaillance_intervention,
+        superviseur_intervention: interventionData.superviseur_intervention,
+        duree_intervention: interventionData.duree_intervention,
+        numero_intervention: interventionData.numero_intervention,
+        lieu_intervention: interventionData.lieu_intervention,
+        statut_intervention: interventionData.statut_intervention,
+        id_contrat: interventionData.id_contrat
+      }).returning();
+      
       return result[0];
     } catch (error) {
       throw new Error(`Erreur lors de la création de l'intervention: ${error.message}`);
@@ -31,9 +55,22 @@ module.exports = {
 
   updateIntervention: async (id, interventionData) => {
     try {
-      await db.update(intervention)
-        .set(interventionData)
-        .where(eq(intervention.id, id));
+      await db.update(interventions)
+        .set({
+          date_intervention: interventionData.date_intervention,
+          cause_intervention: interventionData.cause_intervention,
+          rapport_intervention: interventionData.rapport_intervention,
+          type_intervention: interventionData.type_intervention,
+          defaillance_intervention: interventionData.defaillance_intervention,
+          superviseur_intervention: interventionData.superviseur_intervention,
+          duree_intervention: interventionData.duree_intervention,
+          numero_intervention: interventionData.numero_intervention,
+          lieu_intervention: interventionData.lieu_intervention,
+          statut_intervention: interventionData.statut_intervention,
+          id_contrat: interventionData.id_contrat,
+          updated_at: new Date()
+        })
+        .where(eq(interventions.id_intervention, id));
       return await module.exports.getInterventionById(id);
     } catch (error) {
       throw new Error(`Erreur lors de la mise à jour de l'intervention: ${error.message}`);
@@ -42,52 +79,30 @@ module.exports = {
 
   deleteIntervention: async (id) => {
     try {
-      await db.delete(intervention).where(eq(intervention.id, id));
+      await db.delete(interventions).where(eq(interventions.id_intervention, id));
       return true;
     } catch (error) {
       throw new Error(`Erreur lors de la suppression de l'intervention: ${error.message}`);
     }
   },
 
-  // Recherche avec filtres multiples
-searchInterventions: async (filters) => {
-  try {
-    let query = db.select().from(intervention);
-
-    if (filters.type) {
-      query = query.where(eq(intervention.typeMaintenance, filters.type));
-    }
-    if (filters.date) {
-      query = query.where(eq(intervention.date, filters.date));
-    }
-    if (filters.superviseur) {
-      query = query.where(ilike(intervention.superviseur, `%${filters.superviseur}%`));
-    }
-
-    return await query;
-  } catch (error) {
-    throw new Error(`Erreur recherche interventions: ${error.message}`);
-  }
-},
-
-  // Détails complets (intervention + contrat + employés)
-  getInterventionDetails: async (interventionId) => {
+  searchInterventions: async (filters) => {
     try {
-      const interventionData = await db.select()
-        .from(intervention)
-        .leftJoin(contrat, eq(intervention.contratId, contrat.id))
-        .leftJoin(interventionEmploye, eq(intervention.id, interventionEmploye.interventionId))
-        .leftJoin(employes, eq(interventionEmploye.employeId, employes.id))
-        .where(eq(intervention.id, interventionId));
+      let query = db.select().from(interventions);
 
-      return {
-        ...interventionData[0].intervention,
-        contrat: interventionData[0].contrat,
-        techniciens: interventionData.map(row => row.employes).filter(Boolean)
-      };
+      if (filters.type_intervention) {
+        query = query.where(eq(interventions.type_intervention, filters.type_intervention));
+      }
+      if (filters.date_intervention) {
+        query = query.where(eq(interventions.date_intervention, filters.date_intervention));
+      }
+      if (filters.superviseur_intervention) {
+        query = query.where(ilike(interventions.superviseur_intervention, `%${filters.superviseur_intervention}%`));
+      }
+
+      return await query;
     } catch (error) {
-      throw new Error(`Erreur détails intervention: ${error.message}`);
+      throw new Error(`Erreur recherche interventions: ${error.message}`);
     }
   }
-  
 };
