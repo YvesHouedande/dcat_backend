@@ -9,14 +9,19 @@ const {
 } = require("../../../core/database/models");
 
 /**
- * 
+ *
  * vendu : exemplaire vendu
  * disponible : exemplaire dismponible
  * in Use     : exemplaire (outils) en cours d'utilisation (par un employé)
  */
-const etatExemplaire=["Vendu","Disponible","Utilisation","En maintenance","Endommage","Reserve"]  //liste des etats de l'exemplaire
-
-
+const etatExemplaire = [
+  "Vendu",
+  "Disponible",
+  "Utilisation",
+  "En maintenance",
+  "Endommage",
+  "Reserve",
+]; //liste des etats de l'exemplaire
 
 /**
  * Services pour le modèle `exemplaires` (MVC)
@@ -136,8 +141,6 @@ async function deleteExemplaire(id) {
   return deleted;
 }
 
-
-
 /** ---Autres requetes --- */
 
 async function getExemplairesByProduit(id_produit, code_produit) {
@@ -162,7 +165,27 @@ async function filterExemplairesByEtat(etat) {
 
 //tout les exemplaires disponible
 async function getAvailableExemplaires() {
-  return filterExemplairesByEtat(etatExemplaire[1]);  //disponible
+  return filterExemplairesByEtat(etatExemplaire[1]); //disponible
+}
+
+ // Vérifie si un exemplaire spécifique est en cours d'utilisation
+async function isExemplaireInUse(exId) {
+  const [result] = await db
+    .select()
+    .from(usage_exemplaires)
+    .where(
+      and(
+        eq(usage_exemplaires.id_exemplaire, exId),
+        isNull(usage_exemplaires.date_retour_usage)
+      )
+    );
+
+  return !!result; //retourne un booléen
+}
+
+// Récupère tous les exemplaires actuellement en cours d'utilisation
+async function isExemplairesInUse() {
+  return filterExemplairesByEtat(etatExemplaire[2]);
 }
 
 /**
@@ -202,7 +225,10 @@ async function purchaseExemplaires({
     // 2. Mettre à jour chaque exemplaire : etat -> vendu
     await tx
       .update(exemplaires)
-      .set({ etat_exemplaire: etatExemplaire[0], id_commande: commande.id_commande })  
+      .set({
+        etat_exemplaire: etatExemplaire[0],
+        id_commande: commande.id_commande,
+      })
       .where(inArray(exemplaires.id_exemplaire, exemplaireIds));
 
     // 3. Ajuster le stock produit (soustraire le nombre total d'exemplaires)
@@ -239,9 +265,9 @@ async function assignExemplaire(data) {
 
     // modification de l'etat de l'exemplaire
     await tx.update(exemplaires).set({
-      etat_exemplaire:etatExemplaire[2] //"utilisé"
-    })
-    return assoc
+      etat_exemplaire: etatExemplaire[2], //"utilisé"
+    });
+    return assoc;
   });
 }
 
@@ -273,29 +299,6 @@ async function unassignExemplaire({ exId, empId, etatRetour, dateRetour }) {
   return removed;
 }
 
-
-//voir si un exemplaire est en cours d'utilisation
-async function isExemplaireInUse(exId) {
-  const [result] = await db
-    .select()
-    .from(usage_exemplaires)
-    .where(
-      and(
-        eq(usage_exemplaires.id_exemplaire, exId),
-        isNull(usage_exemplaires.date_retour_usage)
-      )
-    );
-
-  return !!result;    //retourne un booléen
-
-}
-
-//tout les exemplaires en cours d'utilisation
-async function isExemplairesInUse() {
-  return filterExemplairesByEtat(etatExemplaire[2])
-}
-
-
 module.exports = {
   createExemplaire,
   getAllExemplaires,
@@ -303,16 +306,13 @@ module.exports = {
   updateExemplaire,
   deleteExemplaire,
   getExemplairesByProduit,
-  filterExemplairesByEtat,
   getAvailableExemplaires,
   purchaseExemplaires,
   assignExemplaire,
   unassignExemplaire,
   isExemplaireInUse,
-  isExemplairesInUse
+  isExemplairesInUse,
 };
-
-
 
 // /**
 //  * Récupère tous les exemplaires utilisés dans le cadre d’un projet donné.
