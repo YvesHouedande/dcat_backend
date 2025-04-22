@@ -20,7 +20,7 @@ Directory structure:
     │   │   ├── models.js
     │   │   ├── test-db.js
     │   │   └── migrations/
-    │   │       ├── 0000_stale_lenny_balinger.sql
+    │   │       ├── 0000_awesome_master_chief.sql
     │   │       └── meta/
     │   │           ├── 0000_snapshot.json
     │   │           └── _journal.json
@@ -30,15 +30,22 @@ Directory structure:
     ├── init-db/
     │   └── nit-multiple-dbs.sh
     ├── keycloak-setup/
+    │   ├── digest.txt
     │   ├── keycloak-setup-back.js
-    │   └── keycloak-setup-front.js
+    │   ├── keycloak-setup-front.js
+    │   └── keycloak-setup.js
     └── modules/
         ├── administration/
-        │   └── accounting/
-        │       ├── controllers/
-        │       │   └── accounting.controller.js
-        │       └── routes/
-        │           └── accounting.routes.js
+        │   ├── controllers/
+        │   │   ├── accounting.controller.js
+        │   │   └── partner.controller.js
+        │   ├── routes/
+        │   │   ├── accounting.routes.js
+        │   │   └── partner.route.js
+        │   ├── services/
+        │   │   └── partner.service.js
+        │   └── utils/
+        │       └── drizzle-wrapper.js
         ├── clients/
         │   ├── controllers/
         │   │   └── clients.controller.js
@@ -70,26 +77,39 @@ Directory structure:
         │   │   └── projects.routes.js
         │   └── services/
         ├── stocks/
+        │   ├── readme.md
         │   ├── controllers/
         │   │   ├── categorie.controller.js
         │   │   ├── entite.controller.js
+        │   │   ├── exemplaire.controller.js
         │   │   ├── famille.controller.js
+        │   │   ├── livraison.controller.js
         │   │   ├── marque.controller.js
         │   │   ├── modele.controller.js
+        │   │   ├── partenaire.controller.js
+        │   │   ├── produit.controller.js
         │   │   └── stocks.controller.js
         │   ├── routes/
         │   │   ├── categorie.routes.js
         │   │   ├── entite.routes.js
+        │   │   ├── exemplaire.routes.js
         │   │   ├── famille.routes.js
+        │   │   ├── livraison.routes.js
         │   │   ├── marque.routes.js
-        │   │   ├── modele.route.js
+        │   │   ├── modele.routes.js
+        │   │   ├── partenaire.routes.js
+        │   │   ├── produit.routes.js
         │   │   └── stocks.routes.js
         │   ├── services/
         │   │   ├── categorie.service.js
         │   │   ├── entite.service.js
+        │   │   ├── exemplaire.service.js
         │   │   ├── famille.service.js
+        │   │   ├── livraison.service.js
         │   │   ├── marque.service.js
         │   │   ├── modele.service.js
+        │   │   ├── partenaire.service.js
+        │   │   ├── produit.service.js
         │   │   └── stocks.service.js
         │   ├── tests/
         │   │   └── stocks.mock.js
@@ -104,6 +124,9 @@ Directory structure:
             │   └── users.routes.js
             ├── services/
             │   └── users.service.js
+            ├── sql/
+            │   ├── employes.sql
+            │   └── fonctions.sql
             └── tests/
 
 ================================================
@@ -615,6 +638,8 @@ const helmet = require('helmet');
 const { keycloak } = require('./core/auth/keycloak.config');
 const { initKeycloak, protect } = require('./core/auth/middleware');
 const logger = require('./core/utils/logger');
+const adminRoutes = require('./modules/administration/routes/partner.route');
+
 require('dotenv').config();
 
 const app = express();
@@ -644,12 +669,14 @@ function loadModule(moduleName) {
 app.use('/api/interventions', loadModule('interventions'));
 app.use('/api/stocks', loadModule('stocks'));
 app.use('/api/users', loadModule('users'));
+app.use('/api/partner', adminRoutes);
+
 
 // =============== ROUTES PUBLIQUES ===============
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK',
-    auth: 'bearer-only',
+    // auth: 'bearer-only',
     keycloak: {
       realm: keycloak.config.realm,
       clientId: keycloak.config.resource
@@ -717,78 +744,68 @@ Directory structure:
 File: keycloak.config.js
 ================================================
 Ã¯Â»Â¿const Keycloak = require('keycloak-connect');
-const session = require('express-session');
 const logger = require('../utils/logger');
 require('dotenv').config();
-
-const memoryStore = new session.MemoryStore();
 
 const keycloakConfig = {
   realm: process.env.KEYCLOAK_REALM,
   'auth-server-url': process.env.KEYCLOAK_URL,
   'ssl-required': 'external',
   resource: process.env.KEYCLOAK_CLIENT_ID,
-  'public-client': false,
-  'confidential-port': 0,
+  'bearer-only': true,
+  'verify-token-audience': true,
   credentials: {
     secret: process.env.KEYCLOAK_CLIENT_SECRET
   }
 };
 
-logger.info('Keycloak Config:', {
-  realm: keycloakConfig.realm,
-  authServer: keycloakConfig['auth-server-url'],
-  clientId: keycloakConfig.resource
-});
+// Validation de la configuration
+if (!process.env.KEYCLOAK_CLIENT_SECRET) {
+  logger.error('Configuration Keycloak incomplÃƒÂ¨te : KEYCLOAK_CLIENT_SECRET manquant');
+  process.exit(1);
+}
 
-const keycloak = new Keycloak(
-  { store: memoryStore },
-  keycloakConfig
-);
+const keycloak = new Keycloak({}, keycloakConfig);
 
 module.exports = {
   keycloak,
-  memoryStore,
   keycloakConfig
 };
-
-
-console.log('Configuration Keycloak chargÃƒÂ©e:', {
-  realm: process.env.KEYCLOAK_REALM,
-  url: process.env.KEYCLOAK_URL,
-  clientId: process.env.KEYCLOAK_CLIENT_ID,
-  hasSecret: !!process.env.KEYCLOAK_CLIENT_SECRET
-});
 
 
 ================================================
 File: middleware.js
 ================================================
-
-const { keycloak, memoryStore } = require('./keycloak.config');
+const { keycloak } = require('./keycloak.config');
+const { getKeycloakPublicKey } = require('./setupKeycloak');
+const { jwtVerify } = require('jose');
 const logger = require('../utils/logger');
 const { db } = require('../../core/database/config');
 const { employes } = require('../../core/database/models');
 const { eq } = require('drizzle-orm');
-const { jwtVerify } = require('jose');
-const { getKeycloakPublicKey } = require('./setupKeycloak');
 
-// Initialisation Keycloak
+// Middleware d'initialisation Keycloak
 const initKeycloak = () => {
-  logger.info('Initializing Keycloak middleware');
-  return keycloak.middleware({
-    admin: '/admin',
-    logout: '/logout'
-  });
+  logger.info('Middleware Keycloak initialisÃƒÂ© (mode bearer-only)');
+  return keycloak.middleware();
 };
 
-// Middleware de protection avec rÃƒÂ´les
+// Protection de base
 const protect = (requiredRoles = []) => {
   return [
     keycloak.protect(),
-    (req, res, next) => {
+    async (req, res, next) => {
+      if (requiredRoles.length === 0) return next();
+      
       const token = req.kauth.grant.access_token;
-      if (requiredRoles.length && !requiredRoles.some(r => token.hasRole(r))) {
+      const hasRole = requiredRoles.some(role => token.hasRole(role));
+      
+      if (!hasRole) {
+        logger.warn(`AccÃƒÂ¨s refusÃƒÂ© - RÃƒÂ´les manquants`, {
+          user: token.content.sub,
+          requiredRoles,
+          actualRoles: token.content.realm_access?.roles
+        });
         return res.status(403).json({ error: 'Permissions insuffisantes' });
       }
       next();
@@ -796,136 +813,54 @@ const protect = (requiredRoles = []) => {
   ];
 };
 
-// Validation JWT directe
+// Validation JWT autonome
 const validateJWT = async (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'Token manquant' });
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Authorization header manquant' });
+  }
 
+  try {
     const token = authHeader.split(' ')[1];
     const { payload } = await jwtVerify(token, await getKeycloakPublicKey());
     req.userToken = payload;
     next();
   } catch (error) {
-    logger.error('Erreur validation JWT:', error);
+    logger.error('Ãƒâ€°chec de validation JWT', error);
     res.status(401).json({ error: 'Token invalide' });
   }
 };
 
-// Synchronisation utilisateur optimisÃƒÂ©e
-const syncUserOnLogin = async (req, res, next) => {
-  if (!req.kauth?.grant?.access_token?.content) {
-    return next();
-  }
-
-  const keycloakUser = req.kauth.grant.access_token.content;
-  
-  if (!keycloakUser?.sub) {
-    logger.warn('Token Keycloak invalide: sub manquant');
-    return next();
-  }
-
-  try {
-    // Solution avec UPSERT (INSERT ON CONFLICT UPDATE)
-    await db.insert(employes)
-      .values({
-        keycloak_id: keycloakUser.sub,
-        email: keycloakUser.email || `${keycloakUser.sub}@temp.dcat`,
-        nom: keycloakUser.given_name || 'Ãƒâ‚¬ complÃƒÂ©ter',
-        prenom: keycloakUser.family_name || 'Ãƒâ‚¬ complÃƒÂ©ter',
-        status: 'actif',
-        fonctionId: 1,
-        contact: '',
-        adresse: ''
-      })
-      .onConflictDoUpdate({
-        target: employes.keycloak_id,
-        set: { 
-          email: keycloakUser.email,
-          nom: keycloakUser.given_name || db.sql`excluded.nom`,
-          prenom: keycloakUser.family_name || db.sql`excluded.prenom`,
-          status: 'actif'
-        }
-      })
-      .execute();
-
-    logger.info(`Utilisateur synchronisÃƒÂ©: ${keycloakUser.sub}`);
-    next();
-  } catch (error) {
-    logger.error('Erreur synchronisation utilisateur', {
-      error: error.message,
-      userId: keycloakUser.sub,
-      stack: error.stack
-    });
-    next(error);
-  }
-};
-
-// Middleware de dÃƒÂ©connexion complet
-const handleLogout = async (req, res, next) => {
-  try {
-    if (!req.kauth?.grant) {
-      return res.status(200).send('DÃƒÂ©connectÃƒÂ©');
-    }
-
-    // 1. RÃƒÂ©voquer le token Keycloak
-    await keycloak.grantManager.revoke(req.kauth.grant);
-    
-    // 2. DÃƒÂ©truire la session
-    req.session.destroy(err => {
-      if (err) logger.error('Erreur destruction session:', err);
-      
-      // 3. Nettoyer les cookies
-      res.clearCookie('connect.sid');
-      res.clearCookie('keycloak_token');
-      
-      res.status(200).send('DÃƒÂ©connectÃƒÂ© avec succÃƒÂ¨s');
-    });
-  } catch (error) {
-    logger.error('Erreur lors de la dÃƒÂ©connexion:', error);
-    next(error);
-  }
-};
-
 module.exports = {
-  syncUserOnLogin,
-  keycloak,
-  memoryStore,
   initKeycloak,
   protect,
   validateJWT,
-  handleLogout
+  keycloak
 };
 
 
 ================================================
 File: setupKeycloak.js
 ================================================
-const session = require('express-session');
-const { memoryStore, keycloak } = require('./keycloak.config');
+const { keycloak } = require('./keycloak.config');
 const { createRemoteJWKSet } = require('jose');
 const { Issuer } = require('openid-client');
+const logger = require('../utils/logger');
 
-const sessionConfig = session({
-  secret: process.env.SESSION_SECRET || 'your-strong-secret-here',
-  resave: false,
-  saveUninitialized: true,
-  store: memoryStore
-});
-
-// Fonction pour obtenir les clÃƒÂ©s publiques Keycloak
 async function getKeycloakPublicKey() {
-  const keycloakIssuer = await Issuer.discover(
-    `${keycloak.config['auth-server-url']}/realms/${keycloak.config.realm}`
-  );
-  
-  const jwksUri = keycloakIssuer.metadata.jwks_uri;
-  return createRemoteJWKSet(new URL(jwksUri));
+  try {
+    const issuer = await Issuer.discover(
+      `${keycloak.config['auth-server-url']}/realms/${keycloak.config.realm}`
+    );
+    return createRemoteJWKSet(new URL(issuer.metadata.jwks_uri));
+  } catch (error) {
+    logger.error('Erreur de rÃƒÂ©cupÃƒÂ©ration des clÃƒÂ©s Keycloak', error);
+    throw new Error('Service d\'authentification indisponible');
+  }
 }
 
 module.exports = {
-  sessionConfig,
-  getKeycloakPublicKey // Exportez la nouvelle fonction
+  getKeycloakPublicKey
 };
 
 
@@ -1211,7 +1146,7 @@ const produit = pgTable(
     nom: varchar("nom", { length: 100 }),
     description: text("description"),
     type: varchar("type", { length: 50 }),
-    image: varchar("image", { length: 255 }),
+    image: varchar("image", { length: 255 }), // <- revoir la contrainte sur l'image
     quantite: varchar("quantite", { length: 20 }),
     modeleId: integer("modele_id")
       .notNull()
@@ -1547,7 +1482,7 @@ const { intervention } = require('./models');
 
 
 ================================================
-File: core/database/migrations/0000_stale_lenny_balinger.sql
+File: core/database/migrations/0000_awesome_master_chief.sql
 ================================================
 CREATE TABLE "famille" (
 	"id" serial PRIMARY KEY NOT NULL,
@@ -1817,7 +1752,7 @@ ALTER TABLE "Sollicitation_Interventions" ADD CONSTRAINT "Sollicitation_Interven
 File: core/database/migrations/meta/0000_snapshot.json
 ================================================
 {
-  "id": "0b552a57-521f-46ae-bdcc-d9a56caad15a",
+  "id": "63a846d6-1d31-4827-b061-eaadd8697146",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -3567,8 +3502,8 @@ File: core/database/migrations/meta/_journal.json
     {
       "idx": 0,
       "version": "7",
-      "when": 1743786352393,
-      "tag": "0000_stale_lenny_balinger",
+      "when": 1744122559131,
+      "tag": "0000_awesome_master_chief",
       "breakpoints": true
     }
   ]
@@ -3629,6 +3564,278 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
     CREATE USER "$APP_DB_USER" WITH PASSWORD '$APP_DB_PASSWORD';
     CREATE DATABASE "$APP_DB_NAME" OWNER "$APP_DB_USER";
 EOSQL
+
+
+================================================
+File: keycloak-setup/digest.txt
+================================================
+Directory structure:
+└── keycloak-setup/
+    ├── keycloak-setup-back.js
+    └── keycloak-setup-front.js
+
+================================================
+File: keycloak-setup-back.js
+================================================
+require('dotenv').config({ path: '../.env' }); // Charge le fichier .env à la racine
+
+const KeycloakAdminClient = require('@keycloak/keycloak-admin-client').default;
+const logger = require('../core/utils/logger');
+
+// Configuration validation
+const REQUIRED_ENV_VARS = [
+  'KEYCLOAK_URL',
+  'KEYCLOAK_ADMIN',
+  'KEYCLOAK_ADMIN_PASSWORD',
+  'KEYCLOAK_REALM',
+  'KEYCLOAK_CLIENT_ID',
+  'KEYCLOAK_CLIENT_SECRET'
+];
+
+// Verify all required variables are present
+for (const envVar of REQUIRED_ENV_VARS) {
+  if (!process.env[envVar]) {
+    logger.error(`❌ Missing environment variable: ${envVar}`);
+    process.exit(1);
+  }
+}
+
+const keycloakConfig = {
+  baseUrl: process.env.KEYCLOAK_URL,
+  realmName: 'master'
+};
+
+const adminClient = new KeycloakAdminClient(keycloakConfig);
+
+async function setupKeycloak() {
+  try {
+    logger.info('🔑 Authenticating to Keycloak...');
+    
+    await adminClient.auth({
+      username: process.env.KEYCLOAK_ADMIN,
+      password: process.env.KEYCLOAK_ADMIN_PASSWORD,
+      grantType: 'password',
+      clientId: 'admin-cli'
+    });
+
+    logger.info('✅ Successfully authenticated');
+
+    // Realm setup
+    logger.info(`🔄 Checking realm ${process.env.KEYCLOAK_REALM}...`);
+    const realmExists = (await adminClient.realms.find())
+      .some(r => r.realm === process.env.KEYCLOAK_REALM);
+
+    if (!realmExists) {
+      await adminClient.realms.create({
+        realm: process.env.KEYCLOAK_REALM,
+        enabled: true,
+        displayName: `${process.env.KEYCLOAK_REALM} Realm`,
+        loginTheme: "keycloak",
+        accountTheme: "keycloak"
+      });
+      logger.info(`✨ Created realm: ${process.env.KEYCLOAK_REALM}`);
+    } else {
+      logger.info(`ℹ️ Realm ${process.env.KEYCLOAK_REALM} already exists`);
+    }
+
+    // Client setup
+    logger.info(`🔍 Checking client ${process.env.KEYCLOAK_CLIENT_ID}...`);
+    const clients = await adminClient.clients.find({
+      realm: process.env.KEYCLOAK_REALM,
+      clientId: process.env.KEYCLOAK_CLIENT_ID
+    });
+
+    if (clients.length === 0) {
+      await adminClient.clients.create({
+        realm: process.env.KEYCLOAK_REALM,
+        clientId: process.env.KEYCLOAK_CLIENT_ID,
+        secret: process.env.KEYCLOAK_CLIENT_SECRET,
+        redirectUris: [process.env.KEYCLOAK_CALLBACK_URL || 'http://localhost:2000/*'],
+        webOrigins: ['*'],
+        publicClient: false,
+        standardFlowEnabled: true,
+        directAccessGrantsEnabled: true,
+        serviceAccountsEnabled: true,
+        authorizationServicesEnabled: true,
+        enabled: true,
+        protocol: 'openid-connect',
+        attributes: {
+          'post.logout.redirect.uris': '+',
+          'exclude.session.state.from.auth.response': 'false'
+        }
+      });
+      logger.info(`🎯 Created client: ${process.env.KEYCLOAK_CLIENT_ID}`);
+    } else {
+      logger.info(`ℹ️ Client ${process.env.KEYCLOAK_CLIENT_ID} already exists`);
+    }
+
+    logger.info('🏁 Keycloak setup completed successfully');
+  } catch (error) {
+    logger.error('💥 Keycloak setup failed:', error);
+    process.exit(1);
+  }
+}
+
+// Execute setup
+setupKeycloak();
+
+
+================================================
+File: keycloak-setup-front.js
+================================================
+require('dotenv').config({ path: '../.env' });
+
+const KeycloakAdminClient = require('@keycloak/keycloak-admin-client').default;
+
+// Configuration avec valeurs par défaut
+const config = {
+  url: process.env.VITE_KEYCLOAK_URL || process.env.KEYCLOAK_URL || 'http://localhost:8080',
+  realm: process.env.VITE_KEYCLOAK_REALM || 'dcat_realm', // On utilise le realm existant
+  clientId: 'frontend_cli_id',
+  adminUser: process.env.KEYCLOAK_ADMIN || 'admin',
+  adminPass: process.env.KEYCLOAK_ADMIN_PASSWORD || 'admin',
+  appUser: process.env.APP_USER || 'frontend_user',
+  appPassword: process.env.APP_PASSWORD || 'frontend_password123',
+  appEmail: process.env.APP_EMAIL || 'frontend.user@example.com'
+};
+
+console.log('⚙️ Configuration utilisée :');
+console.log(config);
+
+const adminClient = new KeycloakAdminClient({
+  baseUrl: config.url,
+  realmName: 'master',
+});
+
+async function setupKeycloak() {
+  try {
+    // 1. Authentification admin
+    console.log('🔐 Connexion à Keycloak...');
+    await adminClient.auth({
+      username: config.adminUser,
+      password: config.adminPass,
+      grantType: 'password',
+      clientId: 'admin-cli',
+    });
+    console.log('✅ Connecté avec succès');
+
+    // 2. Vérification/création du realm si nécessaire
+    console.log(`🔄 Vérification du realm ${config.realm}...`);
+    const realmExists = (await adminClient.realms.find()).some(r => r.realm === config.realm);
+    
+    if (!realmExists) {
+      await adminClient.realms.create({
+        realm: config.realm,
+        enabled: true,
+        sslRequired: process.env.NODE_ENV === 'production' ? 'external' : 'none',
+        loginTheme: 'keycloak'
+      });
+      console.log(`🆕 Realm créé : ${config.realm}`);
+    } else {
+      console.log(`ℹ️ Realm existant : ${config.realm}`);
+    }
+
+    // 3. Création du client frontend
+    console.log(`🔍 Vérification du client ${config.clientId}...`);
+    const clients = await adminClient.clients.find({
+      realm: config.realm,
+      clientId: config.clientId
+    });
+
+    if (clients.length === 0) {
+      await adminClient.clients.create({
+        realm: config.realm,
+        clientId: config.clientId,
+        publicClient: true,
+        redirectUris: [
+          'http://localhost:2000/*',
+          'http://localhost:5173/*',
+          `${process.env.APP_URL}/*` || ''
+        ].filter(Boolean),
+        webOrigins: ['*'],
+        standardFlowEnabled: true,
+        directAccessGrantsEnabled: true,
+        enabled: true,
+        attributes: {
+          'post.logout.redirect.uris': '+',
+          'exclude.session.state.from.auth.response': 'false'
+        }
+      });
+      console.log(`🆕 Client frontend créé : ${config.clientId}`);
+    } else {
+      console.log(`ℹ️ Client frontend existant : ${config.clientId}`);
+    }
+
+    // 4. Création du rôle 'frontend_user' spécifique
+    // console.log(`👔 Création du rôle 'frontend_user'...`);
+    // try {
+    //   await adminClient.roles.create({
+    //     realm: config.realm,
+    //     // name: 'frontend_user'
+    //   });
+    //   console.log(`🆕 Rôle 'frontend_user' créé`);
+    // } catch (roleError) {
+    //   if (roleError.response?.status !== 409) {
+    //     throw roleError;
+    //   }
+    //   console.log(`ℹ️ Rôle 'frontend_user' existe déjà`);
+    // }
+
+    // 5. Création de l'utilisateur frontend spécifique
+    console.log(`👤 Création de l'utilisateur ${config.appUser}...`);
+    const users = await adminClient.users.find({
+      realm: config.realm,
+      username: config.appUser
+    });
+
+    if (users.length === 0) {
+      const newUser = await adminClient.users.create({
+        realm: config.realm,
+        username: config.appUser,
+        email: config.appEmail,
+        enabled: true,
+        credentials: [{
+          type: 'password',
+          value: config.appPassword,
+          temporary: false
+        }]
+      });
+
+      // Assignation du rôle spécifique
+      const role = await adminClient.roles.findOneByName({
+        realm: config.realm,
+        name: 'frontend_user'
+      });
+      
+      await adminClient.users.addRealmRoleMappings({
+        realm: config.realm,
+        id: newUser.id,
+        roles: [{
+          id: role.id,
+          name: role.name
+        }]
+      });
+
+      console.log(`🆕 Utilisateur frontend créé : ${config.appUser}`);
+      console.log(`🔑 Identifiants : ${config.appUser}/${config.appPassword}`);
+      console.log(`🎯 Rôle attribué : frontend_user`);
+    } else {
+      console.log(`ℹ️ Utilisateur existant : ${config.appUser}`);
+    }
+
+    console.log('🎉 Configuration frontend terminée avec succès !');
+    console.log(`🌐 URL du realm: ${config.url}/realms/${config.realm}`);
+    console.log(`🔑 Client ID: ${config.clientId}`);
+
+  } catch (error) {
+    console.error('💥 Erreur lors de la configuration:', error.response?.data || error.message);
+    process.exit(1);
+  }
+}
+
+setupKeycloak();
+
+
 
 
 ================================================
@@ -3824,19 +4031,19 @@ async function setupKeycloak() {
     }
 
     // 4. Création du rôle 'frontend_user' spécifique
-    console.log(`👔 Création du rôle 'frontend_user'...`);
-    try {
-      await adminClient.roles.create({
-        realm: config.realm,
-        name: 'frontend_user'
-      });
-      console.log(`🆕 Rôle 'frontend_user' créé`);
-    } catch (roleError) {
-      if (roleError.response?.status !== 409) {
-        throw roleError;
-      }
-      console.log(`ℹ️ Rôle 'frontend_user' existe déjà`);
-    }
+    // console.log(`👔 Création du rôle 'frontend_user'...`);
+    // try {
+    //   await adminClient.roles.create({
+    //     realm: config.realm,
+    //     // name: 'frontend_user'
+    //   });
+    //   console.log(`🆕 Rôle 'frontend_user' créé`);
+    // } catch (roleError) {
+    //   if (roleError.response?.status !== 409) {
+    //     throw roleError;
+    //   }
+    //   console.log(`ℹ️ Rôle 'frontend_user' existe déjà`);
+    // }
 
     // 5. Création de l'utilisateur frontend spécifique
     console.log(`👤 Création de l'utilisateur ${config.appUser}...`);
@@ -3859,10 +4066,10 @@ async function setupKeycloak() {
       });
 
       // Assignation du rôle spécifique
-      const role = await adminClient.roles.findOneByName({
-        realm: config.realm,
-        name: 'frontend_user'
-      });
+      // const role = await adminClient.roles.findOneByName({
+      //   realm: config.realm,
+      //   name: 'frontend_user'
+      // });
       
       await adminClient.users.addRealmRoleMappings({
         realm: config.realm,
@@ -3875,7 +4082,7 @@ async function setupKeycloak() {
 
       console.log(`🆕 Utilisateur frontend créé : ${config.appUser}`);
       console.log(`🔑 Identifiants : ${config.appUser}/${config.appPassword}`);
-      console.log(`🎯 Rôle attribué : frontend_user`);
+      // console.log(`🎯 Rôle attribué : frontend_user`);
     } else {
       console.log(`ℹ️ Utilisateur existant : ${config.appUser}`);
     }
@@ -3894,120 +4101,267 @@ setupKeycloak();
 
 
 ================================================
-File: modules/administration/accounting/controllers/accounting.controller.js
+File: keycloak-setup/keycloak-setup.js
+================================================
+require('dotenv').config();
+const KeycloakAdminClient = require('@keycloak/keycloak-admin-client').default;
+
+const config = {
+  url: process.env.KEYCLOAK_URL,
+  realm: process.env.KEYCLOAK_REALM,
+  backend: {
+    clientId: process.env.BACKEND_CLIENT_ID,
+    secret: process.env.BACKEND_CLIENT_SECRET,
+    callback: process.env.BACKEND_CALLBACK_URL
+  },
+  frontend: {
+    clientId: process.env.FRONTEND_CLIENT_ID,
+    callback: process.env.FRONTEND_CALLBACK_URL
+  }
+};
+
+async function setupKeycloak() {
+  const adminClient = new KeycloakAdminClient({
+    baseUrl: config.url,
+    realmName: 'master'
+  });
+
+  try {
+    // Authentification admin
+    await adminClient.auth({
+      username: process.env.KEYCLOAK_ADMIN,
+      password: process.env.KEYCLOAK_ADMIN_PASSWORD,
+      grantType: 'password',
+      clientId: 'admin-cli'
+    });
+
+    // CrÃ©ation du realm
+    await adminClient.realms.create({
+      realm: config.realm,
+      enabled: true,
+      sslRequired: 'none'
+    });
+
+    // Configuration Backend Client
+    await adminClient.clients.create({
+      clientId: config.backend.clientId,
+      secret: config.backend.secret,
+      bearerOnly: true,
+      enabled: true
+    });
+
+    // Configuration Frontend Client
+    await adminClient.clients.create({
+      clientId: config.frontend.clientId,
+      publicClient: true,
+      redirectUris: [config.frontend.callback],
+      webOrigins: ['*'],
+      standardFlowEnabled: true
+    });
+
+    console.log('âœ… Setup complet avec succÃ¨s');
+  } catch (error) {
+    console.error('Erreur:', error.response?.data || error.message);
+  }
+}
+
+setupKeycloak();
+
+
+================================================
+File: modules/administration/controllers/accounting.controller.js
 ================================================
 ï»¿
 
 
 ================================================
-File: modules/administration/accounting/controllers/partner.controller.js
+File: modules/administration/controllers/partner.controller.js
 ================================================
-import { partenaire } from "../../../../core/database/models";
-import logger from "../../../core/logger";
+const PartnerService = require("../services/partner.service")
+const logger = require("../../../core/utils/logger")
+const createPartner = async (req, res) => {
+    try {
+        const partner = await PartnerService.createPartner(req.body);
+        res.status(201).json(partner);
+    } catch (error) {
+        logger.error("Erreur lors de la crÃ©ation du partenaire", error);
+        res.status(500).json({message: "Internal server error"});
+    }
+}
 
-export const createPartner = async (req, res) => {
-  const { nom, telephone, email, specialite, localisation, type, entiteId} = req.body;
-  try {
-    const partner = await partenaire.create({
-      nom,
-      telephone,
-      email,
-      specialite,
-      localisation,
-      type,
-      entiteId,
-    });
-    res.status(201).json(partner);
-  } catch (error) {
-    logger.error(error);
-    res.status(500).json({ message: "Erreur lors de la crÃ©ation du partenaire" });
-  }
-};
+const getPartner = async (req, res) => {
+    try {
+        const partner = await PartnerService.getPartner(req.params.id);
+        if (!partner) {
+            return res.status(404).json({ message: "Partner not found" });
+        }
+        res.status(200).json(partner);
+    } catch (error) {
+        logger.error("Erreur lors de la rÃ©cupÃ©ration du partenaire", error);
+        res.status(500).json({message: "Internal server error"});
+    }
+}   
 
+const updatePartner = async (req, res) => {
+    try {
+        const partner = await PartnerService.updatePartner(req.params.id, req.body);
+        if (!partner) {
+            return res.status(404).json({ message: "Partner not found" });
+        }
+        res.status(200).json(partner);
+    } catch (error) {
+        logger.error(error);
+        res.status(500).json({message: "Internal server error"});
+    }
+}
 
-export const getPartners = async (req, res) => {
-  try {
-    const partners = await partenaire.findMany();
-    res.json(partners);
-  } catch (error) {
-    logger.error(error);
-    res.status(500).json({ message: "Erreur lors de la rÃ©cupÃ©ration des partenaires" });
-  }
-}; 
+const deletePartner = async (req, res) => {
+    try {
+        const partner = await PartnerService.deletePartner(req.params.id);
+        if (!partner) {
+            return res.status(404).json({ message: "Partner not found" });
+        }
+        res.status(200).json(partner);
+    } catch (error) {
+        logger.error("Erreur lors de la suppression du partenaire", error);
+        res.status(500).json({message: "Internal server error"});
+    }
+}
 
-
-export const getPartnerById = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const partner = await partenaire.findUnique({ where: { id } });
-    res.json(partner);
-  } catch (error) {
-    logger.error(error);
-    res.status(500).json({ message: "Erreur lors de la rÃ©cupÃ©ration du partenaire" });
-  }
-};     
-
-
-export const updatePartner = async (req, res) => {
-  const { id } = req.params;
-  const { nom, telephone, email, specialite, localisation, type, entiteId } = req.body;
-  try {
-    const partner = await partenaire.update({ where: { id }, data: { nom, telephone, email, specialite, localisation, type, entiteId } });
-    res.json(partner);
-  } catch (error) {
-    logger.error(error);
-    res.status(500).json({ message: "Erreur lors de la mise Ã  jour du partenaire" });
-  }
-};
-
-
-export const deletePartner = async (req, res) => {
-  const { id } = req.params;
-  try {
-    await partenaire.delete({ where: { id } });
-    res.json({ message: "Partenaire supprimÃ© avec succÃ¨s" });
-  } catch (error) {
-    logger.error(error);
-    res.status(500).json({ message: "Erreur lors de la suppression du partenaire" });
-  }
-};
+const getAllPartners = async (req, res) => {
+    try {
+        const partners = await PartnerService.getAllPartners();
+        if (!partners) {
+            return res.status(404).json({ message: "Partners not found" });
+        }
+        res.status(200).json(partners);
+    } catch (error) {
+        logger.error("Erreur lors de la rÃ©cupÃ©ration des partenaires", error);
+        res.status(500).json({message: "Internal server error"});
+    }
+}
 
 module.exports = {
-  createPartner,
-  getPartners,
-  getPartnerById,
-  updatePartner,
-  deletePartner,
-};
+    createPartner,
+    getPartner,
+    updatePartner,
+    deletePartner,
+    getAllPartners
+}
+
+
+
+
+
 
 
 
 ================================================
-File: modules/administration/accounting/routes/accounting.routes.js
+File: modules/administration/routes/accounting.routes.js
 ================================================
 ï»¿
 
 
 ================================================
-File: modules/administration/accounting/routes/partner.route.js
+File: modules/administration/routes/partner.route.js
 ================================================
-import { express } from "express";
-import { createPartner,
-         getPartners, 
-         getPartnerById, 
-         updatePartner, 
-         deletePartner } from "../controllers/partner.controller";
-
-
+const express = require("express");
+const partnerController = require("../controllers/partner.controller");
 const router = express.Router();
 
-router.post('/', createPartner);
-router.get('/', getPartners); 
-router.get('/:id', getPartnerById);
-router.put('/:id', updatePartner);
-router.delete('/:id', deletePartner); 
+router.post('/', partnerController.createPartner);
+router.get('/', partnerController.getAllPartners);
+router.get('/:id', partnerController.getPartner);
+router.put('/:id', partnerController.updatePartner);
+router.delete('/:id', partnerController.deletePartner);
 
-export default router;
+module.exports = router;
+
+
+
+
+
+================================================
+File: modules/administration/services/partner.service.js
+================================================
+const { eq } = require("drizzle-orm");
+const {db} = require("../utils/drizzle-wrapper")
+const {partenaire} = require("../../../core/database/models")
+
+
+const createPartner = async (partner) => {
+    const newPartner = await db.insert(partenaire).values(partner).returning();
+    return newPartner;
+}
+
+const getAllPartners = async () => {
+    const partners = await db.select().from(partenaire);
+    return partners;
+}
+
+const getPartner = async (id) => {
+    const partner = await db.select().from(partenaire).where(eq(partenaire.id, id));
+    return partner;
+}
+
+const updatePartner = async (id, partner) => {
+    const updatedPartner = await db.update(partenaire).set(partner).where(eq(partenaire.id, id));
+    return updatedPartner;
+}
+
+const deletePartner = async (id) => {
+    const deletedPartner = await db.delete(partenaire).where(eq(partenaire.id, id));
+    return deletedPartner;
+}
+
+
+module.exports = {
+    createPartner,
+    getAllPartners,
+    getPartner,
+    updatePartner,
+    deletePartner
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================
+File: modules/administration/utils/drizzle-wrapper.js
+================================================
+const { drizzle } = require("drizzle-orm/node-postgres");
+const { Pool } = require("pg");
+const schema = require("../../../core/database/models");
+
+const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.APP_DB_USER,
+    password: process.env.APP_DB_PASSWORD,
+    database: process.env.APP_DB_NAME,
+});
+
+// Tester la connexion
+pool.connect((err, client, release) => {
+    if (err) {
+        console.error('Erreur de connexion:', err.stack);
+    } else {
+        console.log('Connexion Ã  la base de donnÃ©es rÃ©ussie!');
+        release();
+    }
+});
+
+module.exports = drizzle(pool, { schema }); 
 
 
 
@@ -4171,6 +4525,42 @@ File: modules/projects/models/projects.model.js
 File: modules/projects/routes/projects.routes.js
 ================================================
 ï»¿
+
+
+
+================================================
+File: modules/stocks/readme.md
+================================================
+## Gestion des erreurs de migration Drizzle ORM
+
+Si vous rencontrez l'erreur suivante lors de l'exÃ©cution de :
+
+```sh
+npx drizzle-kit migrate
+```
+
+```sh
+error: password authentication failed for user "dcat_user"
+    at D:\dcat_backend\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async PgDialect.migrate (D:\dcat_backend\node_modules\src\pg-core\dialect.ts:85:3)
+    at async migrate (D:\dcat_backend\node_modules\src\node-postgres\migrator.ts:10:2) {
+  length: 105,
+  severity: 'FATAL',
+  code: '28P01',
+```
+
+### Solution :
+Assurez-vous que les fichiers suivants utilisent bien le format de fin de ligne `LF` et non `CRLF` :
+- `init-db/init-multiple-dbs.sh`
+- `.env`
+
+Pour convertir ces fichiers sous Linux/macOS :
+```sh
+dos2unix init-db/init-multiple-dbs.sh .env
+```
+
+Sous Windows, utilisez un Ã©diteur de texte comme VS Code et modifiez le format de fin de ligne en `LF`.
 
 
 
@@ -4339,6 +4729,88 @@ module.exports = {
 
 
 ================================================
+File: modules/stocks/controllers/exemplaire.controller.js
+================================================
+const exemplaireService = require("../services/exemplaire.service");
+
+const createExemplaire = async (req, res) => {
+  try {
+    const result = await exemplaireService.createExemplaire(req.body);
+    return res.status(201).json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+const getExemplaires = async (req, res) => {
+  try {
+    const result = await exemplaireService.getExemplaires();
+    return res.status(200).json(result || []);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+const getExemplaireById = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await exemplaireService.getExemplaireById(Number(id));
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+const updateExemplaire = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await exemplaireService.updateExemplaire(id);
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+const deleteExemplaire = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await exemplaireService.deleteExemplaire(id);
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+module.exports = {
+  createExemplaire,
+  getExemplaires,
+  getExemplaireById,
+  updateExemplaire,
+  deleteExemplaire,
+};
+
+
+
+================================================
 File: modules/stocks/controllers/famille.controller.js
 ================================================
 const familleService = require("../services/famille.service");
@@ -4432,6 +4904,103 @@ module.exports = {
   getFamilleById,
   updateFamille,
   deleteFamille
+};
+
+
+================================================
+File: modules/stocks/controllers/livraison.controller.js
+================================================
+const livraisonService = require("../services/livraison.service");
+
+// CREATE
+const createLivraison = async (req, res) => {
+  try {
+    if (!req.body.libelle) {
+      return res.status(400).json({ error: "Le libellÃ© est requis" });
+    }
+    const result = await livraisonService.createLivraison(req.body);
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la crÃ©ation",
+      details: error.message 
+    });
+  }
+};
+
+// READ ALL
+const getLivraisons = async (req, res) => {
+  try {
+    const result = await livraisonService.getLivraisons();
+    res.json(result || []);
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la rÃ©cupÃ©ration",
+      details: error.message 
+    });
+  }
+};
+
+// READ ONE
+const getLivraisonById = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await livraisonService.getLivraisonById(id);
+    if (!result) {
+      return res.status(404).json({ error: "Livraison non trouvÃ©e" });
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la rÃ©cupÃ©ration",
+      details: error.message 
+    });
+  }
+};
+
+// UPDATE
+const updateLivraison = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await livraisonService.updateLivraison(id, req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la mise Ã  jour",
+      details: error.message 
+    });
+  }
+};
+
+// DELETE
+const deleteLivraison = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    await livraisonService.deleteLivraison(id);
+    res.json({ message: "Livraison supprimÃ©e avec succÃ¨s" });
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la suppression",
+      details: error.message 
+    });
+  }
+};
+
+module.exports = {
+  createLivraison,
+  getLivraisons,
+  getLivraisonById,
+  updateLivraison,
+  deleteLivraison
 };
 
 
@@ -4600,6 +5169,170 @@ module.exports = {
 
 
 ================================================
+File: modules/stocks/controllers/partenaire.controller.js
+================================================
+const partenaireService = require("../services/partenaire.service");
+
+const createPartenaire = async (req, res) => {
+  try {
+    const result = await partenaireService.createPartenaire(req.body);
+    return res.status(201).json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+const getPartenaires = async (req, res) => {
+  try {
+    const result = await partenaireService.getPartenaires();
+    return res.status(200).json(result || []);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+const getPartenaireById = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await partenaireService.getPartenaireById(Number(id));
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+const updatePartenaire = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await partenaireService.updatePartenaire(id);
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+const deletePartenaire = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await partenaireService.deletePartenaire(id);
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+module.exports = {
+  createPartenaire,
+  getPartenaires,
+  getPartenaireById,
+  updatePartenaire,
+  deletePartenaire,
+};
+
+
+
+================================================
+File: modules/stocks/controllers/produit.controller.js
+================================================
+const produitService = require("../services/produit.service");
+
+const createProduit = async (req, res) => {
+  try {
+    const result = await produitService.createProduit(req.body);
+    return res.status(201).json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+const getProduits = async (req, res) => {
+  try {
+    const result = await produitService.getProduits();
+    return res.status(200).json(result || []);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+const getProduitById = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await produitService.getProduitById(Number(id));
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+const updateProduit = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await produitService.updateProduit(id);
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+const deleteProduit = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await produitService.deleteProduit(id);
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+module.exports = {
+  createProduit,
+  getProduits,
+  getProduitById,
+  updateProduit,
+  deleteProduit,
+};
+
+
+
+================================================
 File: modules/stocks/controllers/stocks.controller.js
 ================================================
 ï»¿// const stockService = require('../services/stocks.service');
@@ -4661,6 +5394,24 @@ module.exports = router;
 
 
 ================================================
+File: modules/stocks/routes/exemplaire.routes.js
+================================================
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/exemplaire.controller");
+
+// CRUD Routes
+router.post("/", controller.createExemplaire);
+router.get("/", controller.getExemplaires);
+router.get("/:id", controller.getExemplaireById);
+router.put("/:id", controller.updateExemplaire);
+router.delete("/:id", controller.deleteExemplaire);
+
+module.exports = router;
+
+
+
+================================================
 File: modules/stocks/routes/famille.routes.js
 ================================================
 const express = require("express");
@@ -4672,7 +5423,24 @@ router.post("/", controller.createFamille);
 router.get("/", controller.getFamilles);
 router.get("/:id", controller.getFamilleById);
 router.put("/:id", controller.updateFamille);
-router.delete("/:id", controller.deleteFamille);
+router.delete("/{:id}", controller.deleteFamille);
+
+module.exports = router;
+
+
+================================================
+File: modules/stocks/routes/livraison.routes.js
+================================================
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/livraison.controller");
+
+// CRUD Routes
+router.post("/", controller.createLivraison);
+router.get("/", controller.getLivraisons);
+router.get("/:id", controller.getLivraisonById);
+router.put("/:id", controller.updateLivraison);
+router.delete("/{:id}", controller.deleteLivraison);
 
 module.exports = router;
 
@@ -4696,7 +5464,7 @@ module.exports = router;
 
 
 ================================================
-File: modules/stocks/routes/modele.route.js
+File: modules/stocks/routes/modele.routes.js
 ================================================
 const express = require("express");
 const router = express.Router();
@@ -4714,6 +5482,42 @@ module.exports = router;
 
 
 ================================================
+File: modules/stocks/routes/partenaire.routes.js
+================================================
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/partenaire.controller");
+
+// CRUD Routes
+router.post("/", controller.createPartenaire);
+router.get("/", controller.getPartenaires);
+router.get("/:id", controller.getPartenaireById);
+router.put("/:id", controller.updatePartenaire);
+router.delete("/:id", controller.deletePartenaire);
+
+module.exports = router;
+
+
+
+================================================
+File: modules/stocks/routes/produit.routes.js
+================================================
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/produit.controller");
+
+// CRUD Routes
+router.post("/", controller.createProduit);
+router.get("/", controller.getProduits);
+router.get("/:id", controller.getProduitById);
+router.put("/:id", controller.updateProduit);
+router.delete("/:id", controller.deleteProduit);
+
+module.exports = router;
+
+
+
+================================================
 File: modules/stocks/routes/stocks.routes.js
 ================================================
 ï»¿const express = require("express");
@@ -4723,8 +5527,11 @@ const router = express.Router();
 const familleRoutes = require("./famille.routes");
 const categorieRoutes = require("./categorie.routes");
 const marqueRoutes = require("./marque.routes");
-const modeleRoutes = require("./modele.route");
+const modeleRoutes = require("./modele.routes");
 const entiteRoutes = require("./entite.routes");
+const produitRoutes = require("./produit.routes");
+const partenaireRoutes = require("./partenaire.routes");
+const livraisonRoutes = require("./livraison.routes");
 
 // Montage des routes
 router.use("/familles", familleRoutes);
@@ -4732,6 +5539,9 @@ router.use("/categories", categorieRoutes);
 router.use("/marques", marqueRoutes);
 router.use("/modeles", modeleRoutes);
 router.use("/entites", entiteRoutes);
+router.use("/produits", produitRoutes);
+router.use("/partenaires", partenaireRoutes);
+router.use("/livraisons", livraisonRoutes);
 
 module.exports = router;
 
@@ -4768,6 +5578,9 @@ const deleteCategorie=async(id)=>{
     const [result]=await db.delete(categorie).where(eq(categorie.id,id)).returning()
     return result
 }
+
+//recupÃ©rer tout les produits d'une catÃ©gorie
+// const getAllCategorieProduit=
 
 module.exports={
     createCategorie,
@@ -4816,6 +5629,47 @@ module.exports={
     getEntiteById,
     updateEntite,
     deleteEntite
+}
+
+
+================================================
+File: modules/stocks/services/exemplaire.service.js
+================================================
+const { eq } = require("drizzle-orm");
+const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
+const { exemplaire } = require("../../../core/database/models");
+"../../../"
+const createExemplaire=async(data)=>{
+    const [result]=await db.insert(exemplaire).values(data).returning()
+    return result
+}
+
+const getExemplaires=async()=>{
+    return await db.select().from(exemplaire);
+
+}
+
+const getExemplaireById=async(id)=>{
+    const [result]=await db.select().from(exemplaire).where(eq(exemplaire.id,id))
+    return result
+}
+
+const updateExemplaire=async(id,data)=>{
+    const [result]=await db.update(exemplaire).set(data).where(eq(exemplaire.id,id)).returning()
+    return result
+}
+
+const deleteExemplaire=async(id)=>{
+    const [result]=await db.delete(exemplaire).where(eq(exemplaire.id,id)).returning()
+    return result
+}
+
+module.exports={
+    createExemplaire,
+    getExemplaires, 
+    getExemplaireById,
+    updateExemplaire,
+    deleteExemplaire
 }
 
 
@@ -4879,6 +5733,70 @@ module.exports = {
   getFamilleById,
   updateFamille,
   deleteFamille,
+};
+
+
+
+================================================
+File: modules/stocks/services/livraison.service.js
+================================================
+// const { eq } = require("drizzle-orm");
+// const dbConfig = require("../../../core/database/config");
+// const { livraison } = require("../../../core/database/models");
+
+// // Solution robuste pour rÃ©cupÃ©rer db correctement
+// const db = dbConfig.db || dbConfig.default;
+
+// // Debug crucial
+// console.log("MÃ©thodes Drizzle disponibles:", {
+//   insert: typeof db.insert,
+//   select: typeof db.select,
+//   update: typeof db.update,
+//   delete: typeof db.delete
+// });
+
+const { eq } = require("drizzle-orm");
+const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
+const { livraison } = require("../../../core/database/models");
+
+// CRUD complet avec Drizzle
+const createLivraison = async (data) => {
+  const [result] = await db.insert(livraison).values(data).returning();
+  return result;
+};
+
+const getLivraisons = async () => {
+  return await db.select().from(livraison);
+};
+
+const getLivraisonById = async (id) => {
+  const [result] = await db.select().from(livraison).where(eq(livraison.id, id));
+  return result;
+};
+
+const updateLivraison = async (id, data) => {
+  const [result] = await db
+    .update(livraison)
+    .set(data)
+    .where(eq(livraison.id, id))
+    .returning();
+  return result;
+};
+
+const deleteLivraison = async (id) => {
+  const [result] = await db
+    .delete(livraison)
+    .where(eq(livraison.id, id))
+    .returning();
+  return result;
+};
+
+module.exports = {
+  createLivraison,
+  getLivraisons,
+  getLivraisonById,
+  updateLivraison,
+  deleteLivraison,
 };
 
 
@@ -4962,6 +5880,88 @@ module.exports={
     getModeleById,
     updateModele,
     deleteModele
+}
+
+
+================================================
+File: modules/stocks/services/partenaire.service.js
+================================================
+const { eq } = require("drizzle-orm");
+const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
+const { partenaire } = require("../../../core/database/models");
+
+const createPartenaire=async(data)=>{
+    const [result]=await db.insert(partenaire).values(data).returning()
+    return result
+}
+
+const getPartenaires=async()=>{
+    return await db.select().from(partenaire);
+
+}
+
+const getPartenaireById=async(id)=>{
+    const [result]=await db.select().from(partenaire).where(eq(partenaire.id,id))
+    return result
+}
+
+const updatePartenaire=async(id,data)=>{
+    const [result]=await db.update(partenaire).set(data).where(eq(partenaire.id,id)).returning()
+    return result
+}
+
+const deletePartenaire=async(id)=>{
+    const [result]=await db.delete(partenaire).where(eq(partenaire.id,id)).returning()
+    return result
+}
+
+module.exports={
+    createPartenaire,
+    getPartenaires, 
+    getPartenaireById,
+    updatePartenaire,
+    deletePartenaire
+}
+
+
+================================================
+File: modules/stocks/services/produit.service.js
+================================================
+const { eq } = require("drizzle-orm");
+const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
+const { produit } = require("../../../core/database/models");
+
+const createProduit=async(data)=>{
+    const [result]=await db.insert(produit).values(data).returning()
+    return result
+}
+
+const getProduits=async()=>{
+    return await db.select().from(produit);
+
+}
+
+const getProduitById=async(id)=>{
+    const [result]=await db.select().from(produit).where(eq(produit.id,id))
+    return result
+}
+
+const updateProduit=async(id,data)=>{
+    const [result]=await db.update(produit).set(data).where(eq(produit.id,id)).returning()
+    return result
+}
+
+const deleteProduit=async(id)=>{
+    const [result]=await db.delete(produit).where(eq(produit.id,id)).returning()
+    return result
+}
+
+module.exports={
+    createProduit,
+    getProduits, 
+    getProduitById,
+    updateProduit,
+    deleteProduit
 }
 
 
@@ -5076,47 +6076,109 @@ Directory structure:
     â”‚   â””â”€â”€ users.routes.js
     â”œâ”€â”€ services/
     â”‚   â””â”€â”€ users.service.js
+    â”œâ”€â”€ sql/
+    â”‚   â”œâ”€â”€ employes.sql
+    â”‚   â””â”€â”€ fonctions.sql
     â””â”€â”€ tests/
 
 ================================================
 File: controllers/sync.controller.js
 ================================================
 const { db } = require('../../../core/database/config');
-const { employes } = require('../../../core/database/models');
+const { employes, fonction } = require('../../../core/database/models');
 const { eq } = require('drizzle-orm');
 const logger = require('../../../core/utils/logger');
 
 module.exports = {
   syncUser: async (req, res) => {
     const token = req.kauth.grant.access_token;
-    const { email } = req.body; // On ne reÃƒÂ§oit plus que l'email (le reste est en BD mÃƒÂ©tier)
+    const { email, firstName, lastName } = req.body;
 
-    // Validation email cohÃƒÂ©rent
+    // Validation email/token
+    if (!token?.content?.email || !email) {
+      logger.warn('Token ou email manquant', { token, email });
+      return res.status(400).json({ error: "Token ou email invalide" });
+    }
+
     if (token.content.email !== email) {
       logger.warn('IncohÃƒÂ©rence email/token', {
         tokenEmail: token.content.email,
-        providedEmail: email
+        providedEmail: email,
+        userId: token.content.sub
       });
       return res.status(400).json({ error: "Email ne correspond pas au token" });
     }
 
+        // Validation du token
+    // if (!token.content.email_verified) {
+    //   return res.status(403).json({
+    //     error: "Email non vÃƒÂ©rifiÃƒÂ©",
+    //     action_required: {
+    //       type: "email_verification",
+    //       url: `http://localhost:8080/realms/dcat_realm/login-actions/action-token?key=${token.content.jti}`
+    //     }
+    //   });
+    // }
+
     try {
-      // Upsert : CrÃƒÂ©e ou met ÃƒÂ  jour UNIQUEMENT l'ID Keycloak + email
+      // RÃƒÂ©cupÃƒÂ©ration de l'ID de la fonction Technicien
+      const technicien = await db.select()
+        .from(fonction)
+        .where(eq(fonction.nom, 'Technicien'))
+        .limit(1);
+      console.log("RÃƒÂ©sultat recherche Technicien:", technicien);
+
+      if (!technicien || technicien.length === 0) {
+        throw new Error('La fonction Technicien n\'existe pas en base');
+      }
+
+      const fonctionId = technicien[0].id;
+
+      // DonnÃƒÂ©es utilisateur
+      const userData = {
+        keycloak_id: token.content.sub,
+        email: token.content.email,
+        nom: lastName || token.content.family_name || 'Non spÃƒÂ©cifiÃƒÂ©',
+        prenom: firstName || token.content.given_name || 'Non spÃƒÂ©cifiÃƒÂ©',
+        status: 'actif',
+        fonctionId: fonctionId,
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+
+      // Upsert
       await db.insert(employes)
-        .values({
-          keycloak_id: token.content.sub, // Lien avec Keycloak
-          email: token.content.email,
-          status: 'actif' // Valeur par dÃƒÂ©faut
-        })
+        .values(userData)
         .onConflictDoUpdate({
           target: employes.keycloak_id,
-          set: { email: token.content.email } // MAJ email si changÃƒÂ© dans Keycloak
+          set: {
+            email: userData.email,
+            nom: userData.nom,
+            prenom: userData.prenom,
+            fonctionId: fonctionId,
+            updated_at: userData.updated_at
+          }
         });
 
       res.status(204).end();
     } catch (error) {
-      logger.error('Erreur de synchronisation', error);
-      res.status(500).json({ error: "Ãƒâ€°chec de la synchronisation" });
+      logger.error('Erreur de synchronisation', {
+        error: error.message,
+        userId: token.content.sub,
+        email: token.content.email
+      });
+
+      if (error.message.includes('Technicien')) {
+        res.status(400).json({ 
+          error: "Configuration manquante",
+          details: "La fonction Technicien doit ÃƒÂªtre crÃƒÂ©ÃƒÂ©e en base de donnÃƒÂ©es"
+        });
+      } else {
+        res.status(500).json({ 
+          error: "Ãƒâ€°chec de la synchronisation",
+          details: error.message
+        });
+      }
     }
   }
 };
@@ -5125,60 +6187,63 @@ module.exports = {
 ================================================
 File: controllers/users.controller.js
 ================================================
-const logger = require('../../../core/utils/logger');
+Ã¯Â»Â¿const logger = require('../../../core/utils/logger');
 const userService = require('../services/users.service');
 
 module.exports = {
-  /**
-   * RÃƒÂ©cupÃƒÂ¨re tous les utilisateurs (pour admin)
-   */
   getAllUsers: async (req, res, next) => {
     try {
       const { page = 1, limit = 10 } = req.query;
       const users = await userService.getAllUsers(parseInt(page), parseInt(limit));
+      
       logger.info(`RÃƒÂ©cupÃƒÂ©ration de ${users.length} utilisateurs`);
-      res.json(users);
+      res.json(users.map(user => ({
+        ...user,
+        fonction: user.fonction?.nom || 'Non dÃƒÂ©fini'
+      })));
     } catch (error) {
       logger.error('Ãƒâ€°chec de rÃƒÂ©cupÃƒÂ©ration des utilisateurs:', error);
       next(error);
     }
   },
 
-  /**
-   * RÃƒÂ©cupÃƒÂ¨re le profil de l'utilisateur connectÃƒÂ©
-   */
+
   getMyProfile: async (req, res) => {
-    const { sub } = req.kauth.grant.access_token.content; // ID Keycloak
+  const token = req.kauth?.grant?.access_token;
+  if (!token?.content?.sub) {
+      return res.status(401).json({ error: "Token non fourni ou invalide" });
+  }
+  const { sub } = req.kauth.grant.access_token.content;
 
-    try {
-      const user = await userService.getUserByKeycloakId(sub);
-      if (!user) return res.status(404).json({ error: "Utilisateur non trouvÃƒÂ©" });
+  try {
+    const user = await userService.getUserByKeycloakId(sub);
+    console.log('User data:', user); // Debug log
 
-      // Ne renvoie que les donnÃƒÂ©es autorisÃƒÂ©es
-      res.json({
-        email: user.email,
-        nom: user.nom,
-        prenom: user.prenom,
-        service: user.service // Champ mÃƒÂ©tier
-      });
-    } catch (error) {
-      logger.error('Erreur lors de la rÃƒÂ©cupÃƒÂ©ration du profil', {
-        error: error.message,
-        userId: sub
-      });
-      res.status(500).json({ error: "Erreur serveur" });
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvÃƒÂ©" });
     }
-  },
 
-  /**
-   * Met ÃƒÂ  jour le profil de l'utilisateur connectÃƒÂ©
-   */
+    res.json({
+      email: user.email,
+      nom: user.nom,
+      prenom: user.prenom,
+      service: user.service,
+      fonction: user.fonction?.nom || 'Non dÃƒÂ©fini'
+    });
+  } catch (error) {
+    console.error('Error details:', error); // Log complet de l'erreur
+    res.status(500).json({ 
+      error: "Erreur serveur",
+      details: error.message
+    });
+  }
+},
+
   updateMyProfile: async (req, res) => {
     const { sub } = req.kauth.grant.access_token.content;
     const updates = req.body;
 
     try {
-      // Liste des champs autorisÃƒÂ©s ÃƒÂ  ÃƒÂªtre modifiÃƒÂ©s
       const allowedFields = ["tel", "adresse"];
       const filteredUpdates = Object.keys(updates)
         .filter(key => allowedFields.includes(key))
@@ -5204,10 +6269,7 @@ module.exports = {
 ================================================
 File: routes/users.routes.js
 ================================================
-Ã¯Â»Â¿//
-
-
-const express = require('express');
+Ã¯Â»Â¿const express = require('express');
 const router = express.Router();
 const { protect } = require('../../../core/auth/middleware');
 const UsersController = require('../controllers/users.controller');
@@ -5217,14 +6279,17 @@ const SyncController = require('../controllers/sync.controller');
 router.post('/sync', protect(), SyncController.syncUser);
 
 // RÃƒÂ©cupÃƒÂ©ration du profil utilisateur
-router.get('/me', protect(), UsersController.getMyProfile);
+router.get('/me', protect([]), UsersController.getMyProfile);
+// router.get('/me',  UsersController.getMyProfile);
+
 
 // Mise ÃƒÂ  jour du profil (ex: tÃƒÂ©lÃƒÂ©phone)
-router.patch('/me', protect(), UsersController.updateMyProfile);
+router.patch('/me', protect([]), UsersController.updateMyProfile);
 
 // RÃƒÂ©cupÃƒÂ©ration de tous les utilisateurs (avec pagination)
 // router.get('/', protect(['admin']), UsersController.getAllUsers);
-router.get('/', protect(), UsersController.getAllUsers);
+router.get('/',  protect(['user']), UsersController.getAllUsers);
+
 
 
 module.exports = router;
@@ -5234,20 +6299,25 @@ module.exports = router;
 File: services/users.service.js
 ================================================
 const { db } = require('../../../core/database/config');
-const { employes } = require('../../../core/database/models');
+const { employes, fonction } = require('../../../core/database/models');
 const { eq } = require('drizzle-orm');
 
 module.exports = {
-  // RÃƒÂ©cupÃƒÂ¨re un utilisateur par son ID Keycloak
   getUserByKeycloakId: async (keycloakId) => {
-    return await db.query.employes.findFirst({
-      where: eq(employes.keycloak_id, keycloakId)
-    });
+    const result = await db.select()
+      .from(employes)
+      .leftJoin(fonction, eq(employes.fonctionId, fonction.id)) // Sans 's'
+      .where(eq(employes.keycloak_id, keycloakId))
+      .limit(1);
+
+    return result[0] ? {
+      ...result[0].employes,
+      fonction: result[0].fonction // Sans 's'
+    } : null;
   },
 
-  // Met ÃƒÂ  jour les donnÃƒÂ©es modifiables (ex: tÃƒÂ©lÃƒÂ©phone)
   updateUserProfile: async (keycloakId, data) => {
-    const allowedFields = ["tel", "adresse"]; // Champs autorisÃƒÂ©s
+    const allowedFields = ["tel", "adresse"];
     const updates = Object.keys(data)
       .filter(key => allowedFields.includes(key))
       .reduce((obj, key) => ({ ...obj, [key]: data[key] }), {});
@@ -5286,7 +6356,7 @@ module.exports = {
 File: modules/users/controllers/sync.controller.js
 ================================================
 const { db } = require('../../../core/database/config');
-const { employes, fonctions } = require('../../../core/database/models');
+const { employes, fonction } = require('../../../core/database/models');
 const { eq } = require('drizzle-orm');
 const logger = require('../../../core/utils/logger');
 
@@ -5310,12 +6380,24 @@ module.exports = {
       return res.status(400).json({ error: "Email ne correspond pas au token" });
     }
 
+        // Validation du token
+    // if (!token.content.email_verified) {
+    //   return res.status(403).json({
+    //     error: "Email non vÃ©rifiÃ©",
+    //     action_required: {
+    //       type: "email_verification",
+    //       url: `http://localhost:8080/realms/dcat_realm/login-actions/action-token?key=${token.content.jti}`
+    //     }
+    //   });
+    // }
+
     try {
       // RÃ©cupÃ©ration de l'ID de la fonction Technicien
       const technicien = await db.select()
-        .from(fonctions)
-        .where(eq(fonctions.nom, 'Technicien'))
+        .from(fonction)
+        .where(eq(fonction.nom, 'Technicien'))
         .limit(1);
+      console.log("RÃ©sultat recherche Technicien:", technicien);
 
       if (!technicien || technicien.length === 0) {
         throw new Error('La fonction Technicien n\'existe pas en base');
@@ -5330,7 +6412,7 @@ module.exports = {
         nom: lastName || token.content.family_name || 'Non spÃ©cifiÃ©',
         prenom: firstName || token.content.given_name || 'Non spÃ©cifiÃ©',
         status: 'actif',
-        fonction_id: fonctionId,
+        fonctionId: fonctionId,
         created_at: new Date(),
         updated_at: new Date()
       };
@@ -5344,7 +6426,7 @@ module.exports = {
             email: userData.email,
             nom: userData.nom,
             prenom: userData.prenom,
-            fonction_id: fonctionId,
+            fonctionId: fonctionId,
             updated_at: userData.updated_at
           }
         });
@@ -5396,28 +6478,37 @@ module.exports = {
     }
   },
 
+
   getMyProfile: async (req, res) => {
-    const { sub } = req.kauth.grant.access_token.content;
+  const token = req.kauth?.grant?.access_token;
+  if (!token?.content?.sub) {
+      return res.status(401).json({ error: "Token non fourni ou invalide" });
+  }
+  const { sub } = req.kauth.grant.access_token.content;
 
-    try {
-      const user = await userService.getUserByKeycloakId(sub);
-      if (!user) return res.status(404).json({ error: "Utilisateur non trouvÃ©" });
+  try {
+    const user = await userService.getUserByKeycloakId(sub);
+    console.log('User data:', user); // Debug log
 
-      res.json({
-        email: user.email,
-        nom: user.nom,
-        prenom: user.prenom,
-        service: user.service,
-        fonction: user.fonction?.nom || 'Non dÃ©fini'
-      });
-    } catch (error) {
-      logger.error('Erreur lors de la rÃ©cupÃ©ration du profil', {
-        error: error.message,
-        userId: sub
-      });
-      res.status(500).json({ error: "Erreur serveur" });
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvÃ©" });
     }
-  },
+
+    res.json({
+      email: user.email,
+      nom: user.nom,
+      prenom: user.prenom,
+      service: user.service,
+      fonction: user.fonction?.nom || 'Non dÃ©fini'
+    });
+  } catch (error) {
+    console.error('Error details:', error); // Log complet de l'erreur
+    res.status(500).json({ 
+      error: "Erreur serveur",
+      details: error.message
+    });
+  }
+},
 
   updateMyProfile: async (req, res) => {
     const { sub } = req.kauth.grant.access_token.content;
@@ -5449,10 +6540,7 @@ module.exports = {
 ================================================
 File: modules/users/routes/users.routes.js
 ================================================
-ï»¿//
-
-
-const express = require('express');
+ï»¿const express = require('express');
 const router = express.Router();
 const { protect } = require('../../../core/auth/middleware');
 const UsersController = require('../controllers/users.controller');
@@ -5462,14 +6550,17 @@ const SyncController = require('../controllers/sync.controller');
 router.post('/sync', protect(), SyncController.syncUser);
 
 // RÃ©cupÃ©ration du profil utilisateur
-router.get('/me', protect(), UsersController.getMyProfile);
+router.get('/me', protect([]), UsersController.getMyProfile);
+// router.get('/me',  UsersController.getMyProfile);
+
 
 // Mise Ã  jour du profil (ex: tÃ©lÃ©phone)
-router.patch('/me', protect(), UsersController.updateMyProfile);
+router.patch('/me', protect([]), UsersController.updateMyProfile);
 
 // RÃ©cupÃ©ration de tous les utilisateurs (avec pagination)
 // router.get('/', protect(['admin']), UsersController.getAllUsers);
-router.get('/', protect(), UsersController.getAllUsers);
+router.get('/',  protect(['user']), UsersController.getAllUsers);
+
 
 
 module.exports = router;
@@ -5479,17 +6570,21 @@ module.exports = router;
 File: modules/users/services/users.service.js
 ================================================
 const { db } = require('../../../core/database/config');
-const { employes, fonctions } = require('../../../core/database/models');
+const { employes, fonction } = require('../../../core/database/models');
 const { eq } = require('drizzle-orm');
 
 module.exports = {
   getUserByKeycloakId: async (keycloakId) => {
-    return await db.query.employes.findFirst({
-      where: eq(employes.keycloak_id, keycloakId),
-      with: {
-        fonction: true // Jointure avec la table fonctions
-      }
-    });
+    const result = await db.select()
+      .from(employes)
+      .leftJoin(fonction, eq(employes.fonctionId, fonction.id)) // Sans 's'
+      .where(eq(employes.keycloak_id, keycloakId))
+      .limit(1);
+
+    return result[0] ? {
+      ...result[0].employes,
+      fonction: result[0].fonction // Sans 's'
+    } : null;
   },
 
   updateUserProfile: async (keycloakId, data) => {
@@ -5505,29 +6600,53 @@ module.exports = {
 
   getAllUsers: async (page = 1, limit = 10) => {
     try {
-      return await db.query.employes.findMany({
-        columns: {
-          id: true,
-          email: true,
-          prenom: true,
-          nom: true,
-          status: true
-        },
-        with: {
-          fonction: {
-            columns: {
-              nom: true
-            }
-          }
-        },
-        orderBy: [employes.nom],
-        limit: limit,
-        offset: (page - 1) * limit
-      });
+      return await db.select({
+        id: employes.id,
+        email: employes.email,
+        prenom: employes.prenom,
+        nom: employes.nom,
+        status: employes.status,
+        // service: employes.service
+      })
+      .from(employes)
+      .orderBy(employes.nom)
+      .limit(limit)
+      .offset((page - 1) * limit)
+      .execute();
     } catch (error) {
       throw new Error(`Ã‰chec de rÃ©cupÃ©ration des utilisateurs: ${error.message}`);
     }
-  }
+  },
 };
+
+
+================================================
+File: modules/users/sql/employes.sql
+================================================
+INSERT INTO public.employes(
+    id, nom, keycloak_id, prenom, email, contact, adresse, status, fonction_id)
+VALUES 
+    (1, 'Dupont', 'keycloak-001', 'Jean', 'jean.dupont@example.com', '0612345678', '10 Rue de Paris, 75001', true, 1),
+    (2, 'Martin', 'keycloak-002', 'Sophie', 'sophie.martin@example.com', '0623456789', '22 Av. des Champs, 69002', true, 2),
+    (3, 'Bernard', 'keycloak-003', 'Pierre', 'pierre.bernard@example.com', '0634567890', '5 Bd LibertÃ©, 13003', true, 3), -- Technicien
+    (4, 'Petit', 'keycloak-004', 'Marie', 'marie.petit@example.com', '0645678901', '15 Rue Lyon, 31004', false, 3), -- Technicien
+    (5, 'Durand', 'keycloak-005', 'Luc', 'luc.durand@example.com', '0656789012', '30 Av. Central, 59005', true, 4),
+    (6, 'Leroy', 'keycloak-006', 'Emma', 'emma.leroy@example.com', '0667890123', '8 Pl. RÃ©publique, 67006', true, 5),
+    (7, 'Moreau', 'keycloak-007', 'Thomas', 'thomas.moreau@example.com', '0678901234', '12 Rue Principale, 33007', true, 3), -- Technicien
+    (8, 'Lefebvre', 'keycloak-008', 'Julie', 'julie.lefebvre@example.com', '0689012345', '40 Bd des Roses, 06008', false, 2),
+    (9, 'Roux', 'keycloak-009', 'Nicolas', 'nicolas.roux@example.com', '0690123456', '25 Impasse Fleurie, 34009', true, 3), -- Technicien
+    (10, 'Girard', 'keycloak-010', 'Isabelle', 'isabelle.girard@example.com', '0601234567', '18 Chemin Vert, 44010', true, 1);
+
+
+================================================
+File: modules/users/sql/fonctions.sql
+================================================
+INSERT INTO public.fonction(id, nom)
+VALUES 
+    (1, 'Directeur'),
+    (2, 'Manager'),
+    (3, 'Technicien'),
+    (4, 'Assistant'),
+    (5, 'SecrÃ©taire');
 
 

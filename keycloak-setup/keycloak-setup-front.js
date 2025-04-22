@@ -82,19 +82,19 @@ async function setupKeycloak() {
     }
 
     // 4. Création du rôle 'frontend_user' spécifique
-    console.log(`👔 Création du rôle 'frontend_user'...`);
-    try {
-      await adminClient.roles.create({
-        realm: config.realm,
-        name: 'frontend_user'
-      });
-      console.log(`🆕 Rôle 'frontend_user' créé`);
-    } catch (roleError) {
-      if (roleError.response?.status !== 409) {
-        throw roleError;
-      }
-      console.log(`ℹ️ Rôle 'frontend_user' existe déjà`);
-    }
+    // console.log(`👔 Création du rôle 'frontend_user'...`);
+    // try {
+    //   await adminClient.roles.create({
+    //     realm: config.realm,
+    //     // name: 'frontend_user'
+    //   });
+    //   console.log(`🆕 Rôle 'frontend_user' créé`);
+    // } catch (roleError) {
+    //   if (roleError.response?.status !== 409) {
+    //     throw roleError;
+    //   }
+    //   console.log(`ℹ️ Rôle 'frontend_user' existe déjà`);
+    // }
 
     // 5. Création de l'utilisateur frontend spécifique
     console.log(`👤 Création de l'utilisateur ${config.appUser}...`);
@@ -117,23 +117,23 @@ async function setupKeycloak() {
       });
 
       // Assignation du rôle spécifique
-      const role = await adminClient.roles.findOneByName({
-        realm: config.realm,
-        name: 'frontend_user'
-      });
+      // const role = await adminClient.roles.findOneByName({
+      //   realm: config.realm,
+      //   name: 'frontend_user'
+      // });
       
-      await adminClient.users.addRealmRoleMappings({
-        realm: config.realm,
-        id: newUser.id,
-        roles: [{
-          id: role.id,
-          name: role.name
-        }]
-      });
+      // await adminClient.users.addRealmRoleMappings({
+      //   realm: config.realm,
+      //   id: newUser.id,
+      //   roles: [{
+      //     id: role.id,
+      //     name: role.name
+      //   }]
+      // });
 
       console.log(`🆕 Utilisateur frontend créé : ${config.appUser}`);
       console.log(`🔑 Identifiants : ${config.appUser}/${config.appPassword}`);
-      console.log(`🎯 Rôle attribué : frontend_user`);
+      // console.log(`🎯 Rôle attribué : frontend_user`);
     } else {
       console.log(`ℹ️ Utilisateur existant : ${config.appUser}`);
     }
