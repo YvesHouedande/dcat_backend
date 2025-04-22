@@ -42,16 +42,16 @@ const updateExemplaire = async (req, res) => {
     const id = parseInt(req.params.id);
     const data = req.body;
 
-      if (!data || typeof data !== "object") {
-        throw new Error(
-          "Les données à mettre à jour sont invalides ou manquantes."
-        );
-      }
+    if (!data || typeof data !== "object") {
+      throw new Error(
+        "Les données à mettre à jour sont invalides ou manquantes."
+      );
+    }
 
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    const result = await exemplaireService.updateExemplaire(id,data);
+    const result = await exemplaireService.updateExemplaire(id, data);
     return res.json(result);
   } catch (error) {
     res
@@ -67,7 +67,7 @@ const deleteExemplaire = async (req, res) => {
       return res.status(400).json({ error: "ID invalide" });
     }
     const result = await exemplaireService.deleteExemplaire(id);
-    return res.json({message:"élément supprimé avec succès"});
+    return res.json({ message: "élément supprimé avec succès" });
   } catch (error) {
     res
       .status(500)
@@ -76,7 +76,7 @@ const deleteExemplaire = async (req, res) => {
 };
 
 // obtenir tout les exemplaires d'un produit
-const getAllExemplaireProduit = async (req, res) => {
+const getExemplairesByProduit = async (req, res) => {
   try {
     const { id, code } = req.params;
 
@@ -91,7 +91,7 @@ const getAllExemplaireProduit = async (req, res) => {
       return res.status(400).json({ error: "ID invalide" });
     }
 
-    const result = await exemplaireService.getAllExemplaireProduit(
+    const result = await exemplaireService.getExemplairesByProduit(
       parseInt(id),
       code
     );
@@ -103,6 +103,55 @@ const getAllExemplaireProduit = async (req, res) => {
   }
 };
 
+//tout les exemplaires "disponible"
+const getAvailableExemplaires = async (req, res) => {
+  try {
+    const results = await exemplaireService.getAvailableExemplaires();
+    return res.status(200).json(results);
+  } catch (error) {
+    return res.status(500).json({
+      error: "Une erreur est survenue",
+      details: error.message,
+    });
+  }
+};
+
+
+ // Vérifie si un exemplaire spécifique est en cours d'utilisation
+const isExemplaireInUse = async (req, res) => {
+  try {
+    const id = req.param.id;
+    const results = await exemplaireService.isExemplaireInUse(parseInt(id));
+    return res.status(200).json(results);
+  } catch (error) {
+    return res.status(500).json({
+      error: "Une erreur est survenue",
+      details: error.message,
+    });
+  }
+};
+
+// Récupère tous les exemplaires actuellement en cours d'utilisation
+const isExemplairesInUse = async (req, res) => {
+  try {
+    const results = await exemplaireService.isExemplairesInUse();
+    return res.status(200).json(results);
+  } catch (error) {
+    return res.status(500).json({
+      error: "Une erreur est survenue",
+      details: error.message,
+    });
+  }
+};
+/**
+ * 
+ * 
+ *   exemplaireIds,
+  partenaireId,
+  lieuLivraison,
+  dateCommande,
+  dateLivraison,
+ */
 //acheter un exemplaire de produit(un client qui vient acheter)
 
 const purchaseExemplaire = async (req, res) => {
@@ -112,7 +161,9 @@ const purchaseExemplaire = async (req, res) => {
 
     // Vérifie que les deux paramètres sont présents
     if (!exemplaireId || !partenaireId || !quantite) {
-      return res.status(400).json({ message: "Données manquantes dans l'URL ou le corps de la requête" });
+      return res.status(400).json({
+        message: "Données manquantes dans l'URL ou le corps de la requête",
+      });
     }
 
     if (isNaN(exemplaireId) || isNaN(partenaireId) || isNaN(quantite)) {
@@ -138,7 +189,6 @@ const purchaseExemplaire = async (req, res) => {
   }
 };
 
-
 // Affecter un exemplaire à un employé pour un projet
 const assignExemplaire = async (req, res) => {
   try {
@@ -159,7 +209,11 @@ const assignExemplaire = async (req, res) => {
     const parsedProjetId = parseInt(projetId, 10);
     const parsedEmployeId = parseInt(employeId, 10);
 
-    if (isNaN(parsedExemplaireId) || isNaN(parsedEmployeId)|| isNaN(parsedProjetId)) {
+    if (
+      isNaN(parsedExemplaireId) ||
+      isNaN(parsedEmployeId) ||
+      isNaN(parsedProjetId)
+    ) {
       return res.status(400).json({
         error: "INVALID_ID",
         message: "Les identifiants doivent être des nombres valides.",
@@ -169,7 +223,7 @@ const assignExemplaire = async (req, res) => {
     // Appel du service
     const result = await exemplaireService.assignExemplaire({
       exemplaireId: parsedExemplaireId,
-      projetId :parsedProjetId,
+      projetId: parsedProjetId,
       employeId: parsedEmployeId,
       dateUtilisation,
       dateFin,
@@ -194,7 +248,10 @@ module.exports = {
   getExemplaireById,
   updateExemplaire,
   deleteExemplaire,
-  getAllExemplaireProduit,
+  getExemplairesByProduit,
   purchaseExemplaire,
   assignExemplaire,
+  getAvailableExemplaires,
+  isExemplaireInUse,
+  isExemplairesInUse
 };

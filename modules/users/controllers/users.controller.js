@@ -18,35 +18,45 @@ module.exports = {
     }
   },
 
+
   getMyProfile: async (req, res) => {
-    const { sub } = req.kauth.grant.access_token.content;
+  const token = req.kauth?.grant?.access_token;
+  if (!token?.content?.sub) {
+      return res.status(401).json({ error: "Token non fourni ou invalide" });
+  }
+  const { sub } = req.kauth.grant.access_token.content;
 
-    try {
-      const user = await userService.getUserByKeycloakId(sub);
-      if (!user) return res.status(404).json({ error: "Utilisateur non trouvé" });
+  try {
+    const user = await userService.getUserByKeycloakId(sub);
+    // console.log('User data:', user); // Debug log
 
-      res.json({
-        email: user.email,
-        nom: user.nom,
-        prenom: user.prenom,
-        // service: user.service,
-        fonction: user.fonction?.nom || 'Non défini'
-      });
-    } catch (error) {
-      logger.error('Erreur lors de la récupération du profil', {
-        error: error.message,
-        userId: sub
-      });
-      res.status(500).json({ error: "Erreur serveur" });
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
     }
-  },
+
+    res.json({
+      email: user.email,
+      nom: user.nom,
+      prenom: user.prenom,
+      contact: user.contact,
+      adresse: user.adresse,
+      fonction: user.fonction?.nom || 'Non défini'
+    });
+  } catch (error) {
+    console.error('Error details:', error); // Log complet de l'erreur
+    res.status(500).json({ 
+      error: "Erreur serveur",
+      details: error.message
+    });
+  }
+},
 
   updateMyProfile: async (req, res) => {
     const { sub } = req.kauth.grant.access_token.content;
     const updates = req.body;
 
     try {
-      const allowedFields = ["tel", "adresse"];
+      const allowedFields = ["adresse", "contact", "nom", "prenom"];
       const filteredUpdates = Object.keys(updates)
         .filter(key => allowedFields.includes(key))
         .reduce((obj, key) => ({ ...obj, [key]: updates[key] }), {});
@@ -54,6 +64,8 @@ module.exports = {
       if (Object.keys(filteredUpdates).length === 0) {
         return res.status(400).json({ error: "Aucun champ modifiable fourni" });
       }
+
+      logger.error('Test-------------------------',filteredUpdates);
 
       await userService.updateUserProfile(sub, filteredUpdates);
       res.status(204).end();
