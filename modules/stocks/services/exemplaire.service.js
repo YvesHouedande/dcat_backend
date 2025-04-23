@@ -1,5 +1,6 @@
 const { eq, sql, and, inArray, isNull } = require("drizzle-orm");
-const db = require("../utils/drizzle-wrapper");
+const {db} = require("../../../core/database/config");
+// const db = require("../utils/drizzle-wrapper");
 const {
   exemplaires,
   produits,
@@ -10,7 +11,7 @@ const {
 /**
  *
  * vendu : exemplaire vendu
- * disponible : exemplaire dismponible
+ * disponible : exemplaire disponible
  * in Use     : exemplaire (outils) en cours d'utilisation (par un employé)
  */
 const etatExemplaire = [

@@ -1,5 +1,5 @@
 // const { eq, sql, and, inArray, isNull } = require("drizzle-orm");
-// const db = require("../utils/drizzle-wrapper");
+// const {db} = require("../../../core/database/config");
 // const {
 //   exemplaires,
 //   produits,
