@@ -53,7 +53,7 @@ async function createExemplaire(data) {
   return newExemplaire;
 }
 
-async function getAllExemplaires() {
+async function getExemplaires() {
   return db.select().from(exemplaires);
 }
 
@@ -312,7 +312,7 @@ async function unassignExemplaire({ exId, empId, etatRetour, dateRetour }) {
 
 module.exports = {
   createExemplaire,
-  getAllExemplaires,
+  getExemplaires,
   getExemplaireById,
   updateExemplaire,
   deleteExemplaire,

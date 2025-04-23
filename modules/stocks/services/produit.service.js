@@ -11,7 +11,7 @@ const createProduit = async (data) => {
 };
 
 const getProduits = async () => {
-  return await db.select().from(produits).where(eq(produits.supprime, false)); // exclure les produits supprimé
+  return await db.select().from(produits); 
 };
 
 const getProduitById = async (id) => {
@@ -25,7 +25,10 @@ const getProduitById = async (id) => {
 const updateProduit = async (id, data) => {
   const [result] = await db
     .update(produits)
-    .set(data)
+    .set({
+      ...data,
+      updated_at: new Date(),
+    })
     .where(eq(produits.id_produit, id))
     .returning();
   return result;
@@ -33,8 +36,7 @@ const updateProduit = async (id, data) => {
 
 const deleteProduit = async (id) => {
   const [result] = await db
-    .update(produits)
-    .set({ supprime: true })
+    .delete(produits)
     .where(eq(produits.id_produit, id))
     .returning();
   return result;
