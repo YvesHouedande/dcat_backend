@@ -4,8 +4,7 @@ const {
   exemplaires,
   produits,
   commandes,
-  usage_exemplaires,
-  partenaireCommandes,
+  partenaire_commandes,
 } = require("../../../core/database/models");
 
 /**
@@ -41,7 +40,7 @@ async function createExemplaire(data) {
   await db
     .update(produits)
     .set({
-      quantite_produit: sql`CAST(${produits.quantite_produit} AS INTEGER) + 1`,
+      qte_produit: sql`CAST(${produits.qte_produit} AS INTEGER) + 1`,
     })
     .where(
       and(
@@ -72,18 +71,23 @@ async function updateExemplaire(id, data) {
     .where(eq(exemplaires.id_exemplaire, id));
   if (!current) throw new Error("Exemplaire non trouvé");
 
+  // vérifier si l'exemplaire est réasigner à un autre produit
   const produitChange =
     data.id_produit &&
     data.code_produit &&
     (data.id_produit !== current.id_produit ||
       data.code_produit !== current.code_produit);
 
+  // si oui |
+  //        v
+
   if (produitChange) {
     // ajuster ancien produit
     await db
       .update(produits)
       .set({
-        quantite_produit: sql`CAST(${produits.quantite_produit} AS INTEGER) - 1`,
+        qte_produit: sql`CAST(${produits.qte_produit} AS INTEGER) - 1`,
+        updated_at: new Date(),
       })
       .where(
         and(
@@ -96,7 +100,8 @@ async function updateExemplaire(id, data) {
     await db
       .update(produits)
       .set({
-        quantite_produit: sql`CAST(${produits.quantite_produit} AS INTEGER) + 1`,
+        qte_produit: sql`CAST(${produits.qte_produit} AS INTEGER) + 1`,
+        updated_at: new Date(),
       })
       .where(
         and(
@@ -106,9 +111,13 @@ async function updateExemplaire(id, data) {
       );
   }
 
+  //mettre à jour les info de l'exemplaire
   const [updated] = await db
     .update(exemplaires)
-    .set(data)
+    .set({
+      ...data,
+      updated_at: new Date(),
+    })
     .where(eq(exemplaires.id_exemplaire, id))
     .returning();
   return updated;
@@ -125,7 +134,8 @@ async function deleteExemplaire(id) {
   await db
     .update(produits)
     .set({
-      quantite_produit: sql`CAST(${produits.quantite_produit} AS INTEGER) - 1`,
+      qte_produit: sql`CAST(${produits.qte_produit} AS INTEGER) - 1`,
+      updated_at: new Date()
     })
     .where(
       and(
@@ -168,20 +178,20 @@ async function getAvailableExemplaires() {
   return filterExemplairesByEtat(etatExemplaire[1]); //disponible
 }
 
- // Vérifie si un exemplaire spécifique est en cours d'utilisation
-async function isExemplaireInUse(exId) {
-  const [result] = await db
-    .select()
-    .from(usage_exemplaires)
-    .where(
-      and(
-        eq(usage_exemplaires.id_exemplaire, exId),
-        isNull(usage_exemplaires.date_retour_usage)
-      )
-    );
+// // Vérifie si un exemplaire spécifique est en cours d'utilisation
+// async function isExemplaireInUse(exId) {
+//   const [result] = await db
+//     .select()
+//     .from(usage_exemplaires)
+//     .where(
+//       and(
+//         eq(usage_exemplaires.id_exemplaire, exId),
+//         isNull(usage_exemplaires.date_retour_usage)
+//       )
+//     );
 
-  return !!result; //retourne un booléen
-}
+//   return !!result; //retourne un booléen
+// }
 
 // Récupère tous les exemplaires actuellement en cours d'utilisation
 async function isExemplairesInUse() {
@@ -215,8 +225,8 @@ async function purchaseExemplaires({
       .returning();
 
     // Optionnel : liaison via table intermédiaire
-    if (partenaireCommandes) {
-      await tx.insert(partenaireCommandes).values({
+    if (partenaire_commandes) {
+      await tx.insert(partenaire_commandes).values({
         id_partenaire: partenaireId,
         id_commande: commande.id_commande,
       });
@@ -244,7 +254,7 @@ async function purchaseExemplaires({
     await tx
       .update(produits)
       .set({
-        quantite_produit: sql`CAST(${produits.quantite_produit} AS INTEGER) - ${exemplaireIds.length}`,
+        qte_produit: sql`CAST(${produits.qte_produit} AS INTEGER) - ${exemplaireIds.length}`,
       })
       .where(
         and(
@@ -310,8 +320,12 @@ module.exports = {
   purchaseExemplaires,
   assignExemplaire,
   unassignExemplaire,
-  isExemplaireInUse,
+  // isExemplaireInUse,
   isExemplairesInUse,
+
+
+  //variable
+  etatExemplaire
 };
 
 // /**

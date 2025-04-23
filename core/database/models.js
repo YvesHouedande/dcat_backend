@@ -424,7 +424,7 @@ const exemplaires = pgTable("exemplaires", {
     scale: 2,
   }).notNull(),
   date_entree: date("date_entree").notNull(),
-  etat_vente: boolean("etat_vente").notNull(),
+  etat_exemplaire: varchar("etat_exemplaire", { length: 75 }).notNull(),
   id_commande: integer("id_commande").references(() => commandes.id_commande),
   id_livraison: integer("id_livraison")
     .notNull()
