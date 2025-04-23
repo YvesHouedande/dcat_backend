@@ -39,7 +39,7 @@ function loadModule(moduleName) {
 // Chargement des modules
 app.use('/api/stocks', loadModule('stocks'));
 app.use('/api/users', loadModule('users'));
-app.use('/api/administration', loadModule('administration'));
+app.use('/api/administration', loadModule('Administration&Finance'));
 
 
 
