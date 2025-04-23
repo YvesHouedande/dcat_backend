@@ -23,7 +23,10 @@ const getTypeProduitById = async (id) => {
 const updateTypeProduit = async (id, data) => {
   const [result] = await db
     .update(type_produits)
-    .set(data)
+    .set({
+      ...data,
+      updated_at: new Date(),
+    })
     .where(eq(type_produits.id_type_produit, id))
     .returning();
   return result;

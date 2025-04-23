@@ -35,7 +35,10 @@ const getFamilleById = async (id) => {
 const updateFamille = async (id, data) => {
   const [result] = await db
     .update(familles)
-    .set(data)
+    .set({
+      ...data,
+      updated_at: new Date(),
+    })
     .where(eq(familles.id_famille, id))
     .returning();
   return result;

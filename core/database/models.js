@@ -24,7 +24,7 @@ const familles = pgTable("familles", {
 // Modele
 const modeles = pgTable("modeles", {
   id_modele: serial("id_modele").primaryKey(),
-  libele: varchar("libele", { length: 50 }).notNull(),
+  libelle: varchar("libelle", { length: 50 }).notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -352,17 +352,17 @@ const maintenances = pgTable("maintenances", {
 // Livraison
 const livraisons = pgTable("livraisons", {
   id_livraison: serial("id_livraison").primaryKey(),
-  frais_divers: decimal("frais_divers", { precision: 10, scale: 2 }).notNull(),
-  periode_achat: varchar("periode_achat", { length: 50 }).notNull(),
-  prix_achat: decimal("prix_achat", { precision: 10, scale: 2 }).notNull(),
+  frais_divers: decimal("frais_divers", { precision: 10, scale: 2 }),
+  periode_achat: varchar("periode_achat", { length: 50 }),
+  prix_achat: decimal("prix_achat", { precision: 10, scale: 2 }),
   prix_de_revient: decimal("prix_de_revient", {
     precision: 10,
     scale: 2,
-  }).notNull(),
+  }),
   prix_de_vente: decimal("prix_de_vente", {
     precision: 10,
     scale: 2,
-  }).notNull(),
+  }),
   id_partenaire: integer("id_partenaire")
     .notNull()
     .references(() => partenaires.id_partenaire),
