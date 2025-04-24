@@ -75,25 +75,15 @@ on:
       - dev
 
 jobs:
-  check-deploy:
-    runs-on: self-hosted
-    steps:
-      - name: Check commit message
-        id: check
-        run: echo "deploy=${{ contains(github.event.head_commit.message, '[deploy]') }}" >> $GITHUB_OUTPUT
-      
-      - name: Show deployment decision
-        run: |
-          echo "Commit message: ${{ github.event.head_commit.message }}"
-          echo "Will deploy: ${{ steps.check.outputs.deploy }}"
-  
   build-and-deploy:
     runs-on: self-hosted
-    needs: check-deploy
-    if: needs.check-deploy.outputs.deploy == 'true'
+    if: contains(github.event.head_commit.message, '[deploy]')
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Show commit message
+        run: echo "Deploying based on commit message: ${{ github.event.head_commit.message }}"
 
       - name: Build and deploy
         run: |
@@ -101,3 +91,4 @@ jobs:
           docker-compose build
           docker-compose up -d
           echo "Deployment completed!"
+
