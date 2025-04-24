@@ -8,3 +8,5 @@ router.get("/:id", interlocuteurController.getInterlocuteurbyPartenaire);
 router.put("/:id", interlocuteurController.updateInterlocuteur);
 router.delete("/:id", interlocuteurController.deleteInterlocuteur);
 
+module.exports = router;
+
