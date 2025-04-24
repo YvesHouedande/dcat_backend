@@ -33,18 +33,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Debug Docker environment
+      - name: Debug environment
         run: |
-          echo "Current Docker environment variables:"
-          env | grep DOCKER
+          # Check Docker installation
+          which docker || echo "Docker binary not found"
+          which docker-compose || echo "Docker Compose binary not found"
           
-      - name: Try to reset Docker environment
-        run: |
-          unset DOCKER_HOST
-          unset DOCKER_TLS_VERIFY
-          unset DOCKER_CERT_PATH
+          # Check versions
+          docker --version || echo "Docker command failed"
+          docker-compose --version || echo "Docker Compose command failed"
           
-      - name: Build and deploy
+          # Check if Docker daemon is running
+          docker info || echo "Docker daemon not accessible"
+          
+          # Check Docker socket
+          ls -la /var/run/docker.sock || echo "Docker socket not found at default location"
+          
+          # Check user permissions
+          id
+          groups
+          
+          # Check Docker group
+          getent group docker || echo "Docker group not found"
+
+      - name: Try alternate Docker Compose approach
         run: |
-          docker-compose build
-          docker-compose up -d
+          # Try using Docker CLI plugin (v2 compose)
+          docker compose version || echo "Docker Compose plugin not available"
+          
+          # Check Python environment
+          python3 --version
+          pip3 list | grep -E "docker|compose|urllib3|requests"
