@@ -28,11 +28,3 @@ ENTRYPOINT ["/sbin/tini", "--"]
 # Commande de démarrage (utilise la variable PORT depuis .env)
 CMD node server.js
 
-
-
-
-
-
-
-
-
