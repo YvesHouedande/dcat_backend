@@ -61,7 +61,7 @@ const deleteModele = async (req, res) => {
     const result = await modeleService.deleteModele(id);
     return res.json(result);
   } catch (error) {
-    res
+    re
       .status(500)
       .json({ error: "une erreur est survenue", details: error.message });
   }

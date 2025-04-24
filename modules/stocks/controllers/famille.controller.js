@@ -3,7 +3,7 @@ const familleService = require("../services/famille.service");
 // CREATE
 const createFamille = async (req, res) => {
   try {
-    if (!req.body.libelle) {
+    if (!req.body.libelle_famille) {
       return res.status(400).json({ error: "Le libellé est requis" });
     }
     const result = await familleService.createFamille(req.body);

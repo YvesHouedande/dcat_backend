@@ -14,7 +14,8 @@
 // });
 
 const { eq } = require("drizzle-orm");
-const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
+const {db} = require("../../../core/database/config");
+// const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
 const { livraisons, exemplaires } = require("../../../core/database/models");
 
 // CRUD complet avec Drizzle
@@ -31,15 +32,18 @@ const getLivraisonById = async (id) => {
   const [result] = await db
     .select()
     .from(livraisons)
-    .where(eq(livraisons.id, id));
+    .where(eq(livraisons.id_livraison, id));
   return result;
 };
 
 const updateLivraison = async (id, data) => {
   const [result] = await db
     .update(livraisons)
-    .set(data)
-    .where(eq(livraisons.id, id))
+    .set({
+      ...data,
+      updated_at: new Date(),
+    })
+    .where(eq(livraisons.id_livraison, id))
     .returning();
   return result;
 };
@@ -47,7 +51,7 @@ const updateLivraison = async (id, data) => {
 const deleteLivraison = async (id) => {
   const [result] = await db
     .delete(livraisons)
-    .where(eq(livraisons.id, id))
+    .where(eq(livraisons.id_livraison, id))
     .returning();
   return result;
 };
@@ -56,10 +60,10 @@ const deleteLivraison = async (id) => {
 // [POST] /livraisons → Ajouter une livraisons (avec des exemplaires entrants)
 
 // Voir les exemplaires ajoutés lors d’une livraisons
-const getLivraisonExemplaire = async (id_livraison) => {
+const getLivraisonExemplaire = async (id) => {
   const [result] = await db
     .select(exemplaires)
-    .where(eq(exemplaires.id_livraison, id_livraison));
+    .where(eq(exemplaires.id_livraison, id));
 
   return result;
 };

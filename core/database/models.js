@@ -24,7 +24,7 @@ const familles = pgTable("familles", {
 // Modele
 const modeles = pgTable("modeles", {
   id_modele: serial("id_modele").primaryKey(),
-  libele: varchar("libele", { length: 50 }).notNull(),
+  libelle: varchar("libelle", { length: 50 }).notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -114,9 +114,9 @@ const clients_en_ligne = pgTable("clients_en_ligne", {
 // Commande
 const commandes = pgTable("commandes", {
   id_commande: serial("id_commande").primaryKey(),
-  date_de_commande: timestamp("date_de_commande").notNull(),
+  date_de_commande: date("date_de_commande").notNull(),
   etat_commande: varchar("etat_commande", { length: 50 }).notNull(),
-  date_livraison: timestamp("date_livraison"),
+  date_livraison: date("date_livraison"),
   lieu_de_livraison: varchar("lieu_de_livraison", { length: 50 }).notNull(),
   mode_de_paiement: varchar("mode_de_paiement", { length: 50 }).notNull(),
   id_client: integer("id_client").references(() => clients_en_ligne.id_client),
@@ -250,10 +250,10 @@ const produits = pgTable("produits", {
   id_produit: serial("id_produit").primaryKey(), // Clé primaire simple
   code_produit: varchar("code_produit", { length: 100 }).unique().notNull(),
   desi_produit: varchar("desi_produit", { length: 50 }).notNull(),
-  desc_produit: text("desc_produit").notNull(),
-  image_produit: varchar("image_produit", { length: 255 }).notNull(),
-  qte_produit: integer("qte_produit").notNull(),
-  emplacement: varchar("emplacement", { length: 50 }).notNull(),
+  desc_produit: text("desc_produit"),
+  image_produit: varchar("image_produit", { length: 255 }),
+  qte_produit: integer("qte_produit").default(0),
+  emplacement: text("emplacement"),
   id_categorie: integer("id_categorie")
     .notNull()
     .references(() => categories.id_categorie),
@@ -352,17 +352,17 @@ const maintenances = pgTable("maintenances", {
 // Livraison
 const livraisons = pgTable("livraisons", {
   id_livraison: serial("id_livraison").primaryKey(),
-  frais_divers: decimal("frais_divers", { precision: 10, scale: 2 }).notNull(),
-  periode_achat: varchar("periode_achat", { length: 50 }).notNull(),
-  prix_achat: decimal("prix_achat", { precision: 10, scale: 2 }).notNull(),
+  frais_divers: decimal("frais_divers", { precision: 10, scale: 2 }),
+  periode_achat: varchar("periode_achat", { length: 50 }),
+  prix_achat: decimal("prix_achat", { precision: 10, scale: 2 }),
   prix_de_revient: decimal("prix_de_revient", {
     precision: 10,
     scale: 2,
-  }).notNull(),
+  }),
   prix_de_vente: decimal("prix_de_vente", {
     precision: 10,
     scale: 2,
-  }).notNull(),
+  }),
   id_partenaire: integer("id_partenaire")
     .notNull()
     .references(() => partenaires.id_partenaire),
@@ -423,9 +423,9 @@ const exemplaires = pgTable("exemplaires", {
   prix_exemplaire: decimal("prix_exemplaire", {
     precision: 10,
     scale: 2,
-  }).notNull(),
+  }),
   date_entree: date("date_entree").notNull(),
-  etat_vente: boolean("etat_vente").notNull(),
+  etat_exemplaire: varchar("etat_exemplaire", { length: 75 }).default("Disponible").notNull(), //"Vendu", "Disponible", "Utilisation", "En maintenance", "Endommage", "Reserve"
   id_commande: integer("id_commande").references(() => commandes.id_commande),
   id_livraison: integer("id_livraison")
     .notNull()

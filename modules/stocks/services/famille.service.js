@@ -14,7 +14,8 @@
 // });
 
 const { eq } = require("drizzle-orm");
-const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
+const {db} = require("../../../core/database/config");
+// const db = require("../utils/drizzle-wrapper"); // <- Votre wrapper local
 const { familles } = require("../../../core/database/models");
 
 // CRUD complet avec Drizzle
@@ -35,7 +36,10 @@ const getFamilleById = async (id) => {
 const updateFamille = async (id, data) => {
   const [result] = await db
     .update(familles)
-    .set(data)
+    .set({
+      ...data,
+      updated_at: new Date(),
+    })
     .where(eq(familles.id_famille, id))
     .returning();
   return result;

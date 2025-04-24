@@ -78,13 +78,11 @@ const deleteExemplaire = async (req, res) => {
 // obtenir tout les exemplaires d'un produit
 const getExemplairesByProduit = async (req, res) => {
   try {
-    const { id, code } = req.params;
+    const id = req.params.id;
 
-    // Vérifie que les deux paramètres sont présents
-    if (!id || !code) {
-      return res
-        .status(400)
-        .json({ message: "certains paramètres sont manquant" });
+
+    if (!id) {
+      return res.status(400).json({ message: "paramètre manquant" });
     }
 
     if (isNaN(id)) {
@@ -92,8 +90,7 @@ const getExemplairesByProduit = async (req, res) => {
     }
 
     const result = await exemplaireService.getExemplairesByProduit(
-      parseInt(id),
-      code
+      parseInt(id)
     );
     return res.json(result);
   } catch (error) {
@@ -116,8 +113,7 @@ const getAvailableExemplaires = async (req, res) => {
   }
 };
 
-
- // Vérifie si un exemplaire spécifique est en cours d'utilisation
+// Vérifie si un exemplaire spécifique est en cours d'utilisation
 const isExemplaireInUse = async (req, res) => {
   try {
     const id = req.param.id;
@@ -189,58 +185,7 @@ const purchaseExemplaire = async (req, res) => {
   }
 };
 
-// Affecter un exemplaire à un employé pour un projet
-const assignExemplaire = async (req, res) => {
-  try {
-    const { exemplaireId, projetId, employeId } = req.params;
-    const { dateUtilisation, dateFin, dateDebut } = req.body;
 
-    // Vérification des paramètres requis
-    if (!exemplaireId || !projetId || !employeId) {
-      return res.status(400).json({
-        error: "PARAM_MISSING",
-        message:
-          "Certains paramètres sont manquants (exemplaireId, projetId, employeId).",
-      });
-    }
-
-    // Validation des types (meilleure sécurité)
-    const parsedExemplaireId = parseInt(exemplaireId, 10);
-    const parsedProjetId = parseInt(projetId, 10);
-    const parsedEmployeId = parseInt(employeId, 10);
-
-    if (
-      isNaN(parsedExemplaireId) ||
-      isNaN(parsedEmployeId) ||
-      isNaN(parsedProjetId)
-    ) {
-      return res.status(400).json({
-        error: "INVALID_ID",
-        message: "Les identifiants doivent être des nombres valides.",
-      });
-    }
-
-    // Appel du service
-    const result = await exemplaireService.assignExemplaire({
-      exemplaireId: parsedExemplaireId,
-      projetId: parsedProjetId,
-      employeId: parsedEmployeId,
-      dateUtilisation,
-      dateFin,
-      dateDebut,
-    });
-
-    return res.status(201).json(result); // 201 pour indiquer une création réussie
-  } catch (error) {
-    console.error("Une erreur est survenue:", error);
-
-    return res.status(500).json({
-      error: "INTERNAL_SERVER_ERROR",
-      message: "Une erreur est survenue lors du traitement de la requête.",
-      details: error.message,
-    });
-  }
-};
 
 module.exports = {
   createExemplaire,
@@ -250,8 +195,7 @@ module.exports = {
   deleteExemplaire,
   getExemplairesByProduit,
   purchaseExemplaire,
-  assignExemplaire,
   getAvailableExemplaires,
   isExemplaireInUse,
-  isExemplairesInUse
+  isExemplairesInUse,
 };
