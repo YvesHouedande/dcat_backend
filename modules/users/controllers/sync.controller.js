@@ -1,13 +1,13 @@
 const { db } = require('../../../core/database/config');
-const { employes, fonction } = require('../../../core/database/models');
+const { employes, fonctions } = require('../../../core/database/models');
 const { eq } = require('drizzle-orm');
 const logger = require('../../../core/utils/logger');
 
 module.exports = {
   syncUser: async (req, res) => {
     const token = req.kauth.grant.access_token;
-    // const { email, firstName, lastName } = req.body;
-    const { email } = req.body;
+    const { email, firstName, lastName } = req.body;
+    // const { email } = req.body;
 
 
     // Validation email/token
@@ -29,8 +29,8 @@ module.exports = {
     try {
       // Récupération de l'ID de la fonction Technicien
       const technicien = await db.select()
-        .from(fonction)
-        .where(eq(fonction.nom, 'Technicien'))
+        .from(fonctions)
+        .where(eq(fonctions.nom_fonction, 'Technicien'))
         .limit(1);
       console.log("Résultat recherche Technicien:", technicien);
 
@@ -43,7 +43,9 @@ module.exports = {
       // Données utilisateur
       const userData = {
         keycloak_id: token.content.sub,
-        email: token.content.email,
+        email_employes: token.content.email,
+        nom_employes:firstName,
+        prenom_employes:lastName,
         status: 'actif',
         fonctionId: fonctionId,
         created_at: new Date(),
