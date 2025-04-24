@@ -1,16 +1,16 @@
 const { eq, sql, and, inArray, isNull } = require("drizzle-orm");
-const db = require("../utils/drizzle-wrapper");
+const { db } = require("../../../core/database/config");
+// const db = require("../utils/drizzle-wrapper");
 const {
   exemplaires,
   produits,
-  commandes,
-  partenaire_commandes,
+
 } = require("../../../core/database/models");
 
 /**
  *
  * vendu : exemplaire vendu
- * disponible : exemplaire dismponible
+ * disponible : exemplaire disponible
  * in Use     : exemplaire (outils) en cours d'utilisation (par un employé)
  */
 const etatExemplaire = [
@@ -40,19 +40,15 @@ async function createExemplaire(data) {
   await db
     .update(produits)
     .set({
-      qte_produit: sql`CAST(${produits.qte_produit} AS INTEGER) + 1`,
+      qte_produit: sql`${produits.qte_produit} + 1`,
+      updated_at: sql`NOW()`,
     })
-    .where(
-      and(
-        eq(produits.id_produit, id_produit),
-        eq(produits.code_produit, code_produit)
-      )
-    );
+    .where(eq(produits.id_produit, id_produit));
 
   return newExemplaire;
 }
 
-async function getAllExemplaires() {
+async function getExemplaires() {
   return db.select().from(exemplaires);
 }
 
@@ -65,103 +61,119 @@ async function getExemplaireById(id) {
 }
 
 async function updateExemplaire(id, data) {
-  const [current] = await db
-    .select()
-    .from(exemplaires)
-    .where(eq(exemplaires.id_exemplaire, id));
-  if (!current) throw new Error("Exemplaire non trouvé");
+  return await db.transaction(async (tx) => {
+    // 1. Vérification de l'existence de l'exemplaire
+    const [current] = await tx
+      .select()
+      .from(exemplaires)
+      .where(eq(exemplaires.id_exemplaire, id));
 
-  // vérifier si l'exemplaire est réasigner à un autre produit
-  const produitChange =
-    data.id_produit &&
-    data.code_produit &&
-    (data.id_produit !== current.id_produit ||
-      data.code_produit !== current.code_produit);
+    if (!current) {
+      throw new Error("Exemplaire non trouvé");
+    }
 
-  // si oui |
-  //        v
+    // 2. Vérification du changement de produit
+    const produitChange =
+      data.id_produit && data.id_produit !== current.id_produit;
 
-  if (produitChange) {
-    // ajuster ancien produit
-    await db
-      .update(produits)
+    if (produitChange) {
+      // 3. Validation du nouveau produit
+      const [newProduct] = await tx
+        .select()
+        .from(produits)
+        .where(eq(produits.id_produit, data.id_produit));
+
+      if (!newProduct) {
+        throw new Error("Nouveau produit non trouvé");
+      }
+
+      // 4. Ajustement des quantités (en une seule requête pour chaque opération)
+      // Décrémentation ancien produit
+      await tx
+        .update(produits)
+        .set({
+          qte_produit: sql`${produits.qte_produit} - 1`,
+          updated_at: sql`NOW()`,
+        })
+        .where(eq(produits.id_produit, current.id_produit));
+
+      // Incrémentation nouveau produit
+      await tx
+        .update(produits)
+        .set({
+          qte_produit: sql`${produits.qte_produit} + 1`,
+          updated_at: sql`NOW()`,
+        })
+        .where(eq(produits.id_produit, data.id_produit));
+    }
+
+    // 5. Mise à jour de l'exemplaire
+    const [updated] = await tx
+      .update(exemplaires)
       .set({
-        qte_produit: sql`CAST(${produits.qte_produit} AS INTEGER) - 1`,
+        ...data,
         updated_at: new Date(),
       })
-      .where(
-        and(
-          eq(produits.id_produit, current.id_produit),
-          eq(produits.code_produit, current.code_produit)
-        )
-      );
+      .where(eq(exemplaires.id_exemplaire, id))
+      .returning();
 
-    // ajuster nouveau produit
-    await db
-      .update(produits)
-      .set({
-        qte_produit: sql`CAST(${produits.qte_produit} AS INTEGER) + 1`,
-        updated_at: new Date(),
-      })
-      .where(
-        and(
-          eq(produits.id_produit, data.id_produit),
-          eq(produits.code_produit, data.code_produit)
-        )
-      );
-  }
-
-  //mettre à jour les info de l'exemplaire
-  const [updated] = await db
-    .update(exemplaires)
-    .set({
-      ...data,
-      updated_at: new Date(),
-    })
-    .where(eq(exemplaires.id_exemplaire, id))
-    .returning();
-  return updated;
+    return updated;
+  });
 }
 
 async function deleteExemplaire(id) {
-  const [toDelete] = await db
-    .select()
-    .from(exemplaires)
-    .where(eq(exemplaires.id_exemplaire, id));
-  if (!toDelete) throw new Error("Exemplaire non trouvé");
+  return await db.transaction(async (tx) => {
+    // 1. Vérification de l'existence de l'exemplaire
+    const [toDelete] = await tx
+      .select()
+      .from(exemplaires)
+      .where(eq(exemplaires.id_exemplaire, id));
 
-  // Décrémenter le stock produit
-  await db
-    .update(produits)
-    .set({
-      qte_produit: sql`CAST(${produits.qte_produit} AS INTEGER) - 1`,
-      updated_at: new Date()
-    })
-    .where(
-      and(
-        eq(produits.id_produit, toDelete.id_produit),
-        eq(produits.code_produit, toDelete.code_produit)
-      )
-    );
+    if (!toDelete) {
+      throw new Error("Exemplaire non trouvé");
+    }
 
-  const [deleted] = await db
-    .delete(exemplaires)
-    .where(eq(exemplaires.id_exemplaire, id))
-    .returning();
-  return deleted;
+    // 2. Vérification que la quantité ne deviendra pas négative
+    const [produit] = await tx
+      .select({ qte_produit: produits.qte_produit })
+      .from(produits)
+      .where(eq(produits.id_produit, toDelete.id_produit));
+
+    if (produit.qte_produit <= 0) {
+      throw new Error("La quantité du produit est déjà à zéro");
+    }
+
+    // 3. Décrémentation du stock produit
+    const updateResult = await tx
+      .update(produits)
+      .set({
+        qte_produit: sql`GREATEST(${produits.qte_produit} - 1, 0)`, // Évite les valeurs négatives
+        updated_at: sql`NOW()`,
+      })
+      .where(eq(produits.id_produit, toDelete.id_produit));
+
+    if (updateResult.rowCount === 0) {
+      throw new Error("Échec de la mise à jour du produit");
+    }
+
+    // 4. Suppression de l'exemplaire
+    const [deleted] = await tx
+      .delete(exemplaires)
+      .where(eq(exemplaires.id_exemplaire, id))
+      .returning();
+
+    return deleted;
+  });
 }
 
 /** ---Autres requetes --- */
 
-async function getExemplairesByProduit(id_produit, code_produit) {
+async function getExemplairesByProduit(id) {
   return db
     .select()
     .from(exemplaires)
     .where(
-      and(
-        eq(exemplaires.id_produit, id_produit),
-        eq(exemplaires.code_produit, code_produit)
-      )
+      eq(exemplaires.id_produit, id),
     );
 }
 
@@ -198,134 +210,22 @@ async function isExemplairesInUse() {
   return filterExemplairesByEtat(etatExemplaire[2]);
 }
 
-/**
- * Processus d'achat d'exemplaires par un partenaire via le modèle `commandes` :
- * 1. Création d'une commande (avec id_partenaire)
- * 2. Mise à jour des exemplaires (état + id_commande)
- * 3. Ajustement du stock produit
- */
-async function purchaseExemplaires({
-  exemplaireIds,
-  partenaireId,
-  lieuLivraison,
-  dateCommande,
-  dateLivraison,
-}) {
-  return db.transaction(async (tx) => {
-    // 1. Créer une commande
-    const [commande] = await tx
-      .insert(commandes)
-      .values({
-        date_commande: dateCommande,
-        etat_commande: "en cours",
-        date_livraison_commande: dateLivraison,
-        lieu_livraison_commande: lieuLivraison,
-        id_partenaire: partenaireId,
-      })
-      .returning();
 
-    // Optionnel : liaison via table intermédiaire
-    if (partenaire_commandes) {
-      await tx.insert(partenaire_commandes).values({
-        id_partenaire: partenaireId,
-        id_commande: commande.id_commande,
-      });
-    }
 
-    // 2. Mettre à jour chaque exemplaire : etat -> vendu
-    await tx
-      .update(exemplaires)
-      .set({
-        etat_exemplaire: etatExemplaire[0],
-        id_commande: commande.id_commande,
-      })
-      .where(inArray(exemplaires.id_exemplaire, exemplaireIds));
-
-    // 3. Ajuster le stock produit (soustraire le nombre total d'exemplaires)
-    // On prend le produit et le code du premier exemplaire
-    const [firstEx] = await tx
-      .select({
-        id_produit: exemplaires.id_produit,
-        code_produit: exemplaires.code_produit,
-      })
-      .from(exemplaires)
-      .where(eq(exemplaires.id_exemplaire, exemplaireIds[0]));
-
-    await tx
-      .update(produits)
-      .set({
-        qte_produit: sql`CAST(${produits.qte_produit} AS INTEGER) - ${exemplaireIds.length}`,
-      })
-      .where(
-        and(
-          eq(produits.id_produit, firstEx.id_produit),
-          eq(produits.code_produit, firstEx.code_produit)
-        )
-      );
-
-    return commande;
-  });
-}
-
-//  Cette fonction sert à enregistrer un nouvel usage d’un exemplaire par un employé
-async function assignExemplaire(data) {
-  return db.transaction(async (tx) => {
-    // 1. assigner un exemplaire à un employé
-    const [assoc] = await tx.insert(usage_exemplaires).values(data).returning();
-
-    // modification de l'etat de l'exemplaire
-    await tx.update(exemplaires).set({
-      etat_exemplaire: etatExemplaire[2], //"utilisé"
-    });
-    return assoc;
-  });
-}
-
-/**
- * Supprime l'affectation (usage) en cours d'un exemplaire, c’est-à-dire celui sans date de retour.
- * 
- * @param {number} exId - ID de l'exemplaire à désaffecter
-
- * 
- * 
-  Cette logique permet de désaffecter uniquement les exemplaires qui sont encore "en sortie", c’est-à-dire sans date_retour_usage.
- */
-async function unassignExemplaire({ exId, empId, etatRetour, dateRetour }) {
-  const [removed] = await db
-    .update(usage_exemplaires)
-    .set({
-      etat_apres_usage: etatRetour,
-      date_retour_usage: dateRetour,
-    })
-    .where(
-      and(
-        eq(usage_exemplaires.id_exemplaire, exId),
-        eq(usage_exemplaires.id_employes, empId),
-        isNull(usage_exemplaires.date_retour_usage) // On cible uniquement l’usage en cours
-      )
-    )
-    .returning();
-
-  return removed;
-}
 
 module.exports = {
   createExemplaire,
-  getAllExemplaires,
+  getExemplaires,
   getExemplaireById,
   updateExemplaire,
   deleteExemplaire,
   getExemplairesByProduit,
   getAvailableExemplaires,
-  purchaseExemplaires,
-  assignExemplaire,
-  unassignExemplaire,
   // isExemplaireInUse,
   isExemplairesInUse,
 
-
   //variable
-  etatExemplaire
+  etatExemplaire,
 };
 
 // /**
