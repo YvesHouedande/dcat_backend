@@ -14,6 +14,11 @@ const getProduits = async () => {
   return await db.select().from(produits); 
 };
 
+// afficher tous les outils/équipements
+const getProduitsByTypes = async (idType) => {
+  return await db.select().from(produits).where(eq(produits.id_type_produit,idType)); 
+};
+
 const getProduitById = async (id) => {
   const [result] = await db
     .select()
@@ -49,4 +54,5 @@ module.exports = {
   getProduitById,
   updateProduit,
   deleteProduit,
+  getProduitsByTypes
 };
