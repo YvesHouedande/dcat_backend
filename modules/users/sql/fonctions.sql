@@ -1,4 +1,4 @@
-INSERT INTO public.fonction(id, nom)
+INSERT INTO public.fonctions(id_fonction, nom_fonction)
 VALUES 
     (1, 'Directeur'),
     (2, 'Manager'),

@@ -65,7 +65,7 @@ module.exports = {
         return res.status(400).json({ error: "Aucun champ modifiable fourni" });
       }
 
-      logger.error('Test-------------------------',filteredUpdates);
+      logger.error('Erreur',filteredUpdates);
 
       await userService.updateUserProfile(sub, filteredUpdates);
       res.status(204).end();
