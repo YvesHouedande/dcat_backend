@@ -1,28 +1,209 @@
-require('dotenv').config();
-const KeycloakAdminClient = require('@keycloak/keycloak-admin-client').default;
+// require('dotenv').config({ path: '../.env' });
 
-const config = {
-  url: process.env.KEYCLOAK_URL,
-  realm: process.env.KEYCLOAK_REALM,
-  backend: {
-    clientId: process.env.BACKEND_CLIENT_ID,
-    secret: process.env.BACKEND_CLIENT_SECRET,
-    callback: process.env.BACKEND_CALLBACK_URL
-  },
-  frontend: {
-    clientId: process.env.FRONTEND_CLIENT_ID,
-    callback: process.env.FRONTEND_CALLBACK_URL
+// const KeycloakAdminClient = require('@keycloak/keycloak-admin-client').default;
+
+// // Configuration validation
+// const REQUIRED_ENV_VARS = [
+//   'KEYCLOAK_URL',
+//   'KEYCLOAK_ADMIN',
+//   'KEYCLOAK_ADMIN_PASSWORD',
+//   'KEYCLOAK_REALM',
+//   'KEYCLOAK_BACKEND_CLIENT_ID',
+//   'KEYCLOAK_BACKEND_CLIENT_SECRET',
+//   'KEYCLOAK_FRONTEND_CLIENT_ID',
+//   'KEYCLOAK_FRONTEND_CALLBACK_URL'
+// ];
+
+// // Verify all required variables are present
+// for (const envVar of REQUIRED_ENV_VARS) {
+//   if (!process.env[envVar]) {
+//     console.error(`❌ Missing environment variable: ${envVar}`);
+//     process.exit(1);
+//   }
+// }
+
+// const keycloakConfig = {
+//   baseUrl: process.env.KEYCLOAK_URL,
+//   realmName: 'master'
+// };
+
+// const adminClient = new KeycloakAdminClient(keycloakConfig);
+
+// const clients = [
+//   {
+//     clientId: process.env.KEYCLOAK_BACKEND_CLIENT_ID,
+//     secret: process.env.KEYCLOAK_BACKEND_CLIENT_SECRET,
+//     redirectUris: [],
+//     webOrigins: [],
+//     publicClient: false,
+//     enabled: true,
+//     protocol: 'openid-connect'
+//   },
+//   {
+//     clientId: process.env.KEYCLOAK_FRONTEND_CLIENT_ID,
+//     redirectUris: [process.env.KEYCLOAK_FRONTEND_CALLBACK_URL],
+//     webOrigins: ['*'],
+//     publicClient: true,
+//     standardFlowEnabled: true,
+//     enabled: true,
+//     protocol: 'openid-connect'
+//   }
+// ];
+
+// const roles = [
+//   'gestion_adminitartive',
+//   'finance',
+//   'comptabilté',
+//   'rh',
+//   'stock_refference',
+//   'stock_entree_sortie',
+//   'stock_achat',
+//   'gestion_intervention_projet',
+//   'outil_reference',
+//   'outils_entre_sortie_retour',
+//   'maintenance_prestation',
+//   'marketing',
+// ];
+
+// async function setupKeycloak() {
+//   try {
+//     console.info('🔑 Authenticating to Keycloak...');
+    
+//     await adminClient.auth({
+//       username: process.env.KEYCLOAK_ADMIN,
+//       password: process.env.KEYCLOAK_ADMIN_PASSWORD,
+//       grantType: 'password',
+//       clientId: 'admin-cli'
+//     });
+
+//     console.info('✅ Successfully authenticated');
+
+//     // Realm setup
+//     console.info(`🔄 Checking realm ${process.env.KEYCLOAK_REALM}...`);
+//     const realmExists = (await adminClient.realms.find())
+//       .some(r => r.realm === process.env.KEYCLOAK_REALM);
+
+//     if (!realmExists) {
+//       await adminClient.realms.create({
+//         realm: process.env.KEYCLOAK_REALM,
+//         enabled: true,
+//         displayName: `${process.env.KEYCLOAK_REALM} Realm`,
+//         loginTheme: "keycloak",
+//         accountTheme: "keycloak"
+//       });
+//       console.info(`✨ Created realm: ${process.env.KEYCLOAK_REALM}`);
+//     } else {
+//       console.info(`ℹ️ Realm ${process.env.KEYCLOAK_REALM} already exists`);
+//     }
+
+//     // Clients setup
+//     for (const client of clients) {
+//       console.info(`🔍 Checking client ${client.clientId}...`);
+//       const clientExists = (await adminClient.clients.find({
+//         realm: process.env.KEYCLOAK_REALM,
+//         clientId: client.clientId
+//       })).length > 0;
+
+//       if (!clientExists) {
+//         await adminClient.clients.create({
+//           realm: process.env.KEYCLOAK_REALM,
+//           ...client
+//         });
+//         console.info(`🎯 Created client: ${client.clientId}`);
+//       } else {
+//         console.info(`ℹ️ Client ${client.clientId} already exists`);
+//       }
+//     }
+
+//     // Roles setup
+//     for (const role of roles) {
+//       console.info(`🔍 Checking role ${role}...`);
+//       const roleExists = await adminClient.roles.findOneByName({
+//         realm: process.env.KEYCLOAK_REALM,
+//         name: role
+//       });
+
+//       if (!roleExists) {
+//         await adminClient.roles.create({
+//           realm: process.env.KEYCLOAK_REALM,
+//           name: role
+//         });
+//         console.info(`🎯 Created role: ${role}`);
+//       } else {
+//         console.info(`ℹ️ Role ${role} already exists`);
+//       }
+//     }
+
+//     console.info('🏁 Keycloak setup completed successfully');
+//   } catch (error) {
+//     console.error('💥 Keycloak setup failed:', error);
+//     process.exit(1);
+//   }
+// }
+
+// // Execute setup
+// setupKeycloak();
+
+
+require('dotenv').config({ path: '../.env' });
+
+const KeycloakAdminClient = require('@keycloak/keycloak-admin-client').default;
+const fs = require('fs');
+const path = require('path');
+
+// Configuration validation
+const REQUIRED_ENV_VARS = [
+  'KEYCLOAK_URL',
+  'KEYCLOAK_ADMIN',
+  'KEYCLOAK_ADMIN_PASSWORD',
+  'KEYCLOAK_REALM'
+];
+
+// Verify all required variables are present
+for (const envVar of REQUIRED_ENV_VARS) {
+  if (!process.env[envVar]) {
+    console.error(`❌ Missing environment variable: ${envVar}`);
+    process.exit(1);
   }
+}
+
+const keycloakConfig = {
+  baseUrl: process.env.KEYCLOAK_URL,
+  realmName: 'master'
 };
 
-async function setupKeycloak() {
-  const adminClient = new KeycloakAdminClient({
-    baseUrl: config.url,
-    realmName: 'master'
-  });
+const adminClient = new KeycloakAdminClient(keycloakConfig);
 
+const clients = [
+  {
+    file: 'backend_cli_id.json',
+    type: 'backend'
+  },
+  {
+    file: 'frontend_cli_id.json',
+    type: 'frontend'
+  }
+];
+
+const roles = [
+  'gestion_adminitartive',
+  'finance',
+  'comptabilté',
+  'rh',
+  'stock_refference',
+  'stock_entree_sortie',
+  'stock_achat',
+  'gestion_intervention_projet',
+  'outil_reference',
+  'outils_entre_sortie_retour',
+  'maintenance_prestation',
+  'marketing',
+];
+
+async function setupKeycloak() {
   try {
-    // Authentification admin
+    console.info('🔑 Authenticating to Keycloak...');
+    
     await adminClient.auth({
       username: process.env.KEYCLOAK_ADMIN,
       password: process.env.KEYCLOAK_ADMIN_PASSWORD,
@@ -30,34 +211,72 @@ async function setupKeycloak() {
       clientId: 'admin-cli'
     });
 
-    // Création du realm
-    await adminClient.realms.create({
-      realm: config.realm,
-      enabled: true,
-      sslRequired: 'none'
-    });
+    console.info('✅ Successfully authenticated');
 
-    // Configuration Backend Client
-    await adminClient.clients.create({
-      clientId: config.backend.clientId,
-      secret: config.backend.secret,
-      bearerOnly: true,
-      enabled: true
-    });
+    // Realm setup
+    console.info(`🔄 Checking realm ${process.env.KEYCLOAK_REALM}...`);
+    const realmExists = (await adminClient.realms.find())
+      .some(r => r.realm === process.env.KEYCLOAK_REALM);
 
-    // Configuration Frontend Client
-    await adminClient.clients.create({
-      clientId: config.frontend.clientId,
-      publicClient: true,
-      redirectUris: [config.frontend.callback],
-      webOrigins: ['*'],
-      standardFlowEnabled: true
-    });
+    if (!realmExists) {
+      await adminClient.realms.create({
+        realm: process.env.KEYCLOAK_REALM,
+        enabled: true,
+        displayName: `${process.env.KEYCLOAK_REALM} Realm`,
+        loginTheme: "keycloak",
+        accountTheme: "keycloak"
+      });
+      console.info(`✨ Created realm: ${process.env.KEYCLOAK_REALM}`);
+    } else {
+      console.info(`ℹ️ Realm ${process.env.KEYCLOAK_REALM} already exists`);
+    }
 
-    console.log('✅ Setup complet avec succès');
+    // Clients setup
+    for (const client of clients) {
+      const clientConfig = JSON.parse(fs.readFileSync(path.join(__dirname, client.file), 'utf8'));
+      console.info(`🔍 Checking client ${clientConfig.clientId}...`);
+      const clientExists = (await adminClient.clients.find({
+        realm: process.env.KEYCLOAK_REALM,
+        clientId: clientConfig.clientId
+      })).length > 0;
+
+      if (!clientExists) {
+        await adminClient.clients.create({
+          realm: process.env.KEYCLOAK_REALM,
+          ...clientConfig
+        });
+        console.info(`🎯 Created client: ${clientConfig.clientId}`);
+      } else {
+        console.info(`ℹ️ Client ${clientConfig.clientId} already exists`);
+      }
+    }
+
+    // Roles setup
+    for (const role of roles) {
+      console.info(`🔍 Checking role ${role}...`);
+      const roleExists = await adminClient.roles.findOneByName({
+        realm: process.env.KEYCLOAK_REALM,
+        name: role
+      });
+
+      if (!roleExists) {
+        await adminClient.roles.create({
+          realm: process.env.KEYCLOAK_REALM,
+          name: role
+        });
+        console.info(`🎯 Created role: ${role}`);
+      } else {
+        console.info(`ℹ️ Role ${role} already exists`);
+      }
+    }
+
+    console.info('🏁 Keycloak setup completed successfully');
   } catch (error) {
-    console.error('Erreur:', error.response?.data || error.message);
+    console.error('💥 Keycloak setup failed:', error);
+    process.exit(1);
   }
 }
 
+// Execute setup
 setupKeycloak();
+

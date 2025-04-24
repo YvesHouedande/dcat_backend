@@ -114,9 +114,9 @@ const clients_en_ligne = pgTable("clients_en_ligne", {
 // Commande
 const commandes = pgTable("commandes", {
   id_commande: serial("id_commande").primaryKey(),
-  date_de_commande: timestamp("date_de_commande").notNull(),
+  date_de_commande: date("date_de_commande").notNull(),
   etat_commande: varchar("etat_commande", { length: 50 }).notNull(),
-  date_livraison: timestamp("date_livraison"),
+  date_livraison: date("date_livraison"),
   lieu_de_livraison: varchar("lieu_de_livraison", { length: 50 }).notNull(),
   mode_de_paiement: varchar("mode_de_paiement", { length: 50 }).notNull(),
   id_client: integer("id_client").references(() => clients_en_ligne.id_client),
@@ -415,6 +415,7 @@ const interventions = pgTable("interventions", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
+
 // Exemplaire_produit
 const exemplaires = pgTable("exemplaires", {
   id_exemplaire: serial("id_exemplaire").primaryKey(),
@@ -424,7 +425,7 @@ const exemplaires = pgTable("exemplaires", {
     scale: 2,
   }),
   date_entree: date("date_entree").notNull(),
-  etat_exemplaire: varchar("etat_exemplaire", { length: 75 }).notNull(), //"Vendu", "Disponible", "Utilisation", "En maintenance", "Endommage", "Reserve"
+  etat_exemplaire: varchar("etat_exemplaire", { length: 75 }).default("Disponible").notNull(), //"Vendu", "Disponible", "Utilisation", "En maintenance", "Endommage", "Reserve"
   id_commande: integer("id_commande").references(() => commandes.id_commande),
   id_livraison: integer("id_livraison")
     .notNull()

@@ -16,6 +16,6 @@ router.get('/me', protect([]), UsersController.getMyProfile);
 router.patch('/me', protect([]), UsersController.updateMyProfile);
 
 // Récupération de tous les utilisateurs (avec pagination)
-router.get('/', protect([]), UsersController.getAllUsers);
+router.get('/', protect(["rh7",]), UsersController.getAllUsers);
 
 module.exports = router;
