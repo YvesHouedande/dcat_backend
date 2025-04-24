@@ -1,9 +1,11 @@
 const express = require("express");
 const router = express.Router();
-// const entiteRoutes = require("./entity.route");
-// const partnerRoutes = require("./partner.route");
-// const demandRoutes = require("./demand.route");
 const interlocuteurRoutes = require("../GestionAdministrative/routes/interlocuteur.route");
-// CRUD Routes
+const partenaireRoutes = require("../GestionAdministrative/routes/partenaire.route");
+const contratRoutes = require("../GestionAdministrative/routes/contrat.route");
 
+
+router.use("/interlocuteurs", interlocuteurRoutes);
+router.use("/partenaires", partenaireRoutes);
+router.use("/contrats", contratRoutes);
 module.exports = router;
