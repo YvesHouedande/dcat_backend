@@ -33,11 +33,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure DOCKER_HOST
+      - name: Set up Docker socket
         run: |
-          export DOCKER_HOST=unix:///var/run/docker.sock
-
+          # Ensure Docker socket is accessible
+          sudo chmod 666 /var/run/docker.sock || true
+          
       - name: Build and deploy
         run: |
-          docker-compose build
-          docker-compose up -d
+          DOCKER_HOST=unix:///var/run/docker.sock docker-compose build
+          DOCKER_HOST=unix:///var/run/docker.sock docker-compose up -d
+
