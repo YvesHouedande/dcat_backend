@@ -65,8 +65,6 @@
 #           python3 --version
 #           pip3 list | grep -E "docker|compose|urllib3|requests"
 
-
-
 name: Build and deploy
 
 on:
@@ -84,11 +82,12 @@ jobs:
 
       - name: Show commit message
         run: echo "Deploying based on commit message: ${{ github.event.head_commit.message }}"
-      
+
       - name: Build and deploy
         run: |
           echo "Starting deployment..."
           docker-compose build
           docker-compose up -d
           echo "Deployment completed!"
+
 
