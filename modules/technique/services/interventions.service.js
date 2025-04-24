@@ -1,94 +1,92 @@
+const { db } = require("../../config/database");
+const { interventions, intervention_employes, documents, employes } = require("../../models/schema");
 const { eq, and } = require("drizzle-orm");
-const { db } = require('../../../core/database/config');
-const { interventions, intervention_employes, employes, intervention_taches } = require("../../../core/database/models");
 
-// CRUD complet avec Drizzle
-const createIntervention = async (data) => {
-  const [result] = await db.insert(interventions).values(data).returning();
-  return result;
-};
+const interventionsService = {
+  getAllInterventions: async () => {
+    return await db.select().from(interventions);
+  },
 
-const getInterventions = async () => {
-  return await db.select().from(interventions);
-};
+  getInterventionById: async (id) => {
+    const result = await db
+      .select()
+      .from(interventions)
+      .where(eq(interventions.id_intervention, id));
+    return result.length > 0 ? result[0] : null;
+  },
 
-const getInterventionById = async (id) => {
-  const [result] = await db.select().from(interventions).where(eq(interventions.id_intervention, id));
-  return result;
-};
+  createIntervention: async (interventionData) => {
+    const result = await db
+      .insert(interventions)
+      .values(interventionData)
+      .returning();
+    return result[0];
+  },
 
-const getInterventionsByTache = async (tacheId) => {
-  return await db
-    .select({
-      intervention: interventions
-    })
-    .from(intervention_taches)
-    .innerJoin(interventions, eq(intervention_taches.id_intervention, interventions.id_intervention))
-    .where(eq(intervention_taches.id_tache, tacheId))
-    .then(results => results.map(r => r.intervention));
-};
+  updateIntervention: async (id, interventionData) => {
+    const result = await db
+      .update(interventions)
+      .set({
+        ...interventionData,
+        updated_at: new Date(),
+      })
+      .where(eq(interventions.id_intervention, id))
+      .returning();
+    return result.length > 0 ? result[0] : null;
+  },
 
-const updateIntervention = async (id, data) => {
-  const [result] = await db
-    .update(interventions)
-    .set({
-      ...data,
-      updated_at: new Date() // Mettre à jour la date de modification
-    })
-    .where(eq(interventions.id_intervention, id))
-    .returning();
-  return result;
-};
+  deleteIntervention: async (id) => {
+    const result = await db
+      .delete(interventions)
+      .where(eq(interventions.id_intervention, id))
+      .returning();
+    return result.length > 0;
+  },
 
-const deleteIntervention = async (id) => {
-  const [result] = await db
-    .delete(interventions)
-    .where(eq(interventions.id_intervention, id))
-    .returning();
-  return result;
-};
+  addDocumentToIntervention: async (documentData) => {
+    const result = await db.insert(documents).values(documentData).returning();
+    return result[0];
+  },
 
-const assignEmployeToIntervention = async (interventionId, employeId) => {
-  const [result] = await db
-    .insert(intervention_employes)
-    .values({
-      id_intervention: interventionId,
-      id_employes: employeId
-    })
-    .returning();
-  return result;
-};
+  addEmployeToIntervention: async (interventionId, employeId) => {
+    const result = await db
+      .insert(intervention_employes)
+      .values({
+        id_intervention: interventionId,
+        id_employes: employeId,
+      })
+      .returning();
+    return result[0];
+  },
 
-const removeEmployeFromIntervention = async (interventionId, employeId) => {
-  return await db
-    .delete(intervention_employes)
-    .where(
-      and(
-        eq(intervention_employes.id_intervention, interventionId),
-        eq(intervention_employes.id_employes, employeId)
+  removeEmployeFromIntervention: async (interventionId, employeId) => {
+    const result = await db
+      .delete(intervention_employes)
+      .where(
+        and(
+          eq(intervention_employes.id_intervention, interventionId),
+          eq(intervention_employes.id_employes, employeId)
+        )
       )
-    );
+      .returning();
+    return result.length > 0;
+  },
+
+  getInterventionEmployes: async (interventionId) => {
+    return await db
+      .select({
+        id_employes: employes.id_employes,
+        nom_employes: employes.nom_employes,
+        prenom_employes: employes.prenom_employes,
+        email_employes: employes.email_employes,
+      })
+      .from(intervention_employes)
+      .innerJoin(
+        employes,
+        eq(intervention_employes.id_employes, employes.id_employes)
+      )
+      .where(eq(intervention_employes.id_intervention, interventionId));
+  },
 };
 
-const getEmployesByIntervention = async (interventionId) => {
-  return await db
-    .select({
-      employe: employes
-    })
-    .from(intervention_employes)
-    .innerJoin(employes, eq(intervention_employes.id_employes, employes.id_employes))
-    .where(eq(intervention_employes.id_intervention, interventionId))
-    .then(results => results.map(r => r.employe));
-};
-
-module.exports = {
-  createIntervention,
-  getInterventions,
-  getInterventionById,
-  getInterventionsByTache,
-  updateIntervention,
-  deleteIntervention,
-  assignEmployeToIntervention,
-  removeEmployeFromIntervention,
-  getEmployesByIntervention
-};
+module.exports = interventionsService;

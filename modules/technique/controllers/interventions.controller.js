@@ -1,172 +1,132 @@
 const interventionsService = require("../services/interventions.service");
 
-// CREATE
-const createIntervention = async (req, res) => {
-  try {
-    if (!req.body.titre_intervention || !req.body.date_intervention) {
-      return res.status(400).json({ error: "Le titre et la date de l'intervention sont requis" });
+const interventionsController = {
+  getAllInterventions: async (req, res) => {
+    try {
+      const interventions = await interventionsService.getAllInterventions();
+      res.status(200).json(interventions);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
     }
-    const result = await interventionsService.createIntervention(req.body);
-    res.status(201).json(result);
-  } catch (error) {
-    res.status(500).json({ 
-      error: "Erreur lors de la création de l'intervention",
-      details: error.message 
-    });
+  },
+
+  getInterventionById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const intervention = await interventionsService.getInterventionById(parseInt(id));
+      if (!intervention) {
+        return res.status(404).json({ message: "Intervention non trouvée" });
+      }
+      res.status(200).json(intervention);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  createIntervention: async (req, res) => {
+    try {
+      const interventionData = req.body;
+      const newIntervention = await interventionsService.createIntervention(interventionData);
+      res.status(201).json(newIntervention);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  updateIntervention: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const interventionData = req.body;
+      const updatedIntervention = await interventionsService.updateIntervention(parseInt(id), interventionData);
+      if (!updatedIntervention) {
+        return res.status(404).json({ message: "Intervention non trouvée" });
+      }
+      res.status(200).json(updatedIntervention);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  deleteIntervention: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await interventionsService.deleteIntervention(parseInt(id));
+      if (!deleted) {
+        return res.status(404).json({ message: "Intervention non trouvée" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  addDocumentToIntervention: async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Aucun fichier n'a été téléchargé" });
+      }
+      
+      const { id } = req.params;
+      const documentData = {
+        libelle_document: req.body.libelle_document,
+        classification_document: req.body.classification_document,
+        lien_document: req.file.path,
+        etat_document: req.body.etat_document,
+        id_nature_document: parseInt(req.body.id_nature_document),
+        id_intervention: parseInt(id)
+      };
+      
+      const document = await interventionsService.addDocumentToIntervention(documentData);
+      res.status(201).json(document);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  addEmployeToIntervention: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { id_employes } = req.body;
+      
+      const result = await interventionsService.addEmployeToIntervention(
+        parseInt(id),
+        parseInt(id_employes)
+      );
+      
+      res.status(201).json(result);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  removeEmployeFromIntervention: async (req, res) => {
+    try {
+      const { id, employeId } = req.params;
+      
+      const result = await interventionsService.removeEmployeFromIntervention(
+        parseInt(id),
+        parseInt(employeId)
+      );
+      
+      if (!result) {
+        return res.status(404).json({ message: "Association non trouvée" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  getInterventionEmployes: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const employes = await interventionsService.getInterventionEmployes(parseInt(id));
+      res.status(200).json(employes);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
   }
 };
 
-// READ ALL
-const getInterventions = async (req, res) => {
-  try {
-    const result = await interventionsService.getInterventions();
-    res.json(result || []);
-  } catch (error) {
-    res.status(500).json({ 
-      error: "Erreur lors de la récupération des interventions",
-      details: error.message 
-    });
-  }
-};
-
-// READ ONE
-const getInterventionById = async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: "ID invalide" });
-    }
-    const result = await interventionsService.getInterventionById(id);
-    if (!result) {
-      return res.status(404).json({ error: "Intervention non trouvée" });
-    }
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ 
-      error: "Erreur lors de la récupération de l'intervention",
-      details: error.message 
-    });
-  }
-};
-
-// READ BY TACHE
-const getInterventionsByTache = async (req, res) => {
-  try {
-    const tacheId = parseInt(req.params.tacheId);
-    if (isNaN(tacheId)) {
-      return res.status(400).json({ error: "ID de tâche invalide" });
-    }
-    const result = await interventionsService.getInterventionsByTache(tacheId);
-    res.json(result || []);
-  } catch (error) {
-    res.status(500).json({ 
-      error: "Erreur lors de la récupération des interventions par tâche",
-      details: error.message 
-    });
-  }
-};
-
-// UPDATE
-const updateIntervention = async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: "ID invalide" });
-    }
-    const result = await interventionsService.updateIntervention(id, req.body);
-    if (!result) {
-      return res.status(404).json({ error: "Intervention non trouvée ou non modifiée" });
-    }
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ 
-      error: "Erreur lors de la mise à jour de l'intervention",
-      details: error.message 
-    });
-  }
-};
-
-// DELETE
-const deleteIntervention = async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: "ID invalide" });
-    }
-    const result = await interventionsService.deleteIntervention(id);
-    if (!result) {
-      return res.status(404).json({ error: "Intervention non trouvée" });
-    }
-    res.json({ message: "Intervention supprimée avec succès" });
-  } catch (error) {
-    res.status(500).json({ 
-      error: "Erreur lors de la suppression de l'intervention",
-      details: error.message 
-    });
-  }
-};
-
-// ASSIGN EMPLOYE
-const assignEmployeToIntervention = async (req, res) => {
-  try {
-    const interventionId = parseInt(req.params.id);
-    const employeId = parseInt(req.body.id_employes);
-    if (isNaN(interventionId) || isNaN(employeId)) {
-      return res.status(400).json({ error: "IDs invalides" });
-    }
-    const result = await interventionsService.assignEmployeToIntervention(interventionId, employeId);
-    res.status(201).json(result);
-  } catch (error) {
-    res.status(500).json({ 
-      error: "Erreur lors de l'assignation de l'employé à l'intervention",
-      details: error.message 
-    });
-  }
-};
-
-// REMOVE EMPLOYE
-const removeEmployeFromIntervention = async (req, res) => {
-  try {
-    const interventionId = parseInt(req.params.id);
-    const employeId = parseInt(req.params.employeId);
-    if (isNaN(interventionId) || isNaN(employeId)) {
-      return res.status(400).json({ error: "IDs invalides" });
-    }
-    await interventionsService.removeEmployeFromIntervention(interventionId, employeId);
-    res.json({ message: "Employé retiré de l'intervention avec succès" });
-  } catch (error) {
-    res.status(500).json({ 
-      error: "Erreur lors du retrait de l'employé de l'intervention",
-      details: error.message 
-    });
-  }
-};
-
-// GET EMPLOYES BY INTERVENTION
-const getEmployesByIntervention = async (req, res) => {
-  try {
-    const interventionId = parseInt(req.params.id);
-    if (isNaN(interventionId)) {
-      return res.status(400).json({ error: "ID d'intervention invalide" });
-    }
-    const result = await interventionsService.getEmployesByIntervention(interventionId);
-    res.json(result || []);
-  } catch (error) {
-    res.status(500).json({ 
-      error: "Erreur lors de la récupération des employés de l'intervention",
-      details: error.message 
-    });
-  }
-};
-
-module.exports = {
-  createIntervention,
-  getInterventions,
-  getInterventionById,
-  getInterventionsByTache,
-  updateIntervention,
-  deleteIntervention,
-  assignEmployeToIntervention,
-  removeEmployeFromIntervention,
-  getEmployesByIntervention
-};
+module.exports = interventionsController;
