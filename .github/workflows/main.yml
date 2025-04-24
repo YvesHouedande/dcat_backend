@@ -1,9 +1,30 @@
+# name: Build and deploy
+
+# on:
+#   push:
+#     branches:
+#       - dev
+
+# jobs:
+#   build-and-deploy:
+#     runs-on: self-hosted
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       - name: Build and deploy
+#         run: |
+#           docker-compose build
+#           docker-compose up -d
+
+
+
 name: Build and deploy
 
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
   build-and-deploy:
@@ -11,6 +32,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Configure DOCKER_HOST
+        run: |
+          export DOCKER_HOST=unix:///var/run/docker.sock
 
       - name: Build and deploy
         run: |
