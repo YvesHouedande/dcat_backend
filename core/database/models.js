@@ -114,9 +114,9 @@ const clients_en_ligne = pgTable("clients_en_ligne", {
 // Commande
 const commandes = pgTable("commandes", {
   id_commande: serial("id_commande").primaryKey(),
-  date_de_commande: timestamp("date_de_commande").notNull(),
+  date_de_commande: date("date_de_commande").notNull(),
   etat_commande: varchar("etat_commande", { length: 50 }).notNull(),
-  date_livraison: timestamp("date_livraison"),
+  date_livraison: date("date_livraison"),
   lieu_de_livraison: varchar("lieu_de_livraison", { length: 50 }).notNull(),
   mode_de_paiement: varchar("mode_de_paiement", { length: 50 }).notNull(),
   id_client: integer("id_client").references(() => clients_en_ligne.id_client),

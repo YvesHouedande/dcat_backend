@@ -1,4 +1,4 @@
-const { eq, sql, inArray } = require("drizzle-orm");
+const { and, eq, inArray, sql } = require("drizzle-orm");
 const { db } = require("../../../core/database/config");
 const {
   exemplaires,
@@ -30,124 +30,100 @@ const { etatExemplaire } = require("./exemplaire.service");
  * @param {string} params.modePaiement - Mode de paiement
  * @returns {Promise<Object>} Commande complète avec les exemplaires liés
  */
+
 async function createCommande({
   exemplaireIds,
   partenaireId,
   lieuLivraison,
-  dateCommande,
-  //   dateCommande = new Date(),
+  dateCommande = new Date(),
   dateLivraison,
   modePaiement,
 }) {
   return await db.transaction(async (tx) => {
-    // Étape 1 : Validation des entrées
+    // 1. Validation des entrées
     if (!exemplaireIds?.length) throw new Error("Aucun exemplaire spécifié");
     if (!partenaireId) throw new Error("Partenaire non spécifié");
 
-    // Étape 2 : Vérification des exemplaires
-    const existingExemplaires = await tx
-      .select({
-        id: exemplaires.id_exemplaire,
-        produitId: exemplaires.id_produit,
-        etat: exemplaires.etat_exemplaire,
-      })
+    // 2. Vérification des exemplaires
+    const exemplairesToOrder = await tx
+      .select()
       .from(exemplaires)
-      .where(inArray(exemplaires.id_exemplaire, exemplaireIds));
+      .where(
+        and(
+          inArray(exemplaires.id_exemplaire, exemplaireIds),
+          eq(exemplaires.etat_exemplaire, "Disponible")
+        )
+      );
 
-    if (existingExemplaires.length !== exemplaireIds.length) {
-      throw new Error("Certains exemplaires spécifiés n'existent pas");
-    }
-
-    const nonDisponibles = existingExemplaires.filter(
-      (e) => e.etat !== etatExemplaire[1] // "Disponible"
-    );
-
-    if (nonDisponibles.length > 0) {
+    if (exemplairesToOrder.length !== exemplaireIds.length) {
+      const missing = exemplaireIds.filter(
+        id => !exemplairesToOrder.some(e => e.id_exemplaire === id)
+      );
       throw new Error(
-        `${nonDisponibles.length} exemplaire(s) non disponible(s)`
+        `Exemplaires non disponibles ou introuvables: ${missing.join(", ")}`
       );
     }
 
-    // Étape 3 : Création de la commande
-    const [commande] = await tx
+    // 3. Création de la commande
+    const [newCommande] = await tx
       .insert(commandes)
       .values({
-        date_commande: dateCommande,
+        date_de_commande: new Date(dateCommande),
         etat_commande: "en cours",
-        date_livraison_commande: dateLivraison,
-        lieu_livraison_commande: lieuLivraison,
+        date_livraison: new Date(dateLivraison),
+        lieu_de_livraison: lieuLivraison,
         mode_de_paiement: modePaiement,
-        id_partenaire: partenaireId,
         created_at: new Date(),
         updated_at: new Date(),
       })
       .returning();
 
-    // Étape 4 : Liaison commande/partenaire
-    await tx.insert(partenaire_commandes).values({
-      id_partenaire: partenaireId,
-      id_commande: commande.id_commande,
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
+    // 4. Liaison partenaire-commande
+    await tx
+      .insert(partenaire_commandes)
+      .values({
+        id_partenaire: partenaireId,
+        id_commande: newCommande.id_commande,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
 
-    // Étape 5 : Mise à jour des exemplaires
+    // 5. Mise à jour des exemplaires
     await tx
       .update(exemplaires)
       .set({
         etat_exemplaire: etatExemplaire[0], // "Vendu"
-        id_commande: commande.id_commande,
+        id_commande: newCommande.id_commande,
         updated_at: new Date(),
       })
       .where(inArray(exemplaires.id_exemplaire, exemplaireIds));
 
-    // Étape 6 : Réduction des quantités dans le stock produits
-    const produitsQuantites = existingExemplaires.reduce(
-      (acc, { produitId }) => {
-        acc[produitId] = (acc[produitId] || 0) + 1;
-        return acc;
-      },
-      {}
-    );
+    // 6. Mise à jour des stocks produits
+    const produitsQuantites = exemplairesToOrder.reduce((acc, exemplaire) => {
+      acc[exemplaire.id_produit] = (acc[exemplaire.id_produit] || 0) + 1;
+      return acc;
+    }, {});
 
-    for (const [produitIdStr, quantite] of Object.entries(produitsQuantites)) {
-      const produitId = Number(produitIdStr);
-      const updateResult = await tx
+    for (const [produitId, quantite] of Object.entries(produitsQuantites)) {
+      await tx
         .update(produits)
         .set({
           qte_produit: sql`${produits.qte_produit} - ${quantite}`,
           updated_at: new Date(),
         })
-        .where(eq(produits.id_produit, produitId));
-
-      if (updateResult.rowCount === 0) {
-        throw new Error(
-          `Impossible de mettre à jour le stock pour le produit ID ${produitId}`
-        );
-      }
+        .where(eq(produits.id_produit, Number(produitId)));
     }
 
-    // Étape 7 : Récupération de la commande complète
-    const [completeCommande] = await tx
-      .select()
-      .from(commandes)
-      .leftJoin(
-        partenaires,
-        eq(commandes.id_partenaire, partenaires.id_partenaire)
-      )
-      .where(eq(commandes.id_commande, commande.id_commande));
-
-    completeCommande.exemplaires = await tx
-      .select()
-      .from(exemplaires)
-      .where(inArray(exemplaires.id_exemplaire, exemplaireIds));
+    // 7. Récupération de la commande complète
+    const completeCommande = {
+      ...newCommande,
+      exemplaires: exemplairesToOrder,
+      partenaire: { id_partenaire: partenaireId }
+    };
 
     return completeCommande;
   });
 }
-
-
-
 
 // 🔍 Lire une commande avec détails
 async function getCommandeById(idCommande) {
@@ -170,7 +146,6 @@ async function getCommandeById(idCommande) {
   return commande;
 }
 
-
 // 📜 Liste paginée ou filtrée des commandes
 async function getAllCommandes({ limit = 50, offset = 0, etat = null } = {}) {
   let query = db
@@ -187,7 +162,6 @@ async function getAllCommandes({ limit = 50, offset = 0, etat = null } = {}) {
 
   return await query.limit(limit).offset(offset);
 }
-
 
 // 📝 Mise à jour d'une commande
 async function updateCommande(idCommande, updateData) {
@@ -246,7 +220,6 @@ async function deleteCommande(idCommande) {
 
   return { success: true };
 }
-
 
 module.exports = {
   createCommande,

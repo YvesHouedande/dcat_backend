@@ -1,6 +1,6 @@
 const commandeService = require("../services/commande.service");
 
-createCommande = async (req, res) => {
+const createCommande = async (req, res) => {
   try {
     const commande = await commandeService.createCommande(req.body);
     res.status(201).json(commande);
@@ -9,7 +9,7 @@ createCommande = async (req, res) => {
   }
 };
 
-getCommandeById = async (req, res) => {
+const getCommandeById = async (req, res) => {
   try {
     const commande = await commandeService.getCommandeById(
       Number(req.params.id)
@@ -27,7 +27,7 @@ getCommandeById = async (req, res) => {
  *
  */
 
-getAllCommandes = async (req, res) => {
+const getAllCommandes = async (req, res) => {
   try {
     const { limit, offset, etat } = req.query;
     const commandes = await commandeService.getAllCommandes({
@@ -41,7 +41,7 @@ getAllCommandes = async (req, res) => {
   }
 };
 
-updateCommande = async (req, res) => {
+const updateCommande = async (req, res) => {
   try {
     const commande = await commandeService.updateCommande(
       Number(req.params.id),
@@ -53,7 +53,7 @@ updateCommande = async (req, res) => {
   }
 };
 
-deleteCommande = async (req, res) => {
+const deleteCommande = async (req, res) => {
   try {
     const result = await commandeService.deleteCommande(Number(req.params.id));
     res.status(200).json(result);
@@ -62,10 +62,10 @@ deleteCommande = async (req, res) => {
   }
 };
 
-module.exports = {
-  createCommande,
+module.exports={
   getCommandeById,
   getAllCommandes,
   updateCommande,
   deleteCommande,
-};
+  createCommande
+}
