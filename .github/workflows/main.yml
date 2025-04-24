@@ -1,21 +1,21 @@
-name: Build and deploy
+# name: Build and deploy
 
-on:
-  push:
-    branches:
-      - dev
+# on:
+#   push:
+#     branches:
+#       - dev
 
-jobs:
-  build-and-deploy:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+# jobs:
+#   build-and-deploy:
+#     runs-on: self-hosted
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
 
-      - name: Build and deploy
-        run: |
-          docker-compose build
-          docker-compose up -d
+#       - name: Build and deploy
+#         run: |
+#           docker-compose build
+#           docker-compose up -d
 
 
 
@@ -64,3 +64,41 @@ jobs:
 #           # Check Python environment
 #           python3 --version
 #           pip3 list | grep -E "docker|compose|urllib3|requests"
+
+
+
+name: Build and deploy
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  check-deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Check commit message
+        id: check
+        run: echo "deploy=${{ contains(github.event.head_commit.message, '[deploy]') }}" >> $GITHUB_OUTPUT
+      
+      - name: Show deployment decision
+        run: |
+          echo "Commit message: ${{ github.event.head_commit.message }}"
+          echo "Will deploy: ${{ steps.check.outputs.deploy }}"
+  
+  build-and-deploy:
+    runs-on: self-hosted
+    needs: check-deploy
+    if: needs.check-deploy.outputs.deploy == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build and deploy
+        run: |
+          echo "Starting deployment..."
+          docker-compose build
+          docker-compose up -d
+          echo "Deployment completed!"
+
