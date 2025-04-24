@@ -415,6 +415,7 @@ const interventions = pgTable("interventions", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
+
 // Exemplaire_produit
 const exemplaires = pgTable("exemplaires", {
   id_exemplaire: serial("id_exemplaire").primaryKey(),

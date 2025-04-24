@@ -9,8 +9,6 @@ const logger = require('./core/utils/logger');
 
 require('dotenv').config();
 
-const backendSoro = require('./modules/flutter_backend/routes/index_routes');
-
 // Initialisation Express
 const app = express();
 
@@ -43,12 +41,9 @@ app.use('/api/administration', loadModule('Administration&Finance'));
 
 
 
-// CHARGEMENT DES ROUTES DES PROJETS ET INTERVENTIONS
+// CHARGEMENT DES ENDPOINT DU MODULZ TECHNIQUES
 
-app.use('/api/interventions', backendSoro.interventions);
-app.use('/api/contrats', backendSoro.contrats);
-app.use('/api/missions', backendSoro.missions);
-
+app.use('/api/technique', loadModule('technique'));
 
 
 
@@ -106,7 +101,7 @@ app.listen(PORT, () => {
   logger.info(`Keycloak configured for realm: ${keycloak.config.realm}`);
   logger.info('Available routes:');
   logger.info(`- GET  http://localhost:${PORT}/health`);
-  logger.info(`- GET  http://localhost:${PORT}/api/interventions`);
+  logger.info(`- GET  http://localhost:${PORT}/api/technique`);
   logger.info(`- POST http://localhost:${PORT}/api/interventions (protected)`);
   logger.info(`- GET  http://localhost:${PORT}/api/stocks`);
   logger.info(`- POST http://localhost:${PORT}/api/stocks (protected, requires inventory-manager role)`);
