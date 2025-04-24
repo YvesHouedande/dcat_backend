@@ -1,5 +1,5 @@
 const { eq, and } = require("drizzle-orm");
-const db = require("../utils/drizzle-wrapper");
+const { db } = require('../../../core/database/config');
 const { interventions, intervention_employes, employes, intervention_taches } = require("../../../core/database/models");
 
 // CRUD complet avec Drizzle

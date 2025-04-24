@@ -1,6 +1,6 @@
 const { eq } = require("drizzle-orm");
-const db = require("../utils/drizzle-wrapper");
-const { taches, projets } = require("../../../core/database/models");
+const { db } = require('../../../core/database/config');
+const { taches } = require("../../../core/database/models");
 
 // CRUD complet avec Drizzle
 const createTache = async (data) => {

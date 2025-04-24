@@ -43,7 +43,7 @@ app.use('/api/administration', loadModule('Administration&Finance'));
 
 // CHARGEMENT DES ENDPOINT DU MODULZ TECHNIQUES
 
-app.use('/api/administration', loadModule('technique'));
+app.use('/api/technique', loadModule('technique'));
 
 
 
@@ -95,13 +95,13 @@ app.use((err, req, res, next) => {
 // DÉMARRAGE DU SERVEUR
 // =============================================
 // const PORT = process.env.PORT || 3000;
-const PORT = 1000;
+const PORT = 2000;
 app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Keycloak configured for realm: ${keycloak.config.realm}`);
   logger.info('Available routes:');
   logger.info(`- GET  http://localhost:${PORT}/health`);
-  logger.info(`- GET  http://localhost:${PORT}/api/interventions`);
+  logger.info(`- GET  http://localhost:${PORT}/api/technique`);
   logger.info(`- POST http://localhost:${PORT}/api/interventions (protected)`);
   logger.info(`- GET  http://localhost:${PORT}/api/stocks`);
   logger.info(`- POST http://localhost:${PORT}/api/stocks (protected, requires inventory-manager role)`);
