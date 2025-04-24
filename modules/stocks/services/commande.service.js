@@ -6,8 +6,12 @@ const {
   commandes,
   partenaires,
   partenaire_commandes,
+  sortie_exemplaires,
 } = require("../../../core/database/models");
-const { etatExemplaire } = require("./exemplaire.service");
+
+const {etatExemplaire}=require('./exemplaire.service')
+
+const typeSortie = ["vente directe", "vente en ligne", "projet"];
 
 /**
  * Effectue un achat d'exemplaires par un partenaire.
@@ -31,6 +35,7 @@ const { etatExemplaire } = require("./exemplaire.service");
  * @returns {Promise<Object>} Commande complète avec les exemplaires liés
  */
 
+// créer une commande
 async function createCommande({
   exemplaireIds,
   partenaireId,
@@ -51,13 +56,13 @@ async function createCommande({
       .where(
         and(
           inArray(exemplaires.id_exemplaire, exemplaireIds),
-          eq(exemplaires.etat_exemplaire, "Disponible")
+          eq(exemplaires.etat_exemplaire, etatExemplaire[1]) //"Disponible"
         )
       );
 
     if (exemplairesToOrder.length !== exemplaireIds.length) {
       const missing = exemplaireIds.filter(
-        id => !exemplairesToOrder.some(e => e.id_exemplaire === id)
+        (id) => !exemplairesToOrder.some((e) => e.id_exemplaire === id)
       );
       throw new Error(
         `Exemplaires non disponibles ou introuvables: ${missing.join(", ")}`
@@ -79,14 +84,12 @@ async function createCommande({
       .returning();
 
     // 4. Liaison partenaire-commande
-    await tx
-      .insert(partenaire_commandes)
-      .values({
-        id_partenaire: partenaireId,
-        id_commande: newCommande.id_commande,
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
+    await tx.insert(partenaire_commandes).values({
+      id_partenaire: partenaireId,
+      id_commande: newCommande.id_commande,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
 
     // 5. Mise à jour des exemplaires
     await tx
@@ -100,16 +103,14 @@ async function createCommande({
 
     // 6. Enregistrement dans sortie_exemplaires
     for (const exemplaireId of exemplaireIds) {
-      await tx
-        .insert(sortie_exemplaires)
-        .values({
-          type_sortie: "vente directe",
-          reference_id: newCommande.id_commande,
-          date_sortie: new Date(),
-          id_exemplaire: exemplaireId,
-          created_at: new Date(),
-          updated_at: new Date(),
-        });
+      await tx.insert(sortie_exemplaires).values({
+        type_sortie: typeSortie[0],
+        reference_id: newCommande.id_commande,
+        date_sortie: new Date(),
+        id_exemplaire: exemplaireId,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
     }
 
     // 7. Mise à jour des stocks produits
@@ -133,11 +134,11 @@ async function createCommande({
       ...newCommande,
       exemplaires: exemplairesToOrder,
       partenaire: { id_partenaire: partenaireId },
-      sorties: exemplaireIds.map(id => ({
+      sorties: exemplaireIds.map((id) => ({
         id_exemplaire: id,
-        type_sortie: "vente directe",
-        reference_id: newCommande.id_commande
-      }))
+        type_sortie: typeSortie[0],
+        reference_id: newCommande.id_commande,
+      })),
     };
 
     return completeCommande;
@@ -146,23 +147,35 @@ async function createCommande({
 
 // 🔍 Lire une commande avec détails
 async function getCommandeById(idCommande) {
-  const [commande] = await db
-    .select()
+  const [row] = await db
+    .select({
+      commande: commandes,
+      partenaire: partenaires,
+    })
     .from(commandes)
     .leftJoin(
+      partenaire_commandes,
+      eq(commandes.id_commande, partenaire_commandes.id_commande)
+    )
+    .leftJoin(
       partenaires,
-      eq(commandes.id_partenaire, partenaires.id_partenaire)
+      eq(partenaire_commandes.id_partenaire, partenaires.id_partenaire)
     )
     .where(eq(commandes.id_commande, idCommande));
 
-  if (!commande) throw new Error("Commande introuvable");
+  if (!row) throw new Error("Commande introuvable");
 
-  commande.exemplaires = await db
+  // Charger les exemplaires liés
+  const exemplairesAssocies = await db
     .select()
     .from(exemplaires)
     .where(eq(exemplaires.id_commande, idCommande));
 
-  return commande;
+  return {
+    ...row.commande,
+    partenaire: row.partenaire || null,
+    exemplaires: exemplairesAssocies,
+  };
 }
 
 // 📜 Liste paginée ou filtrée des commandes
@@ -171,8 +184,12 @@ async function getAllCommandes({ limit = 50, offset = 0, etat = null } = {}) {
     .select()
     .from(commandes)
     .leftJoin(
+      partenaire_commandes,
+      eq(commandes.id_commande, partenaire_commandes.id_commande)
+    )
+    .leftJoin(
       partenaires,
-      eq(commandes.id_partenaire, partenaires.id_partenaire)
+      eq(partenaire_commandes.id_partenaire, partenaires.id_partenaire)
     );
 
   if (etat) {
@@ -184,53 +201,79 @@ async function getAllCommandes({ limit = 50, offset = 0, etat = null } = {}) {
 
 // 📝 Mise à jour d'une commande
 async function updateCommande(idCommande, updateData) {
-  const validFields = {
-    date_livraison_commande: true,
-    lieu_livraison_commande: true,
-    etat_commande: true,
-    mode_de_paiement: true,
-    updated_at: new Date(),
-  };
+  const allowedFields = [
+    "date_livraison",
+    "lieu_de_livraison",
+    "etat_commande",
+    "mode_de_paiement",
+  ];
 
-  const updatePayload = {};
-  for (const [key, value] of Object.entries(updateData)) {
-    if (validFields[key]) {
-      updatePayload[key] = value;
-    }
-  }
+  const updatePayload = Object.fromEntries(
+    Object.entries(updateData).filter(([key]) => allowedFields.includes(key))
+  );
 
   if (!Object.keys(updatePayload).length) {
     throw new Error("Aucune donnée valide à mettre à jour");
   }
 
-  const result = await db
+  updatePayload.updated_at = new Date();
+
+  const [result] = await db
     .update(commandes)
     .set(updatePayload)
-    .where(eq(commandes.id_commande, idCommande));
+    .where(eq(commandes.id_commande, idCommande))
+    .returning();
 
-  if (result.rowCount === 0) throw new Error("Commande non trouvée");
+  if (!result) throw new Error("Commande non trouvée");
 
   return getCommandeById(idCommande);
 }
 
-// ❌ Suppression d'une commande
+// ❌ Suppression d'une commande complète
 async function deleteCommande(idCommande) {
-  // On supprime les liaisons avec les partenaires
-  await db
-    .delete(partenaire_commandes)
-    .where(eq(partenaire_commandes.id_commande, idCommande));
-
-  // On remet à null les id_commande des exemplaires
-  await db
-    .update(exemplaires)
-    .set({
-      id_commande: null,
-      etat_exemplaire: "Disponible",
-      updated_at: new Date(),
-    })
+  // 1. Récupération des exemplaires liés à cette commande
+  const exemplairesAssocies = await db
+    .select()
+    .from(exemplaires)
     .where(eq(exemplaires.id_commande, idCommande));
 
-  // Suppression de la commande
+  // 2. Suppression des liaisons avec les partenaires et des sorties
+  await Promise.all([
+    db
+      .delete(partenaire_commandes)
+      .where(eq(partenaire_commandes.id_commande, idCommande)),
+
+    db.delete(sortie_exemplaires).where(
+      and(
+        eq(sortie_exemplaires.reference_id, idCommande),
+        eq(sortie_exemplaires.type_sortie, typeSortie[0]) // "vente directe"
+      )
+    ),
+  ]);
+
+  // 3. Réinitialisation des exemplaires et mise à jour des stocks produits
+  for (const ex of exemplairesAssocies) {
+    await Promise.all([
+      db
+        .update(exemplaires)
+        .set({
+          id_commande: null,
+          etat_exemplaire: etatExemplaire[1], //"Disponible"
+          updated_at: new Date(),
+        })
+        .where(eq(exemplaires.id_exemplaire, ex.id_exemplaire)),
+
+      db
+        .update(produits)
+        .set({
+          qte_produit: sql`${produits.qte_produit} + 1`,
+          updated_at: new Date(),
+        })
+        .where(eq(produits.id_produit, ex.id_produit)),
+    ]);
+  }
+
+  // 4. Suppression de la commande elle-même
   const result = await db
     .delete(commandes)
     .where(eq(commandes.id_commande, idCommande));
