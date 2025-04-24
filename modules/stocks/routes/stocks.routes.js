@@ -11,6 +11,8 @@ const exemplaireRoutes = require("./exemplaire.routes");
 const livraisonRoutes = require("./livraison.routes");
 const typesProduitRoutes = require("./typesProduit.routes");
 const commandeRoutes = require("./commande.route");
+const sortiesExemplairesRoutes = require("./sortiesExemplaire.route");
+const achatRoutes = require("./achat.route");
 
 // Montage des routes
 router.use("/familles", familleRoutes);
@@ -22,5 +24,7 @@ router.use("/exemplaires", exemplaireRoutes);
 router.use("/livraisons", livraisonRoutes);
 router.use("/types-produits", typesProduitRoutes);
 router.use("/commandes", commandeRoutes);
+router.use("/sorties-exemplaires", sortiesExemplairesRoutes);
+router.use("/achats", achatRoutes);
 
 module.exports = router;
