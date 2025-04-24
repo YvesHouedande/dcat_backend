@@ -92,13 +92,27 @@ async function createCommande({
     await tx
       .update(exemplaires)
       .set({
-        etat_exemplaire: etatExemplaire[0], // "Vendu"
+        etat_exemplaire: "Vendu",
         id_commande: newCommande.id_commande,
         updated_at: new Date(),
       })
       .where(inArray(exemplaires.id_exemplaire, exemplaireIds));
 
-    // 6. Mise à jour des stocks produits
+    // 6. Enregistrement dans sortie_exemplaires
+    for (const exemplaireId of exemplaireIds) {
+      await tx
+        .insert(sortie_exemplaires)
+        .values({
+          type_sortie: "vente directe",
+          reference_id: newCommande.id_commande,
+          date_sortie: new Date(),
+          id_exemplaire: exemplaireId,
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+    }
+
+    // 7. Mise à jour des stocks produits
     const produitsQuantites = exemplairesToOrder.reduce((acc, exemplaire) => {
       acc[exemplaire.id_produit] = (acc[exemplaire.id_produit] || 0) + 1;
       return acc;
@@ -114,11 +128,16 @@ async function createCommande({
         .where(eq(produits.id_produit, Number(produitId)));
     }
 
-    // 7. Récupération de la commande complète
+    // 8. Récupération de la commande complète
     const completeCommande = {
       ...newCommande,
       exemplaires: exemplairesToOrder,
-      partenaire: { id_partenaire: partenaireId }
+      partenaire: { id_partenaire: partenaireId },
+      sorties: exemplaireIds.map(id => ({
+        id_exemplaire: id,
+        type_sortie: "vente directe",
+        reference_id: newCommande.id_commande
+      }))
     };
 
     return completeCommande;
