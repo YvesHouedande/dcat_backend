@@ -33,13 +33,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker socket
+      - name: Debug Docker environment
         run: |
-          # Ensure Docker socket is accessible
-          sudo chmod 666 /var/run/docker.sock || true
+          echo "Current Docker environment variables:"
+          env | grep DOCKER
+          
+      - name: Try to reset Docker environment
+        run: |
+          unset DOCKER_HOST
+          unset DOCKER_TLS_VERIFY
+          unset DOCKER_CERT_PATH
           
       - name: Build and deploy
         run: |
-          DOCKER_HOST=unix:///var/run/docker.sock docker-compose build
-          DOCKER_HOST=unix:///var/run/docker.sock docker-compose up -d
-
+          docker-compose build
+          docker-compose up -d
