@@ -9,8 +9,6 @@ const logger = require('./core/utils/logger');
 
 require('dotenv').config();
 
-const backendSoro = require('./modules/flutter_backend/routes/index_routes');
-
 // Initialisation Express
 const app = express();
 
@@ -43,12 +41,9 @@ app.use('/api/administration', loadModule('administration'));
 
 
 
-// CHARGEMENT DES ROUTES DES PROJETS ET INTERVENTIONS
+// CHARGEMENT DES ENDPOINT DU MODULZ TECHNIQUES
 
-app.use('/api/interventions', backendSoro.interventions);
-app.use('/api/contrats', backendSoro.contrats);
-app.use('/api/missions', backendSoro.missions);
-
+app.use('/api/administration', loadModule('technique'));
 
 
 
