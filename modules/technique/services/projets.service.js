@@ -1,46 +1,152 @@
-const { eq } = require("drizzle-orm");
 const { db } = require('../../../core/database/config');
-const { projets } = require("../../../core/database/models");
+const { projets, collaborer, documents, livrables, partenaires } = require("../../../core/database/models");
+const { eq, and } = require("drizzle-orm");
 
-// CRUD complet avec Drizzle
-const createProjet = async (data) => {
-  const [result] = await db.insert(projets).values(data).returning();
-  return result;
+const projetsService = {
+  getAllProjets: async () => {
+    return await db.select().from(projets);
+  },
+
+  getProjetById: async (id) => {
+    const result = await db
+      .select()
+      .from(projets)
+      .where(eq(projets.id_projet, id));
+    return result.length > 0 ? result[0] : null;
+  },
+
+  createProjet: async (projetData) => {
+    const result = await db
+      .insert(projets)
+      .values(projetData)
+      .returning();
+    return result[0];
+  },
+
+  updateProjet: async (id, projetData) => {
+    const result = await db
+      .update(projets)
+      .set({
+        ...projetData,
+        updated_at: new Date(),
+      })
+      .where(eq(projets.id_projet, id))
+      .returning();
+    return result.length > 0 ? result[0] : null;
+  },
+
+  deleteProjet: async (id) => {
+    const result = await db
+      .delete(projets)
+      .where(eq(projets.id_projet, id))
+      .returning();
+    return result.length > 0;
+  },
+
+  addDocumentToProjet: async (documentData) => {
+    const result = await db.insert(documents).values(documentData).returning();
+    return result[0];
+  },
+
+  addPartenaireToProjet: async (projetId, partenaireId) => {
+    const result = await db
+      .insert(collaborer)
+      .values({
+        id_projet: projetId,
+        id_partenaire: partenaireId,
+      })
+      .returning();
+    return result[0];
+  },
+
+  removePartenaireFromProjet: async (projetId, partenaireId) => {
+    const result = await db
+      .delete(collaborer)
+      .where(
+        and(
+          eq(collaborer.id_projet, projetId),
+          eq(collaborer.id_partenaire, partenaireId)
+        )
+      )
+      .returning();
+    return result.length > 0;
+  },
+
+  getProjetPartenaires: async (projetId) => {
+    return await db
+      .select({
+        id_partenaire: partenaires.id_partenaire,
+        nom_partenaire: partenaires.nom_partenaire,
+        email_partenaire: partenaires.email_partenaire,
+        telephone_partenaire: partenaires.telephone_partenaire,
+        specialite: partenaires.specialite
+      })
+      .from(collaborer)
+      .innerJoin(
+        partenaires,
+        eq(collaborer.id_partenaire, partenaires.id_partenaire)
+      )
+      .where(eq(collaborer.id_projet, projetId));
+  },
+
+  getProjetLivrables: async (projetId) => {
+    return await db
+      .select()
+      .from(livrables)
+      .where(eq(livrables.id_projet, projetId));
+  },
+
+  createLivrable: async (livrableData) => {
+    const result = await db
+      .insert(livrables)
+      .values(livrableData)
+      .returning();
+    return result[0];
+  },
+
+  // Ajout des nouvelles méthodes pour la gestion des documents
+  getProjetDocuments: async (projetId) => {
+    try {
+      return await db
+        .select({
+          id_documents: documents.id_documents,
+          libelle_document: documents.libelle_document,
+          classification_document: documents.classification_document,
+          lien_document: documents.lien_document,
+          etat_document: documents.etat_document,
+          created_at: documents.created_at,
+          updated_at: documents.updated_at
+        })
+        .from(documents)
+        .where(eq(documents.id_projet, projetId));
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des documents: ${error.message}`);
+    }
+  },
+
+  getDocumentById: async (documentId) => {
+    try {
+      const result = await db
+        .select()
+        .from(documents)
+        .where(eq(documents.id_documents, documentId));
+      return result.length > 0 ? result[0] : null;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération du document: ${error.message}`);
+    }
+  },
+
+  deleteDocument: async (documentId) => {
+    try {
+      const result = await db
+        .delete(documents)
+        .where(eq(documents.id_documents, documentId))
+        .returning();
+      return result.length > 0;
+    } catch (error) {
+      throw new Error(`Erreur lors de la suppression du document: ${error.message}`);
+    }
+  }
 };
 
-const getProjets = async () => {
-  return await db.select().from(projets);
-};
-
-const getProjetById = async (id) => {
-  const [result] = await db.select().from(projets).where(eq(projets.id_projet, id));
-  return result;
-};
-
-const updateProjet = async (id, data) => {
-  const [result] = await db
-    .update(projets)
-    .set({
-      ...data,
-      updated_at: new Date() // Mettre à jour la date de modification
-    })
-    .where(eq(projets.id_projet, id))
-    .returning();
-  return result;
-};
-
-const deleteProjet = async (id) => {
-  const [result] = await db
-    .delete(projets)
-    .where(eq(projets.id_projet, id))
-    .returning();
-  return result;
-};
-
-module.exports = {
-  createProjet,
-  getProjets,
-  getProjetById,
-  updateProjet,
-  deleteProjet,
-};
+module.exports = projetsService;
