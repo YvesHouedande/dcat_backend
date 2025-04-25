@@ -191,10 +191,11 @@ const prestations = pgTable("prestations", {
 // Livrable
 const livrables = pgTable("livrables", {
   id_livrable: serial("id_livrable").primaryKey(),
+  libelle_livrable: varchar("libelle_livrable", { length: 100 }),
   date: date("date"),
   realisations: text("realisations"),
   reserves: text("reserves"),
-  approbation: boolean("approbation"),
+  approbation: text("approbation"),
   recommandation: text("recommandation"),
   id_projet: integer("id_projet").references(() => projets.id_projet),
   created_at: timestamp("created_at").defaultNow().notNull(),
