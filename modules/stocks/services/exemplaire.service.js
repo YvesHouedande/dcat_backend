@@ -1,11 +1,7 @@
 const { eq, sql, and, inArray, isNull } = require("drizzle-orm");
 const { db } = require("../../../core/database/config");
 // const db = require("../utils/drizzle-wrapper");
-const {
-  exemplaires,
-  produits,
-
-} = require("../../../core/database/models");
+const { exemplaires, produits } = require("../../../core/database/models");
 
 /**
  *
@@ -57,6 +53,15 @@ async function getExemplaireById(id) {
     .select()
     .from(exemplaires)
     .where(eq(exemplaires.id_exemplaire, id));
+  return ex;
+}
+
+//rechercher un exemplaire à partir d'un numéro de series
+async function getExemplaireByNumSerie(num_serie) {
+  const [ex] = await db
+    .select()
+    .from(exemplaires)
+    .where(eq(exemplaires.num_serie, num_serie));
   return ex;
 }
 
@@ -169,60 +174,55 @@ async function deleteExemplaire(id) {
 /** ---Autres requetes --- */
 
 async function getExemplairesByProduit(id) {
+  return db.select().from(exemplaires).where(eq(exemplaires.id_produit, id));
+}
+
+//filtrer les exemplaires selon leur etat (disponible,vendu...)
+async function filterExemplairesByEtat(id, etat) {
   return db
     .select()
     .from(exemplaires)
     .where(
-      eq(exemplaires.id_produit, id),
+      and(
+        eq(exemplaires.id_produit, id),
+        eq(exemplaires.etat_exemplaire, etat)
+      )
     );
 }
 
-// plusieurs exemplaires selon un état
-async function filterExemplairesByEtat(etat) {
-  return db
-    .select()
-    .from(exemplaires)
-    .where(eq(exemplaires.etat_exemplaire, etat));
-}
 
-//tout les exemplaires disponible
-async function getAvailableExemplaires() {
-  return filterExemplairesByEtat(etatExemplaire[1]); //disponible
-}
+// // // Vérifie si un exemplaire spécifique est en cours d'utilisation
+// // async function isExemplaireInUse(exId) {
+// //   const [result] = await db
+// //     .select()
+// //     .from(usage_exemplaires)
+// //     .where(
+// //       and(
+// //         eq(usage_exemplaires.id_exemplaire, exId),
+// //         isNull(usage_exemplaires.date_retour_usage)
+// //       )
+// //     );
 
-// // Vérifie si un exemplaire spécifique est en cours d'utilisation
-// async function isExemplaireInUse(exId) {
-//   const [result] = await db
-//     .select()
-//     .from(usage_exemplaires)
-//     .where(
-//       and(
-//         eq(usage_exemplaires.id_exemplaire, exId),
-//         isNull(usage_exemplaires.date_retour_usage)
-//       )
-//     );
+// //   return !!result; //retourne un booléen
+// // }
 
-//   return !!result; //retourne un booléen
+// // Récupère tous les exemplaires actuellement en cours d'utilisation
+// async function isExemplairesInUse() {
+//   return filterExemplairesByEtat(etatExemplaire[2]);
 // }
-
-// Récupère tous les exemplaires actuellement en cours d'utilisation
-async function isExemplairesInUse() {
-  return filterExemplairesByEtat(etatExemplaire[2]);
-}
-
-
-
 
 module.exports = {
   createExemplaire,
   getExemplaires,
   getExemplaireById,
+  getExemplaireByNumSerie,
   updateExemplaire,
   deleteExemplaire,
   getExemplairesByProduit,
-  getAvailableExemplaires,
   // isExemplaireInUse,
-  isExemplairesInUse,
+  // isExemplairesInUse,
+
+  filterExemplairesByEtat,
 
   //variable
   etatExemplaire,

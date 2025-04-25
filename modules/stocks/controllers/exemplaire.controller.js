@@ -37,6 +37,20 @@ const getExemplaireById = async (req, res) => {
   }
 };
 
+//rechercher un exemplaire à partir d'un numéro de series
+const getExemplaireByNumSerie = async (req, res) => {
+  try {
+    const num_serie = req.params.num_serie;
+
+    const result = await exemplaireService.getExemplaireByNumSerie(num_serie);
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
 const updateExemplaire = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -80,7 +94,6 @@ const getExemplairesByProduit = async (req, res) => {
   try {
     const id = req.params.id;
 
-
     if (!id) {
       return res.status(400).json({ message: "paramètre manquant" });
     }
@@ -100,102 +113,92 @@ const getExemplairesByProduit = async (req, res) => {
   }
 };
 
-//tout les exemplaires "disponible"
-const getAvailableExemplaires = async (req, res) => {
+//filtrer les exemplaires selon leur etat (disponible,vendu...)
+const filterExemplairesByEtat = async (req, res) => {
   try {
-    const results = await exemplaireService.getAvailableExemplaires();
-    return res.status(200).json(results);
-  } catch (error) {
-    return res.status(500).json({
-      error: "Une erreur est survenue",
-      details: error.message,
-    });
-  }
-};
+    const { id, etat } = req.params;
 
-// Vérifie si un exemplaire spécifique est en cours d'utilisation
-const isExemplaireInUse = async (req, res) => {
-  try {
-    const id = req.param.id;
-    const results = await exemplaireService.isExemplaireInUse(parseInt(id));
-    return res.status(200).json(results);
-  } catch (error) {
-    return res.status(500).json({
-      error: "Une erreur est survenue",
-      details: error.message,
-    });
-  }
-};
+    // Vérification des paramètres
+    if (!id || !etat) {
+      return res.status(400).json({ error: "Paramètres requis : id et etat" });
+    }
 
-// Récupère tous les exemplaires actuellement en cours d'utilisation
-const isExemplairesInUse = async (req, res) => {
-  try {
-    const results = await exemplaireService.isExemplairesInUse();
-    return res.status(200).json(results);
-  } catch (error) {
-    return res.status(500).json({
-      error: "Une erreur est survenue",
-      details: error.message,
-    });
-  }
-};
-/**
- * 
- * 
- *   exemplaireIds,
-  partenaireId,
-  lieuLivraison,
-  dateCommande,
-  dateLivraison,
- */
-//acheter un exemplaire de produit(un client qui vient acheter)
+    const parsedId = parseInt(id);
 
-const purchaseExemplaire = async (req, res) => {
-  try {
-    const { exemplaireId, partenaireId } = req.params;
-    const { lieuLivraison, quantite, dateAchat } = req.body;
+    if (isNaN(parsedId)) {
+      return res
+        .status(400)
+        .json({ error: "ID invalide (doit être un nombre)" });
+    }
 
-    // Vérifie que les deux paramètres sont présents
-    if (!exemplaireId || !partenaireId || !quantite) {
+    // Liste blanche des états valides
+    const etatsAutorises = [
+      "Disponible",
+      "Vendu",
+      "Utilisation",
+      "En maintenance",
+      "Endommage",
+      "Reserve",
+    ];
+    if (!etatsAutorises.includes(etat)) {
       return res.status(400).json({
-        message: "Données manquantes dans l'URL ou le corps de la requête",
+        error: `Etat invalide. Les états autorisés sont : ${etatsAutorises.join(
+          ", "
+        )}`,
       });
     }
 
-    if (isNaN(exemplaireId) || isNaN(partenaireId) || isNaN(quantite)) {
-      return res.status(400).json({ error: "ID ou quantité invalide" });
-    }
-
-    // Appeler la logique du service
-    const result = await exemplaireService.purchaseExemplaire({
-      exemplaireId,
-      partenaireId,
-      lieuLivraison,
-      quantite,
-      dateAchat,
-    });
-
-    // Retourner le résultat
-    return res.json(result);
+    const results = await exemplaireService.filterExemplairesByEtat(
+      parsedId,
+      etat
+    );
+    return res.status(200).json(results);
   } catch (error) {
-    res.status(500).json({
-      error: "Une erreur est survenue",
+    return res.status(500).json({
+      error: "Une erreur est survenue lors du filtrage",
       details: error.message,
     });
   }
 };
 
 
+// // Vérifie si un exemplaire spécifique est en cours d'utilisation
+// const isExemplaireInUse = async (req, res) => {
+//   try {
+//     const id = req.param.id;
+//     const results = await exemplaireService.isExemplaireInUse(parseInt(id));
+//     return res.status(200).json(results);
+//   } catch (error) {
+//     return res.status(500).json({
+//       error: "Une erreur est survenue",
+//       details: error.message,
+//     });
+//   }
+// };
+
+// // Récupère tous les exemplaires actuellement en cours d'utilisation
+// const isExemplairesInUse = async (req, res) => {
+//   try {
+//     const results = await exemplaireService.isExemplairesInUse();
+//     return res.status(200).json(results);
+//   } catch (error) {
+//     return res.status(500).json({
+//       error: "Une erreur est survenue",
+//       details: error.message,
+//     });
+//   }
+// };
 
 module.exports = {
   createExemplaire,
   getExemplaires,
   getExemplaireById,
+  getExemplaireByNumSerie,
   updateExemplaire,
   deleteExemplaire,
   getExemplairesByProduit,
-  purchaseExemplaire,
-  getAvailableExemplaires,
-  isExemplaireInUse,
-  isExemplairesInUse,
+  // isExemplaireInUse,
+  // isExemplairesInUse,
+
+  filterExemplairesByEtat,
 };
