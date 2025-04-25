@@ -1,25 +1,42 @@
 const express = require("express");
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
 const projetsController = require("../controllers/projets.controller");
 const uploadMiddleware = require("../utils/middleware/uploadMiddleware");
 
-// Routes pour les projets
+// Définition des chemins de stockage
+const UPLOAD_PATHS = {
+  PROJETS: 'media/documents/technique/projets'
+};
+
+// Routes CRUD de base
 router.get("/", projetsController.getAllProjets);
 router.get("/:id", projetsController.getProjetById);
 router.post("/", projetsController.createProjet);
 router.put("/:id", projetsController.updateProjet);
 router.delete("/:id", projetsController.deleteProjet);
 
-// Route pour ajouter un document à un projet
-router.post("/:id/documents", uploadMiddleware.single("document"), projetsController.addDocumentToProjet);
+// Routes pour la gestion des documents
+router.post("/:id/documents",
+  (req, res, next) => {
+    try {
+      // Définir le chemin avant l'upload
+      req.uploadPath = path.join(process.cwd(), UPLOAD_PATHS.PROJETS);
+      next();
+    } catch (error) {
+      next(error);
+    }
+  },
+  uploadMiddleware.single("document"),
+  projetsController.addDocumentToProjet
+);
+router.get("/:id/documents", projetsController.getProjetDocuments);
+router.delete("/:id/documents/:documentId", projetsController.deleteDocument);
 
-// Routes pour la gestion des partenaires de projet
+// Routes pour la gestion des partenaires
 router.post("/:id/partenaires", projetsController.addPartenaireToProjet);
 router.delete("/:id/partenaires/:partenaireId", projetsController.removePartenaireFromProjet);
 router.get("/:id/partenaires", projetsController.getProjetPartenaires);
-
-// Routes pour les livrables du projet
-router.get("/:id/livrables", projetsController.getProjetLivrables);
-router.post("/:id/livrables", projetsController.createLivrable);
 
 module.exports = router;

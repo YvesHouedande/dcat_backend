@@ -103,6 +103,50 @@ const projetsService = {
       .returning();
     return result[0];
   },
+
+  // Ajout des nouvelles méthodes pour la gestion des documents
+  getProjetDocuments: async (projetId) => {
+    try {
+      return await db
+        .select({
+          id_documents: documents.id_documents,
+          libelle_document: documents.libelle_document,
+          classification_document: documents.classification_document,
+          lien_document: documents.lien_document,
+          etat_document: documents.etat_document,
+          created_at: documents.created_at,
+          updated_at: documents.updated_at
+        })
+        .from(documents)
+        .where(eq(documents.id_projet, projetId));
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des documents: ${error.message}`);
+    }
+  },
+
+  getDocumentById: async (documentId) => {
+    try {
+      const result = await db
+        .select()
+        .from(documents)
+        .where(eq(documents.id_documents, documentId));
+      return result.length > 0 ? result[0] : null;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération du document: ${error.message}`);
+    }
+  },
+
+  deleteDocument: async (documentId) => {
+    try {
+      const result = await db
+        .delete(documents)
+        .where(eq(documents.id_documents, documentId))
+        .returning();
+      return result.length > 0;
+    } catch (error) {
+      throw new Error(`Erreur lors de la suppression du document: ${error.message}`);
+    }
+  }
 };
 
 module.exports = projetsService;

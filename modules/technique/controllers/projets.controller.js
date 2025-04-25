@@ -1,10 +1,6 @@
 const path = require('path');
 const projetsService = require("../services/projets.service");
 
-// Définition des chemins de stockage
-const UPLOAD_PATHS = {
-  PROJETS: 'media/documents/technique/projets'
-};
 
 const projetsController = {
   getAllProjets: async (req, res) => {
@@ -121,8 +117,7 @@ const projetsController = {
 
   addDocumentToProjet: async (req, res) => {
     try {
-      // Définir le chemin de stockage pour les documents du projet
-      req.uploadPath = path.join(process.cwd(), UPLOAD_PATHS.PROJETS);
+     
 
       if (!req.file) {
         return res.status(400).json({
@@ -135,7 +130,7 @@ const projetsController = {
       const documentData = {
         libelle_document: req.body.libelle_document,
         classification_document: req.body.classification_document,
-        lien_document: path.join(UPLOAD_PATHS.PROJETS, req.file.filename),
+        lien_document: req.file.path.replace(/\\/g, '/'), 
         etat_document: req.body.etat_document || 'actif',
         id_nature_document: parseInt(req.body.id_nature_document),
         id_projet: parseInt(id)
