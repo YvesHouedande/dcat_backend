@@ -428,8 +428,8 @@ const sortie_exemplaires = pgTable("sortie_exemplaires", {
 
 // Tables d'association
 
-const collaborer = pgTable(
-  "collaborer",
+const partenaire_projets = pgTable(
+  "partenaire_projets",
   {
     id_projet: integer("id_projet")
       .notNull()
@@ -479,8 +479,8 @@ const partenaire_commandes = pgTable(
   })
 );
 
-const faire_entrer = pgTable(
-  "faire_entrer",
+const employe_entrer_exemplaires = pgTable(
+  "employe_entrer_exemplaires",
   {
     id_exemplaire: integer("id_exemplaire")
       .notNull()
@@ -499,8 +499,8 @@ const faire_entrer = pgTable(
   })
 );
 
-const effectuer = pgTable(
-  "effectuer",
+const employe_prestations = pgTable(
+  "employe_prestations",
   {
     id_employes: integer("id_employes")
       .notNull()
@@ -533,8 +533,8 @@ const intervention_taches = pgTable(
   })
 );
 
-const faire_sortir = pgTable(
-  "faire_sortir",
+const employe_sortir_exemplaires = pgTable(
+  "employe_sortir_exemplaires",
   {
     id_exemplaire: integer("id_exemplaire")
       .notNull()
@@ -622,13 +622,13 @@ module.exports = {
   interventions,
   exemplaires,
   sortie_exemplaires,
-  collaborer,
+  partenaire_projets,
   intervention_employes,
   partenaire_commandes,
-  faire_entrer,
-  effectuer,
+  employe_entrer_exemplaires,
+  employe_prestations,
   intervention_taches,
-  faire_sortir,
+  employe_sortir_exemplaires,
   maintenance_employes,
   maintenance_moyens_travail,
 };
