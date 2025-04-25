@@ -4,6 +4,7 @@ const helmet = require("helmet");
 const { keycloak } = require("./core/auth/keycloak.config");
 const { initKeycloak, protect } = require("./core/auth/middleware");
 const logger = require("./core/utils/logger");
+const swaggerRoutes = require('./core/utils/swagger.routes');
 
 require("dotenv").config();
 
@@ -37,6 +38,9 @@ function loadModule(moduleName) {
     process.exit(1);
   }
 }
+
+// Swagger 
+app.use('/api', swaggerRoutes);
 
 // Chargement des modules
 app.use("/api/stocks", loadModule("stocks"));
