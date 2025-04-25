@@ -1,4 +1,10 @@
+const path = require('path');
 const projetsService = require("../services/projets.service");
+
+// Définition des chemins de stockage
+const UPLOAD_PATHS = {
+  PROJETS: 'media/documents/technique/projets'
+};
 
 const projetsController = {
   getAllProjets: async (req, res) => {
@@ -25,61 +31,136 @@ const projetsController = {
 
   createProjet: async (req, res) => {
     try {
-      const projetData = req.body;
+      const projetData = {
+        nom_projet: req.body.nom_projet,
+        type_projet: req.body.type_projet,
+        devis_estimatif: parseFloat(req.body.devis_estimatif),
+        date_debut: new Date(req.body.date_debut),
+        date_fin: new Date(req.body.date_fin),
+        duree_prevu_projet: req.body.duree_prevu_projet,
+        description_projet: req.body.description_projet,
+        etat: req.body.etat || 'en_cours',
+        lieu: req.body.lieu,
+        responsable: req.body.responsable,
+        site: req.body.site,
+        id_famille: req.body.id_famille ? parseInt(req.body.id_famille) : null
+      };
+
       const newProjet = await projetsService.createProjet(projetData);
-      res.status(201).json(newProjet);
+
+      res.status(201).json({
+        success: true,
+        message: "Projet créé avec succès",
+        data: {
+          projet: newProjet,
+          details: {
+            dateCreation: new Date().toISOString()
+          }
+        }
+      });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({
+        success: false,
+        message: "Erreur lors de la création du projet",
+        error: error.message
+      });
     }
   },
 
   updateProjet: async (req, res) => {
     try {
       const { id } = req.params;
-      const projetData = req.body;
-      const updatedProjet = await projetsService.updateProjet(parseInt(id), projetData);
+      // Prendre directement toutes les données du corps de la requête
+      const updateData = req.body;
+      
+      // Convertir les types de données si nécessaire
+      if (updateData.devis_estimatif) updateData.devis_estimatif = parseFloat(updateData.devis_estimatif);
+      if (updateData.date_debut) updateData.date_debut = new Date(updateData.date_debut);
+      if (updateData.date_fin) updateData.date_fin = new Date(updateData.date_fin);
+      if (updateData.id_famille) updateData.id_famille = parseInt(updateData.id_famille);
+
+      const updatedProjet = await projetsService.updateProjet(parseInt(id), updateData);
+
       if (!updatedProjet) {
         return res.status(404).json({ message: "Projet non trouvé" });
       }
+
       res.status(200).json(updatedProjet);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   },
 
+
   deleteProjet: async (req, res) => {
     try {
       const { id } = req.params;
       const deleted = await projetsService.deleteProjet(parseInt(id));
+      
       if (!deleted) {
-        return res.status(404).json({ message: "Projet non trouvé" });
+        return res.status(404).json({ 
+          success: false,
+          message: "Projet non trouvé" 
+        });
       }
-      res.status(204).send();
+      
+      // Réponse explicite avec un message de succès
+      res.status(200).json({
+        success: true,
+        message: "Projet supprimé avec succès",
+        data: { id: parseInt(id) }
+      });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ 
+        success: false,
+        message: error.message 
+      });
     }
   },
+  
 
   addDocumentToProjet: async (req, res) => {
     try {
+      // Définir le chemin de stockage pour les documents du projet
+      req.uploadPath = path.join(process.cwd(), UPLOAD_PATHS.PROJETS);
+
       if (!req.file) {
-        return res.status(400).json({ message: "Aucun fichier n'a été téléchargé" });
+        return res.status(400).json({
+          success: false,
+          message: "Aucun fichier n'a été téléchargé"
+        });
       }
-      
+
       const { id } = req.params;
       const documentData = {
         libelle_document: req.body.libelle_document,
         classification_document: req.body.classification_document,
-        lien_document: req.file.path,
-        etat_document: req.body.etat_document,
+        lien_document: path.join(UPLOAD_PATHS.PROJETS, req.file.filename),
+        etat_document: req.body.etat_document || 'actif',
         id_nature_document: parseInt(req.body.id_nature_document),
         id_projet: parseInt(id)
       };
-      
+
       const document = await projetsService.addDocumentToProjet(documentData);
-      res.status(201).json(document);
+      
+      res.status(201).json({
+        success: true,
+        message: "Document ajouté avec succès au projet",
+        data: {
+          document: document,
+          details: {
+            dateCreation: new Date().toISOString(),
+            creePar: req.user?.username || 'system',
+            chemin: documentData.lien_document
+          }
+        }
+      });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({
+        success: false,
+        message: "Erreur lors de l'ajout du document",
+        error: error.message
+      });
     }
   },
 
@@ -93,9 +174,16 @@ const projetsController = {
         parseInt(id_partenaire)
       );
       
-      res.status(201).json(result);
+      res.status(201).json({
+        success: true,
+        message: "Partenaire ajouté au projet avec succès",
+        data: result
+      });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
     }
   },
 
@@ -109,12 +197,25 @@ const projetsController = {
       );
       
       if (!result) {
-        return res.status(404).json({ message: "Association non trouvée" });
+        return res.status(404).json({ 
+          success: false, 
+          message: "Association non trouvée" 
+        });
       }
       
-      res.status(204).send();
+      res.status(200).json({
+        success: true,
+        message: "Partenaire retiré du projet avec succès",
+        data: { 
+          projet_id: parseInt(id), 
+          partenaire_id: parseInt(partenaireId) 
+        }
+      });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
     }
   },
 
@@ -122,9 +223,17 @@ const projetsController = {
     try {
       const { id } = req.params;
       const partenaires = await projetsService.getProjetPartenaires(parseInt(id));
-      res.status(200).json(partenaires);
+      
+      res.status(200).json({
+        success: true,
+        message: "Liste des partenaires du projet récupérée avec succès",
+        data: partenaires
+      });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
     }
   },
 
@@ -132,9 +241,17 @@ const projetsController = {
     try {
       const { id } = req.params;
       const livrables = await projetsService.getProjetLivrables(parseInt(id));
-      res.status(200).json(livrables);
+      
+      res.status(200).json({
+        success: true,
+        message: "Liste des livrables du projet récupérée avec succès",
+        data: livrables
+      });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
     }
   },
 
@@ -147,11 +264,20 @@ const projetsController = {
       };
       
       const newLivrable = await projetsService.createLivrable(livrableData);
-      res.status(201).json(newLivrable);
+      
+      res.status(201).json({
+        success: true,
+        message: "Livrable créé avec succès",
+        data: newLivrable
+      });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
     }
   }
+
 };
 
 module.exports = projetsController;

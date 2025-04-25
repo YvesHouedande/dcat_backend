@@ -1,5 +1,5 @@
-const { db } = require("../../config/database");
-const { taches, intervention_taches, employes } = require("../../models/schema");
+const { db } = require('../../../core/database/config');
+const { taches, intervention_taches, employes } = require("../../../core/database/models");
 const { eq, and } = require("drizzle-orm");
 
 const tachesService = {

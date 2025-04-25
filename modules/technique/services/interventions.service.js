@@ -1,5 +1,6 @@
-const { db } = require("../../config/database");
-const { interventions, intervention_employes, documents, employes } = require("../../models/schema");
+const { db } = require('../../../core/database/config');
+const { interventions, intervention_employes, employes, intervention_taches, documents } = require("../../../core/database/models");
+
 const { eq, and } = require("drizzle-orm");
 
 const interventionsService = {
@@ -87,6 +88,49 @@ const interventionsService = {
       )
       .where(eq(intervention_employes.id_intervention, interventionId));
   },
+
+  getInterventionDocuments: async (interventionId) => {
+    try {
+      return await db
+        .select({
+          id_documents: documents.id_documents,
+          libelle_document: documents.libelle_document,
+          classification_document: documents.classification_document,
+          lien_document: documents.lien_document,
+          etat_document: documents.etat_document,
+          created_at: documents.created_at,
+          updated_at: documents.updated_at
+        })
+        .from(documents)
+        .where(eq(documents.id_intervention, interventionId));
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des documents: ${error.message}`);
+    }
+  },
+
+  getDocumentById: async (documentId) => {
+    try {
+      const result = await db
+        .select()
+        .from(documents)
+        .where(eq(documents.id_documents, documentId));
+      return result.length > 0 ? result[0] : null;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération du document: ${error.message}`);
+    }
+  },
+
+  deleteDocument: async (documentId) => {
+    try {
+      const result = await db
+        .delete(documents)
+        .where(eq(documents.id_documents, documentId))
+        .returning();
+      return result.length > 0;
+    } catch (error) {
+      throw new Error(`Erreur lors de la suppression du document: ${error.message}`);
+    }
+  }
 };
 
 module.exports = interventionsService;

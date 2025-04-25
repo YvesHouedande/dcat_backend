@@ -1,5 +1,5 @@
-const { db } = require("../../config/database");
-const { projets, collaborer, documents, livrables, partenaires } = require("../../models/schema");
+const { db } = require('../../../core/database/config');
+const { projets, collaborer, documents, livrables, partenaires } = require("../../../core/database/models");
 const { eq, and } = require("drizzle-orm");
 
 const projetsService = {
