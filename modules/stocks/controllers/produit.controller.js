@@ -31,6 +31,23 @@ const getProduits = async (req, res) => {
   }
 };
 
+// afficher tous les outils/équipements
+const getProduitsByTypes = async (req, res) => {
+  try {
+    const idType = parseInt(req.params.idType);
+    if (isNaN(idType)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await produitService.getProduitsByTypes(Number(idType));
+    return res.json(result);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
+
 const getProduitById = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -85,4 +102,5 @@ module.exports = {
   getProduitById,
   updateProduit,
   deleteProduit,
+  getProduitsByTypes
 };
