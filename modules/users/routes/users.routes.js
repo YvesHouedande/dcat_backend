@@ -16,6 +16,14 @@ router.get('/me', protect([]), UsersController.getMyProfile);
 router.patch('/me', protect([]), UsersController.updateMyProfile);
 
 // Récupération de tous les utilisateurs (avec pagination)
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Liste des utilisateurs
+ *     tags:
+ *       - Utilisateurs
+ */
 router.get('/', protect(["rh7",]), UsersController.getAllUsers);
 
 module.exports = router;
