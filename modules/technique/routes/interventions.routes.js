@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const interventionsController = require('../controllers/interventions.controller');
-const uploadMiddleware = require("../utils/middleware/uploadMiddleware");
+const uploadMiddleware = require("../../utils/middleware/uploadMiddleware");
 
 // Définition des chemins de stockage
 const UPLOAD_PATHS = {

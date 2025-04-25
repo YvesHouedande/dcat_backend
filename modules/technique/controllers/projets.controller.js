@@ -271,6 +271,55 @@ const projetsController = {
         message: error.message 
       });
     }
+  },
+
+  getProjetDocuments: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const documents = await projetsService.getProjetDocuments(parseInt(id));
+      
+      res.status(200).json({
+        success: true,
+        message: "Liste des documents du projet récupérée avec succès",
+        data: documents
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+  },
+
+  deleteDocument: async (req, res) => {
+    try {
+      const { id, documentId } = req.params;
+      
+      // Vérification que le document appartient bien au projet
+      const document = await projetsService.getDocumentById(parseInt(documentId));
+      if (!document || document.id_projet !== parseInt(id)) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Document non trouvé ou n'appartenant pas à ce projet" 
+        });
+      }
+      
+      const deleted = await projetsService.deleteDocument(parseInt(documentId));
+      
+      res.status(200).json({
+        success: true,
+        message: "Document supprimé avec succès",
+        data: { 
+          projet_id: parseInt(id), 
+          document_id: parseInt(documentId) 
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
   }
 
 };

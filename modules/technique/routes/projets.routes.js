@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const projetsController = require("../controllers/projets.controller");
-const uploadMiddleware = require("../utils/middleware/uploadMiddleware");
+const uploadMiddleware = require("../../utils/middleware/uploadMiddleware");
 
 // Définition des chemins de stockage
 const UPLOAD_PATHS = {
@@ -31,6 +31,7 @@ router.post("/:id/documents",
   uploadMiddleware.single("document"),
   projetsController.addDocumentToProjet
 );
+
 router.get("/:id/documents", projetsController.getProjetDocuments);
 router.delete("/:id/documents/:documentId", projetsController.deleteDocument);
 
