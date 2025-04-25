@@ -54,7 +54,10 @@ const getPartenaireById = async (id) => {
 }
 
 const updatePartenaire = async (id, data) => {
-  const [result] = await db.update(partenaires).set(data).where(eq(partenaires.id_partenaire, id)).returning();
+  const [result] = await db
+  .update(partenaires)
+  .set({...data, updated_at: new Date() })
+  .where(eq(partenaires.id_partenaire, id)).returning();
   return result;
 }
 

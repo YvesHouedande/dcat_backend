@@ -27,7 +27,7 @@ const getEntiteById=async(id)=>{
 const updateEntite=async(id,data)=>{
     const [result]=await db
     .update(entites)
-    .set(data)
+    .set({...data,updated_at:new Date()})
     .where(eq(entites.id_entite,id)).returning()
     return result
 }
