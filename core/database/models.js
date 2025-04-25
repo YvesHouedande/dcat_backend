@@ -239,7 +239,7 @@ const produits = pgTable("produits", {
   code_produit: varchar("code_produit", { length: 100 }).unique(),
   desi_produit: varchar("desi_produit", { length: 50 }),
   desc_produit: text("desc_produit"),
-  image_produit: varchar("image_produit", { length: 255 }),
+  image_produit: text("image_produit"),
   qte_produit: integer("qte_produit").default(0),
   emplacement: text("emplacement"),
   id_categorie: integer("id_categorie").references(
@@ -328,6 +328,7 @@ const maintenances = pgTable("maintenances", {
 // Livraison
 const livraisons = pgTable("livraisons", {
   id_livraison: serial("id_livraison").primaryKey(),
+  reference_livraison: varchar("reference_livraison", { length: 75 }),
   frais_divers: decimal("frais_divers", { precision: 10, scale: 2 }),
   periode_achat: varchar("periode_achat", { length: 50 }),
   prix_achat: decimal("prix_achat", { precision: 10, scale: 2 }),
@@ -374,6 +375,9 @@ const interventions = pgTable("interventions", {
 const documents = pgTable("documents", {
   id_documents: serial("id_documents").primaryKey(),
   libelle_document: varchar("libelle_document", { length: 100 }),
+  classification_document: varchar("classification_document", {
+    length: 50,
+  }),
   date_document: varchar("date_document", { length: 50 }),
   lien_document: varchar("lien_document", { length: 255 }),
   etat_document: varchar("etat_document", { length: 50 }),
