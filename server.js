@@ -115,4 +115,6 @@ app.listen(PORT, () => {
     `- POST http://localhost:${PORT}/api/stocks (protected, requires inventory-manager role)`
   );
   logger.info(`- GET  http://localhost:${PORT}/api/protected (protected)`);
+  logger.info(`- ###################NODE_ENV:${process.env.NODE_ENV}########################`);
+
 });
