@@ -250,28 +250,6 @@ const projetsController = {
     }
   },
 
-  createLivrable: async (req, res) => {
-    try {
-      const { id } = req.params;
-      const livrableData = {
-        ...req.body,
-        id_projet: parseInt(id)
-      };
-      
-      const newLivrable = await projetsService.createLivrable(livrableData);
-      
-      res.status(201).json({
-        success: true,
-        message: "Livrable créé avec succès",
-        data: newLivrable
-      });
-    } catch (error) {
-      res.status(500).json({ 
-        success: false, 
-        message: error.message 
-      });
-    }
-  },
 
   getProjetDocuments: async (req, res) => {
     try {

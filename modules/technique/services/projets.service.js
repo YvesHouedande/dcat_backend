@@ -96,14 +96,6 @@ const projetsService = {
       .where(eq(livrables.id_projet, projetId));
   },
 
-  createLivrable: async (livrableData) => {
-    const result = await db
-      .insert(livrables)
-      .values(livrableData)
-      .returning();
-    return result[0];
-  },
-
   // Ajout des nouvelles méthodes pour la gestion des documents
   getProjetDocuments: async (projetId) => {
     try {
