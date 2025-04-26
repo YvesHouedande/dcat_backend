@@ -67,23 +67,23 @@
 version: '3.8'
 
 services:
-  # app:
-  #   build: .
-  #   container_name: dcat_backend
-  #   ports:
-  #     - "2000:2000"
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     DB_HOST: postgres
-  #     DB_NAME: ${APP_DB_NAME:-app_db_name}
-  #     DB_USER: ${APP_DB_USER:-app_db_user}
-  #     DB_PASSWORD: ${APP_DB_PASSWORD:-app_db_password}
-  #   depends_on:
-  #     - postgres
-  #     - keycloak
-  #   networks:
-  #     - dcat_network
+  app:
+    build: .
+    container_name: dcat_backend
+    ports:
+      - "2000:2000"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      DB_NAME: ${APP_DB_NAME:-app_db_name}
+      DB_USER: ${APP_DB_USER:-app_db_user}
+      DB_PASSWORD: ${APP_DB_PASSWORD:-app_db_password}
+    depends_on:
+      - postgres
+      - keycloak
+    networks:
+      - dcat_network
 
   postgres:
     image: postgres:15-alpine
@@ -118,8 +118,8 @@ services:
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak123}
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
-      # KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
-      KC_HOSTNAME: ${KC_HOSTNAME_${NODE_ENV}}
+      KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
+      # KC_HOSTNAME: ${KC_HOSTNAME_${NODE_ENV}}
       KC_HTTP_ENABLED: "true"
       KC_PROXY: edge
     ports:
