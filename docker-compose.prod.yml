@@ -140,8 +140,7 @@ services:
     container_name: dcat_nginx
     volumes:
       - ./nginx/keycloak.conf:/etc/nginx/conf.d/default.conf
-      - ./nginx/ssl/keycloak.dcat.ci.crt:/opt/keycloak/conf/keycloak.dcat.ci.crt
-      - ./nginx/ssl/keycloak.dcat.ci.key:/opt/keycloak/conf/keycloak.dcat.ci.key
+      - ./nginx/ssl:/etc/ssl/certs
     ports:
       - "80:80"    # HTTP
       - "443:443"  # HTTPS
