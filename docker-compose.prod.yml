@@ -123,6 +123,9 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
       KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
       KC_HTTPS_PORT: 443
+      KC_HTTPS_CERTIFICATE_FILE: ./nginx/ssl/keycloak.dcat.ci.crt
+      KC_HTTPS_CERTIFICATE_KEY_FILE: ./nginx/ssl/keycloak.dcat.ci.key
+
       # KC_HTTP_ENABLED: "true"
       KC_PROXY: edge
     ports:
