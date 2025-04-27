@@ -121,15 +121,15 @@ services:
       KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
       KC_HTTPS_PORT: 443
 
-      # KC_HTTP_ENABLED: "true"
+      KC_HTTP_ENABLED: "false"
       KC_PROXY: edge
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
-    # command: ["start", "--hostname-strict=false", "--https-port=443"]
-    command: ["start-dev"]
+    command: ["start", "--hostname-strict=false", "--https-port=443"]
+    # command: ["start-dev"]
     networks:
       - dcat_network
 
