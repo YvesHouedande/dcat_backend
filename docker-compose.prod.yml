@@ -64,6 +64,103 @@
 
 
 
+# version: '3.8'
+
+# services:
+#   # Service Backend
+#   app:
+#     build: .
+#     container_name: dcat_backend
+#     ports:
+#       - "2000:2000"
+#     env_file:
+#       - .env
+#     environment:
+#       DB_HOST: postgres
+#       DB_NAME: ${APP_DB_NAME:-app_db_name}
+#       DB_USER: ${APP_DB_USER:-app_db_user}
+#       DB_PASSWORD: ${APP_DB_PASSWORD:-app_db_password}
+#     depends_on:
+#       - postgres
+#       - keycloak
+#     networks:
+#       - dcat_network
+
+#   # Service PostgreSQL
+#   postgres:
+#     image: postgres:15-alpine
+#     container_name: dcat_postgres
+#     env_file: .env
+#     environment:
+#       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-default_postgres_password}
+#       POSTGRES_USER: postgres
+#       POSTGRES_DB: postgres
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#       - ./init-db:/docker-entrypoint-initdb.d
+#       - ./.env:/tmp/.env:ro
+#     ports:
+#       - "${DB_PORT:-5432}:5432"
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U postgres"]
+#       interval: 5s
+#       timeout: 5s
+#       retries: 5
+#     networks:
+#       - dcat_network
+
+#   # Service Keycloak
+#   keycloak:
+#     image: quay.io/keycloak/keycloak:26.1.4
+#     container_name: keycloak
+#     env_file: .env
+#     environment:
+#       KC_DB: postgres
+#       KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB_NAME:-keycloak_db}
+#       KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak_user}
+#       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak123}
+#       KEYCLOAK_ADMIN: admin
+#       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
+#       KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
+#       KC_HTTPS_PORT: 443
+#       KC_HTTPS_CERTIFICATE_FILE: ./nginx/ssl/keycloak.dcat.ci.crt
+#       KC_HTTPS_CERTIFICATE_KEY_FILE: ./nginx/ssl/keycloak.dcat.ci.key
+
+#       # KC_HTTP_ENABLED: "true"
+#       KC_PROXY: edge
+#     ports:
+#       - "8080:8080"
+#     depends_on:
+#       postgres:
+#         condition: service_healthy
+#     command: ["start", "--hostname-strict=false", "--https-port=443"]
+#     networks:
+#       - dcat_network
+
+#   # Service Nginx (Reverse Proxy pour Keycloak)
+#   nginx:
+#     image: nginx:latest
+#     container_name: dcat_nginx
+#     volumes:
+#       - ./nginx/keycloak.conf:/etc/nginx/conf.d/default.conf
+#       - ./nginx/ssl:/etc/ssl/certs
+#     ports:
+#       - "80:80"    # HTTP
+#       - "443:443"  # HTTPS
+#     depends_on:
+#       - keycloak
+#     networks:
+#       - dcat_network
+
+# volumes:
+#   postgres_data:
+
+# networks:
+#   dcat_network:
+#     driver: bridge
+
+
+
 version: '3.8'
 
 services:
@@ -123,33 +220,17 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
       KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
       KC_HTTPS_PORT: 443
-      KC_HTTPS_CERTIFICATE_FILE: ./nginx/ssl/keycloak.dcat.ci.crt
-      KC_HTTPS_CERTIFICATE_KEY_FILE: ./nginx/ssl/keycloak.dcat.ci.key
 
-      # KC_HTTP_ENABLED: "true"
+      KC_HTTP_ENABLED: "true"
       KC_PROXY: edge
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
-    # command: ["start", "--hostname-strict=false", "--https-port=443"]
-    command: ["start-dev"]
+    command: ["start", "--hostname-strict=false", "--https-port=443"]
     networks:
       - dcat_network
-
-  # Service Nginx (Reverse Proxy pour Keycloak)
-  nginx:
-    image: nginx:latest
-    container_name: dcat_nginx
-    volumes:
-      - ./nginx/keycloak.conf:/etc/nginx/conf.d/default.conf
-      - ./nginx/ssl:/etc/ssl/certs
-    ports:
-      - "80:80"    # HTTP
-      - "443:443"  # HTTPS
-    depends_on:
-      - keycloak
     networks:
       - dcat_network
 
