@@ -123,7 +123,7 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
       KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
       KC_HTTPS_PORT: 443
-      KC_HTTP_ENABLED: "true"
+      # KC_HTTP_ENABLED: "true"
       KC_PROXY: edge
     ports:
       - "8080:8080"
