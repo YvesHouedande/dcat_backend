@@ -223,6 +223,8 @@ services:
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
     command: ["start", "--hostname-strict=false"]
+    ports:
+      - "8080:8080"  # Important: Exposer le port pour l'accès externe
     depends_on:
       postgres:
         condition: service_healthy
@@ -235,6 +237,7 @@ volumes:
 networks:
   dcat_network:
     driver: bridge
+
 
 
 
