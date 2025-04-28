@@ -1,14 +1,9 @@
-/**
- * Ce fichier est utilisé pour modifier les informations de prix pour une livraison d'exemplaire
- *
- *
- */
-const { eq } = require("drizzle-orm");
+const { eq, and } = require("drizzle-orm");
 const { db } = require("../../../core/database/config");
-const { livraisons, exemplaires } = require("../../../core/database/models");
+const { livraisons, exemplaires, produits } = require("../../../core/database/models");
 
 // Met à jour uniquement les champs liés à l'achat dans la table livraisons
-// Et met à jour le prix_exemplaire de tous les exemplaires liés si prix_de_vente est fourni
+// Et met à jour le prix_produit si prix_de_vente est fourni
 const updateAchatFields = async (id, data) => {
   const allowedFields = [
     "prix_achat",
@@ -23,29 +18,41 @@ const updateAchatFields = async (id, data) => {
     Object.entries(data).filter(([key]) => allowedFields.includes(key))
   );
 
-  // Mise à jour des champs dans la table livraisons
-  const [result] = await db
-    .update(livraisons)
-    .set({
-      ...cleanData,
-      updated_at: new Date(),
-    })
-    .where(eq(livraisons.id_livraison, id))
-    .returning();
-
-  // Si prix_de_vente est fourni, on met à jour le champ prix_exemplaire
-  // de tous les exemplaires liés à cette livraison
-  if (cleanData.prix_de_vente !== undefined) {
-    await db
-      .update(exemplaires)
+  await db.transaction(async (tx) => {
+    // 1. Mise à jour des champs dans la table livraisons
+    const [result] = await tx
+      .update(livraisons)
       .set({
-        prix_exemplaire: cleanData.prix_de_vente,
+        ...cleanData,
         updated_at: new Date(),
       })
-      .where(eq(exemplaires.id_livraison, id));
-  }
+      .where(eq(livraisons.id_livraison, id))
+      .returning();
 
-  return result;
+    // 2. Si prix_de_vente est fourni, on met à jour le prix_produit
+    if (cleanData.prix_de_vente !== undefined) {
+      // Récupérer les exemplaires de la livraison
+      const exemplairesLivraison = await tx
+        .select({ id_produit: exemplaires.id_produit })
+        .from(exemplaires)
+        .where(eq(exemplaires.id_livraison, id));
+
+      // Mettre à jour le prix pour chaque produit unique
+      const produitsIds = [...new Set(exemplairesLivraison.map(e => e.id_produit))];
+      
+      for (const id_produit of produitsIds) {
+        await tx
+          .update(produits)
+          .set({
+            prix_produit: cleanData.prix_de_vente,
+            updated_at: new Date(),
+          })
+          .where(eq(produits.id_produit, id_produit));
+      }
+    }
+
+    return result;
+  });
 };
 
 // Récupère les informations d'achat d'une livraison à partir de son ID
@@ -80,28 +87,26 @@ const getAllAchats = async () => {
   }));
 };
 
-// Récupère les infos d'achat à partir d'un exemplaire spécifique (via son id_livraison)
+// Récupère les infos d'achat à partir d'un exemplaire spécifique
 const getAchatByExemplaireId = async (id_exemplaire) => {
-  const [ex] = await db
-    .select()
+  // Jointure entre exemplaire et livraison
+  const [result] = await db
+    .select({
+      id_livraison: livraisons.id_livraison,
+      prix_achat: livraisons.prix_achat,
+      frais_divers: livraisons.frais_divers,
+      prix_de_revient: livraisons.prix_de_revient,
+      prix_de_vente: livraisons.prix_de_vente,
+      periode_achat: livraisons.periode_achat,
+    })
     .from(exemplaires)
+    .leftJoin(
+      livraisons,
+      eq(exemplaires.id_livraison, livraisons.id_livraison)
+    )
     .where(eq(exemplaires.id_exemplaire, id_exemplaire));
-  if (!ex) return null;
 
-  const [achat] = await db
-    .select()
-    .from(livraisons)
-    .where(eq(livraisons.id_livraison, ex.id_livraison));
-  if (!achat) return null;
-
-  return {
-    id: achat.id_livraison,
-    prix_achat: achat.prix_achat,
-    frais_divers: achat.frais_divers,
-    prix_de_revient: achat.prix_de_revient,
-    prix_de_vente: achat.prix_de_vente,
-    periode_achat: achat.periode_achat,
-  };
+  return result || null;
 };
 
 module.exports = {

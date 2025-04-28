@@ -8,12 +8,16 @@ const achatService = require("../services/achat.service");
 const updateAchat = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ error: "Aucune donnée à mettre à jour" });
+    }
     const result = await achatService.updateAchatFields(id, req.body);
     res.json(result);
   } catch (error) {
     res.status(400).json({ error: "Échec de la mise à jour", details: error.message });
   }
 };
+
 
 const getAchatById = async (req, res) => {
   try {
