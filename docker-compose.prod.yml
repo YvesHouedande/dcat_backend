@@ -207,33 +207,36 @@ services:
       - dcat_network
 
   # Service Keycloak
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.1.4
-    container_name: keycloak
-    env_file: .env
-    environment:
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB_NAME:-keycloak_db}
-      KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak_user}
-      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak123}
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
-      KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
-      KC_HTTPS_PORT: 443
-
-      KC_HTTP_ENABLED: "true"
-      KC_PROXY: edge
+keycloak:
+  image: quay.io/keycloak/keycloak:26.1.4
+  container_name: keycloak
+  env_file: .env
+  environment:
+    KC_DB: postgres
+    KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB_NAME:-keycloak_db}
+    KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak_user}
+    KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak123}
+    KEYCLOAK_ADMIN: admin
+    KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
+    KC_PROXY: edge
+    KC_HOSTNAME: keycloak.dcat.ci
+    KC_HOSTNAME_STRICT: "false"
+    KC_HTTP_ENABLED: "true"
+    KC_HTTPS_PORT: 443
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
-    command: ["start", "--hostname-strict=false", "--https-port=443"]
+  command:
+    - start
+    - --proxy=edge
+    - --hostname=keycloak.dcat.ci
+    - --hostname-strict=false
     networks:
       - dcat_network
     networks:
       - dcat_network
-
 volumes:
   postgres_data:
 
