@@ -222,6 +222,8 @@ services:
       KC_HOSTNAME: keycloak.dcat.ci
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
+    command: ["start", "--hostname-strict=false", "--https-port=443"]
+
     depends_on:
       postgres:
         condition: service_healthy
