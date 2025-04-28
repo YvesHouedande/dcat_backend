@@ -2,6 +2,7 @@ Directory structure:
 └── dcat_backend/
     ├── README.md
     ├── Dockerfile
+    ├── docker-compose.prod.yml
     ├── docker-compose.yml
     ├── drizzle.config.js
     ├── init.sql
@@ -33,7 +34,6 @@ Directory structure:
     │   └── nit-multiple-dbs.sh
     ├── keycloak-setup/
     │   ├── backend_cli_id.json
-    │   ├── digest.txt
     │   ├── frontend_cli_id.json
     │   ├── keycloak-setup-back.js
     │   ├── keycloak-setup-front.js
@@ -247,6 +247,153 @@ CMD node server.js
 
 
 ================================================
+File: docker-compose.prod.yml
+================================================
+# services:
+#   app:
+#     build: .
+#     container_name: dcat_backend
+#     ports:
+#       - "2000:2000"
+#     env_file:
+#       - .env
+#     environment:
+#       DB_HOST: postgres
+#       DB_NAME: ${APP_DB_NAME:-app_db_name}
+#       DB_USER: ${APP_DB_USER:-app_db_user}
+#       DB_PASSWORD: ${APP_DB_PASSWORD:-app_db_password}
+#     depends_on:
+#       - postgres
+#       - keycloak
+      
+#   postgres:
+#     image: postgres:15-alpine
+#     container_name: dcat_postgres
+#     env_file: .env
+#     environment:
+#       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-default_postgres_password}
+#       POSTGRES_USER: postgres
+#       POSTGRES_DB: postgres
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#       - ./init-db:/docker-entrypoint-initdb.d
+#       - ./.env:/tmp/.env:ro
+#     ports:
+#       - "${DB_PORT:-5432}:5432"
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U postgres"]
+#       interval: 5s
+#       timeout: 5s
+#       retries: 5
+
+#   keycloak:
+#     image: quay.io/keycloak/keycloak:26.1.4
+#     container_name: keycloak
+#     env_file: .env
+#     environment:
+#       KC_DB: postgres
+#       KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB_NAME:-keycloak_db}
+#       KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak_user}
+#       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak123}
+#       KEYCLOAK_ADMIN: admin
+#       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
+#       KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
+#       KC_HTTP_ENABLED: "true"
+#       KC_PROXY: edge
+#     ports:
+#       - "8080:8080"
+#     depends_on:
+#       postgres:
+#         condition: service_healthy
+#     command: ["start-dev"]
+
+# volumes:
+#   postgres_data:
+# # networks:
+# #   - dcat_network
+
+
+
+
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: dcat_backend
+    ports:
+      - "2000:2000"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      DB_NAME: ${APP_DB_NAME:-app_db_name}
+      DB_USER: ${APP_DB_USER:-app_db_user}
+      DB_PASSWORD: ${APP_DB_PASSWORD:-app_db_password}
+    depends_on:
+      - postgres
+      - keycloak
+    networks:
+      - dcat_network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: dcat_postgres
+    env_file: .env
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-default_postgres_password}
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+      - ./.env:/tmp/.env:ro
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dcat_network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1.4
+    container_name: keycloak
+    env_file: .env
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB_NAME:-keycloak_db}
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak_user}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak123}
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
+      KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
+      KC_HTTPS_PORT: 443
+
+      KC_HTTP_ENABLED: "false"
+      KC_PROXY: edge
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["start", "--hostname-strict=false", "--https-port=443"]
+    # command: ["start-dev"]
+    networks:
+      - dcat_network
+
+volumes:
+  postgres_data:
+
+networks:
+  dcat_network:
+    driver: bridge
+
+
+
+================================================
 File: docker-compose.yml
 ================================================
 # services:
@@ -370,6 +517,7 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
       KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
+      # KC_HOSTNAME: ${KC_HOSTNAME_${NODE_ENV}}
       KC_HTTP_ENABLED: "true"
       KC_PROXY: edge
     ports:
@@ -450,6 +598,8 @@ File: package.json
     "pg-promise": "^11.13.0",
     "postgres-js": "^0.1.0",
     "sequelize": "^6.37.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "winston": "^3.17.0"
   }
 }
@@ -465,6 +615,7 @@ const helmet = require("helmet");
 const { keycloak } = require("./core/auth/keycloak.config");
 const { initKeycloak, protect } = require("./core/auth/middleware");
 const logger = require("./core/utils/logger");
+const swaggerRoutes = require('./core/utils/swagger.routes');
 
 require("dotenv").config();
 
@@ -498,6 +649,9 @@ function loadModule(moduleName) {
     process.exit(1);
   }
 }
+
+// Swagger 
+app.use('/api', swaggerRoutes);
 
 // Chargement des modules
 app.use("/api/stocks", loadModule("stocks"));
@@ -572,6 +726,8 @@ app.listen(PORT, () => {
     `- POST http://localhost:${PORT}/api/stocks (protected, requires inventory-manager role)`
   );
   logger.info(`- GET  http://localhost:${PORT}/api/protected (protected)`);
+  logger.info(`- ###################NODE_ENV:${process.env.NODE_ENV}########################`);
+
 });
 
 
@@ -1117,8 +1273,8 @@ const taches = pgTable("taches", {
   nom_tache: varchar("nom_tache", { length: 50 }),
   desc_tache: text("desc_tache"),
   statut: varchar("statut", { length: 50 }),
-  date_debut: timestamp("date_debut"),
-  date_fin: timestamp("date_fin"),
+  date_debut: date("date_debut"),
+  date_fin: date("date_fin"),
   priorite: varchar("priorite", { length: 50 }),
   id_projet: integer("id_projet").references(() => projets.id_projet),
   created_at: timestamp("created_at").defaultNow().notNull(),
@@ -1128,7 +1284,7 @@ const taches = pgTable("taches", {
 // Prestation
 const prestations = pgTable("prestations", {
   id_prestation: serial("id_prestation").primaryKey(),
-  date_de_maintenance: timestamp("date_de_maintenance"),
+  date_de_maintenance: date("date_de_maintenance"),
   type_de_maintenance: varchar("type_de_maintenance", { length: 50 }),
   description: text("description"),
   responsable: varchar("responsable", { length: 50 }),
@@ -1144,10 +1300,11 @@ const prestations = pgTable("prestations", {
 // Livrable
 const livrables = pgTable("livrables", {
   id_livrable: serial("id_livrable").primaryKey(),
+  libelle_livrable: varchar("libelle_livrable", { length: 100 }),
   date: date("date"),
   realisations: text("realisations"),
   reserves: text("reserves"),
-  approbation: boolean("approbation"),
+  approbation: text("approbation"),
   recommandation: text("recommandation"),
   id_projet: integer("id_projet").references(() => projets.id_projet),
   created_at: timestamp("created_at").defaultNow().notNull(),
@@ -1194,7 +1351,12 @@ const produits = pgTable("produits", {
   desc_produit: text("desc_produit"),
   image_produit: text("image_produit"),
   qte_produit: integer("qte_produit").default(0),
-  emplacement: text("emplacement"),
+  emplacement_produit: text("emplacement"),
+  caracteristiques_produit: text("caracteristiques"),
+  prix_produit: decimal("prix_produit", {
+    precision: 10,
+    scale: 2,
+  }),
   id_categorie: integer("id_categorie").references(
     () => categories.id_categorie
   ),
@@ -1303,7 +1465,7 @@ const livraisons = pgTable("livraisons", {
 // Intervention
 const interventions = pgTable("interventions", {
   id_intervention: serial("id_intervention").primaryKey(),
-  date_intervention: timestamp("date_intervention"),
+  date_intervention: date("date_intervention"),
   cause_defaillance: varchar("cause_defaillance", { length: 50 }),
   rapport_intervention: text("rapport_intervention"),
   type_intervention: varchar("type_intervention", { length: 50 }),
@@ -1353,15 +1515,10 @@ const documents = pgTable("documents", {
 const exemplaires = pgTable("exemplaires", {
   id_exemplaire: serial("id_exemplaire").primaryKey(),
   num_serie: varchar("num_serie", { length: 50 }),
-  prix_exemplaire: decimal("prix_exemplaire", {
-    precision: 10,
-    scale: 2,
-  }),
   date_entree: date("date_entree"),
   etat_exemplaire: varchar("etat_exemplaire", { length: 75 }).default(
     "Disponible"
   ), //"Vendu", "Disponible", "Utilisation", "En maintenance", "Endommage", "Reserve"
-  id_commande: integer("id_commande").references(() => commandes.id_commande),
   id_livraison: integer("id_livraison").references(
     () => livraisons.id_livraison
   ),
@@ -1375,7 +1532,7 @@ const sortie_exemplaires = pgTable("sortie_exemplaires", {
   id_sortie_exemplaire: serial("id_sortie_exemplaire").primaryKey(),
   type_sortie: varchar("type_sortie", { length: 50 }),
   reference_id: integer("reference_id"),
-  date_sortie: timestamp("date_sortie"),
+  date_sortie: date("date_sortie"),
   id_exemplaire: integer("id_exemplaire").references(
     () => exemplaires.id_exemplaire
   ),
@@ -1446,7 +1603,7 @@ const employe_entrer_exemplaires = pgTable(
       .notNull()
       .references(() => employes.id_employes),
     etat_apres: varchar("etat_apres", { length: 50 }).notNull(),
-    date_de_retour: timestamp("date_de_retour").notNull(),
+    date_de_retour: date("date_de_retour").notNull(),
     commentaire: text("commentaire"),
     created_at: timestamp("created_at").defaultNow().notNull(),
     updated_at: timestamp("updated_at").defaultNow().notNull(),
@@ -1501,7 +1658,7 @@ const employe_sortir_exemplaires = pgTable(
       .references(() => employes.id_employes),
     but_usage: varchar("but_usage", { length: 50 }).notNull(),
     etat_avant: varchar("etat_avant", { length: 50 }).notNull(),
-    date_de_sortie: timestamp("date_de_sortie").notNull(),
+    date_de_sortie: date("date_de_sortie").notNull(),
     site_intervention: varchar("site_intervention", { length: 100 }).notNull(),
     commentaire: text("commentaire"),
     created_at: timestamp("created_at").defaultNow().notNull(),
@@ -1538,13 +1695,33 @@ const maintenance_moyens_travail = pgTable(
     id_maintenance: integer("id_maintenance")
       .notNull()
       .references(() => maintenances.id_maintenance),
-    date_maintenance: timestamp("date_maintenance").notNull(),
+    date_maintenance: date("date_maintenance"),
     created_at: timestamp("created_at").defaultNow().notNull(),
     updated_at: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
     pk: primaryKey({
       columns: [table.id_moyens_de_travail, table.id_maintenance],
+    }),
+  })
+);
+
+const commande_produits = pgTable(
+  "commande_produits",
+  {
+    id_commande: integer("id_commande")
+      .notNull()
+      .references(() => commandes.id_commande),
+    id_produit: integer("id_produit")
+      .notNull()
+      .references(() => produits.id_produit),
+    quantite: integer("quantite"),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+    updated_at: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({
+      columns: [table.id_commande, table.id_produit],
     }),
   })
 );
@@ -1588,6 +1765,7 @@ module.exports = {
   employe_sortir_exemplaires,
   maintenance_employes,
   maintenance_moyens_travail,
+  commande_produits,
 };
 
 
@@ -8414,28 +8592,67 @@ module.exports = logger;
 ================================================
 File: core/utils/swagger.js
 ================================================
+// const swaggerJSDoc = require('swagger-jsdoc');
+
+// const swaggerDefinition = {
+//   openapi: '3.0.0',
+//   info: {
+//     title: 'API Documentation',
+//     version: '1.0.0',
+//     description: 'Documentation de l\'API',
+//   },
+//   servers: [
+//     {
+//       url: 'http://localhost:2000',
+//       description: 'Serveur de dÃ©veloppement',
+//     },
+//   ],
+//   tags: [
+//     {
+//       name: 'Utilisateurs',
+//       description: 'Endpoints pour les utilisateurs',
+//     },
+//     {
+//       name: 'Stocks',
+//       description: 'Endpoints pour les stocks',
+//     },
+//     // Ajoutez d'autres tags pour les autres modules
+//   ],
+// };
+
+// const options = {
+//   swaggerDefinition,
+//   apis: ['./modules/**/routes/*.js', './modules/**/controllers/*.js'],
+// };
+
+// const swaggerSpec = swaggerJSDoc(options);
+
+// module.exports = swaggerSpec;
+
+
+
 const swaggerJSDoc = require('swagger-jsdoc');
+
+const serverUrl = process.env.NODE_ENV === 'production' ? process.env.SERVER_URL_production : process.env.SERVER_URL_development;
 
 const swaggerDefinition = {
   openapi: '3.0.0',
   info: {
-    title: 'DCAT Backend API',
-    description: 'API pour le backend de DCAT',
-    version: '1.0.0'
+    title: 'API',
+    version: '1.0.0',
+    description: 'API Documentation',
   },
   servers: [
     {
-      url: '/api'
-    }
-  ]
+      url: serverUrl,
+    },
+  ],
+  // ...
 };
 
 const options = {
   swaggerDefinition,
-  apis: [
-    './modules/**/routes/*.js',
-    './modules/**/controllers/*.js'
-  ]
+  apis: ['./routes/*.js'],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
@@ -8542,485 +8759,6 @@ File: keycloak-setup/backend_cli_id.json
     "manage": true
   }
 }
-
-
-================================================
-File: keycloak-setup/digest.txt
-================================================
-Directory structure:
-└── keycloak-setup/
-    ├── backend_cli_id.json
-    ├── frontend_cli_id.json
-    ├── keycloak-setup-back.js
-    ├── keycloak-setup-front.js
-    └── keycloak-setup.js
-
-================================================
-File: backend_cli_id.json
-================================================
-{
-  "clientId": "backend_cli_id",
-  "name": "",
-  "description": "",
-  "surrogateAuthRequired": false,
-  "enabled": true,
-  "alwaysDisplayInConsole": false,
-  "clientAuthenticatorType": "client-secret",
-  "redirectUris": [
-    "http://localhost:2000/*"
-  ],
-  "webOrigins": [
-    "*"
-  ],
-  "notBefore": 0,
-  "bearerOnly": true,
-  "consentRequired": false,
-  "standardFlowEnabled": true,
-  "implicitFlowEnabled": false,
-  "directAccessGrantsEnabled": true,
-  "serviceAccountsEnabled": true,
-  "publicClient": false,
-  "frontchannelLogout": false,
-  "protocol": "openid-connect",
-  "attributes": {
-    "realm_client": "false",
-    "oidc.ciba.grant.enabled": "false",
-    "backchannel.logout.session.required": "true",
-    "post.logout.redirect.uris": "+",
-    "oauth2.device.authorization.grant.enabled": "false",
-    "backchannel.logout.revoke.offline.tokens": "false",
-    "exclude.session.state.from.auth.response": "false"
-  },
-  "authenticationFlowBindingOverrides": {},
-  "fullScopeAllowed": true,
-  "nodeReRegistrationTimeout": -1,
-  "defaultClientScopes": [
-    "web-origins",
-    "service_account",
-    "acr",
-    "profile",
-    "roles",
-    "basic",
-    "email"
-  ],
-  "optionalClientScopes": [
-    "address",
-    "phone",
-    "organization",
-    "offline_access",
-    "microprofile-jwt"
-  ],
-  "access": {
-    "view": true,
-    "configure": true,
-    "manage": true
-  }
-}
-
-
-================================================
-File: frontend_cli_id.json
-================================================
-{
-  "clientId": "frontend_cli_id",
-  "surrogateAuthRequired": false,
-  "enabled": true,
-  "alwaysDisplayInConsole": false,
-  "clientAuthenticatorType": "client-secret",
-  "redirectUris": [
-    "http://localhost:2000/*",
-    "undefined/*",
-    "http://localhost:5173/*"
-  ],
-  "webOrigins": [
-    "*"
-  ],
-  "notBefore": 0,
-  "bearerOnly": false,
-  "consentRequired": false,
-  "standardFlowEnabled": true,
-  "implicitFlowEnabled": false,
-  "directAccessGrantsEnabled": true,
-  "serviceAccountsEnabled": false,
-  "publicClient": true,
-  "frontchannelLogout": false,
-  "protocol": "openid-connect",
-  "attributes": {
-    "realm_client": "false",
-    "post.logout.redirect.uris": "+",
-    "exclude.session.state.from.auth.response": "false"
-  },
-  "authenticationFlowBindingOverrides": {},
-  "fullScopeAllowed": true,
-  "nodeReRegistrationTimeout": -1,
-  "protocolMappers": [
-    {
-      "name": "backend-audience",
-      "protocol": "openid-connect",
-      "protocolMapper": "oidc-audience-mapper",
-      "consentRequired": false,
-      "config": {
-        "included.client.audience": "backend_cli_id",
-        "id.token.claim": "true",
-        "lightweight.claim": "false",
-        "access.token.claim": "true",
-        "introspection.token.claim": "true"
-      }
-    }
-  ],
-  "defaultClientScopes": [
-    "web-origins",
-    "acr",
-    "profile",
-    "roles",
-    "basic",
-    "email"
-  ],
-  "optionalClientScopes": [
-    "address",
-    "phone",
-    "organization",
-    "offline_access",
-    "microprofile-jwt"
-  ],
-  "access": {
-    "view": true,
-    "configure": true,
-    "manage": true
-  }
-}
-
-
-================================================
-File: keycloak-setup-back.js
-================================================
-require('dotenv').config({ path: '../.env' }); // Charge le fichier .env à la racine
-
-const KeycloakAdminClient = require('@keycloak/keycloak-admin-client').default;
-const logger = require('../core/utils/logger');
-
-// Configuration validation
-const REQUIRED_ENV_VARS = [
-  'KEYCLOAK_URL',
-  'KEYCLOAK_ADMIN',
-  'KEYCLOAK_ADMIN_PASSWORD',
-  'KEYCLOAK_REALM',
-  'KEYCLOAK_CLIENT_ID',
-  'KEYCLOAK_CLIENT_SECRET'
-];
-
-// Verify all required variables are present
-for (const envVar of REQUIRED_ENV_VARS) {
-  if (!process.env[envVar]) {
-    logger.error(`❌ Missing environment variable: ${envVar}`);
-    process.exit(1);
-  }
-}
-
-const keycloakConfig = {
-  baseUrl: process.env.KEYCLOAK_URL,
-  realmName: 'master'
-};
-
-const adminClient = new KeycloakAdminClient(keycloakConfig);
-
-async function setupKeycloak() {
-  try {
-    logger.info('🔑 Authenticating to Keycloak...');
-    
-    await adminClient.auth({
-      username: process.env.KEYCLOAK_ADMIN,
-      password: process.env.KEYCLOAK_ADMIN_PASSWORD,
-      grantType: 'password',
-      clientId: 'admin-cli'
-    });
-
-    logger.info('✅ Successfully authenticated');
-
-    // Realm setup
-    logger.info(`🔄 Checking realm ${process.env.KEYCLOAK_REALM}...`);
-    const realmExists = (await adminClient.realms.find())
-      .some(r => r.realm === process.env.KEYCLOAK_REALM);
-
-    if (!realmExists) {
-      await adminClient.realms.create({
-        realm: process.env.KEYCLOAK_REALM,
-        enabled: true,
-        displayName: `${process.env.KEYCLOAK_REALM} Realm`,
-        loginTheme: "keycloak",
-        accountTheme: "keycloak"
-      });
-      logger.info(`✨ Created realm: ${process.env.KEYCLOAK_REALM}`);
-    } else {
-      logger.info(`ℹ️ Realm ${process.env.KEYCLOAK_REALM} already exists`);
-    }
-
-    // Client setup
-    logger.info(`🔍 Checking client ${process.env.KEYCLOAK_CLIENT_ID}...`);
-    const clients = await adminClient.clients.find({
-      realm: process.env.KEYCLOAK_REALM,
-      clientId: process.env.KEYCLOAK_CLIENT_ID
-    });
-
-    if (clients.length === 0) {
-      await adminClient.clients.create({
-        realm: process.env.KEYCLOAK_REALM,
-        clientId: process.env.KEYCLOAK_CLIENT_ID,
-        secret: process.env.KEYCLOAK_CLIENT_SECRET,
-        redirectUris: [process.env.KEYCLOAK_CALLBACK_URL || 'http://localhost:2000/*'],
-        webOrigins: ['*'],
-        publicClient: false,
-        // standardFlowEnabled: true,
-        // directAccessGrantsEnabled: true,
-        // serviceAccountsEnabled: true,
-        // authorizationServicesEnabled: true,
-        enabled: true,
-        protocol: 'openid-connect',
-        attributes: {
-          'post.logout.redirect.uris': '+',
-          'exclude.session.state.from.auth.response': 'false'
-        }
-      });
-      logger.info(`🎯 Created client: ${process.env.KEYCLOAK_CLIENT_ID}`);
-    } else {
-      logger.info(`ℹ️ Client ${process.env.KEYCLOAK_CLIENT_ID} already exists`);
-    }
-
-    logger.info('🏁 Keycloak setup completed successfully');
-  } catch (error) {
-    logger.error('💥 Keycloak setup failed:', error);
-    process.exit(1);
-  }
-}
-
-// Execute setup
-setupKeycloak();
-
-
-================================================
-File: keycloak-setup-front.js
-================================================
-require('dotenv').config({ path: '../.env' });
-
-const KeycloakAdminClient = require('@keycloak/keycloak-admin-client').default;
-
-// Configuration avec valeurs par défaut
-const config = {
-  url: process.env.VITE_KEYCLOAK_URL || process.env.KEYCLOAK_URL || 'http://localhost:8080',
-  realm: process.env.VITE_KEYCLOAK_REALM || 'dcat_realm', // On utilise le realm existant
-  clientId: 'frontend_cli_id',
-  adminUser: process.env.KEYCLOAK_ADMIN || 'admin',
-  adminPass: process.env.KEYCLOAK_ADMIN_PASSWORD || 'admin',
-  appUser: process.env.APP_USER || 'frontend_user',
-  appPassword: process.env.APP_PASSWORD || 'frontend_password123',
-  appEmail: process.env.APP_EMAIL || 'frontend.user@example.com'
-};
-
-console.log('⚙️ Configuration utilisée :');
-console.log(config);
-
-const adminClient = new KeycloakAdminClient({
-  baseUrl: config.url,
-  realmName: 'master',
-});
-
-async function setupKeycloak() {
-  try {
-    // 1. Authentification admin
-    console.log('🔐 Connexion à Keycloak...');
-    await adminClient.auth({
-      username: config.adminUser,
-      password: config.adminPass,
-      grantType: 'password',
-      clientId: 'admin-cli',
-    });
-    console.log('✅ Connecté avec succès');
-
-    // 2. Vérification/création du realm si nécessaire
-    console.log(`🔄 Vérification du realm ${config.realm}...`);
-    const realmExists = (await adminClient.realms.find()).some(r => r.realm === config.realm);
-    
-    if (!realmExists) {
-      await adminClient.realms.create({
-        realm: config.realm,
-        enabled: true,
-        sslRequired: process.env.NODE_ENV === 'production' ? 'external' : 'none',
-        loginTheme: 'keycloak'
-      });
-      console.log(`🆕 Realm créé : ${config.realm}`);
-    } else {
-      console.log(`ℹ️ Realm existant : ${config.realm}`);
-    }
-
-    // 3. Création du client frontend
-    console.log(`🔍 Vérification du client ${config.clientId}...`);
-    const clients = await adminClient.clients.find({
-      realm: config.realm,
-      clientId: config.clientId
-    });
-
-    if (clients.length === 0) {
-      await adminClient.clients.create({
-        realm: config.realm,
-        clientId: config.clientId,
-        publicClient: true,
-        redirectUris: [
-          'http://localhost:2000/*',
-          'http://localhost:5173/*',
-          `${process.env.APP_URL}/*` || ''
-        ].filter(Boolean),
-        webOrigins: ['*'],
-        standardFlowEnabled: true,
-        directAccessGrantsEnabled: true,
-        enabled: true,
-        attributes: {
-          'post.logout.redirect.uris': '+',
-          'exclude.session.state.from.auth.response': 'false'
-        }
-      });
-      console.log(`🆕 Client frontend créé : ${config.clientId}`);
-    } else {
-      console.log(`ℹ️ Client frontend existant : ${config.clientId}`);
-    }
-
-    // 4. Création du rôle 'frontend_user' spécifique
-    // console.log(`👔 Création du rôle 'frontend_user'...`);
-    // try {
-    //   await adminClient.roles.create({
-    //     realm: config.realm,
-    //     // name: 'frontend_user'
-    //   });
-    //   console.log(`🆕 Rôle 'frontend_user' créé`);
-    // } catch (roleError) {
-    //   if (roleError.response?.status !== 409) {
-    //     throw roleError;
-    //   }
-    //   console.log(`ℹ️ Rôle 'frontend_user' existe déjà`);
-    // }
-
-    // 5. Création de l'utilisateur frontend spécifique
-    console.log(`👤 Création de l'utilisateur ${config.appUser}...`);
-    const users = await adminClient.users.find({
-      realm: config.realm,
-      username: config.appUser
-    });
-
-    if (users.length === 0) {
-      const newUser = await adminClient.users.create({
-        realm: config.realm,
-        username: config.appUser,
-        email: config.appEmail,
-        enabled: true,
-        credentials: [{
-          type: 'password',
-          value: config.appPassword,
-          temporary: false
-        }]
-      });
-
-      // Assignation du rôle spécifique
-      // const role = await adminClient.roles.findOneByName({
-      //   realm: config.realm,
-      //   name: 'frontend_user'
-      // });
-      
-      // await adminClient.users.addRealmRoleMappings({
-      //   realm: config.realm,
-      //   id: newUser.id,
-      //   roles: [{
-      //     id: role.id,
-      //     name: role.name
-      //   }]
-      // });
-
-      console.log(`🆕 Utilisateur frontend créé : ${config.appUser}`);
-      console.log(`🔑 Identifiants : ${config.appUser}/${config.appPassword}`);
-      // console.log(`🎯 Rôle attribué : frontend_user`);
-    } else {
-      console.log(`ℹ️ Utilisateur existant : ${config.appUser}`);
-    }
-
-    console.log('🎉 Configuration frontend terminée avec succès !');
-    console.log(`🌐 URL du realm: ${config.url}/realms/${config.realm}`);
-    console.log(`🔑 Client ID: ${config.clientId}`);
-
-  } catch (error) {
-    console.error('💥 Erreur lors de la configuration:', error.response?.data || error.message);
-    process.exit(1);
-  }
-}
-
-setupKeycloak();
-
-
-================================================
-File: keycloak-setup.js
-================================================
-require('dotenv').config();
-const KeycloakAdminClient = require('@keycloak/keycloak-admin-client').default;
-
-const config = {
-  url: process.env.KEYCLOAK_URL,
-  realm: process.env.KEYCLOAK_REALM,
-  backend: {
-    clientId: process.env.BACKEND_CLIENT_ID,
-    secret: process.env.BACKEND_CLIENT_SECRET,
-    callback: process.env.BACKEND_CALLBACK_URL
-  },
-  frontend: {
-    clientId: process.env.FRONTEND_CLIENT_ID,
-    callback: process.env.FRONTEND_CALLBACK_URL
-  }
-};
-
-async function setupKeycloak() {
-  const adminClient = new KeycloakAdminClient({
-    baseUrl: config.url,
-    realmName: 'master'
-  });
-
-  try {
-    // Authentification admin
-    await adminClient.auth({
-      username: process.env.KEYCLOAK_ADMIN,
-      password: process.env.KEYCLOAK_ADMIN_PASSWORD,
-      grantType: 'password',
-      clientId: 'admin-cli'
-    });
-
-    // CrÃ©ation du realm
-    await adminClient.realms.create({
-      realm: config.realm,
-      enabled: true,
-      sslRequired: 'none'
-    });
-
-    // Configuration Backend Client
-    await adminClient.clients.create({
-      clientId: config.backend.clientId,
-      secret: config.backend.secret,
-      bearerOnly: true,
-      enabled: true
-    });
-
-    // Configuration Frontend Client
-    await adminClient.clients.create({
-      clientId: config.frontend.clientId,
-      publicClient: true,
-      redirectUris: [config.frontend.callback],
-      webOrigins: ['*'],
-      standardFlowEnabled: true
-    });
-
-    console.log('âœ… Setup complet avec succÃ¨s');
-  } catch (error) {
-    console.error('Erreur:', error.response?.data || error.message);
-  }
-}
-
-setupKeycloak();
-
-
 
 
 ================================================
@@ -10714,7 +10452,7 @@ const getEntiteById=async(id)=>{
 const updateEntite=async(id,data)=>{
     const [result]=await db
     .update(entites)
-    .set(data)
+    .set({...data,updated_at:new Date()})
     .where(eq(entites.id_entite,id)).returning()
     return result
 }
@@ -10916,7 +10654,10 @@ const getPartenaireById = async (id) => {
 }
 
 const updatePartenaire = async (id, data) => {
-  const [result] = await db.update(partenaires).set(data).where(eq(partenaires.id_partenaire, id)).returning();
+  const [result] = await db
+  .update(partenaires)
+  .set({...data, updated_at: new Date() })
+  .where(eq(partenaires.id_partenaire, id)).returning();
   return result;
 }
 
@@ -16315,6 +16056,14 @@ router.get('/me', protect([]), UsersController.getMyProfile);
 router.patch('/me', protect([]), UsersController.updateMyProfile);
 
 // RÃ©cupÃ©ration de tous les utilisateurs (avec pagination)
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Liste des utilisateurs
+ *     tags:
+ *       - Utilisateurs
+ */
 router.get('/', protect(["rh7",]), UsersController.getAllUsers);
 
 module.exports = router;
@@ -16617,6 +16366,33 @@ File: .github/workflows/main.yml
 
 
 
+# name: Build and deploy
+
+# on:
+#   push:
+#     branches:
+#       - dev
+
+# jobs:
+#   build-and-deploy:
+#     runs-on: self-hosted
+#     if: contains(github.event.head_commit.message, '[deploy]')
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       - name: Build and deploy
+#         env:
+#           KC_HOSTNAME: ${{ secrets.KC_HOSTNAME }}
+#         run: |
+#           echo "KC_HOSTNAME=$KC_HOSTNAME"
+#           echo "Starting deployment..."
+#           docker-compose build
+#           docker-compose up -d
+#           echo "Deployment completed!"
+
+
+
 name: Build and deploy
 
 on:
@@ -16638,7 +16414,8 @@ jobs:
         run: |
           echo "KC_HOSTNAME=$KC_HOSTNAME"
           echo "Starting deployment..."
-          docker-compose build
-          docker-compose up -d
+          docker-compose -f docker-compose.prod.yml build
+          docker-compose -f docker-compose.prod.yml up -d
           echo "Deployment completed!"
+
 
