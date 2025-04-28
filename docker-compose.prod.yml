@@ -218,21 +218,13 @@ services:
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak123}
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
-      KC_PROXY: edge
+      KC_PROXY_HEADERS: forward
       KC_HOSTNAME: keycloak.dcat.ci
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
-      KC_HTTPS_PORT: 443
-    ports:
-      - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
-    command:
-      - start
-      - --proxy=edge
-      - --hostname=keycloak.dcat.ci
-      - --hostname-strict=false
     networks:
       - dcat_network
 
@@ -242,4 +234,5 @@ volumes:
 networks:
   dcat_network:
     driver: bridge
+
 
