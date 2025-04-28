@@ -119,7 +119,6 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
       KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
-      # KC_HOSTNAME: ${KC_HOSTNAME_${NODE_ENV}}
       KC_HTTP_ENABLED: "true"
       KC_PROXY: edge
     ports:
