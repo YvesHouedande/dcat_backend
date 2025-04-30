@@ -1,5 +1,16 @@
 const commandeService = require("../services/commande.service");
 
+/**
+ * 
+const commande = await createCommande({
+  produitsQuantites: { 1: 2, 3: 1 }, // 2x produit ID 1, 1x produit ID 3
+  partenaireId: 5,
+  lieuLivraison: "Magasin principal",
+  dateLivraison: "2025-05-10",
+  modePaiement: "carte"
+});
+ */
+
 const createCommande = async (req, res) => {
   try {
     const commande = await commandeService.createCommande(req.body);
@@ -62,10 +73,10 @@ const deleteCommande = async (req, res) => {
   }
 };
 
-module.exports={
+module.exports = {
   getCommandeById,
   getAllCommandes,
   updateCommande,
   deleteCommande,
-  createCommande
-}
+  createCommande,
+};

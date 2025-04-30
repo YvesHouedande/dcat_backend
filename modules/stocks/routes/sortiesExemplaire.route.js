@@ -3,9 +3,9 @@ const router = express.Router();
 const controller = require("../controllers/sortiesExemplaire.controller");
 
 
-router.get("/", controller.getAllSorties);
-router.get("/:id", controller.getSortieById);
 router.post("/", controller.createSortie);
+router.get("/", controller.getSorties);
+router.get("/:id", controller.getSortieDetails);
 router.put("/:id", controller.updateSortie);
 router.delete("/:id", controller.deleteSortie);
 
