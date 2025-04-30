@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const projetsController = require("../controllers/projets.controller");
 const uploadMiddleware = require("../../utils/middleware/uploadMiddleware");
 
@@ -21,8 +22,15 @@ router.delete("/:id", projetsController.deleteProjet);
 router.post("/:id/documents",
   (req, res, next) => {
     try {
-      // Définir le chemin avant l'upload
-      req.uploadPath = path.join(process.cwd(), UPLOAD_PATHS.PROJETS);
+      // Définir et créer le chemin avant l'upload
+      const uploadPath = path.join(process.cwd(), UPLOAD_PATHS.PROJETS);
+      
+      // Créer le dossier s'il n'existe pas
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      
+      req.uploadPath = uploadPath;
       next();
     } catch (error) {
       next(error);
@@ -39,5 +47,6 @@ router.delete("/:id/documents/:documentId", projetsController.deleteDocument);
 router.post("/:id/partenaires", projetsController.addPartenaireToProjet);
 router.delete("/:id/partenaires/:partenaireId", projetsController.removePartenaireFromProjet);
 router.get("/:id/partenaires", projetsController.getProjetPartenaires);
+router.get("/:id/livrables-with-documents", projetsController.getProjetLivrablesWithDocuments);
 
 module.exports = router;

@@ -97,15 +97,28 @@ const entites = pgTable("entites", {
 });
 
 // Client_en_ligne
+// Client_en_ligne
 const clients_en_ligne = pgTable("clients_en_ligne", {
   id_client: serial("id_client").primaryKey(),
-  nom_complet: varchar("nom_complet", { length: 50 }),
+  nom: varchar("nom", { length: 50 }),
+  role: varchar("role", { length: 50 }).default('client'),
   email: varchar("email", { length: 50 }).unique(),
-  mot_de_passe: varchar("mot_de_passe", { length: 255 }),
-  numero_de_telephone: varchar("numero_de_telephone", { length: 50 }),
+  password: varchar("password", { length: 255 }),
+  contact: varchar("contact", { length: 50 }),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
+
+const refresh_tokens = pgTable("refresh_tokens", { 
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id")
+    .notNull()
+    .references(() => clients_en_ligne.id_client, { onDelete: 'cascade' }),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  expires_at: timestamp("expires_at").notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+});
+
 
 // Commande
 const commandes = pgTable("commandes", {
@@ -218,7 +231,6 @@ const services = pgTable("services", {
   titre_service: varchar("titre_service", { length: 50 }),
   image: varchar("image", { length: 255 }),
   description: text("description"),
-  id_employes: integer("id_employes").references(() => employes.id_employes),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -229,7 +241,6 @@ const affiches = pgTable("affiches", {
   image: varchar("image", { length: 255 }),
   titre: varchar("titre", { length: 50 }),
   description: text("description"),
-  id_employes: integer("id_employes").references(() => employes.id_employes),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -627,6 +638,7 @@ module.exports = {
   nature_documents,
   entites,
   clients_en_ligne,
+  refresh_tokens,
   commandes,
   type_produits,
   categories,

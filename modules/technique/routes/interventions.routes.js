@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const interventionsController = require('../controllers/interventions.controller');
 const uploadMiddleware = require("../../utils/middleware/uploadMiddleware");
 
@@ -33,8 +34,15 @@ router.delete("/:id", interventionsController.deleteIntervention);
 router.post("/:id/documents",
   (req, res, next) => {
     try {
-      // Définir le chemin avant l'upload
-      req.uploadPath = path.join(process.cwd(), UPLOAD_PATHS.INTERVENTIONS);
+      // Définir et créer le chemin avant l'upload
+      const uploadPath = path.join(process.cwd(), UPLOAD_PATHS.INTERVENTIONS);
+      
+      // Créer le dossier s'il n'existe pas
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      
+      req.uploadPath = uploadPath;
       next();
     } catch (error) {
       next(error);
@@ -46,7 +54,9 @@ router.post("/:id/documents",
 
 // Routes pour la gestion des employés
 router.post("/:id/employes", interventionsController.addEmployeToIntervention);
+
 router.delete("/:id/employes/:employeId", interventionsController.removeEmployeFromIntervention);
+
 router.get("/:id/employes", interventionsController.getInterventionEmployes);
 
 

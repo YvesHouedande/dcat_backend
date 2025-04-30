@@ -52,6 +52,8 @@ app.use("/api/administration", loadModule("Administration&Finance"));
 
 app.use("/api/technique", loadModule("technique"));
 
+app.use("/api/marketing_commercial", loadModule("marketing_commercial"));
+
 // =============================================
 // ROUTES PUBLIQUES
 // =============================================
@@ -103,7 +105,7 @@ app.use((err, req, res, next) => {
 // DÉMARRAGE DU SERVEUR
 // =============================================
 // const PORT = process.env.PORT || 3000;
-const PORT = 2000;
+const PORT = 1000;
 app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Keycloak configured for realm: ${keycloak.config.realm}`);
