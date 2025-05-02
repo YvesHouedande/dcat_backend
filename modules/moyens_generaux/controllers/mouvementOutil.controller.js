@@ -1,120 +1,106 @@
-const outilsService = require('../services/mouvementOutil.service');
-const { validationResult } = require('express-validator');
+const toolsService = require("../services/mouvementOutil.service");
 
-// Liste des outils
-async function listOutils(req, res) {
+// Récupérer la liste de tous les produits de type "outil".
+const getAllOutils = async (req, res) => {
   try {
-    const filters = {
-      search: req.query.search,
-      etat: req.query.etat
-    };
-    
-    const outils = await outilsService.getAllOutils(filters);
-    res.json(outils);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const outils = await toolsService.getAllOutils();
+    res.status(200).json(outils);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-}
+};
 
-// Historique d'un outil
-async function historiqueOutil(req, res) {
+//Récupérer tous les exemplaires des outils.
+const getExemplairesOutils = async (req, res) => {
   try {
-    const id_exemplaire = parseInt(req.params.id);
-    const historique = await outilsService.getHistoriqueOutil(id_exemplaire);
-    
-    if (!historique) {
-      return res.status(404).json({ message: "Outil introuvable" });
-    }
-    
-    res.json(historique);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const exemplaires = await toolsService.getExemplairesOutils();
+    res.status(200).json(exemplaires);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-}
+};
 
-// Sortie d'un outil
-
-/**
- * 
- * {
-  "id_exemplaire": 101,
-  "id_employe": 5,
-  "but_usage": "Installation électrique",
-  "etat_avant": "Parfait",
-  "site_intervention": "Chantier principal",
-  "commentaire": "Avec accessoires"
-}
- */
-async function sortir(req, res) {
+//Enregistrer la sortie d'un exemplaire d'outil par un employé (prêt temporaire).
+const enregistrerSortieOutil = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const data = {
-      id_exemplaire: parseInt(req.body.id_exemplaire),
-      id_employe: parseInt(req.body.id_employe),
-      but_usage: req.body.but_usage,
-      etat_avant: req.body.etat_avant,
-      site_intervention: req.body.site_intervention,
-      commentaire: req.body.commentaire
-    };
-
-    const sortie = await outilsService.sortirOutil(data);
-    res.status(201).json(sortie);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+    await toolsService.enregistrerSortieOutil(req.body);
+    res.status(201).json({ message: "Sortie enregistrée avec succès." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-}
+};
 
-// Retour d'un outil
-/**
- * 
- * {
-  "id_exemplaire": 101,
-  "id_employe": 5,
-  "etat_apres": "Bon état",
-  "commentaire": "RAS"
-}
- */
-async function retourner(req, res) {
+//Enregistrer la retour (entrée) d'un outil utilisé par un employé.
+const enregistrerEntreeOutil = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+    await toolsService.enregistrerEntreeOutil(req.body);
+    res.status(201).json({ message: "Entrée enregistrée avec succès." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+//Vérifier si un produit sorti a été déposé (retourné)
+const estOutilRetourne = async (req, res) => {
+  try {
+    const { id_exemplaire, id_employes } = req.params;
+
+    // Vérification des paramètres
+    if (
+      !id_exemplaire ||
+      !id_employes ||
+      isNaN(parseInt(id_exemplaire)) ||
+      isNaN(parseInt(id_employes))
+    ) {
+      return res.status(400).json({ error: "Paramètres invalides" });
     }
 
-    const data = {
-      id_exemplaire: parseInt(req.body.id_exemplaire),
-      id_employe: parseInt(req.body.id_employe),
-      etat_apres: req.body.etat_apres,
-      commentaire: req.body.commentaire
-    };
+    const retourne = await toolsService.estOutilRetourne(
+      parseInt(id_exemplaire),
+      parseInt(id_employes)
+    );
 
-    const entree = await outilsService.retournerOutil(data);
-    res.status(201).json(entree);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(200).json({ retourne });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-}
+};
 
-// Outils actuellement sortis par employé
-async function outilsSortisEmploye(req, res) {
+//Avoir l'historique des entrées et sorties d'outils
+const getHistoriqueOutils = async (req, res) => {
   try {
-    const id_employe = parseInt(req.params.id_employe);
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: "ID requis" });
+    }
 
-    const outils = await outilsService.getOutilsSortisParEmploye(id_employe);
-    res.json(outils);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const historique = await toolsService.getHistoriqueOutils(parseInt(id));
+    res.status(200).json(historique);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-}
+};
+
+
+
+const getHistoriqueGlobal = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const data = await toolsService.getHistoriqueGlobal(page, limit);
+    res.status(200).json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 
 module.exports = {
-  listOutils,
-  historiqueOutil,
-  sortir,
-  retourner,
-  outilsSortisEmploye
+  getAllOutils,
+  getExemplairesOutils,
+  enregistrerSortieOutil,
+  enregistrerEntreeOutil,
+  estOutilRetourne,
+  getHistoriqueOutils,
+  getHistoriqueGlobal
 };
