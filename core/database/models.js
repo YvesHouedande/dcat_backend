@@ -228,9 +228,10 @@ const moyens_de_travail = pgTable("moyens_de_travail", {
 // Service
 const services = pgTable("services", {
   id_service: serial("id_service").primaryKey(),
-  titre_service: varchar("titre_service", { length: 50 }),
-  image: varchar("image", { length: 255 }),
-  description: text("description"),
+  titre_service: varchar("titre_service", { length: 100 }),
+  sous_titre_service: varchar("sous_titre_service", { length:  200}),
+  detail_service: text("detail_service"),
+  image_service: varchar("image", { length: 255 }),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -239,8 +240,8 @@ const services = pgTable("services", {
 const affiches = pgTable("affiches", {
   id_affiche: serial("id_affiche").primaryKey(),
   image: varchar("image", { length: 255 }),
-  titre: varchar("titre", { length: 50 }),
-  description: text("description"),
+  titre_promotion: varchar("titre_promotion", { length: 100 }),
+  sous_titre_promotion: varchar("sous_titre_promotion", { length: 150 }),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
