@@ -55,7 +55,7 @@ const servicesDcatController = {
         
         return res.status(400).json({ 
           success: false, 
-          error: "Titre, sous-titre et detail sont requis",
+          error: "le titre, sous-titre et detail sont requis",
           received: {
             titre_service: !!req.body.titre_service,
             sous_titre_service: !!req.body.sous_titre_service,
