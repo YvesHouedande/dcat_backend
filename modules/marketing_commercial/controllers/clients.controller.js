@@ -20,41 +20,85 @@ const clientsController = {
 
   login: async (req, res) => {
     try {
-      const { client, passwordOk } = await clientsService.login(req.body);
+      // Vérification des champs requis dès le début
+      const { identifiant, password } = req.body;
+      if (!identifiant || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "L'identifiant et le mot de passe sont requis",
+          errorCode: "MISSING_FIELDS"
+        });
+      }
 
-      if (!passwordOk) return res.status(400).json({ success: false, error: "Mot de passe incorrect" });
+      try {
+        const { client, passwordOk } = await clientsService.login(req.body);
 
-      const token = jwt.sign(
-        { id: client.id_client, role: client.role },
-        JWT_SECRET,
-        { expiresIn: "15m" }
-      );
-      const refreshToken = jwt.sign(
-        { id: client.id_client, role: client.role },
-        JWT_REFRESH_SECRET,
-        { expiresIn: "7d" }
-      );
+        if (!passwordOk) {
+          return res.status(401).json({ 
+            success: false, 
+            error: "Mot de passe incorrect", 
+            errorCode: "INVALID_PASSWORD"
+          });
+        }
 
-      await db.insert(refresh_tokens).values({
-        user_id: client.id_client,
-        token: refreshToken,
-        expires_at: dayjs().add(7, 'day').toDate(),
-      });
+        const token = jwt.sign(
+          { id: client.id_client, role: client.role },
+          JWT_SECRET,
+          { expiresIn: "15m" }
+        );
+        
+        const refreshToken = jwt.sign(
+          { id: client.id_client, role: client.role },
+          JWT_REFRESH_SECRET,
+          { expiresIn: "7d" }
+        );
 
-      res.json({
-        success: true,
-        client: {
-          id: client.id_client,
-          nom: client.nom,
-          email: client.email,
-          contact: client.contact,
-          role: client.role,
-        },
-        token,
-        refreshToken,
-      });
+        await db.insert(refresh_tokens).values({
+          user_id: client.id_client,
+          token: refreshToken,
+          expires_at: dayjs().add(7, 'day').toDate(),
+        });
+
+        res.json({
+          success: true,
+          client: {
+            id: client.id_client,
+            nom: client.nom,
+            email: client.email,
+            contact: client.contact,
+            role: client.role,
+          },
+          token,
+          refreshToken,
+        });
+      } catch (error) {
+        // Messages d'erreur plus précis avec codes d'erreur
+        if (error.message === "Aucun compte trouvé avec cet identifiant") {
+          return res.status(401).json({ 
+            success: false, 
+            error: error.message,
+            errorCode: "USER_NOT_FOUND" 
+          });
+        } else if (error.message === "Mot de passe incorrect") {
+          return res.status(401).json({ 
+            success: false, 
+            error: error.message,
+            errorCode: "INVALID_PASSWORD" 
+          });
+        } else {
+          return res.status(400).json({ 
+            success: false, 
+            error: error.message,
+            errorCode: "LOGIN_ERROR"
+          });
+        }
+      }
     } catch (error) {
-      res.status(400).json({ success: false, error: error.message });
+      res.status(500).json({ 
+        success: false, 
+        error: "Erreur serveur: " + error.message,
+        errorCode: "SERVER_ERROR"
+      });
     }
   },
 

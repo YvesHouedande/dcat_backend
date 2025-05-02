@@ -37,10 +37,10 @@ const affichesController = {
   createAffiche: async (req, res) => {
     try {
       // Validation des champs requis
-      if (!req.file || !req.body.titre || !req.body.description) {
+      if (!req.file || !req.body.titre || !req.body.sous_titre) {
         return res.status(400).json({ 
           success: false, 
-          error: "Titre, description et image sont requis" 
+          error: "Titre, sous-titre et image sont requis" 
         });
       }
 
@@ -51,13 +51,21 @@ const affichesController = {
           error: "Le titre ne doit pas dépasser 50 caractères"
         });
       }
+      
+      // Validation de la longueur du sous-titre
+      if (req.body.sous_titre.length > 50) {
+        return res.status(400).json({
+          success: false,
+          error: "Le sous-titre ne doit pas dépasser 50 caractères"
+        });
+      }
 
       const relativePath = path.join('media/images/affiches_dcat', req.file.filename)
         .replace(/\\/g, '/');
 
       const afficheData = {
         titre: req.body.titre.trim(),
-        description: req.body.description.trim(),
+        sous_titre: req.body.sous_titre.trim(),
         image: relativePath
       };
 
@@ -78,10 +86,10 @@ const affichesController = {
     }
 
     try {
-      if (!req.body.titre || !req.body.description) {
+      if (!req.body.titre || !req.body.sous_titre) {
         return res.status(400).json({ 
           success: false, 
-          error: "Titre et description sont requis" 
+          error: "Titre et sous-titre sont requis" 
         });
       }
 
@@ -91,10 +99,17 @@ const affichesController = {
           error: "Le titre ne doit pas dépasser 50 caractères"
         });
       }
+      
+      if (req.body.sous_titre.length > 50) {
+        return res.status(400).json({
+          success: false,
+          error: "Le sous-titre ne doit pas dépasser 50 caractères"
+        });
+      }
 
       const afficheData = {
         titre: req.body.titre.trim(),
-        description: req.body.description.trim()
+        sous_titre: req.body.sous_titre.trim()
       };
 
       if (req.file) {

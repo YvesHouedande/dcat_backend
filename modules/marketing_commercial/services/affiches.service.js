@@ -1,6 +1,6 @@
 const { db } = require('../../../core/database/config');
-const { affiches, employes } = require("../../../core/database/models");
-const { eq } = require("drizzle-orm");
+const { affiches } = require("../../../core/database/models");
+const { eq, desc } = require("drizzle-orm");
 const fs = require('fs').promises;
 
 const affichesService = {
@@ -8,35 +8,27 @@ const affichesService = {
     return await db
       .select({
         id: affiches.id_affiche,
-        titre: affiches.titre,
+        titre: affiches.titre_promotion,
+        sous_titre: affiches.sous_titre_promotion,
         image: affiches.image,
-        description: affiches.description,
-        employe: {
-          id: employes.id_employes,
-          nom: employes.nom_employes,
-          prenom: employes.prenom_employes
-        }
+        created_at: affiches.created_at
       })
       .from(affiches)
-      .leftJoin(employes, eq(affiches.id_employes, employes.id_employes));
+      .orderBy(desc(affiches.created_at));
   },
 
   getAfficheById: async (id) => {
     const result = await db
       .select({
         id: affiches.id_affiche,
-        titre: affiches.titre,
+        titre: affiches.titre_promotion,
+        sous_titre: affiches.sous_titre_promotion,
         image: affiches.image,
-        description: affiches.description,
-        employe: {
-          id: employes.id_employes,
-          nom: employes.nom_employes,
-          prenom: employes.prenom_employes
-        }
+        created_at: affiches.created_at
       })
       .from(affiches)
-      .leftJoin(employes, eq(affiches.id_employes, employes.id_employes))
-      .where(eq(affiches.id_affiche, id));
+      .where(eq(affiches.id_affiche, id))
+      .limit(1);
     
     return result[0];
   },
@@ -44,7 +36,11 @@ const affichesService = {
   createAffiche: async (afficheData) => {
     const result = await db
       .insert(affiches)
-      .values(afficheData)
+      .values({
+        titre_promotion: afficheData.titre,
+        sous_titre_promotion: afficheData.sous_titre,
+        image: afficheData.image
+      })
       .returning();
     return result[0];
   },
@@ -58,6 +54,7 @@ const affichesService = {
 
     if (affiche.length === 0) return null;
 
+    // Suppression de l'ancienne image si une nouvelle est fournie
     if (afficheData.image && affiche[0].image) {
       try {
         await fs.unlink(affiche[0].image);
@@ -69,7 +66,9 @@ const affichesService = {
     const result = await db
       .update(affiches)
       .set({
-        ...afficheData,
+        titre_promotion: afficheData.titre,
+        sous_titre_promotion: afficheData.sous_titre,
+        image: afficheData.image || affiche[0].image,
         updated_at: new Date()
       })
       .where(eq(affiches.id_affiche, id))
@@ -87,6 +86,7 @@ const affichesService = {
 
     if (affiche.length === 0) return false;
 
+    // Suppression du fichier image
     if (affiche[0].image) {
       try {
         await fs.unlink(affiche[0].image);
@@ -95,10 +95,7 @@ const affichesService = {
       }
     }
 
-    await db
-      .delete(affiches)
-      .where(eq(affiches.id_affiche, id));
-
+    await db.delete(affiches).where(eq(affiches.id_affiche, id));
     return true;
   }
 };
