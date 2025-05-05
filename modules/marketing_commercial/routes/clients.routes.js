@@ -2,10 +2,215 @@ const express = require("express");
 const router = express.Router();
 const clientsController = require("../controllers/clients.controller");
 
+/**
+ * @swagger
+ * /api/clients/login:
+ *   post:
+ *     summary: Connecte un client
+ *     description: Authentifie un client et renvoie un token d'accès
+ *     tags: [Clients]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Adresse email du client
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: Mot de passe du client
+ *     responses:
+ *       200:
+ *         description: Connexion réussie
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 client:
+ *                   $ref: '#/components/schemas/Client'
+ *                 token:
+ *                   type: string
+ *                   description: JWT pour authentifier les requêtes ultérieures
+ *                 refreshToken:
+ *                   type: string
+ *                   description: Token permettant de rafraîchir le token d'accès
+ *       400:
+ *         description: Identifiants invalides
+ *       500:
+ *         description: Erreur serveur
+ */
 router.post('/login', clientsController.login);
+
+/**
+ * @swagger
+ * /api/clients/register:
+ *   post:
+ *     summary: Enregistre un nouveau client
+ *     description: Crée un nouveau compte client
+ *     tags: [Clients]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - nom
+ *               - email
+ *               - password
+ *             properties:
+ *               nom:
+ *                 type: string
+ *                 description: Nom complet du client
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Adresse email du client
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: Mot de passe du client
+ *               contact:
+ *                 type: string
+ *                 description: Numéro de téléphone du client
+ *     responses:
+ *       201:
+ *         description: Client enregistré avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 client:
+ *                   $ref: '#/components/schemas/Client'
+ *                 token:
+ *                   type: string
+ *                   description: JWT pour authentifier les requêtes ultérieures
+ *       400:
+ *         description: Données invalides ou email déjà utilisé
+ *       500:
+ *         description: Erreur serveur
+ */
 router.post('/register', clientsController.register);
+
+/**
+ * @swagger
+ * /api/clients/verify-token:
+ *   get:
+ *     summary: Vérifie la validité d'un token
+ *     description: Vérifie si le token d'authentification fourni est valide
+ *     tags: [Clients]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Token valide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 client:
+ *                   $ref: '#/components/schemas/Client'
+ *       401:
+ *         description: Token invalide ou expiré
+ */
 router.get('/verify-token', clientsController.verifyToken);
+
+/**
+ * @swagger
+ * /api/clients/refresh-token:
+ *   post:
+ *     summary: Rafraîchit un token d'authentification
+ *     description: Génère un nouveau token d'accès à partir d'un refresh token
+ *     tags: [Clients]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 description: Refresh token précédemment obtenu
+ *     responses:
+ *       200:
+ *         description: Nouveau token généré avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 token:
+ *                   type: string
+ *                   description: Nouveau JWT pour authentifier les requêtes ultérieures
+ *       401:
+ *         description: Refresh token invalide ou expiré
+ *       500:
+ *         description: Erreur serveur
+ */
 router.post('/refresh-token', clientsController.refreshToken);
+
+/**
+ * @swagger
+ * /api/clients/logout:
+ *   post:
+ *     summary: Déconnecte un client
+ *     description: Invalide le refresh token du client
+ *     tags: [Clients]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 description: Refresh token à invalider
+ *     responses:
+ *       200:
+ *         description: Déconnexion réussie
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Déconnexion réussie
+ *       400:
+ *         description: Refresh token non fourni
+ *       500:
+ *         description: Erreur serveur
+ */
 router.post('/logout', clientsController.logout);
 
 module.exports = router;

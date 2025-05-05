@@ -45,18 +45,18 @@ const affichesController = {
       }
 
       // Validation de la longueur du titre
-      if (req.body.titre.length > 50) {
+      if (req.body.titre.length > 100) {
         return res.status(400).json({
           success: false,
-          error: "Le titre ne doit pas dépasser 50 caractères"
+          error: "Le titre ne doit pas dépasser 100 caractères"
         });
       }
       
       // Validation de la longueur du sous-titre
-      if (req.body.sous_titre.length > 50) {
+      if (req.body.sous_titre.length > 150) {
         return res.status(400).json({
           success: false,
-          error: "Le sous-titre ne doit pas dépasser 50 caractères"
+          error: "Le sous-titre ne doit pas dépasser 150 caractères"
         });
       }
 
@@ -93,17 +93,17 @@ const affichesController = {
         });
       }
 
-      if (req.body.titre.length > 50) {
+      if (req.body.titre.length > 100) {
         return res.status(400).json({
           success: false,
-          error: "Le titre ne doit pas dépasser 50 caractères"
+          error: "Le titre ne doit pas dépasser 100 caractères"
         });
       }
       
-      if (req.body.sous_titre.length > 50) {
+      if (req.body.sous_titre.length > 150) {
         return res.status(400).json({
           success: false,
-          error: "Le sous-titre ne doit pas dépasser 50 caractères"
+          error: "Le sous-titre ne doit pas dépasser 150 caractères"
         });
       }
 
