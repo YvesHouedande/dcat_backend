@@ -16,17 +16,6 @@ module.exports = {
     } : null;
   },
 
-  updateUserProfile: async (keycloakId, data) => {
-    const allowedFields = ["contact", "adresse", "prenom", "nom"];
-    const updates = Object.keys(data)
-      .filter(key => allowedFields.includes(key))
-      .reduce((obj, key) => ({ ...obj, [key]: data[key] }), {});
-
-    await db.update(employes)
-      .set(updates)
-      .where(eq(employes.keycloak_id, keycloakId));
-  },
-
   getAllUsers: async (page = 1, limit = 10) => {
     try {
       return await db.select({
@@ -35,7 +24,7 @@ module.exports = {
         prenom: employes.prenom_employes,
         nom: employes.nom_employes,
         status: employes.status_employes,
-        // service: employes.service
+        fonction: employes.id_fonction,
       })
       .from(employes)
       .orderBy(employes.nom_employes)
@@ -46,4 +35,10 @@ module.exports = {
       throw new Error(`Échec de récupération des utilisateurs: ${error.message}`);
     }
   },
+
+  updateUserById: async (userId, data) => {
+    await db.update(employes)
+      .set(data)
+      .where(eq(employes.id_employes, userId));
+  }
 };
