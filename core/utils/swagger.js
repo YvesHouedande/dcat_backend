@@ -1,66 +1,48 @@
-// const swaggerJSDoc = require('swagger-jsdoc');
-
-// const swaggerDefinition = {
-//   openapi: '3.0.0',
-//   info: {
-//     title: 'API Documentation',
-//     version: '1.0.0',
-//     description: 'Documentation de l\'API',
-//   },
-//   servers: [
-//     {
-//       url: 'http://localhost:2000',
-//       description: 'Serveur de développement',
-//     },
-//   ],
-//   tags: [
-//     {
-//       name: 'Utilisateurs',
-//       description: 'Endpoints pour les utilisateurs',
-//     },
-//     {
-//       name: 'Stocks',
-//       description: 'Endpoints pour les stocks',
-//     },
-//     // Ajoutez d'autres tags pour les autres modules
-//   ],
-// };
-
-// const options = {
-//   swaggerDefinition,
-//   apis: ['./modules/**/routes/*.js', './modules/**/controllers/*.js'],
-// };
-
-// const swaggerSpec = swaggerJSDoc(options);
-
-// module.exports = swaggerSpec;
-
-
-
 const swaggerJSDoc = require('swagger-jsdoc');
 
-const serverUrl = process.env.NODE_ENV === 'production' ? process.env.SERVER_URL_production : process.env.SERVER_URL_development;
+// Configuration avec concaténation automatique du /api
+const serverUrl = (process.env.NODE_ENV === 'production' 
+  ? process.env.SERVER_URL_production 
+  : process.env.SERVER_URL_development || 'http://localhost:2000') + '/api';
 
 const swaggerDefinition = {
   openapi: '3.0.0',
   info: {
-    title: 'API',
+    title: 'API Gestion ERP-DCAT',
     version: '1.0.0',
-    description: 'API Documentation',
+    description: 'Documentation complète de l\'API ',
   },
   servers: [
     {
       url: serverUrl,
+      description: process.env.NODE_ENV === 'production' 
+        ? 'Serveur de production' 
+        : 'Serveur local de développement'
     },
   ],
-  // ...
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      }
+    }
+  },
+  security: [{
+    bearerAuth: []
+  }]
 };
 
 const options = {
   swaggerDefinition,
-  apis: ['./routes/*.js'],
+  apis: [
+    './modules/**/routes/*.js',
+    './modules/**/controllers/*.js'
+  ],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
 
 module.exports = swaggerSpec;
+
