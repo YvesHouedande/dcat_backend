@@ -14,90 +14,56 @@ const UPLOAD_PATHS = {
 // Routes CRUD de base
 /**
  * @swagger
- * /technique/projets:
+ * /api/projets:
  *   get:
  *     summary: Liste tous les projets
- *     tags:
- *       - Projets
+ *     tags: [Projets]
  */
 router.get("/", projetsController.getAllProjets);
 
 /**
  * @swagger
- * /technique/projets/{id}:
+ * /api/projets/{id}:
  *   get:
  *     summary: Récupère un projet par son ID
- *     tags:
- *       - Projets
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du projet
+ *     tags: [Projets]
  */
 router.get("/:id", projetsController.getProjetById);
 
 /**
  * @swagger
- * /technique/projets:
+ * /api/projets:
  *   post:
  *     summary: Crée un nouveau projet
- *     tags:
- *       - Projets
+ *     tags: [Projets]
  */
 router.post("/", projetsController.createProjet);
 
 /**
  * @swagger
- * /technique/projets/{id}:
+ * /api/projets/{id}:
  *   put:
- *     summary: Mettre à jour un projet
- *     tags:
- *       - Projets
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du projet
+ *     summary: Met à jour un projet
+ *     tags: [Projets]
  */
 router.put("/:id", projetsController.updateProjet);
 
 /**
  * @swagger
- * /technique/projets/{id}:
+ * /api/projets/{id}:
  *   delete:
  *     summary: Supprime un projet
- *     tags:
- *       - Projets
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du projet
+ *     tags: [Projets]
  */
 router.delete("/:id", projetsController.deleteProjet);
 
 // Routes pour la gestion des documents
 /**
  * @swagger
- * /technique/projets/{id}/documents:
+ * /api/projets/{id}/documents:
  *   post:
  *     summary: Ajoute un document à un projet
- *     tags:
- *       - Projets
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du projet
+ *     tags: [Projets]
  */
 router.post("/:id/documents",
   (req, res, next) => {
@@ -122,116 +88,56 @@ router.post("/:id/documents",
 
 /**
  * @swagger
- * /technique/projets/{id}/documents:
+ * /api/projets/{id}/documents:
  *   get:
  *     summary: Récupère les documents d'un projet
- *     tags:
- *       - Projets
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du projet
+ *     tags: [Projets]
  */
 router.get("/:id/documents", projetsController.getProjetDocuments);
 
 /**
  * @swagger
- * /technique/projets/{id}/documents/{documentId}:
+ * /api/projets/{id}/documents/{documentId}:
  *   delete:
  *     summary: Supprime un document d'un projet
- *     tags:
- *       - Projets
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du projet
- *       - in: path
- *         name: documentId
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du document
+ *     tags: [Projets]
  */
 router.delete("/:id/documents/:documentId", projetsController.deleteDocument);
 
 // Routes pour la gestion des partenaires
 /**
  * @swagger
- * /technique/projets/{id}/partenaires:
+ * /api/projets/{id}/partenaires:
  *   post:
  *     summary: Ajoute un partenaire à un projet
- *     tags:
- *       - Projets
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du projet
+ *     tags: [Projets]
  */
 router.post("/:id/partenaires", projetsController.addPartenaireToProjet);
 
 /**
  * @swagger
- * /technique/projets/{id}/partenaires/{partenaireId}:
+ * /api/projets/{id}/partenaires/{partenaireId}:
  *   delete:
  *     summary: Retire un partenaire d'un projet
- *     tags:
- *       - Projets
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du projet
- *       - in: path
- *         name: partenaireId
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du partenaire
+ *     tags: [Projets]
  */
 router.delete("/:id/partenaires/:partenaireId", projetsController.removePartenaireFromProjet);
 
 /**
  * @swagger
- * /technique/projets/{id}/partenaires:
+ * /api/projets/{id}/partenaires:
  *   get:
  *     summary: Récupère les partenaires d'un projet
- *     tags:
- *       - Projets
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du projet
+ *     tags: [Projets]
  */
 router.get("/:id/partenaires", projetsController.getProjetPartenaires);
 
 /**
  * @swagger
- * /technique/projets/{id}/livrables-with-documents:
+ * /api/projets/{id}/livrables-with-documents:
  *   get:
  *     summary: Récupère les livrables avec documents d'un projet
- *     tags:
- *       - Projets
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du projet
+ *     tags: [Projets]
  */
 router.get("/:id/livrables-with-documents", projetsController.getProjetLivrablesWithDocuments);
 

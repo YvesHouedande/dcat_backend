@@ -4,7 +4,7 @@ const clientsController = require("../controllers/clients.controller");
 
 /**
  * @swagger
- * /marketing_commercial/clients/login:
+ * /api/clients/login:
  *   post:
  *     summary: Connecte un client
  *     description: Authentifie un client et renvoie un token d'accès
@@ -55,7 +55,7 @@ router.post('/login', clientsController.login);
 
 /**
  * @swagger
- * /marketing_commercial/clients/register:
+ * /api/clients/register:
  *   post:
  *     summary: Enregistre un nouveau client
  *     description: Crée un nouveau compte client
@@ -110,7 +110,7 @@ router.post('/register', clientsController.register);
 
 /**
  * @swagger
- * /marketing_commercial/clients/verify-token:
+ * /api/clients/verify-token:
  *   get:
  *     summary: Vérifie la validité d'un token
  *     description: Vérifie si le token d'authentification fourni est valide
@@ -137,7 +137,7 @@ router.get('/verify-token', clientsController.verifyToken);
 
 /**
  * @swagger
- * /marketing_commercial/clients/refresh-token:
+ * /api/clients/refresh-token:
  *   post:
  *     summary: Rafraîchit un token d'authentification
  *     description: Génère un nouveau token d'accès à partir d'un refresh token
@@ -177,7 +177,7 @@ router.post('/refresh-token', clientsController.refreshToken);
 
 /**
  * @swagger
- * /marketing_commercial/clients/logout:
+ * /api/clients/logout:
  *   post:
  *     summary: Déconnecte un client
  *     description: Invalide le refresh token du client

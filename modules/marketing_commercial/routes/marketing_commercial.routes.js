@@ -6,10 +6,10 @@ const router = express.Router();
  * tags:
  *   - name: Clients
  *     description: Gestion des clients et authentification
- *   - name: Produits
- *     description: Gestion du catalogue de produits
- *   - name: Commandes
- *     description: Gestion des commandes clients
+ *   - name: Produits Marketing
+ *     description: Gestion du catalogue de produits marketing
+ *   - name: Commandes Marketing
+ *     description: Gestion des commandes clients marketing
  *   - name: Services DCAT
  *     description: Gestion des services proposés par DCAT
  *   - name: Affiches
@@ -136,11 +136,54 @@ const commandesRoutes = require("./commandes.routes");
 const servicesDcatRoutes = require("./services_dcat.routes");
 const affichesRoutes = require("./affiches.routes");
 
-// Montage des routes
+/**
+ * @swagger
+ * /api/clients:
+ *   description: Routes liées aux clients
+ *   get:
+ *     summary: Accède à la gestion des clients
+ *     tags: [Clients]
+ */
 router.use("/clients", clientsRoutes);
+
+/**
+ * @swagger
+ * /api/produits:
+ *   description: Routes liées aux produits marketing
+ *   get:
+ *     summary: Accède au catalogue de produits marketing
+ *     tags: [Produits Marketing]
+ */
 router.use("/produits", produitsRoutes);
+
+/**
+ * @swagger
+ * /api/commandes:
+ *   description: Routes liées aux commandes marketing
+ *   get:
+ *     summary: Accède aux commandes clients marketing
+ *     tags: [Commandes Marketing]
+ */
 router.use("/commandes", commandesRoutes);
+
+/**
+ * @swagger
+ * /api/services:
+ *   description: Routes liées aux services DCAT
+ *   get:
+ *     summary: Accède aux services proposés par DCAT
+ *     tags: [Services DCAT]
+ */
 router.use("/services", servicesDcatRoutes);
+
+/**
+ * @swagger
+ * /api/affiches:
+ *   description: Routes liées aux affiches promotionnelles
+ *   get:
+ *     summary: Accède aux affiches promotionnelles
+ *     tags: [Affiches]
+ */
 router.use("/affiches", affichesRoutes);
 
 module.exports = router;

@@ -12,99 +12,46 @@ router.use((req, res, next) => {
 
 /**
  * @swagger
- * /marketing_commercial/affiches:
+ * /api/affiches:
  *   get:
  *     summary: Liste toutes les affiches
- *     tags:
- *       - Affiches
+ *     tags: [Affiches]
  */
 router.get('/', affichesController.getAllAffiches);
 
 /**
  * @swagger
- * /marketing_commercial/affiches/{id}:
+ * /api/affiches/{id}:
  *   get:
  *     summary: Récupère une affiche par son ID
- *     tags:
- *       - Affiches
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID de l'affiche
+ *     tags: [Affiches]
  */
 router.get('/:id', affichesController.getAfficheById);
 
 /**
  * @swagger
- * /marketing_commercial/affiches:
+ * /api/affiches:
  *   post:
  *     summary: Crée une nouvelle affiche
- *     tags:
- *       - Affiches
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               titre:
- *                 type: string
- *               description:
- *                 type: string
- *               image:
- *                 type: string
- *                 format: binary
+ *     tags: [Affiches]
  */
 router.post('/', uploadMiddleware.single('image'), affichesController.createAffiche);
 
 /**
  * @swagger
- * /marketing_commercial/affiches/{id}:
+ * /api/affiches/{id}:
  *   put:
  *     summary: Met à jour une affiche
- *     tags:
- *       - Affiches
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID de l'affiche
- *     requestBody:
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               titre:
- *                 type: string
- *               description:
- *                 type: string
- *               image:
- *                 type: string
- *                 format: binary
+ *     tags: [Affiches]
  */
 router.put('/:id', uploadMiddleware.single('image'), affichesController.updateAffiche);
 
 /**
  * @swagger
- * /marketing_commercial/affiches/{id}:
+ * /api/affiches/{id}:
  *   delete:
  *     summary: Supprime une affiche
- *     tags:
- *       - Affiches
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID de l'affiche
+ *     tags: [Affiches]
  */
 router.delete('/:id', affichesController.deleteAffiche);
 

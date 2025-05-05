@@ -12,99 +12,46 @@ router.use((req, res, next) => {
 
 /**
  * @swagger
- * /marketing_commercial/services:
+ * /api/services:
  *   get:
  *     summary: Liste tous les services DCAT
- *     tags:
- *       - Services DCAT
+ *     tags: [Services DCAT]
  */
 router.get('/', servicesDcatController.getAllServices);
 
 /**
  * @swagger
- * /marketing_commercial/services/{id}:
+ * /api/services/{id}:
  *   get:
  *     summary: Récupère un service DCAT par son ID
- *     tags:
- *       - Services DCAT
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du service
+ *     tags: [Services DCAT]
  */
 router.get('/:id', servicesDcatController.getServiceById);
 
 /**
  * @swagger
- * /marketing_commercial/services:
+ * /api/services:
  *   post:
  *     summary: Crée un nouveau service DCAT
- *     tags:
- *       - Services DCAT
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               titre:
- *                 type: string
- *               description:
- *                 type: string
- *               image:
- *                 type: string
- *                 format: binary
+ *     tags: [Services DCAT]
  */
 router.post('/', uploadMiddleware.single('image'), servicesDcatController.createService);
 
 /**
  * @swagger
- * /marketing_commercial/services/{id}:
+ * /api/services/{id}:
  *   put:
  *     summary: Met à jour un service DCAT
- *     tags:
- *       - Services DCAT
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du service
- *     requestBody:
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               titre:
- *                 type: string
- *               description:
- *                 type: string
- *               image:
- *                 type: string
- *                 format: binary
+ *     tags: [Services DCAT]
  */
 router.put('/:id', uploadMiddleware.single('image'), servicesDcatController.updateService);
 
 /**
  * @swagger
- * /marketing_commercial/services/{id}:
+ * /api/services/{id}:
  *   delete:
  *     summary: Supprime un service DCAT
- *     tags:
- *       - Services DCAT
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID du service
+ *     tags: [Services DCAT]
  */
 router.delete('/:id', servicesDcatController.deleteService);
 
