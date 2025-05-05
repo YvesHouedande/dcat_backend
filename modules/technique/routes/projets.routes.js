@@ -53,7 +53,7 @@ router.post("/", projetsController.createProjet);
  * @swagger
  * /technique/projets/{id}:
  *   put:
- *     summary: Met à jour un projet
+ *     summary: Mettre à jour un projet
  *     tags:
  *       - Projets
  *     parameters:
