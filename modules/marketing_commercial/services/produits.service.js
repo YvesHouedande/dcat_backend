@@ -1,6 +1,6 @@
 const { db } = require('../../../core/database/config');
 const { produits, type_produits, familles, marques, modeles } = require("../../../core/database/models");
-const { eq, and, isNotNull } = require("drizzle-orm");
+const { eq, and, isNotNull, desc } = require("drizzle-orm");
 
 const produitsService = {
   // Récupérer tous les produits de type équipement par famille
@@ -47,6 +47,32 @@ const produitsService = {
       )
       .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
       .leftJoin(familles, eq(produits.id_famille, familles.id_famille));
+  },
+
+  // Récupérer les 5 derniers produits ajoutés (nouveautés)
+  getLatestProducts: async (limit = 5) => {
+    return await db
+      .select({
+        id: produits.id_produit,
+        designation: produits.desi_produit,
+        description: produits.desc_produit,
+        image: produits.image_produit,
+        prix: produits.prix_produit,
+        caracteristiques: produits.caracteristiques_produit,
+        famille_id: familles.id_famille,
+        famille_libelle: familles.libelle_famille,
+      })
+      .from(produits)
+      .where(
+        and(
+          eq(type_produits.libelle, 'equipement'),
+          isNotNull(produits.prix_produit)
+        )
+      )
+      .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
+      .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+      .orderBy(desc(produits.id_produit)) // Supposons que les IDs plus élevés sont les plus récents
+      .limit(limit);
   },
 
   // Récupérer les détails d'un produit

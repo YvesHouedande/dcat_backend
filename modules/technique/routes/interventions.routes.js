@@ -29,8 +29,25 @@ const handleUploadError = (err, req, res, next) => {
  * /technique/interventions:
  *   get:
  *     summary: Liste toutes les interventions
- *     tags:
- *       - Interventions
+ *     description: Récupère la liste complète des interventions techniques
+ *     tags: [Interventions]
+ *     responses:
+ *       200:
+ *         description: Liste des interventions récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 interventions:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Intervention'
+ *       500:
+ *         description: Erreur serveur
  */
 router.get("/", interventionsController.getAllInterventions);
 
@@ -39,8 +56,8 @@ router.get("/", interventionsController.getAllInterventions);
  * /technique/interventions/{id}:
  *   get:
  *     summary: Récupère une intervention par son ID
- *     tags:
- *       - Interventions
+ *     description: Renvoie les détails d'une intervention spécifique
+ *     tags: [Interventions]
  *     parameters:
  *       - in: path
  *         name: id
@@ -48,6 +65,23 @@ router.get("/", interventionsController.getAllInterventions);
  *         schema:
  *           type: integer
  *         description: ID de l'intervention
+ *     responses:
+ *       200:
+ *         description: Détails de l'intervention récupérés avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 intervention:
+ *                   $ref: '#/components/schemas/Intervention'
+ *       404:
+ *         description: Intervention non trouvée
+ *       500:
+ *         description: Erreur serveur
  */
 router.get("/:id", interventionsController.getInterventionById);
 
@@ -56,8 +90,33 @@ router.get("/:id", interventionsController.getInterventionById);
  * /technique/interventions:
  *   post:
  *     summary: Crée une nouvelle intervention
- *     tags:
- *       - Interventions
+ *     description: Ajoute une nouvelle intervention dans le système
+ *     tags: [Interventions]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               date_intervention:
+ *                 type: string
+ *                 format: date
+ *               type_intervention:
+ *                 type: string
+ *               lieu:
+ *                 type: string
+ *               rapport_intervention:
+ *                 type: string
+ *               statut_intervention:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Intervention créée avec succès
+ *       400:
+ *         description: Données invalides
+ *       500:
+ *         description: Erreur serveur
  */
 router.post("/", interventionsController.createIntervention);
 
@@ -66,8 +125,8 @@ router.post("/", interventionsController.createIntervention);
  * /technique/interventions/{id}:
  *   put:
  *     summary: Met à jour une intervention
- *     tags:
- *       - Interventions
+ *     description: Modifie les informations d'une intervention existante
+ *     tags: [Interventions]
  *     parameters:
  *       - in: path
  *         name: id
@@ -75,6 +134,31 @@ router.post("/", interventionsController.createIntervention);
  *         schema:
  *           type: integer
  *         description: ID de l'intervention
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               date_intervention:
+ *                 type: string
+ *                 format: date
+ *               type_intervention:
+ *                 type: string
+ *               lieu:
+ *                 type: string
+ *               rapport_intervention:
+ *                 type: string
+ *               statut_intervention:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Intervention mise à jour avec succès
+ *       404:
+ *         description: Intervention non trouvée
+ *       500:
+ *         description: Erreur serveur
  */
 router.put("/:id", interventionsController.updateIntervention);
 
@@ -83,8 +167,8 @@ router.put("/:id", interventionsController.updateIntervention);
  * /technique/interventions/{id}:
  *   delete:
  *     summary: Supprime une intervention
- *     tags:
- *       - Interventions
+ *     description: Supprime définitivement une intervention du système
+ *     tags: [Interventions]
  *     parameters:
  *       - in: path
  *         name: id
@@ -92,6 +176,13 @@ router.put("/:id", interventionsController.updateIntervention);
  *         schema:
  *           type: integer
  *         description: ID de l'intervention
+ *     responses:
+ *       200:
+ *         description: Intervention supprimée avec succès
+ *       404:
+ *         description: Intervention non trouvée
+ *       500:
+ *         description: Erreur serveur
  */
 router.delete("/:id", interventionsController.deleteIntervention);
 
@@ -101,8 +192,8 @@ router.delete("/:id", interventionsController.deleteIntervention);
  * /technique/interventions/{id}/documents:
  *   post:
  *     summary: Ajoute un document à une intervention
- *     tags:
- *       - Interventions
+ *     description: Télécharge et associe un document à une intervention
+ *     tags: [Interventions]
  *     parameters:
  *       - in: path
  *         name: id
@@ -110,6 +201,29 @@ router.delete("/:id", interventionsController.deleteIntervention);
  *         schema:
  *           type: integer
  *         description: ID de l'intervention
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               document:
+ *                 type: string
+ *                 format: binary
+ *                 description: Fichier à télécharger
+ *               libelle_document:
+ *                 type: string
+ *                 description: Nom du document
+ *     responses:
+ *       201:
+ *         description: Document ajouté avec succès
+ *       400:
+ *         description: Erreur lors du téléchargement
+ *       404:
+ *         description: Intervention non trouvée
+ *       500:
+ *         description: Erreur serveur
  */
 router.post("/:id/documents",
   (req, res, next) => {
@@ -138,8 +252,8 @@ router.post("/:id/documents",
  * /technique/interventions/{id}/employes:
  *   post:
  *     summary: Ajoute un employé à une intervention
- *     tags:
- *       - Interventions
+ *     description: Assigne un employé à une intervention spécifique
+ *     tags: [Interventions]
  *     parameters:
  *       - in: path
  *         name: id
@@ -147,6 +261,25 @@ router.post("/:id/documents",
  *         schema:
  *           type: integer
  *         description: ID de l'intervention
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id_employes:
+ *                 type: integer
+ *                 description: ID de l'employé à assigner
+ *     responses:
+ *       201:
+ *         description: Employé assigné avec succès
+ *       400:
+ *         description: Données invalides
+ *       404:
+ *         description: Intervention ou employé non trouvé
+ *       500:
+ *         description: Erreur serveur
  */
 router.post("/:id/employes", interventionsController.addEmployeToIntervention);
 
@@ -155,8 +288,8 @@ router.post("/:id/employes", interventionsController.addEmployeToIntervention);
  * /technique/interventions/{id}/employes/{employeId}:
  *   delete:
  *     summary: Retire un employé d'une intervention
- *     tags:
- *       - Interventions
+ *     description: Désassigne un employé d'une intervention spécifique
+ *     tags: [Interventions]
  *     parameters:
  *       - in: path
  *         name: id
@@ -170,6 +303,13 @@ router.post("/:id/employes", interventionsController.addEmployeToIntervention);
  *         schema:
  *           type: integer
  *         description: ID de l'employé
+ *     responses:
+ *       200:
+ *         description: Employé retiré avec succès
+ *       404:
+ *         description: Association intervention-employé non trouvée
+ *       500:
+ *         description: Erreur serveur
  */
 router.delete("/:id/employes/:employeId", interventionsController.removeEmployeFromIntervention);
 
@@ -178,8 +318,8 @@ router.delete("/:id/employes/:employeId", interventionsController.removeEmployeF
  * /technique/interventions/{id}/employes:
  *   get:
  *     summary: Récupère les employés d'une intervention
- *     tags:
- *       - Interventions
+ *     description: Liste tous les employés assignés à une intervention spécifique
+ *     tags: [Interventions]
  *     parameters:
  *       - in: path
  *         name: id
@@ -187,6 +327,32 @@ router.delete("/:id/employes/:employeId", interventionsController.removeEmployeF
  *         schema:
  *           type: integer
  *         description: ID de l'intervention
+ *     responses:
+ *       200:
+ *         description: Liste des employés récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 employes:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_employes:
+ *                         type: integer
+ *                       nom_employes:
+ *                         type: string
+ *                       prenom_employes:
+ *                         type: string
+ *       404:
+ *         description: Intervention non trouvée
+ *       500:
+ *         description: Erreur serveur
  */
 router.get("/:id/employes", interventionsController.getInterventionEmployes);
 
@@ -197,8 +363,8 @@ router.get("/:id/employes", interventionsController.getInterventionEmployes);
  * /technique/interventions/{id}/documents:
  *   get:
  *     summary: Récupère les documents d'une intervention
- *     tags:
- *       - Interventions
+ *     description: Liste tous les documents associés à une intervention spécifique
+ *     tags: [Interventions]
  *     parameters:
  *       - in: path
  *         name: id
@@ -206,6 +372,32 @@ router.get("/:id/employes", interventionsController.getInterventionEmployes);
  *         schema:
  *           type: integer
  *         description: ID de l'intervention
+ *     responses:
+ *       200:
+ *         description: Liste des documents récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 documents:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_documents:
+ *                         type: integer
+ *                       libelle_document:
+ *                         type: string
+ *                       lien_document:
+ *                         type: string
+ *       404:
+ *         description: Intervention non trouvée
+ *       500:
+ *         description: Erreur serveur
  */
 router.get("/:id/documents", interventionsController.getInterventionDocuments);
 
@@ -214,8 +406,8 @@ router.get("/:id/documents", interventionsController.getInterventionDocuments);
  * /technique/interventions/{id}/documents/{documentId}:
  *   delete:
  *     summary: Supprime un document d'une intervention
- *     tags:
- *       - Interventions
+ *     description: Supprime définitivement un document associé à une intervention
+ *     tags: [Interventions]
  *     parameters:
  *       - in: path
  *         name: id
@@ -229,6 +421,13 @@ router.get("/:id/documents", interventionsController.getInterventionDocuments);
  *         schema:
  *           type: integer
  *         description: ID du document
+ *     responses:
+ *       200:
+ *         description: Document supprimé avec succès
+ *       404:
+ *         description: Document ou intervention non trouvé
+ *       500:
+ *         description: Erreur serveur
  */
 router.delete("/:id/documents/:documentId", interventionsController.deleteDocument);
 
