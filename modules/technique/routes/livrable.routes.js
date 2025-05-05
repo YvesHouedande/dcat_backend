@@ -10,13 +10,93 @@ const UPLOAD_PATHS = {
 };
 
 // CRUD Livrable
+/**
+ * @swagger
+ * /technique/livrables:
+ *   get:
+ *     summary: Liste tous les livrables
+ *     tags:
+ *       - Livrables
+ */
 router.get("/", livrableController.getAllLivrables);
+
+/**
+ * @swagger
+ * /technique/livrables/{id}:
+ *   get:
+ *     summary: Récupère un livrable par son ID
+ *     tags:
+ *       - Livrables
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du livrable
+ */
 router.get("/:id", livrableController.getLivrableById);
+
+/**
+ * @swagger
+ * /technique/livrables:
+ *   post:
+ *     summary: Crée un nouveau livrable
+ *     tags:
+ *       - Livrables
+ */
 router.post("/", livrableController.createLivrable);
+
+/**
+ * @swagger
+ * /technique/livrables/{id}:
+ *   put:
+ *     summary: Met à jour un livrable
+ *     tags:
+ *       - Livrables
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du livrable
+ */
 router.put("/:id", livrableController.updateLivrable);
+
+/**
+ * @swagger
+ * /technique/livrables/{id}:
+ *   delete:
+ *     summary: Supprime un livrable
+ *     tags:
+ *       - Livrables
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du livrable
+ */
 router.delete("/:id", livrableController.deleteLivrable);
 
 // Documents liés au livrable
+/**
+ * @swagger
+ * /technique/livrables/{id}/documents:
+ *   post:
+ *     summary: Ajoute un document à un livrable
+ *     tags:
+ *       - Livrables
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du livrable
+ */
 router.post("/:id/documents",
   (req, res, next) => {
     try {
@@ -34,7 +114,44 @@ router.post("/:id/documents",
   livrableController.addDocumentToLivrable
 );
 
+/**
+ * @swagger
+ * /technique/livrables/{id}/documents:
+ *   get:
+ *     summary: Récupère les documents d'un livrable
+ *     tags:
+ *       - Livrables
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du livrable
+ */
 router.get("/:id/documents", livrableController.getLivrableDocuments);
+
+/**
+ * @swagger
+ * /technique/livrables/{id}/documents/{documentId}:
+ *   delete:
+ *     summary: Supprime un document d'un livrable
+ *     tags:
+ *       - Livrables
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du livrable
+ *       - in: path
+ *         name: documentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du document
+ */
 router.delete("/:id/documents/:documentId", livrableController.deleteDocument);
 
 module.exports = router;

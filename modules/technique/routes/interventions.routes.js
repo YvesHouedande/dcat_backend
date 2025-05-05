@@ -24,13 +24,93 @@ const handleUploadError = (err, req, res, next) => {
 };
 
 // Routes CRUD de base
+/**
+ * @swagger
+ * /technique/interventions:
+ *   get:
+ *     summary: Liste toutes les interventions
+ *     tags:
+ *       - Interventions
+ */
 router.get("/", interventionsController.getAllInterventions);
+
+/**
+ * @swagger
+ * /technique/interventions/{id}:
+ *   get:
+ *     summary: Récupère une intervention par son ID
+ *     tags:
+ *       - Interventions
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'intervention
+ */
 router.get("/:id", interventionsController.getInterventionById);
+
+/**
+ * @swagger
+ * /technique/interventions:
+ *   post:
+ *     summary: Crée une nouvelle intervention
+ *     tags:
+ *       - Interventions
+ */
 router.post("/", interventionsController.createIntervention);
+
+/**
+ * @swagger
+ * /technique/interventions/{id}:
+ *   put:
+ *     summary: Met à jour une intervention
+ *     tags:
+ *       - Interventions
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'intervention
+ */
 router.put("/:id", interventionsController.updateIntervention);
+
+/**
+ * @swagger
+ * /technique/interventions/{id}:
+ *   delete:
+ *     summary: Supprime une intervention
+ *     tags:
+ *       - Interventions
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'intervention
+ */
 router.delete("/:id", interventionsController.deleteIntervention);
 
 // Route pour les documents avec gestion des erreurs d'upload
+/**
+ * @swagger
+ * /technique/interventions/{id}/documents:
+ *   post:
+ *     summary: Ajoute un document à une intervention
+ *     tags:
+ *       - Interventions
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'intervention
+ */
 router.post("/:id/documents",
   (req, res, next) => {
     try {
@@ -53,15 +133,103 @@ router.post("/:id/documents",
 );
 
 // Routes pour la gestion des employés
+/**
+ * @swagger
+ * /technique/interventions/{id}/employes:
+ *   post:
+ *     summary: Ajoute un employé à une intervention
+ *     tags:
+ *       - Interventions
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'intervention
+ */
 router.post("/:id/employes", interventionsController.addEmployeToIntervention);
 
+/**
+ * @swagger
+ * /technique/interventions/{id}/employes/{employeId}:
+ *   delete:
+ *     summary: Retire un employé d'une intervention
+ *     tags:
+ *       - Interventions
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'intervention
+ *       - in: path
+ *         name: employeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'employé
+ */
 router.delete("/:id/employes/:employeId", interventionsController.removeEmployeFromIntervention);
 
+/**
+ * @swagger
+ * /technique/interventions/{id}/employes:
+ *   get:
+ *     summary: Récupère les employés d'une intervention
+ *     tags:
+ *       - Interventions
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'intervention
+ */
 router.get("/:id/employes", interventionsController.getInterventionEmployes);
 
 
 // Routes pour la gestion des documents
+/**
+ * @swagger
+ * /technique/interventions/{id}/documents:
+ *   get:
+ *     summary: Récupère les documents d'une intervention
+ *     tags:
+ *       - Interventions
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'intervention
+ */
 router.get("/:id/documents", interventionsController.getInterventionDocuments);
+
+/**
+ * @swagger
+ * /technique/interventions/{id}/documents/{documentId}:
+ *   delete:
+ *     summary: Supprime un document d'une intervention
+ *     tags:
+ *       - Interventions
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'intervention
+ *       - in: path
+ *         name: documentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du document
+ */
 router.delete("/:id/documents/:documentId", interventionsController.deleteDocument);
 
 

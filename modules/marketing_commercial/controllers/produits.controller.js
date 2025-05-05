@@ -11,6 +11,15 @@ const produitsController = {
     }
   },
 
+  getAllEquipements: async (req, res) => {
+    try {
+      const produits = await produitsService.getAllEquipements();
+      res.json({ success: true, produits });
+    } catch (error) {
+      res.status(400).json({ success: false, error: error.message });
+    }
+  },
+
   getProductDetails: async (req, res) => {
     try {
       const { productId } = req.params;
