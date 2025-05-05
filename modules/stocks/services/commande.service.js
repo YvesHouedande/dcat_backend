@@ -6,38 +6,27 @@ const {
   commandes,
   partenaires,
   partenaire_commandes,
+  commande_produits,
   sortie_exemplaires,
 } = require("../../../core/database/models");
 
-const {etatExemplaire}=require('./exemplaire.service')
+const { etatExemplaire } = require("./exemplaire.service");
 
-const typeSortie = ["vente directe", "vente en ligne", "projet"];
+const { typeSortie } = require("./sortieExemplaire.service");
 
 /**
- * Effectue un achat d'exemplaires par un partenaire.
- *
- * Étapes :
- * 1. Validation des données d'entrée
- * 2. Vérification de la disponibilité des exemplaires
- * 3. Création de la commande
- * 4. Liaison commande-partenaire
- * 5. Mise à jour des exemplaires vendus
- * 6. Ajustement du stock produit
- * 7. Retour de la commande complète avec ses exemplaires
- *
- * @param {Object} params
- * @param {number[]} params.exemplaireIds - IDs des exemplaires à acheter
- * @param {number} params.partenaireId - ID du partenaire acheteur
- * @param {string} params.lieuLivraison - Lieu de livraison
- * @param {Date} [params.dateCommande=new Date()] - Date de commande
- * @param {Date} params.dateLivraison - Date de livraison prévue
- * @param {string} params.modePaiement - Mode de paiement
- * @returns {Promise<Object>} Commande complète avec les exemplaires liés
+ * 
+const commande = await createCommande({
+  produitsQuantites: { 1: 2, 3: 1 }, // 2x produit ID 1, 1x produit ID 3
+  partenaireId: 5,
+  lieuLivraison: "Magasin principal",
+  dateLivraison: "2025-05-10",
+  modePaiement: "carte"
+});
  */
 
-// créer une commande
 async function createCommande({
-  exemplaireIds,
+  produitsQuantites, // {id_produit: quantite}
   partenaireId,
   lieuLivraison,
   dateCommande = new Date(),
@@ -46,27 +35,45 @@ async function createCommande({
 }) {
   return await db.transaction(async (tx) => {
     // 1. Validation des entrées
-    if (!exemplaireIds?.length) throw new Error("Aucun exemplaire spécifié");
+    if (!produitsQuantites || !Object.keys(produitsQuantites).length) {
+      throw new Error("Aucun produit spécifié");
+    }
     if (!partenaireId) throw new Error("Partenaire non spécifié");
 
-    // 2. Vérification des exemplaires
-    const exemplairesToOrder = await tx
-      .select()
-      .from(exemplaires)
-      .where(
-        and(
-          inArray(exemplaires.id_exemplaire, exemplaireIds),
-          eq(exemplaires.etat_exemplaire, etatExemplaire[1]) //"Disponible"
-        )
-      );
+    // 2. Vérification des stocks et récupération des exemplaires disponibles
+    const produitsACommander = Object.entries(produitsQuantites);
+    const exemplairesReserves = [];
 
-    if (exemplairesToOrder.length !== exemplaireIds.length) {
-      const missing = exemplaireIds.filter(
-        (id) => !exemplairesToOrder.some((e) => e.id_exemplaire === id)
-      );
-      throw new Error(
-        `Exemplaires non disponibles ou introuvables: ${missing.join(", ")}`
-      );
+    for (const [produitId, quantite] of produitsACommander) {
+      // Vérifier la quantité disponible
+      const [produit] = await tx
+        .select()
+        .from(produits)
+        .where(eq(produits.id_produit, Number(produitId)));
+
+      if (!produit || produit.qte_produit < quantite) {
+        throw new Error(`Stock insuffisant pour le produit ${produitId}`);
+      }
+
+      // Récupérer des exemplaires disponibles
+      const exemplairesDispos = await tx
+        .select()
+        .from(exemplaires)
+        .where(
+          and(
+            eq(exemplaires.id_produit, Number(produitId)),
+            eq(exemplaires.etat_exemplaire, "Disponible")
+          )
+        )
+        .limit(quantite);
+
+      if (exemplairesDispos.length < quantite) {
+        throw new Error(
+          `Pas assez d'exemplaires disponibles pour le produit ${produitId}`
+        );
+      }
+
+      exemplairesReserves.push(...exemplairesDispos);
     }
 
     // 3. Création de la commande
@@ -83,7 +90,7 @@ async function createCommande({
       })
       .returning();
 
-    // 4. Liaison partenaire-commande
+    // 4. Liaison commande-partenaire (étape cruciale ajoutée)
     await tx.insert(partenaire_commandes).values({
       id_partenaire: partenaireId,
       id_commande: newCommande.id_commande,
@@ -91,35 +98,29 @@ async function createCommande({
       updated_at: new Date(),
     });
 
-    // 5. Mise à jour des exemplaires
-    await tx
-      .update(exemplaires)
-      .set({
-        etat_exemplaire: "Vendu",
+    // 5. Liaison commande-produits
+    for (const [produitId, quantite] of produitsACommander) {
+      await tx.insert(commande_produits).values({
         id_commande: newCommande.id_commande,
-        updated_at: new Date(),
-      })
-      .where(inArray(exemplaires.id_exemplaire, exemplaireIds));
-
-    // 6. Enregistrement dans sortie_exemplaires
-    for (const exemplaireId of exemplaireIds) {
-      await tx.insert(sortie_exemplaires).values({
-        type_sortie: typeSortie[0],
-        reference_id: newCommande.id_commande,
-        date_sortie: new Date(),
-        id_exemplaire: exemplaireId,
+        id_produit: Number(produitId),
+        quantite: quantite,
         created_at: new Date(),
         updated_at: new Date(),
       });
     }
 
-    // 7. Mise à jour des stocks produits
-    const produitsQuantites = exemplairesToOrder.reduce((acc, exemplaire) => {
-      acc[exemplaire.id_produit] = (acc[exemplaire.id_produit] || 0) + 1;
-      return acc;
-    }, {});
+    // 6. Mise à jour des exemplaires (marqués comme vendus)
+    const exemplairesIds = exemplairesReserves.map((e) => e.id_exemplaire);
+    await tx
+      .update(exemplaires)
+      .set({
+        etat_exemplaire: etatExemplaire[5], //Reservé
+        updated_at: new Date(),
+      })
+      .where(inArray(exemplaires.id_exemplaire, exemplairesIds));
 
-    for (const [produitId, quantite] of Object.entries(produitsQuantites)) {
+    // 7. Mise à jour des stocks produits
+    for (const [produitId, quantite] of produitsACommander) {
       await tx
         .update(produits)
         .set({
@@ -129,16 +130,15 @@ async function createCommande({
         .where(eq(produits.id_produit, Number(produitId)));
     }
 
-    // 8. Récupération de la commande complète
+    // 8. Retour de la commande complète
     const completeCommande = {
       ...newCommande,
-      exemplaires: exemplairesToOrder,
-      partenaire: { id_partenaire: partenaireId },
-      sorties: exemplaireIds.map((id) => ({
-        id_exemplaire: id,
-        type_sortie: typeSortie[0],
-        reference_id: newCommande.id_commande,
+      produits: produitsACommander.map(([id, qte]) => ({
+        id_produit: Number(id),
+        quantite: qte,
       })),
+      exemplaires: exemplairesReserves,
+      partenaire: { id_partenaire: partenaireId },
     };
 
     return completeCommande;

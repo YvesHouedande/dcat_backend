@@ -18,7 +18,11 @@ const tachesService = {
   createTache: async (tacheData) => {
     const result = await db
       .insert(taches)
-      .values(tacheData)
+      .values({
+        ...tacheData,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
       .returning();
     return result[0];
   },
@@ -43,12 +47,15 @@ const tachesService = {
     return result.length > 0;
   },
 
+  // Gestion des employés associés à une tâche
   addEmployeToTache: async (tacheId, employeId) => {
     const result = await db
       .insert(intervention_taches)
       .values({
         id_tache: tacheId,
         id_employes: employeId,
+        created_at: new Date(),
+        updated_at: new Date(),
       })
       .returning();
     return result[0];

@@ -15,7 +15,7 @@ const etatExemplaire = [
   "Utilisation",
   "En maintenance",
   "Endommage",
-  "Reserve",
+  "Reserve", //fait partie d'une commande,mais pas encore sortie(pas enregistré dans la table sortie exemplaire)
 ]; //liste des etats de l'exemplaire
 
 /**

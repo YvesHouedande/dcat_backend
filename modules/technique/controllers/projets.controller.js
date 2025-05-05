@@ -1,14 +1,14 @@
+const fs = require('fs').promises;
 const path = require('path');
 const projetsService = require("../services/projets.service");
-
 
 const projetsController = {
   getAllProjets: async (req, res) => {
     try {
       const projets = await projetsService.getAllProjets();
-      res.status(200).json(projets);
+      res.status(200).json({ success: true, data: projets });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ success: false, message: error.message });
     }
   },
 
@@ -17,11 +17,11 @@ const projetsController = {
       const { id } = req.params;
       const projet = await projetsService.getProjetById(parseInt(id));
       if (!projet) {
-        return res.status(404).json({ message: "Projet non trouvé" });
+        return res.status(404).json({ success: false, message: "Projet non trouvé" });
       }
-      res.status(200).json(projet);
+      res.status(200).json({ success: true, data: projet });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ success: false, message: error.message });
     }
   },
 
@@ -66,10 +66,7 @@ const projetsController = {
   updateProjet: async (req, res) => {
     try {
       const { id } = req.params;
-      // Prendre directement toutes les données du corps de la requête
       const updateData = req.body;
-      
-      // Convertir les types de données si nécessaire
       if (updateData.devis_estimatif) updateData.devis_estimatif = parseFloat(updateData.devis_estimatif);
       if (updateData.date_debut) updateData.date_debut = new Date(updateData.date_debut);
       if (updateData.date_fin) updateData.date_fin = new Date(updateData.date_fin);
@@ -78,47 +75,34 @@ const projetsController = {
       const updatedProjet = await projetsService.updateProjet(parseInt(id), updateData);
 
       if (!updatedProjet) {
-        return res.status(404).json({ message: "Projet non trouvé" });
+        return res.status(404).json({ success: false, message: "Projet non trouvé" });
       }
 
-      res.status(200).json(updatedProjet);
+      res.status(200).json({ success: true, data: updatedProjet });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ success: false, message: error.message });
     }
   },
-
 
   deleteProjet: async (req, res) => {
     try {
       const { id } = req.params;
       const deleted = await projetsService.deleteProjet(parseInt(id));
-      
       if (!deleted) {
-        return res.status(404).json({ 
-          success: false,
-          message: "Projet non trouvé" 
-        });
+        return res.status(404).json({ success: false, message: "Projet non trouvé" });
       }
-      
-      // Réponse explicite avec un message de succès
       res.status(200).json({
         success: true,
         message: "Projet supprimé avec succès",
         data: { id: parseInt(id) }
       });
     } catch (error) {
-      res.status(500).json({ 
-        success: false,
-        message: error.message 
-      });
+      res.status(500).json({ success: false, message: error.message });
     }
   },
-  
 
   addDocumentToProjet: async (req, res) => {
     try {
-     
-
       if (!req.file) {
         return res.status(400).json({
           success: false,
@@ -127,17 +111,32 @@ const projetsController = {
       }
 
       const { id } = req.params;
+      const relativePath = req.file.path
+        .replace(process.cwd(), '')
+        .replace(/\\/g, '/')
+        .replace(/^\//, '');
+
       const documentData = {
         libelle_document: req.body.libelle_document,
         classification_document: req.body.classification_document,
-        lien_document: req.file.path.replace(/\\/g, '/'), 
+        lien_document: relativePath,
         etat_document: req.body.etat_document || 'actif',
-        id_nature_document: parseInt(req.body.id_nature_document),
+        id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null,
         id_projet: parseInt(id)
       };
 
-      const document = await projetsService.addDocumentToProjet(documentData);
-      
+      let document;
+      try {
+        document = await projetsService.addDocumentToProjet(documentData);
+      } catch (dbError) {
+        await fs.unlink(req.file.path).catch(() => {});
+        return res.status(500).json({
+          success: false,
+          message: "Erreur lors de l'enregistrement du document en base",
+          error: dbError.message
+        });
+      }
+
       res.status(201).json({
         success: true,
         message: "Document ajouté avec succès au projet",
@@ -145,8 +144,7 @@ const projetsController = {
           document: document,
           details: {
             dateCreation: new Date().toISOString(),
-            creePar: req.user?.username || 'system',
-            chemin: documentData.lien_document
+            chemin: relativePath
           }
         }
       });
@@ -163,54 +161,40 @@ const projetsController = {
     try {
       const { id } = req.params;
       const { id_partenaire } = req.body;
-      
       const result = await projetsService.addPartenaireToProjet(
         parseInt(id),
         parseInt(id_partenaire)
       );
-      
       res.status(201).json({
         success: true,
         message: "Partenaire ajouté au projet avec succès",
         data: result
       });
     } catch (error) {
-      res.status(500).json({ 
-        success: false, 
-        message: error.message 
-      });
+      res.status(500).json({ success: false, message: error.message });
     }
   },
 
   removePartenaireFromProjet: async (req, res) => {
     try {
       const { id, partenaireId } = req.params;
-      
       const result = await projetsService.removePartenaireFromProjet(
         parseInt(id),
         parseInt(partenaireId)
       );
-      
       if (!result) {
-        return res.status(404).json({ 
-          success: false, 
-          message: "Association non trouvée" 
-        });
+        return res.status(404).json({ success: false, message: "Association non trouvée" });
       }
-      
       res.status(200).json({
         success: true,
         message: "Partenaire retiré du projet avec succès",
-        data: { 
-          projet_id: parseInt(id), 
-          partenaire_id: parseInt(partenaireId) 
+        data: {
+          projet_id: parseInt(id),
+          partenaire_id: parseInt(partenaireId)
         }
       });
     } catch (error) {
-      res.status(500).json({ 
-        success: false, 
-        message: error.message 
-      });
+      res.status(500).json({ success: false, message: error.message });
     }
   },
 
@@ -218,17 +202,13 @@ const projetsController = {
     try {
       const { id } = req.params;
       const partenaires = await projetsService.getProjetPartenaires(parseInt(id));
-      
       res.status(200).json({
         success: true,
         message: "Liste des partenaires du projet récupérée avec succès",
         data: partenaires
       });
     } catch (error) {
-      res.status(500).json({ 
-        success: false, 
-        message: error.message 
-      });
+      res.status(500).json({ success: false, message: error.message });
     }
   },
 
@@ -236,40 +216,27 @@ const projetsController = {
     try {
       const { id } = req.params;
       const livrables = await projetsService.getProjetLivrables(parseInt(id));
-      
       res.status(200).json({
         success: true,
         message: "Liste des livrables du projet récupérée avec succès",
         data: livrables
       });
     } catch (error) {
-      res.status(500).json({ 
-        success: false, 
-        message: error.message 
-      });
+      res.status(500).json({ success: false, message: error.message });
     }
   },
 
-  createLivrable: async (req, res) => {
+  getProjetLivrablesWithDocuments: async (req, res) => {
     try {
       const { id } = req.params;
-      const livrableData = {
-        ...req.body,
-        id_projet: parseInt(id)
-      };
-      
-      const newLivrable = await projetsService.createLivrable(livrableData);
-      
-      res.status(201).json({
+      const livrables = await projetsService.getProjetLivrablesWithDocuments(parseInt(id));
+      res.status(200).json({
         success: true,
-        message: "Livrable créé avec succès",
-        data: newLivrable
+        message: "Liste des livrables avec documents du projet récupérée avec succès",
+        data: livrables
       });
     } catch (error) {
-      res.status(500).json({ 
-        success: false, 
-        message: error.message 
-      });
+      res.status(500).json({ success: false, message: error.message });
     }
   },
 
@@ -277,51 +244,39 @@ const projetsController = {
     try {
       const { id } = req.params;
       const documents = await projetsService.getProjetDocuments(parseInt(id));
-      
       res.status(200).json({
         success: true,
         message: "Liste des documents du projet récupérée avec succès",
         data: documents
       });
     } catch (error) {
-      res.status(500).json({ 
-        success: false, 
-        message: error.message 
-      });
+      res.status(500).json({ success: false, message: error.message });
     }
   },
 
   deleteDocument: async (req, res) => {
     try {
       const { id, documentId } = req.params;
-      
-      // Vérification que le document appartient bien au projet
       const document = await projetsService.getDocumentById(parseInt(documentId));
       if (!document || document.id_projet !== parseInt(id)) {
-        return res.status(404).json({ 
-          success: false, 
-          message: "Document non trouvé ou n'appartenant pas à ce projet" 
+        return res.status(404).json({
+          success: false,
+          message: "Document non trouvé ou n'appartenant pas à ce projet"
         });
       }
-      
       const deleted = await projetsService.deleteDocument(parseInt(documentId));
-      
       res.status(200).json({
         success: true,
         message: "Document supprimé avec succès",
-        data: { 
-          projet_id: parseInt(id), 
-          document_id: parseInt(documentId) 
+        data: {
+          projet_id: parseInt(id),
+          document_id: parseInt(documentId)
         }
       });
     } catch (error) {
-      res.status(500).json({ 
-        success: false, 
-        message: error.message 
-      });
+      res.status(500).json({ success: false, message: error.message });
     }
   }
-
 };
 
 module.exports = projetsController;

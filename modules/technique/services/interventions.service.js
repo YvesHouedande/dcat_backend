@@ -2,6 +2,8 @@ const { db } = require('../../../core/database/config');
 const { interventions, intervention_employes, employes, intervention_taches, documents } = require("../../../core/database/models");
 
 const { eq, and } = require("drizzle-orm");
+const fs = require('fs').promises;  // Ajoutez cette importation
+const path = require('path');       // Ajoutez cette importation
 
 const interventionsService = {
   getAllInterventions: async () => {
@@ -36,6 +38,7 @@ const interventionsService = {
     return result.length > 0 ? result[0] : null;
   },
 
+  
   deleteIntervention: async (id) => {
     const result = await db
       .delete(interventions)
@@ -44,11 +47,13 @@ const interventionsService = {
     return result.length > 0;
   },
 
+ 
   addDocumentToIntervention: async (documentData) => {
     const result = await db.insert(documents).values(documentData).returning();
     return result[0];
   },
 
+  
   addEmployeToIntervention: async (interventionId, employeId) => {
     const result = await db
       .insert(intervention_employes)
@@ -59,7 +64,7 @@ const interventionsService = {
       .returning();
     return result[0];
   },
-
+  
   removeEmployeFromIntervention: async (interventionId, employeId) => {
     const result = await db
       .delete(intervention_employes)
@@ -72,6 +77,7 @@ const interventionsService = {
       .returning();
     return result.length > 0;
   },
+
 
   getInterventionEmployes: async (interventionId) => {
     return await db
@@ -89,13 +95,14 @@ const interventionsService = {
       .where(eq(intervention_employes.id_intervention, interventionId));
   },
 
+ 
   getInterventionDocuments: async (interventionId) => {
     try {
       return await db
         .select({
           id_documents: documents.id_documents,
           libelle_document: documents.libelle_document,
-          classification_document: documents.classification_document,
+          // classification_document: documents.classification_document,
           lien_document: documents.lien_document,
           etat_document: documents.etat_document,
           created_at: documents.created_at,
@@ -108,6 +115,7 @@ const interventionsService = {
     }
   },
 
+ 
   getDocumentById: async (documentId) => {
     try {
       const result = await db
@@ -120,17 +128,56 @@ const interventionsService = {
     }
   },
 
-  deleteDocument: async (documentId) => {
-    try {
-      const result = await db
-        .delete(documents)
-        .where(eq(documents.id_documents, documentId))
-        .returning();
-      return result.length > 0;
-    } catch (error) {
-      throw new Error(`Erreur lors de la suppression du document: ${error.message}`);
+
+    deleteDocument: async (documentId) => {
+      try {
+        // 1. Récupérer le document
+        const document = await interventionsService.getDocumentById(documentId);
+        
+        if (!document) {
+          throw new Error("Document non trouvé");
+        }
+  
+        // 2. Supprimer le fichier physique
+        try {
+          // Normaliser le chemin stocké dans la BD
+          const normalizedPath = document.lien_document.replace(/\\/g, '/');
+          
+          // Construire le chemin absolu
+          const absolutePath = path.join(process.cwd(), normalizedPath);
+          
+          // Vérifier si le fichier existe avant de le supprimer
+          const fileExists = await fs.access(absolutePath)
+            .then(() => true)
+            .catch(() => false);
+  
+          if (fileExists) {
+            await fs.unlink(absolutePath);
+          }
+        } catch (fileError) {
+          // On continue même si la suppression du fichier échoue
+          // Dans un système de production, on pourrait vouloir enregistrer cette erreur
+          // dans un système de journalisation plutôt que de l'afficher en console
+        }
+  
+        // 3. Supprimer l'entrée de la base de données
+        const result = await db
+          .delete(documents)
+          .where(eq(documents.id_documents, documentId))
+          .returning();
+  
+        if (result.length === 0) {
+          throw new Error("Échec de la suppression en base de données");
+        }
+  
+        return true;
+      } catch (error) {
+        throw new Error(`Erreur lors de la suppression du document: ${error.message}`);
+      }
+    
     }
-  }
+
+
 };
 
 module.exports = interventionsService;
