@@ -27,114 +27,114 @@ const achatRoutes = require("./achat.route");
 // router.use("/sorties-exemplaires", sortiesExemplairesRoutes);
 // router.use("/achats", achatRoutes);
 
-/**
- * @swagger
- * /familles:
- *   description: Routes liées aux familles
- *   get:
- *     summary: Accède aux familles de produits
- *     tags: [Familles]
- */
+// /**
+//  * @swagger
+//  * /familles:
+//  *   description: Routes liées aux familles
+//  *   get:
+//  *     summary: Accède aux familles de produits
+//  *     tags: [Familles]
+//  */
 router.use("/familles", familleRoutes);
 
-/**
- * @swagger
- * /categories:
- *   description: Routes liées aux catégories
- *   get:
- *     summary: Accède aux catégories de produits
- *     tags: [Catégories]
- */
+// /**
+//  * @swagger
+//  * /categories:
+//  *   description: Routes liées aux catégories
+//  *   get:
+//  *     summary: Accède aux catégories de produits
+//  *     tags: [Catégories]
+//  */
 router.use("/categories", categorieRoutes);
 
-/**
- * @swagger
- * /marques:
- *   description: Routes liées aux marques
- *   get:
- *     summary: Accède aux marques de produits
- *     tags: [Marques]
- */
+// /**
+//  * @swagger
+//  * /marques:
+//  *   description: Routes liées aux marques
+//  *   get:
+//  *     summary: Accède aux marques de produits
+//  *     tags: [Marques]
+//  */
 router.use("/marques", marqueRoutes);
 
-/**
- * @swagger
- * /modeles:
- *   description: Routes liées aux modèles
- *   get:
- *     summary: Accède aux modèles de produits
- *     tags: [Modèles]
- */
+// /**
+//  * @swagger
+//  * /modeles:
+//  *   description: Routes liées aux modèles
+//  *   get:
+//  *     summary: Accède aux modèles de produits
+//  *     tags: [Modèles]
+//  */
 router.use("/modeles", modeleRoutes);
 
-/**
- * @swagger
- * /produits:
- *   description: Routes liées aux produits
- *   get:
- *     summary: Accède aux produits
- *     tags: [Produits]
- */
+// /**
+//  * @swagger
+//  * /produits:
+//  *   description: Routes liées aux produits
+//  *   get:
+//  *     summary: Accède aux produits
+//  *     tags: [Produits]
+//  */
 router.use("/produits", produitRoutes);
 
-/**
- * @swagger
- * /exemplaires:
- *   description: Routes liées aux exemplaires de produits
- *   get:
- *     summary: Accède aux exemplaires de produits
- *     tags: [Exemplaires]
- */
+// /**
+//  * @swagger
+//  * /exemplaires:
+//  *   description: Routes liées aux exemplaires de produits
+//  *   get:
+//  *     summary: Accède aux exemplaires de produits
+//  *     tags: [Exemplaires]
+//  */
 router.use("/exemplaires", exemplaireRoutes);
 
-/**
- * @swagger
- * /livraisons:
- *   description: Routes liées aux livraisons
- *   get:
- *     summary: Accède aux livraisons
- *     tags: [Livraisons]
- */
+// /**
+//  * @swagger
+//  * /livraisons:
+//  *   description: Routes liées aux livraisons
+//  *   get:
+//  *     summary: Accède aux livraisons
+//  *     tags: [Livraisons]
+//  */
 router.use("/livraisons", livraisonRoutes);
 
-/**
- * @swagger
- * /types-produits:
- *   description: Routes liées aux types de produits
- *   get:
- *     summary: Accède aux types de produits
- *     tags: [Types de Produits]
- */
+// /**
+//  * @swagger
+//  * /types-produits:
+//  *   description: Routes liées aux types de produits
+//  *   get:
+//  *     summary: Accède aux types de produits
+//  *     tags: [Types de Produits]
+//  */
 router.use("/types-produits", typesProduitRoutes);
 
-/**
- * @swagger
- * /commandes:
- *   description: Routes liées aux commandes
- *   get:
- *     summary: Accède aux commandes
- *     tags: [Commandes]
- */
+// /**
+//  * @swagger
+//  * /commandes:
+//  *   description: Routes liées aux commandes
+//  *   get:
+//  *     summary: Accède aux commandes
+//  *     tags: [Commandes]
+//  */
 router.use("/commandes", commandeRoutes);
 
-/**
- * @swagger
- * /sorties-exemplaires:
- *   description: Routes liées aux sorties d'exemplaires
- *   get:
- *     summary: Accède aux sorties d'exemplaires
- *     tags: [Sorties Exemplaires]
- */
+// /**
+//  * @swagger
+//  * /sorties-exemplaires:
+//  *   description: Routes liées aux sorties d'exemplaires
+//  *   get:
+//  *     summary: Accède aux sorties d'exemplaires
+//  *     tags: [Sorties Exemplaires]
+//  */
 router.use("/sorties-exemplaires", sortiesExemplairesRoutes);
 
-/**
- * @swagger
- * /achats:
- *   description: Routes liées aux achats
- *   get:
- *     summary: Accède aux achats
- *     tags: [Achats]
- */
+// /**
+//  * @swagger
+//  * /achats:
+//  *   description: Routes liées aux achats
+//  *   get:
+//  *     summary: Accède aux achats
+//  *     tags: [Achats]
+//  */
 router.use("/achats", achatRoutes);
 
 module.exports = router;

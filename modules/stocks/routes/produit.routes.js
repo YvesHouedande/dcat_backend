@@ -10,99 +10,99 @@ const controller = require("../controllers/produit.controller");
 // router.put("/:id", controller.updateProduit);
 // router.delete("/:id", controller.deleteProduit);
 
-/**
- * @swagger
- * /produits:
- *   post:
- *     summary: Crée un nouveau produit
- *     tags: [Produits]
- */
+// /**
+//  * @swagger
+//  * /produits:
+//  *   post:
+//  *     summary: Crée un nouveau produit
+//  *     tags: [Produits]
+//  */
 router.post("/", controller.createProduit);
 
-/**
- * @swagger
- * /produits:
- *   get:
- *     summary: Récupère tous les produits
- *     tags: [Produits]
- *     responses:
- *       200:
- *         description: Liste des produits
- *         content:
- *           application/json:
- *             example:
- *               - id_produit: 5
- *                 code_produit: "produit-4"
- *                 desi_produit: "produit-4"
- *                 desc_produit: null
- *                 image_produit: "media\\images\\stock_moyensgeneraux\\produits\\tomate_1745603051631.jpeg"
- *                 qte_produit: 1
- *                 emplacement_produit: "salle 4"
- *                 caracteristiques_produit: null
- *                 prix_produit: null
- *                 id_categorie: 2
- *                 id_type_produit: 1
- *                 id_modele: 2
- *                 id_famille: 2
- *                 id_marque: 3
- *                 created_at: "2025-04-25T17:44:12.643Z"
- *                 updated_at: "2025-04-28T16:19:41.264Z"
- *                 image_url: "http://localhost:2000/media/images/stock_moyensgeneraux/produits/tomate_1745603051631.jpeg"
- *               - id_produit: 7
- *                 code_produit: "outils-1"
- *                 desi_produit: "outils-1"
- *                 desc_produit: "test"
- *                 image_produit: "media\\images\\stock_moyensgeneraux\\produits\\tomate_1745872525356.jpeg"
- *                 qte_produit: 1
- *                 emplacement_produit: null
- *                 caracteristiques_produit: null
- *                 prix_produit: null
- *                 id_categorie: null
- *                 id_type_produit: 5
- *                 id_modele: null
- *                 id_famille: null
- *                 id_marque: null
- *                 created_at: "2025-04-28T20:20:28.899Z"
- *                 updated_at: "2025-04-28T20:35:25.365Z"
- *                 image_url: "http://localhost:2000/media/images/stock_moyensgeneraux/produits/tomate_1745872525356.jpeg"
- */
+// /**
+//  * @swagger
+//  * /produits:
+//  *   get:
+//  *     summary: Récupère tous les produits
+//  *     tags: [Produits]
+//  *     responses:
+//  *       200:
+//  *         description: Liste des produits
+//  *         content:
+//  *           application/json:
+//  *             example:
+//  *               - id_produit: 5
+//  *                 code_produit: "produit-4"
+//  *                 desi_produit: "produit-4"
+//  *                 desc_produit: null
+//  *                 image_produit: "media\\images\\stock_moyensgeneraux\\produits\\tomate_1745603051631.jpeg"
+//  *                 qte_produit: 1
+//  *                 emplacement_produit: "salle 4"
+//  *                 caracteristiques_produit: null
+//  *                 prix_produit: null
+//  *                 id_categorie: 2
+//  *                 id_type_produit: 1
+//  *                 id_modele: 2
+//  *                 id_famille: 2
+//  *                 id_marque: 3
+//  *                 created_at: "2025-04-25T17:44:12.643Z"
+//  *                 updated_at: "2025-04-28T16:19:41.264Z"
+//  *                 image_url: "http://localhost:2000/media/images/stock_moyensgeneraux/produits/tomate_1745603051631.jpeg"
+//  *               - id_produit: 7
+//  *                 code_produit: "outils-1"
+//  *                 desi_produit: "outils-1"
+//  *                 desc_produit: "test"
+//  *                 image_produit: "media\\images\\stock_moyensgeneraux\\produits\\tomate_1745872525356.jpeg"
+//  *                 qte_produit: 1
+//  *                 emplacement_produit: null
+//  *                 caracteristiques_produit: null
+//  *                 prix_produit: null
+//  *                 id_categorie: null
+//  *                 id_type_produit: 5
+//  *                 id_modele: null
+//  *                 id_famille: null
+//  *                 id_marque: null
+//  *                 created_at: "2025-04-28T20:20:28.899Z"
+//  *                 updated_at: "2025-04-28T20:35:25.365Z"
+//  *                 image_url: "http://localhost:2000/media/images/stock_moyensgeneraux/produits/tomate_1745872525356.jpeg"
+//  */
 
 router.get("/", controller.getProduits);
 
-/**
- * @swagger
- * /produits/{id}:
- *   get:
- *     summary: Récupère un produit par ID
- *     tags: [Produits]
- */
+// /**
+//  * @swagger
+//  * /produits/{id}:
+//  *   get:
+//  *     summary: Récupère un produit par ID
+//  *     tags: [Produits]
+//  */
 router.get("/:id", controller.getProduitById);
 
-/**
- * @swagger
- * /produits/{idType}:
- *   get:
- *     summary: Récupère tous les produits par type (outils/équipements)
- *     tags: [Produits]
- */
+// /**
+//  * @swagger
+//  * /produits/{idType}:
+//  *   get:
+//  *     summary: Récupère tous les produits par type (outils/équipements)
+//  *     tags: [Produits]
+//  */
 router.get("/:idType", controller.getProduitsByTypes);
 
-/**
- * @swagger
- * /produits/{id}:
- *   put:
- *     summary: Met à jour un produit par ID
- *     tags: [Produits]
- */
+// /**
+//  * @swagger
+//  * /produits/{id}:
+//  *   put:
+//  *     summary: Met à jour un produit par ID
+//  *     tags: [Produits]
+//  */
 router.put("/:id", controller.updateProduit);
 
-/**
- * @swagger
- * /produits/{id}:
- *   delete:
- *     summary: Supprime un produit par ID
- *     tags: [Produits]
- */
+// /**
+//  * @swagger
+//  * /produits/{id}:
+//  *   delete:
+//  *     summary: Supprime un produit par ID
+//  *     tags: [Produits]
+//  */
 router.delete("/:id", controller.deleteProduit);
 
 
