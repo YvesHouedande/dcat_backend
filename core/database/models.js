@@ -124,7 +124,8 @@ const refresh_tokens = pgTable("refresh_tokens", {
 const commandes = pgTable("commandes", {
   id_commande: serial("id_commande").primaryKey(),
   date_de_commande: date("date_de_commande"),
-  etat_commande: varchar("etat_commande", { length: 50 }),
+  //etat_commande : retourner, valider, annuler, en cours
+  etat_commande: varchar("etat_commande", { length: 50 }).default("En cours"),
   date_livraison: date("date_livraison"),
   lieu_de_livraison: varchar("lieu_de_livraison", { length: 50 }),
   mode_de_paiement: varchar("mode_de_paiement", { length: 50 }),
@@ -398,7 +399,8 @@ const documents = pgTable("documents", {
   }),
   date_document: varchar("date_document", { length: 50 }),
   lien_document: varchar("lien_document", { length: 255 }),
-  etat_document: varchar("etat_document", { length: 50 }),
+  //etat_document : actif, archive
+  etat_document: varchar("etat_document", { length: 50 }).default("Actif"),
   id_livrable: integer("id_livrable").references(() => livrables.id_livrable),
   id_projet: integer("id_projet").references(() => projets.id_projet),
   id_demandes: integer("id_demandes").references(() => demandes.id_demandes),

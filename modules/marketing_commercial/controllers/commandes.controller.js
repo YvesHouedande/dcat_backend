@@ -29,6 +29,54 @@ const commandesController = {
       res.status(400).json({ success: false, error: error.message });
     }
   },
+
+  updateCommandeStatus: async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { etat_commande } = req.body;
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "ID de commande invalide" 
+        });
+      }
+      
+      if (!etat_commande) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "L'état de la commande est requis" 
+        });
+      }
+      
+      const updatedCommande = await commandesService.updateCommandeStatus(id, etat_commande);
+      
+      res.json({ 
+        success: true, 
+        message: "État de la commande mis à jour avec succès",
+        data: updatedCommande
+      });
+    } catch (error) {
+      // Gestion spécifique des erreurs
+      if (error.message.includes("État de commande invalide")) {
+        return res.status(400).json({ 
+          success: false, 
+          error: error.message 
+        });
+      } else if (error.message === "Commande non trouvée") {
+        return res.status(404).json({ 
+          success: false, 
+          error: "Commande non trouvée" 
+        });
+      }
+      
+      // Erreur générique
+      res.status(500).json({ 
+        success: false, 
+        error: "Erreur lors de la mise à jour de l'état de la commande: " + error.message 
+      });
+    }
+  }
 };
 
 module.exports = commandesController;
