@@ -23,7 +23,7 @@ const createCommande = async (req, res) => {
 const getCommandeById = async (req, res) => {
   try {
     const commande = await commandeService.getCommandeById(
-      Number(req.params.id)
+      parseInt(req.params.id)
     );
     res.status(200).json(commande);
   } catch (err) {

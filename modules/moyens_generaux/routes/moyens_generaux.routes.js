@@ -10,7 +10,7 @@ const maintenanceRoutes = require("./maintenance.route"); //moyens de travail
 
 /**
  * @swagger
- * /api/outils:
+ * /outils:
  *   description: Routes liées aux outils
  *   get:
  *     summary: Accède aux outils
@@ -20,7 +20,7 @@ router.use("/outils", outilsRoutes);
 
 /**
  * @swagger
- * /api/moyens-travail:
+ * /moyens-travail:
  *   description: Routes liées aux moyens de travail
  *   get:
  *     summary: Accède aux moyens de travail
@@ -30,7 +30,7 @@ router.use("/moyens-travail", moyenstravailRoutes);
 
 /**
  * @swagger
- * /api/maintenances:
+ * /maintenances:
  *   description: Routes liées aux maintenances
  *   get:
  *     summary: Accède aux maintenances

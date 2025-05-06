@@ -146,37 +146,42 @@ async function createCommande({
 }
 
 // 🔍 Lire une commande avec détails
-async function getCommandeById(idCommande) {
-  const [row] = await db
-    .select({
-      commande: commandes,
-      partenaire: partenaires,
-    })
-    .from(commandes)
-    .leftJoin(
-      partenaire_commandes,
-      eq(commandes.id_commande, partenaire_commandes.id_commande)
-    )
-    .leftJoin(
-      partenaires,
-      eq(partenaire_commandes.id_partenaire, partenaires.id_partenaire)
-    )
-    .where(eq(commandes.id_commande, idCommande));
+async function getCommandeById(id) {
+  try {
+    const [row] = await db
+      .select({
+        commande: commandes,
+        partenaire: partenaires,
+      })
+      .from(commandes)
+      .leftJoin(
+        partenaire_commandes,
+        eq(commandes.id_commande, partenaire_commandes.id_commande)
+      )
+      .leftJoin(
+        partenaires,
+        eq(partenaire_commandes.id_partenaire, partenaires.id_partenaire)
+      )
+      .where(eq(commandes.id_commande, id));
 
-  if (!row) throw new Error("Commande introuvable");
+    if (!row) throw new Error("Commande introuvable");
 
-  // Charger les exemplaires liés
-  const exemplairesAssocies = await db
-    .select()
-    .from(exemplaires)
-    .where(eq(exemplaires.id_commande, idCommande));
+    const exemplairesAssocies = await db
+      .select()
+      .from(exemplaires)
+      .where(eq(exemplaires.id_commande, id));
 
-  return {
-    ...row.commande,
-    partenaire: row.partenaire || null,
-    exemplaires: exemplairesAssocies,
-  };
+    return {
+      ...row.commande,
+      partenaire: row.partenaire || null,
+      exemplaires: exemplairesAssocies,
+    };
+  } catch (error) {
+    console.error("Erreur dans getCommandeById:", error);
+    throw error;
+  }
 }
+
 
 // 📜 Liste paginée ou filtrée des commandes
 async function getAllCommandes({ limit = 50, offset = 0, etat = null } = {}) {
