@@ -19,7 +19,7 @@ const controller = require("../controllers/exemplaire.controller");
 
 /**
  * @swagger
- * /api/exemplaires:
+ * /exemplaires:
  *   post:
  *     summary: Crée un nouvel exemplaire
  *     tags: [Exemplaires]
@@ -28,25 +28,70 @@ router.post("/", controller.createExemplaire);
 
 /**
  * @swagger
- * /api/exemplaires:
+ * /exemplaires:
  *   get:
  *     summary: Récupère tous les exemplaires
  *     tags: [Exemplaires]
+ *     responses:
+ *       200:
+ *         description: Liste des exemplaires
+ *         content:
+ *           application/json:
+ *             example:
+ *               - id_exemplaire: 11
+ *                 num_serie: "serie-5"
+ *                 date_entree: "2025-04-23"
+ *                 etat_exemplaire: "Disponible"
+ *                 id_livraison: 1
+ *                 id_produit: 5
+ *                 created_at: "2025-04-28T15:07:29.561Z"
+ *                 updated_at: "2025-04-28T15:54:11.714Z"
+ *               - id_exemplaire: 12
+ *                 num_serie: "serie-6"
+ *                 date_entree: "2025-04-23"
+ *                 etat_exemplaire: "Reserve"
+ *                 id_livraison: 1
+ *                 id_produit: 5
+ *                 created_at: "2025-04-28T15:07:40.083Z"
+ *                 updated_at: "2025-04-28T16:19:41.256Z"
  */
+
 router.get("/", controller.getExemplaires);
 
 /**
  * @swagger
- * /api/exemplaires/{id}:
+ * /exemplaires/{id}:
  *   get:
  *     summary: Récupère un exemplaire par ID
  *     tags: [Exemplaires]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'exemplaire
+ *     responses:
+ *       200:
+ *         description: Détails de l'exemplaire
+ *         content:
+ *           application/json:
+ *             example:
+ *               id_exemplaire: 11
+ *               num_serie: "serie-5"
+ *               date_entree: "2025-04-23"
+ *               etat_exemplaire: "Disponible"
+ *               id_livraison: 1
+ *               id_produit: 5
+ *               created_at: "2025-04-28T15:07:29.561Z"
+ *               updated_at: "2025-04-28T15:54:11.714Z"
  */
+
 router.get("/:id", controller.getExemplaireById);
 
 /**
  * @swagger
- * /api/exemplaires/series/{num_serie}:
+ * /exemplaires/series/{num_serie}:
  *   get:
  *     summary: Récupère un exemplaire par numéro de série
  *     tags: [Exemplaires]
@@ -55,7 +100,7 @@ router.get("/series/:num_serie", controller.getExemplaireByNumSerie);
 
 /**
  * @swagger
- * /api/exemplaires/{id}:
+ * /exemplaires/{id}:
  *   put:
  *     summary: Met à jour un exemplaire par ID
  *     tags: [Exemplaires]
@@ -64,7 +109,7 @@ router.put("/:id", controller.updateExemplaire);
 
 /**
  * @swagger
- * /api/exemplaires/{id}:
+ * /exemplaires/{id}:
  *   delete:
  *     summary: Supprime un exemplaire par ID
  *     tags: [Exemplaires]
@@ -73,20 +118,101 @@ router.delete("/:id", controller.deleteExemplaire);
 
 /**
  * @swagger
- * /api/exemplaires/produit/{id}:
+ * /exemplaires/produit/{id}:
  *   get:
  *     summary: Récupère les exemplaires d’un produit
  *     tags: [Exemplaires]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du produit
+ *     responses:
+ *       200:
+ *         description: Liste des exemplaires associés au produit
+ *         content:
+ *           application/json:
+ *             example:
+ *               - id_exemplaire: 11
+ *                 num_serie: "serie-5"
+ *                 date_entree: "2025-04-23"
+ *                 etat_exemplaire: "Disponible"
+ *                 id_livraison: 1
+ *                 id_produit: 5
+ *                 created_at: "2025-04-28T15:07:29.561Z"
+ *                 updated_at: "2025-04-28T15:54:11.714Z"
+ *               - id_exemplaire: 12
+ *                 num_serie: "serie-6"
+ *                 date_entree: "2025-04-23"
+ *                 etat_exemplaire: "Reserve"
+ *                 id_livraison: 1
+ *                 id_produit: 5
+ *                 created_at: "2025-04-28T15:07:40.083Z"
+ *                 updated_at: "2025-04-28T16:19:41.256Z"
  */
+
 router.get("/produit/:id", controller.getExemplairesByProduit);
 
 /**
  * @swagger
- * /api/exemplaires/produit/{id}/etat/{etat}:
+ * /exemplaires/produit/{id}/etat/{etat}:
  *   get:
- *     summary: Filtre les exemplaires d’un produit selon leur état (disponible, vendu, etc.)
+ *     summary: Filtre les exemplaires d'un produit selon leur état
  *     tags: [Exemplaires]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du produit
+ *       - in: path
+ *         name: etat
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: "État de l'exemplaire (ex: Disponible, Réserve, Vendu)"
+ *     responses:
+ *       200:
+ *         description: Liste des exemplaires filtrés selon l'état
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id_exemplaire:
+ *                     type: integer
+ *                     example: 11
+ *                   num_serie:
+ *                     type: string
+ *                     example: "serie-5"
+ *                   date_entree:
+ *                     type: string
+ *                     format: date
+ *                     example: "2025-04-23"
+ *                   etat_exemplaire:
+ *                     type: string
+ *                     example: "Disponible"
+ *                   id_livraison:
+ *                     type: integer
+ *                     example: 1
+ *                   id_produit:
+ *                     type: integer
+ *                     example: 5
+ *                   created_at:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2025-04-28T15:07:29.561Z"
+ *                   updated_at:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2025-04-28T15:54:11.714Z"
  */
+
 router.get("/produit/:id/etat/:etat", controller.filterExemplairesByEtat);
 
 module.exports = router;
