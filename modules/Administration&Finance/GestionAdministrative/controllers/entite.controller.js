@@ -29,6 +29,21 @@ const getEntites = async (req, res) => {
     }
 }
 
+const getEntiteById = async (req, res) => {
+    try {                   
+        const { id } = req.params;
+        const entite = await entiteService.getEntiteById(id);
+        if (!entite) {
+            return res.status(404).json({ message: "Entite not found" });
+        }
+        res.status(200).json(entite);
+    } catch (error) {
+        console.error("Error fetching entite by ID:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+
 const updateEntite = async (req, res) => {
     try {
         const { id } = req.params;
@@ -59,6 +74,7 @@ const deleteEntite = async (req, res) => {
 module.exports = {
     createEntite,
     getEntites,
+    getEntiteById,
     updateEntite,
     deleteEntite
 }

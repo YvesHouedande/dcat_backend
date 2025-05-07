@@ -44,7 +44,7 @@ const updateNature = async (id, data) => {
     try {
         const result = await db
         .update(nature_documents)
-        .set(data)
+        .set({...data, updated_at: new Date()})
         .where(eq(nature_documents.id_nature_document, id))
         .returning();
         return result;

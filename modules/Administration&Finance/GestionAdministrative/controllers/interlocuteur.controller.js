@@ -30,6 +30,18 @@ const getInterlocuteurbyPartenaire = async (req, res) => {
     }
 }
 
+const getInterlocuteurById = async (req, res) => {
+    try {
+        const interlocuteur = await interlocuteurService.getInterlocuteurById(req.params.id);
+        if (!interlocuteur) {
+            return res.status(404).json({ message: 'Interlocuteur not found' });
+        }
+        res.status(200).json(interlocuteur);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 const updateInterlocuteur = async (req, res) => {
     try {
         const interlocuteur = await interlocuteurService.updateInterlocuteur(req.params.id, req.body);
@@ -58,6 +70,7 @@ module.exports = {
     createInterlocuteur,
     getInterlocuteurs,
     getInterlocuteurbyPartenaire,
+    getInterlocuteurById,
     updateInterlocuteur,
     deleteInterlocuteur
 }
