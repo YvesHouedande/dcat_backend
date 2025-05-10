@@ -30,16 +30,18 @@ const clientsService = {
 
     return { client: user[0], passwordOk };
   },
+  
   // Inscription d'un client
   register: async ({ nom, email, contact, password }) => {
     const exist = await db.select().from(clients_en_ligne).where(eq(clients_en_ligne.email, email)).limit(1);
+    
     if (exist.length > 0) throw new Error("Email déjà utilisé");
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await db.insert(clients_en_ligne).values({
-      nom,
-      email,
+      nom: nom,
+      email: email,
       contact: contact,
       password: hashedPassword,
       role: "client",

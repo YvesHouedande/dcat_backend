@@ -124,7 +124,6 @@ const refresh_tokens = pgTable("refresh_tokens", {
 const commandes = pgTable("commandes", {
   id_commande: serial("id_commande").primaryKey(),
   date_de_commande: date("date_de_commande"),
-  //etat_commande : retourner, valider, annuler, en cours
   etat_commande: varchar("etat_commande", { length: 50 }).default("En cours"),
   date_livraison: date("date_livraison"),
   lieu_de_livraison: varchar("lieu_de_livraison", { length: 50 }),
@@ -621,6 +620,7 @@ const commande_produits = pgTable(
       .notNull()
       .references(() => produits.id_produit),
     quantite: integer("quantite"),
+    prix_unitaire: decimal("prix_unitaire", { precision: 10, scale: 2 }),
     created_at: timestamp("created_at").defaultNow().notNull(),
     updated_at: timestamp("updated_at").defaultNow().notNull(),
   },
