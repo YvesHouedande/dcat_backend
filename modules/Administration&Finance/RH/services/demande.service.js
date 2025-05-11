@@ -1,6 +1,6 @@
 const {eq} = require("drizzle-orm");
 const {db} = require("../../../../core/database/config")
-const {demandes} = require("../../../../core/database/models")
+const {demandes,documents} = require("../../../../core/database/models");
 
 const createDemande = async (data) => {
     try {
@@ -44,7 +44,7 @@ const updateDemande = async (id, data) => {
     try {
         const result = await db
         .update(demandes)
-        .set(data)
+        .set({...data, updated_at: new Date()})
         .where(eq(demandes.id_demandes, id))
         .returning();
         return result;
@@ -67,10 +67,30 @@ const deleteDemande = async (id) => {
     }
 }
 
+const addDocumentToDemande = async (documentData) => {
+
+    const result = await db
+    .insert(documents)
+    .values(documentData)
+    .returning();
+    return result;
+}
+
+const getdemandeById = async (id) =>{
+    const result = await db
+    .select()
+    .from(demandes)
+    .where(eq(demandes.id_demandes, id))
+    return result;
+}
+
+
 module.exports = {
     createDemande,
     getAllDemandes,
     getdemandeBytype,
     updateDemande,
-    deleteDemande
+    deleteDemande,
+    addDocumentToDemande,
+    getdemandeById
 }

@@ -45,7 +45,6 @@ app.use('/api', swaggerRoutes);
 // Chargement des modules
 app.use("/api/stocks", loadModule("stocks"));
 app.use("/api/moyens-generaux", loadModule("moyens_generaux"));
-app.use("/api/users", loadModule("users"));
 app.use("/api/administration", loadModule("Administration&Finance"));
 
 // CHARGEMENT DES ENDPOINT DU MODULZ TECHNIQUES

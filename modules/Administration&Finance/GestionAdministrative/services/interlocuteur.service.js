@@ -12,12 +12,21 @@ const getInterlocuteurs = async () => {
 }
 
 const getInterlocuteurbyPartenaire = async (id) => {
-    const [result] = await db.select().from(interlocuteur).where(eq(interlocuteurs.id_partenaire, id));
+    const result = await db.select().from(interlocuteurs).where(eq(interlocuteurs.id_partenaire, id));
+    return result;
+}
+
+const getInterlocuteurById = async (id) => {
+    const [result] = await db.select().from(interlocuteurs).where(eq(interlocuteurs.id_interlocuteur, id));
     return result;
 }
 
 const updateInterlocuteur = async (id, data) => {
-    const [result] = await db.update(interlocuteurs).set(data).where(eq(interlocuteurs.id_interlocuteur, id)).returning();
+    const [result] = await db
+    .update(interlocuteurs)
+    .set({...data, updated_at: new Date()})
+    .where(eq(interlocuteurs.id_interlocuteur, id))
+    .returning();
     return result;
 }
 
@@ -30,6 +39,7 @@ module.exports = {
     createInterlocuteur,
     getInterlocuteurs,
     getInterlocuteurbyPartenaire,
+    getInterlocuteurById,
     updateInterlocuteur,
     deleteInterlocuteur
 }
