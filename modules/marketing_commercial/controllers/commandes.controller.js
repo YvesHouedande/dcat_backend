@@ -32,12 +32,18 @@ const commandesController = {
       
       const commande = await commandesService.createCommande(req.body);
       
+      if (!commande || !commande.id_commande) {
+        return res.status(500).json({ 
+          success: false, 
+          error: "Erreur lors de la création de la commande" 
+        });
+      }
+      
       // Récupérer la commande complète avec les produits
       const commandeComplete = await commandesService.getCommandeById(commande.id_commande);
       
       res.status(201).json({ success: true, commande: commandeComplete });
     } catch (error) {
-      console.error("Erreur création commande:", error);
       res.status(400).json({ success: false, error: "Erreur lors de la création de la commande" });
     }
   },
@@ -56,7 +62,6 @@ const commandesController = {
       const commande = await commandesService.getCommandeById(id);
       res.json({ success: true, commande });
     } catch (error) {
-      console.error("Erreur récupération commande:", error);
       if (error.message === "Commande non trouvée") {
         return res.status(404).json({ success: false, error: "Commande non trouvée" });
       }
@@ -78,7 +83,6 @@ const commandesController = {
       const commandes = await commandesService.getClientCommandes(clientId);
       res.json({ success: true, commandes });
     } catch (error) {
-      console.error("Erreur récupération commandes client:", error);
       res.status(500).json({ success: false, error: "Erreur lors de la récupération des commandes" });
     }
   },
@@ -97,7 +101,6 @@ const commandesController = {
       const commandes = await commandesService.getCommandesByStatus(status);
       res.json({ success: true, commandes });
     } catch (error) {
-      console.error("Erreur récupération commandes par statut:", error);
       res.status(500).json({ success: false, error: "Erreur lors de la récupération des commandes" });
     }
   },
@@ -117,7 +120,6 @@ const commandesController = {
       try {
         await commandesService.getCommandeById(id);
       } catch (error) {
-        console.error("Erreur vérification existence commande:", error);
         if (error.message === "Commande non trouvée") {
           return res.status(404).json({ success: false, error: "Commande non trouvée" });
         }
@@ -127,7 +129,6 @@ const commandesController = {
       const produits = await commandesService.getCommandeProducts(id);
       res.json({ success: true, produits });
     } catch (error) {
-      console.error("Erreur récupération produits commande:", error);
       res.status(500).json({ success: false, error: "Erreur lors de la récupération des produits de la commande" });
     }
   },
@@ -159,7 +160,6 @@ const commandesController = {
         data: updatedCommande
       });
     } catch (error) {
-      console.error("Erreur mise à jour statut commande:", error);
       // Gestion spécifique des erreurs
       if (error.message.includes("État de commande invalide")) {
         return res.status(400).json({ 
@@ -208,7 +208,6 @@ const commandesController = {
         data: updatedCommande
       });
     } catch (error) {
-      console.error("Erreur mise à jour date livraison:", error);
       if (error.message === "Commande non trouvée") {
         return res.status(404).json({ 
           success: false, 
@@ -255,7 +254,6 @@ const commandesController = {
         data: updatedCommande
       });
     } catch (error) {
-      console.error("Erreur mise à jour statut et date commande:", error);
       if (error.message.includes("État de commande invalide")) {
         return res.status(400).json({ 
           success: false, 

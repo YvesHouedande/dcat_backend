@@ -213,4 +213,35 @@ router.post('/refresh-token', clientsController.refreshToken);
  */
 router.post('/logout', clientsController.logout);
 
+/**
+ * @swagger
+ * /api/clients/admin/all:
+ *   get:
+ *     summary: Récupère tous les clients
+ *     description: Liste tous les clients enregistrés (fonctionnalité admin)
+ *     tags: [Clients Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Liste des clients récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 clients:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Client'
+ *       401:
+ *         description: Non autorisé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/admin/all', clientsController.getAllClients);
+
 module.exports = router;
