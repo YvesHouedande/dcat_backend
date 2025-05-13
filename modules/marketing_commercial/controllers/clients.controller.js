@@ -18,6 +18,7 @@ const clientsController = {
     }
   },
 
+  //gere la connexion des clients
   login: async (req, res) => {
     try {
       // Vérification des champs requis dès le début
