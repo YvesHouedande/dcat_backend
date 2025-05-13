@@ -30,21 +30,34 @@ const commandesController = {
         });
       }
       
-      const commande = await commandesService.createCommande(req.body);
-      
-      if (!commande || !commande.id_commande) {
+      try {
+        const commande = await commandesService.createCommande(req.body);
+        
+        if (!commande || !commande.id_commande) {
+          return res.status(500).json({ 
+            success: false, 
+            error: "Erreur lors de la création de la commande: commande invalide retournée par le service" 
+          });
+        }
+        
+        // Récupérer la commande complète avec les produits
+        const commandeComplete = await commandesService.getCommandeById(commande.id_commande);
+        
+        res.status(201).json({ success: true, commande: commandeComplete });
+      } catch (serviceError) {
+        console.error("Erreur service commande:", serviceError);
         return res.status(500).json({ 
           success: false, 
-          error: "Erreur lors de la création de la commande" 
+          error: `Erreur du service lors de la création de la commande: ${serviceError.message}` 
         });
       }
-      
-      // Récupérer la commande complète avec les produits
-      const commandeComplete = await commandesService.getCommandeById(commande.id_commande);
-      
-      res.status(201).json({ success: true, commande: commandeComplete });
     } catch (error) {
-      res.status(400).json({ success: false, error: "Erreur lors de la création de la commande" });
+      console.error("Erreur globale création commande:", error);
+      res.status(400).json({ 
+        success: false, 
+        error: `Erreur lors de la création de la commande: ${error.message || "Erreur inconnue"}`,
+        details: error.stack
+      });
     }
   },
 
@@ -81,9 +94,14 @@ const commandesController = {
       }
       
       const commandes = await commandesService.getClientCommandes(clientId);
+      
       res.json({ success: true, commandes });
     } catch (error) {
-      res.status(500).json({ success: false, error: "Erreur lors de la récupération des commandes" });
+      res.status(500).json({ 
+        success: false, 
+        error: "Erreur lors de la récupération des commandes",
+        details: error.message
+      });
     }
   },
 
