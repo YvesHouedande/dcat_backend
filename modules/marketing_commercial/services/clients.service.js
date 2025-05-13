@@ -48,6 +48,26 @@ const clientsService = {
     });
 
     return { message: "Inscription réussie" };
+  },
+
+  // Récupérer tous les clients (pour admin)
+  getAllClients: async () => {
+    try {
+      const allClients = await db.select({
+        id_client: clients_en_ligne.id_client,
+        nom: clients_en_ligne.nom,
+        email: clients_en_ligne.email,
+        contact: clients_en_ligne.contact,
+        role: clients_en_ligne.role,
+        created_at: clients_en_ligne.created_at,
+      })
+      .from(clients_en_ligne)
+      .orderBy(clients_en_ligne.created_at);
+      
+      return allClients;
+    } catch (error) {
+      throw new Error("Erreur lors de la récupération des clients: " + error.message);
+    }
   }
 };
 
