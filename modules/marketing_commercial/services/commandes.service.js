@@ -3,6 +3,7 @@ const { commandes, commande_produits, clients_en_ligne, produits, familles, marq
 const { eq, desc, and, sql } = require("drizzle-orm");
 const nodemailer = require('nodemailer');
 
+
 // Configuration de Nodemailer avec les variables d'environnement
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'node180-eu.n0c.com',
@@ -16,9 +17,11 @@ const transporter = nodemailer.createTransport({
 
 // Adresse email d'expédition
 const emailFrom = '"DCAT" <sales@dcat.ci>';
-// Chemin vers le logo de l'entreprise
+
+// Chemin vers le logo de l'entreprise - utiliser un chemin d'URL absolue
+const baseUrl = process.env.BASE_URL || 'https://dcat.ci';
+// Utiliser le chemin avec des slashes pour les URLs (compatible avec tous les OS)
 const logoPath = 'media/images/services_dcat/entreprise_logo.png';
-const baseUrl = 'https://dcat.ci';
 const logoUrl = `${baseUrl}/${logoPath}`;
 
 // Style commun pour les emails
