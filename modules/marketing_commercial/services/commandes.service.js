@@ -16,10 +16,9 @@ const transporter = nodemailer.createTransport({
 
 // Adresse email d'expédition
 const emailFrom = '"DCAT" <sales@dcat.ci>';
-// 'https://dcat.ci'
 // Chemin vers le logo de l'entreprise
 const logoPath = 'media/images/services_dcat/entreprise_logo.png';
-const baseUrl = process.env.API_BASE_URL || 'http://172.23.98.211:2000';
+const baseUrl = 'https://dcat.ci';
 const logoUrl = `${baseUrl}/${logoPath}`;
 
 // Style commun pour les emails
