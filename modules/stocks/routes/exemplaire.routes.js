@@ -173,46 +173,53 @@ router.get("/produit/:id", controller.getExemplairesByProduit);
  *         required: true
  *         schema:
  *           type: string
- *         description: "État de l'exemplaire (ex: Disponible, Réserve, Vendu)"
+ *         description: "Vendu, Disponible, Utilisation, En maintenance, Endommage, Reserve"
  *     responses:
  *       200:
- *         description: Liste des exemplaires filtrés selon l'état
+ *         description: Liste des exemplaires filtrés selon l'état, avec total
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id_exemplaire:
- *                     type: integer
- *                     example: 11
- *                   num_serie:
- *                     type: string
- *                     example: "serie-5"
- *                   date_entree:
- *                     type: string
- *                     format: date
- *                     example: "2025-04-23"
- *                   etat_exemplaire:
- *                     type: string
- *                     example: "Disponible"
- *                   id_livraison:
- *                     type: integer
- *                     example: 1
- *                   id_produit:
- *                     type: integer
- *                     example: 5
- *                   created_at:
- *                     type: string
- *                     format: date-time
- *                     example: "2025-04-28T15:07:29.561Z"
- *                   updated_at:
- *                     type: string
- *                     format: date-time
- *                     example: "2025-04-28T15:54:11.714Z"
+ *               type: object
+ *               properties:
+ *                 total:
+ *                   type: integer
+ *                   example: 3
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_exemplaire:
+ *                         type: integer
+ *                         example: 11
+ *                       num_serie:
+ *                         type: string
+ *                         example: "serie-5"
+ *                       date_entree:
+ *                         type: string
+ *                         format: date
+ *                         example: "2025-04-23"
+ *                       etat_exemplaire:
+ *                         type: string
+ *                         example: "Disponible"
+ *                       id_livraison:
+ *                         type: integer
+ *                         example: 1
+ *                       id_produit:
+ *                         type: integer
+ *                         example: 5
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-04-28T15:07:29.561Z"
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-04-28T15:54:11.714Z"
  */
 
-router.get("/produit/:id/etat/:etat", controller.filterExemplairesByEtat);
+
+router.get("/produit/:id/etat/:etat", controller.filterExemplairesByEtat);  // id : id du produit de l'exemplaire ; etat : etat de l'exemplaire ("Vendu"...)
 
 module.exports = router;

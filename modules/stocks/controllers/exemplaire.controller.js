@@ -114,6 +114,7 @@ const getExemplairesByProduit = async (req, res) => {
 };
 
 //filtrer les exemplaires selon leur etat (disponible,vendu...)
+// id : id du produit de l'exemplaire ; etat : etat de l'exemplaire ("Vendu"...)
 const filterExemplairesByEtat = async (req, res) => {
   try {
     const { id, etat } = req.params;
@@ -160,7 +161,6 @@ const filterExemplairesByEtat = async (req, res) => {
     });
   }
 };
-
 
 // // Vérifie si un exemplaire spécifique est en cours d'utilisation
 // const isExemplaireInUse = async (req, res) => {

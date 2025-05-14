@@ -4,7 +4,8 @@ const router = express.Router();
 // Import des sous-routes
 const outilsRoutes = require("./mouvementOutil.route");
 const moyenstravailRoutes = require("./moyensdeTravail.route"); //moyens de travail
-const maintenanceRoutes = require("./maintenance.route"); //moyens de travail
+const maintenanceRoutes = require("./maintenance.route"); 
+const maintenanceMoyenTravailRoutes = require("./maintenance.route"); 
 
 // Montage des routes
 
@@ -37,5 +38,16 @@ router.use("/moyens-travail", moyenstravailRoutes);
 //  *     tags: [Maintenances]
 //  */
 router.use("/maintenances", maintenanceRoutes);
+
+
+// /**
+//  * @swagger
+//  * /maintenances:
+//  *   description: Routes liées aux maintenances
+//  *   get:
+//  *     summary: Accède aux maintenances
+//  *     tags: [Maintenances]
+//  */
+router.use("/maintenance-moyen-travails", maintenanceMoyenTravailRoutes);
 
 module.exports = router;

@@ -74,3 +74,32 @@ module.exports = {
   updateModele,
   deleteModele,
 };
+
+
+
+
+
+// [
+//   {"libelle_modele": "Bravia X90J", "id_marque": 1 },
+//   {"libelle_modele": "EliteBook 840", "id_marque": 2 },
+//   {"libelle_modele": "Galaxy Tab S9", "id_marque": 3 },
+//   {"libelle_modele": "OLED CX", "id_marque": 4 },
+//   {"libelle_modele": "Tiger Neo N-type", "id_marque": 5 },
+//   {"libelle_modele": "Tahoma Switch", "id_marque": 6 },
+//   {"libelle_modele": "SmartHub 3", "id_marque": 3 },
+//   {"libelle_modele": "ProDesk 600", "id_marque": 2 }
+// ]
+
+
+
+// [
+//   {"libelle_modele": "Bravia X90J"},
+//   {"libelle_modele": "EliteBook 840"},
+//   {"libelle_modele": "Galaxy Tab S9"},
+//   {"libelle_modele": "OLED CX"},
+//   {"libelle_modele": "Tiger Neo N-type"},
+//   {"libelle_modele": "Tahoma Switch"},
+//   {"libelle_modele": "SmartHub 3"},
+//   {"libelle_modele": "ProDesk 600"}
+// ]
+
