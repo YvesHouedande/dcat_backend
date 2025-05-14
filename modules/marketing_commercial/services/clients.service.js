@@ -30,22 +30,44 @@ const clientsService = {
 
     return { client: user[0], passwordOk };
   },
+  
   // Inscription d'un client
   register: async ({ nom, email, contact, password }) => {
     const exist = await db.select().from(clients_en_ligne).where(eq(clients_en_ligne.email, email)).limit(1);
+    
     if (exist.length > 0) throw new Error("Email déjà utilisé");
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await db.insert(clients_en_ligne).values({
-      nom,
-      email,
+      nom: nom,
+      email: email,
       contact: contact,
       password: hashedPassword,
       role: "client",
     });
 
     return { message: "Inscription réussie" };
+  },
+
+  // Récupérer tous les clients (pour admin)
+  getAllClients: async () => {
+    try {
+      const allClients = await db.select({
+        id_client: clients_en_ligne.id_client,
+        nom: clients_en_ligne.nom,
+        email: clients_en_ligne.email,
+        contact: clients_en_ligne.contact,
+        role: clients_en_ligne.role,
+        created_at: clients_en_ligne.created_at,
+      })
+      .from(clients_en_ligne)
+      .orderBy(clients_en_ligne.created_at);
+      
+      return allClients;
+    } catch (error) {
+      throw new Error("Erreur lors de la récupération des clients: " + error.message);
+    }
   }
 };
 

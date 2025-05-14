@@ -17,6 +17,7 @@ services:
     depends_on:
       - postgres
       - keycloak
+    restart: always
     networks:
       - dcat_network
 

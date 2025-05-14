@@ -4,7 +4,8 @@ const router = express.Router();
 
 router.post("/", interlocuteurController.createInterlocuteur);
 router.get("/", interlocuteurController.getInterlocuteurs);
-router.get("/:id", interlocuteurController.getInterlocuteurbyPartenaire);
+router.get("/partenaire/:id", interlocuteurController.getInterlocuteurbyPartenaire);
+router.get("/:id", interlocuteurController.getInterlocuteurById);
 router.put("/:id", interlocuteurController.updateInterlocuteur);
 router.delete("/:id", interlocuteurController.deleteInterlocuteur);
 

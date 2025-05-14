@@ -17,7 +17,10 @@ const getContratsbyPartenaire=async(id)=>{
 }
 
 const updateContrat=async(id,data)=>{
-    const [result]=await db.update(contrats).set(data).where(eq(contrats.id_contrat,id)).returning()
+    const [result]=await db
+    .update(contrats)
+    .set({...data ,updated_at:new Date()})
+    .where(eq(contrats.id_contrat,id)).returning()
     return result
 }
 

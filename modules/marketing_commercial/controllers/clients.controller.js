@@ -18,6 +18,7 @@ const clientsController = {
     }
   },
 
+  //gere la connexion des clients
   login: async (req, res) => {
     try {
       // Vérification des champs requis dès le début
@@ -180,6 +181,19 @@ const clientsController = {
 
     await db.delete(refresh_tokens).where(eq(refresh_tokens.token, refreshToken));
     res.json({ success: true, message: "Déconnexion réussie" });
+  },
+
+  // Récupérer tous les clients (fonctionnalité admin)
+  getAllClients: async (req, res) => {
+    try {
+      const clients = await clientsService.getAllClients();
+      res.json({ success: true, clients });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        error: "Erreur lors de la récupération des clients: " + error.message
+      });
+    }
   },
 };
 
