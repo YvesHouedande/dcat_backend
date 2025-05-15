@@ -15,7 +15,7 @@ const controller = require("../controllers/mouvementOutil.controller");
 
 /**
  * @swagger
- * /outils:
+ * /moyens-generaux/outils:
  *   get:
  *     summary: Récupère tous les outils
  *     tags: [Outils]
@@ -53,7 +53,7 @@ router.get("/", controller.getAllOutils);
 
 /**
  * @swagger
- * /outils/exemplaires:
+ * /moyens-generaux/outils/exemplaires:
  *   get:
  *     summary: Récupère les exemplaires d'outils
  *     tags: [Outils]
@@ -100,7 +100,7 @@ router.get("/exemplaires", controller.getExemplairesOutils);
 
 /**
  * @swagger
- * /outils/sortie:
+ * /moyens-generaux/outils/sortie:
  *   post:
  *     summary: Enregistre une sortie d'outil
  *     tags: [Outils]
@@ -109,7 +109,7 @@ router.post("/sortie", controller.enregistrerSortieOutil);
 
 /**
  * @swagger
- * /outils/entree:
+ * /moyens-generaux/outils/entree:
  *   post:
  *     summary: Enregistre une entrée d'outil
  *     tags: [Outils]
@@ -118,7 +118,7 @@ router.post("/entree", controller.enregistrerEntreeOutil);
 
 /**
  * @swagger
- * /outils/etat/{id_exemplaire}/{id_employes}:
+ * /moyens-generaux/outils/etat/{id_exemplaire}/{id_employes}:
  *   get:
  *     summary: Vérifie si un outil sorti a été retourné
  *     tags: [Outils]
@@ -148,7 +148,7 @@ router.get("/etat/:id_exemplaire/:id_employes", controller.estOutilRetourne);
 
 /**
  * @swagger
- * /outils/historique/{id}:
+ * /moyens-generaux/outils/historique/{id}:
  *   get:
  *     summary: Récupère l'historique des entrées et sorties d'un outil spécifique
  *     tags: [Outils]
@@ -157,7 +157,7 @@ router.get("/historique/:id", controller.getHistoriqueOutils);
 
 /**
  * @swagger
- * /outils/historiques:
+ * /moyens-generaux/outils/historiques:
  *   get:
  *     summary: Récupère l'historique global des entrées et sorties de tous les outils
  *     tags: [Outils]

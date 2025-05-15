@@ -9,7 +9,7 @@ const controller = require("../controllers/achat.controller");
 
 /**
  * @swagger
- * /achats:
+ * /stocks/achats:
  *   get:
  *     summary: Récupère tous les achats
  *     description: Retourne la liste complète de tous les achats enregistrés
@@ -49,7 +49,7 @@ router.get("/", controller.getAllAchats);
 
 /**
  * @swagger
- * /achats/{id}:
+ * /stocks/achats/{id}:
  *   get:
  *     summary: Récupère un achat par ID
  *     tags: [Achats]
@@ -58,7 +58,7 @@ router.get("/:id", controller.getAchatById);
 
 /**
  * @swagger
- * /achats/{id}:
+ * /stocks/achats/{id}:
  *   put:
  *     summary: Met à jour un achat par ID
  *     tags: [Achats]
@@ -67,7 +67,7 @@ router.put("/:id", controller.updateAchat);
 
 /**
  * @swagger
- * /achats/exemplaire/{id}:
+ * /stocks/achats/exemplaire/{id}:
  *   get:
  *     summary: Récupère un achat via l'ID d'un exemplaire
  *     tags: [Achats]

@@ -11,7 +11,7 @@ const controller = require("../controllers/modele.controller");
 
 /**
  * @swagger
- * /modeles:
+ * /stocks/modeles:
  *   post:
  *     summary: Crée un nouveau modèle
  *     tags: [Modèles]
@@ -20,7 +20,7 @@ router.post("/", controller.createModele);
 
 /**
  * @swagger
- * /modeles:
+ * /stocks/modeles:
  *   get:
  *     summary: Récupère tous les modèles
  *     tags: [Modèles]
@@ -44,7 +44,7 @@ router.get("/", controller.getModeles);
 
 /**
  * @swagger
- * /modeles/{id}:
+ * /stocks/modeles/{id}:
  *   get:
  *     summary: Récupère un modèle par ID
  *     tags: [Modèles]
@@ -53,7 +53,7 @@ router.get("/:id", controller.getModeleById);
 
 /**
  * @swagger
- * /modeles/{id}:
+ * /stocks/modeles/{id}:
  *   put:
  *     summary: Met à jour un modèle par ID
  *     tags: [Modèles]
@@ -62,7 +62,7 @@ router.put("/:id", controller.updateModele);
 
 /**
  * @swagger
- * /modeles/{id}:
+ * /stocks/modeles/{id}:
  *   delete:
  *     summary: Supprime un modèle par ID
  *     tags: [Modèles]

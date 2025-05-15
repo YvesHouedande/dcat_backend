@@ -5,7 +5,7 @@ const controller = require("../controllers/maintenance.controller");
 // CRUD Routes
 /**
  * @swagger
- * /maintenances:
+ * /moyens-generaux/maintenances:
  *   post:
  *     summary: Crée une nouvelle maintenance
  *     tags: [Maintenances]
@@ -14,7 +14,7 @@ router.post("/", controller.createMaintenance);
 
 /**
  * @swagger
- * /maintenances:
+ * /moyens-generaux/maintenances:
  *   get:
  *     summary: Récupère toutes les maintenances
  *     tags: [Maintenances]
@@ -48,7 +48,7 @@ router.get("/", controller.getMaintenances);
 
 /**
  * @swagger
- * /maintenances/{id}:
+ * /moyens-generaux/maintenances/{id}:
  *   get:
  *     summary: Récupère une maintenance par ID
  *     tags: [Maintenances]
@@ -57,7 +57,7 @@ router.get("/:id", controller.getMaintenanceById);
 
 /**
  * @swagger
- * /maintenances/{id}:
+ * /moyens-generaux/maintenances/{id}:
  *   put:
  *     summary: Met à jour une maintenance par ID
  *     tags: [Maintenances]
@@ -66,7 +66,7 @@ router.put("/:id", controller.updateMaintenance);
 
 /**
  * @swagger
- * /maintenances/{id}:
+ * /moyens-generaux/maintenances/{id}:
  *   delete:
  *     summary: Supprime une maintenance par ID
  *     tags: [Maintenances]

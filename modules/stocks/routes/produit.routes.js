@@ -21,7 +21,7 @@ router.post("/", controller.createProduit);
 
 /**
  * @swagger
- * /produits:
+ * /stocks/produits:
  *   get:
  *     summary: Récupère tous les produits
  *     tags: [Produits]
@@ -71,7 +71,7 @@ router.get("/", controller.getProduits);
 
 /**
  * @swagger
- * /produits/{id}:
+ * /stocks/produits/{id}:
  *   get:
  *     summary: Récupère un produit par ID
  *     tags: [Produits]
@@ -80,16 +80,16 @@ router.get("/:id", controller.getProduitById);
 
 /**
  * @swagger
- * /produits/{idType}:
+ * /stocks/produits/type/{idType}:
  *   get:
  *     summary: Récupère tous les produits par type (outils/équipements)
  *     tags: [Produits]
  */
-router.get("/:idType", controller.getProduitsByTypes);
+router.get("/type/:idType", controller.getProduitsByTypes);
 
 /**
  * @swagger
- * /produits/{id}:
+ * /stocks/produits/{id}:
  *   put:
  *     summary: Met à jour un produit par ID
  *     tags: [Produits]
@@ -98,7 +98,7 @@ router.put("/:id", controller.updateProduit);
 
 /**
  * @swagger
- * /produits/{id}:
+ * /stocks/produits/{id}:
  *   delete:
  *     summary: Supprime un produit par ID
  *     tags: [Produits]

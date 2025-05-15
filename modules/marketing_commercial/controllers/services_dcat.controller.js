@@ -234,6 +234,49 @@ const servicesDcatController = {
         details: error.message 
       });
     }
+  },
+  
+  /**
+   * Télécharge une image en conservant son nom original
+   * Cet endpoint est utilisé spécifiquement pour importer des images
+   * de services DCAT sans modifier leur nom
+   */
+  uploadServiceImage: async (req, res) => {
+    try {
+      // Vérifier qu'une image a été envoyée
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Aucune image n'a été téléchargée" 
+        });
+      }
+      
+      // Construire le chemin relatif de l'image
+      const relativePath = path.join('media/images/services_dcat', req.file.originalname)
+        .replace(/\\/g, '/');
+      
+      // Retourner le chemin d'accès de l'image
+      return res.status(201).json({
+        success: true,
+        imagePath: relativePath,
+        message: "Image téléchargée avec succès"
+      });
+    } catch (error) {
+      // En cas d'erreur, on supprime l'image si elle a été uploadée
+      if (req.file && req.file.path) {
+        try {
+          await fs.unlink(req.file.path);
+        } catch (unlinkError) {
+          // Si la suppression de l'image échoue, on ne fait rien de plus
+        }
+      }
+      
+      return res.status(500).json({
+        success: false,
+        error: "Erreur lors du téléchargement de l'image",
+        details: error.message
+      });
+    }
   }
 };
 

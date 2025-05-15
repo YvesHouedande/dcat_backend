@@ -74,6 +74,7 @@
 //   updatePartenaire,
 //   deletePartenaire,
 // };
+//bonjour
 
 const partenaireService = require("../services/partenaire.service");
 

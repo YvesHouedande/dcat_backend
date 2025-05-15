@@ -13,7 +13,7 @@ const controller = require("../controllers/livraison.controller");
 
 /**
  * @swagger
- * /livraisons:
+ * /stocks/livraisons:
  *   post:
  *     summary: Crée une nouvelle livraison
  *     tags: [Livraisons]
@@ -22,7 +22,7 @@ router.post("/", controller.createLivraison);
 
 /**
  * @swagger
- * /livraisons:
+ * /stocks/livraisons:
  *   get:
  *     summary: Récupère toutes les livraisons
  *     tags: [Livraisons]
@@ -58,7 +58,7 @@ router.get("/", controller.getLivraisons);
 
 /**
  * @swagger
- * /livraisons/{id}:
+ * /stocks/livraisons/{id}:
  *   get:
  *     summary: Récupère une livraison par ID
  *     tags: [Livraisons]
@@ -67,7 +67,7 @@ router.get("/:id", controller.getLivraisonById);
 
 /**
  * @swagger
- * /livraisons/{id}:
+ * /stocks/livraisons/{id}:
  *   put:
  *     summary: Met à jour une livraison par ID
  *     tags: [Livraisons]
@@ -76,7 +76,7 @@ router.put("/:id", controller.updateLivraison);
 
 /**
  * @swagger
- * /livraisons/{id}:
+ * /stocks/livraisons/{id}:
  *   delete:
  *     summary: Supprime une livraison par ID
  *     tags: [Livraisons]
@@ -85,7 +85,7 @@ router.delete("/:id", controller.deleteLivraison);
 
 /**
  * @swagger
- * /livraisons/{id}/exemplaires:
+ * /stocks/livraisons/{id}/exemplaires:
  *   get:
  *     summary: Récupère les exemplaires ajoutés lors d'une livraison
  *     tags: [Livraisons]
