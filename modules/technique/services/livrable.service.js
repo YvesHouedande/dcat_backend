@@ -60,6 +60,10 @@ const livrableService = {
     // 3. Supprimer l'entrée en base
     const [result] = await db.delete(documents).where(eq(documents.id_documents, documentId)).returning();
     return result;
+  },
+
+  getLivrablesByProjet: async (projetId) => {
+    return await db.select().from(livrables).where(eq(livrables.id_projet, projetId));
   }
 };
 
