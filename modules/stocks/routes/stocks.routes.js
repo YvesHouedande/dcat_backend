@@ -29,7 +29,7 @@ const achatRoutes = require("./achat.route");
 
 // /**
 //  * @swagger
-//  * /familles:
+//  * /stocks/familles:
 //  *   description: Routes liées aux familles
 //  *   get:
 //  *     summary: Accède aux familles de produits
@@ -39,7 +39,7 @@ router.use("/familles", familleRoutes);
 
 // /**
 //  * @swagger
-//  * /categories:
+//  * /stocks/categories:
 //  *   description: Routes liées aux catégories
 //  *   get:
 //  *     summary: Accède aux catégories de produits
@@ -49,7 +49,7 @@ router.use("/categories", categorieRoutes);
 
 // /**
 //  * @swagger
-//  * /marques:
+//  * /stocks/marques:
 //  *   description: Routes liées aux marques
 //  *   get:
 //  *     summary: Accède aux marques de produits
@@ -59,7 +59,7 @@ router.use("/marques", marqueRoutes);
 
 // /**
 //  * @swagger
-//  * /modeles:
+//  * /stocks/modeles:
 //  *   description: Routes liées aux modèles
 //  *   get:
 //  *     summary: Accède aux modèles de produits
@@ -69,7 +69,7 @@ router.use("/modeles", modeleRoutes);
 
 // /**
 //  * @swagger
-//  * /produits:
+//  * /stocks/produits:
 //  *   description: Routes liées aux produits
 //  *   get:
 //  *     summary: Accède aux produits
@@ -79,7 +79,7 @@ router.use("/produits", produitRoutes);
 
 // /**
 //  * @swagger
-//  * /exemplaires:
+//  * /stocks/exemplaires:
 //  *   description: Routes liées aux exemplaires de produits
 //  *   get:
 //  *     summary: Accède aux exemplaires de produits
@@ -89,7 +89,7 @@ router.use("/exemplaires", exemplaireRoutes);
 
 // /**
 //  * @swagger
-//  * /livraisons:
+//  * /stocks/livraisons:
 //  *   description: Routes liées aux livraisons
 //  *   get:
 //  *     summary: Accède aux livraisons
@@ -99,7 +99,7 @@ router.use("/livraisons", livraisonRoutes);
 
 // /**
 //  * @swagger
-//  * /types-produits:
+//  * /stocks/types-produits:
 //  *   description: Routes liées aux types de produits
 //  *   get:
 //  *     summary: Accède aux types de produits
@@ -109,7 +109,7 @@ router.use("/types-produits", typesProduitRoutes);
 
 // /**
 //  * @swagger
-//  * /commandes:
+//  * /stocks/commandes:
 //  *   description: Routes liées aux commandes
 //  *   get:
 //  *     summary: Accède aux commandes
@@ -119,7 +119,7 @@ router.use("/commandes", commandeRoutes);
 
 // /**
 //  * @swagger
-//  * /sorties-exemplaires:
+//  * /stocks/sorties-exemplaires:
 //  *   description: Routes liées aux sorties d'exemplaires
 //  *   get:
 //  *     summary: Accède aux sorties d'exemplaires
@@ -129,7 +129,7 @@ router.use("/sorties-exemplaires", sortiesExemplairesRoutes);
 
 // /**
 //  * @swagger
-//  * /achats:
+//  * /stocks/achats:
 //  *   description: Routes liées aux achats
 //  *   get:
 //  *     summary: Accède aux achats
