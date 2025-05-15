@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
 const emailFrom = '"DCAT" <sales@dcat.ci>';
 
 // Chemin vers le logo de l'entreprise - utiliser un chemin d'URL absolue
-const baseUrl = 'https://dcat.ci';
+const baseUrl = 'erpback.dcat.ci';
 // Utiliser le chemin avec des slashes pour les URLs (compatible avec tous les OS)
 const logoPath = 'media/images/services_dcat/entreprise_logo.png';
 const logoUrl = `${baseUrl}/${logoPath}`;
