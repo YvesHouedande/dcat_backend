@@ -130,7 +130,7 @@ const handleUploadError = (err, req, res, next) => {
 
 /**
  * @swagger
- * /api/interventions:
+ * /api/marketing_commercial/interventions:
  *   get:
  *     summary: Liste toutes les interventions
  *     description: Récupère la liste complète des interventions techniques
@@ -157,7 +157,7 @@ router.get("/", interventionsController.getAllInterventions);
 
 /**
  * @swagger
- * /api/interventions/{id}:
+ * /api/marketing_commercial/interventions/{id}:
  *   get:
  *     summary: Récupère une intervention par son ID
  *     description: Retourne les détails d'une intervention spécifique
@@ -191,7 +191,7 @@ router.get("/:id", interventionsController.getInterventionById);
 
 /**
  * @swagger
- * /api/interventions:
+ * /api/marketing_commercial/interventions:
  *   post:
  *     summary: Crée une nouvelle intervention
  *     description: Enregistre une nouvelle intervention technique
@@ -275,7 +275,7 @@ router.post("/", interventionsController.createIntervention);
 
 /**
  * @swagger
- * /api/interventions/{id}:
+ * /api/marketing_commercial/interventions/{id}:
  *   put:
  *     summary: Met à jour une intervention
  *     description: Modifie les informations d'une intervention existante
@@ -364,7 +364,7 @@ router.put("/:id", interventionsController.updateIntervention);
 
 /**
  * @swagger
- * /api/interventions/{id}:
+ * /api/marketing_commercial/interventions/{id}:
  *   delete:
  *     summary: Supprime une intervention
  *     description: Supprime une intervention existante par son ID
@@ -399,7 +399,7 @@ router.delete("/:id", interventionsController.deleteIntervention);
 
 /**
  * @swagger
- * /api/interventions/{id}/documents:
+ * /api/marketing_commercial/interventions/{id}/documents:
  *   post:
  *     summary: Ajoute un document à une intervention
  *     description: Télécharge et associe un document à une intervention existante
@@ -480,7 +480,7 @@ router.post("/:id/documents",
 
 /**
  * @swagger
- * /api/interventions/{id}/employes:
+ * /api/marketing_commercial/interventions/{id}/employes:
  *   post:
  *     summary: Ajoute un employé à une intervention
  *     description: Associe un employé à une intervention existante
@@ -529,7 +529,7 @@ router.post("/:id/employes", interventionsController.addEmployeToIntervention);
 
 /**
  * @swagger
- * /api/interventions/{id}/employes/{employeId}:
+ * /api/marketing_commercial/interventions/{id}/employes/{employeId}:
  *   delete:
  *     summary: Retire un employé d'une intervention
  *     description: Dissocie un employé d'une intervention existante
@@ -570,7 +570,7 @@ router.delete("/:id/employes/:employeId", interventionsController.removeEmployeF
 
 /**
  * @swagger
- * /api/interventions/{id}/employes:
+ * /api/marketing_commercial/interventions/{id}/employes:
  *   get:
  *     summary: Récupère les employés d'une intervention
  *     description: Retourne la liste des employés associés à une intervention spécifique
@@ -606,7 +606,7 @@ router.get("/:id/employes", interventionsController.getInterventionEmployes);
 
 /**
  * @swagger
- * /api/interventions/{id}/documents:
+ * /api/marketing_commercial/interventions/{id}/documents:
  *   get:
  *     summary: Récupère les documents d'une intervention
  *     description: Retourne la liste des documents associés à une intervention spécifique
@@ -642,7 +642,7 @@ router.get("/:id/documents", interventionsController.getInterventionDocuments);
 
 /**
  * @swagger
- * /api/interventions/{id}/documents/{documentId}:
+ * /api/marketing_commercial/interventions/{id}/documents/{documentId}:
  *   delete:
  *     summary: Supprime un document d'une intervention
  *     description: Supprime un document associé à une intervention spécifique

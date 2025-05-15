@@ -71,7 +71,7 @@ const tachesController = require("../controllers/taches.controller");
 
 /**
  * @swagger
- * /api/taches:
+ * /api/marketing_commercial/taches:
  *   get:
  *     summary: Liste toutes les tâches
  *     description: Récupère la liste complète des tâches avec leurs informations
@@ -98,7 +98,7 @@ router.get("/", tachesController.getAllTaches);
 
 /**
  * @swagger
- * /api/taches/{id}:
+ * /api/marketing_commercial/taches/{id}:
  *   get:
  *     summary: Récupère une tâche par son ID
  *     description: Retourne les détails d'une tâche spécifique
@@ -132,7 +132,7 @@ router.get("/:id", tachesController.getTacheById);
 
 /**
  * @swagger
- * /api/taches:
+ * /api/marketing_commercial/taches:
  *   post:
  *     summary: Crée une nouvelle tâche
  *     description: Enregistre une nouvelle tâche dans le système
@@ -196,7 +196,7 @@ router.post("/", tachesController.createTache);
 
 /**
  * @swagger
- * /api/taches/{id}:
+ * /api/marketing_commercial/taches/{id}:
  *   put:
  *     summary: Met à jour une tâche
  *     description: Modifie les informations d'une tâche existante
@@ -264,7 +264,7 @@ router.put("/:id", tachesController.updateTache);
 
 /**
  * @swagger
- * /api/taches/{id}:
+ * /api/marketing_commercial/taches/{id}:
  *   delete:
  *     summary: Supprime une tâche
  *     description: Supprime une tâche existante par son ID
@@ -299,7 +299,7 @@ router.delete("/:id", tachesController.deleteTache);
 
 /**
  * @swagger
- * /api/taches/{id}/employes:
+ * /api/marketing_commercial/taches/{id}/employes:
  *   post:
  *     summary: Assigne un employé à une tâche
  *     description: Associe un employé à une tâche existante
@@ -348,7 +348,7 @@ router.post("/:id/employes", tachesController.addEmployeToTache);
 
 /**
  * @swagger
- * /api/taches/{id}/employes/{employeId}:
+ * /api/marketing_commercial/taches/{id}/employes/{employeId}:
  *   delete:
  *     summary: Retire un employé d'une tâche
  *     description: Dissocie un employé d'une tâche existante
@@ -389,7 +389,7 @@ router.delete("/:id/employes/:employeId", tachesController.removeEmployeFromTach
 
 /**
  * @swagger
- * /api/taches/{id}/employes:
+ * /api/marketing_commercial/taches/{id}/employes:
  *   get:
  *     summary: Récupère les employés assignés à une tâche
  *     description: Retourne la liste des employés associés à une tâche spécifique
@@ -425,7 +425,7 @@ router.get("/:id/employes", tachesController.getTacheEmployes);
 
 /**
  * @swagger
- * /api/taches/projet/{projetId}:
+ * /api/marketing_commercial/taches/projet/{projetId}:
  *   get:
  *     summary: Récupère les tâches associées à un projet
  *     description: Retourne la liste des tâches appartenant à un projet spécifique

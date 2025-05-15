@@ -38,7 +38,7 @@ router.use((req, res, next) => {
  *           format: date-time
  *           description: Dernière date de mise à jour de l'affiche
  * 
- * /api/affiches:
+ * /api/marketing_commercial/affiches:
  *   get:
  *     summary: Liste toutes les affiches
  *     description: Retourne la liste complète des affiches promotionnelles
@@ -65,7 +65,7 @@ router.get('/', affichesController.getAllAffiches);
 
 /**
  * @swagger
- * /api/affiches/{id}:
+ * /api/marketing_commercial/affiches/{id}:
  *   get:
  *     summary: Récupère une affiche par son ID
  *     description: Retourne les détails d'une affiche promotionnelle spécifique
@@ -101,7 +101,7 @@ router.get('/:id', affichesController.getAfficheById);
 
 /**
  * @swagger
- * /api/affiches:
+ * /api/marketing_commercial/affiches:
  *   post:
  *     summary: Crée une nouvelle affiche
  *     description: Ajoute une nouvelle affiche promotionnelle avec image et textes
@@ -153,7 +153,7 @@ router.post('/', uploadMiddleware.single('image'), affichesController.createAffi
 
 /**
  * @swagger
- * /api/affiches/{id}:
+ * /api/marketing_commercial/affiches/{id}:
  *   put:
  *     summary: Met à jour une affiche
  *     description: Modifie une affiche promotionnelle existante
@@ -210,7 +210,7 @@ router.put('/:id', uploadMiddleware.single('image'), affichesController.updateAf
 
 /**
  * @swagger
- * /api/affiches/{id}:
+ * /api/marketing_commercial/affiches/{id}:
  *   delete:
  *     summary: Supprime une affiche
  *     description: Supprime définitivement une affiche promotionnelle et son image

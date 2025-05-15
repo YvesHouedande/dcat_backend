@@ -76,7 +76,7 @@ const UPLOAD_PATHS = {
 
 /**
  * @swagger
- * /api/livrables:
+ * /api/marketing_commercial/livrables:
  *   get:
  *     summary: Liste tous les livrables
  *     description: Récupère la liste complète des livrables avec leurs informations
@@ -103,7 +103,7 @@ router.get("/", livrableController.getAllLivrables);
 
 /**
  * @swagger
- * /api/livrables/{id}:
+ * /api/marketing_commercial/livrables/{id}:
  *   get:
  *     summary: Récupère un livrable par son ID
  *     description: Retourne les détails d'un livrable spécifique
@@ -137,7 +137,7 @@ router.get("/:id", livrableController.getLivrableById);
 
 /**
  * @swagger
- * /api/livrables:
+ * /api/marketing_commercial/livrables:
  *   post:
  *     summary: Crée un nouveau livrable
  *     description: Enregistre un nouveau livrable dans le système
@@ -198,7 +198,7 @@ router.post("/", livrableController.createLivrable);
 
 /**
  * @swagger
- * /api/livrables/{id}:
+ * /api/marketing_commercial/livrables/{id}:
  *   put:
  *     summary: Met à jour un livrable
  *     description: Modifie les informations d'un livrable existant
@@ -263,7 +263,7 @@ router.put("/:id", livrableController.updateLivrable);
 
 /**
  * @swagger
- * /api/livrables/{id}:
+ * /api/marketing_commercial/livrables/{id}:
  *   delete:
  *     summary: Supprime un livrable
  *     description: Supprime un livrable existant par son ID
@@ -298,7 +298,7 @@ router.delete("/:id", livrableController.deleteLivrable);
 
 /**
  * @swagger
- * /api/livrables/{id}/documents:
+ * /api/marketing_commercial/livrables/{id}/documents:
  *   post:
  *     summary: Ajoute un document à un livrable
  *     description: Télécharge et associe un document à un livrable existant
@@ -379,7 +379,7 @@ router.post("/:id/documents",
 
 /**
  * @swagger
- * /api/livrables/{id}/documents:
+ * /api/marketing_commercial/livrables/{id}/documents:
  *   get:
  *     summary: Récupère les documents d'un livrable
  *     description: Retourne la liste des documents associés à un livrable spécifique
@@ -415,7 +415,7 @@ router.get("/:id/documents", livrableController.getLivrableDocuments);
 
 /**
  * @swagger
- * /api/livrables/{id}/documents/{documentId}:
+ * /api/marketing_commercial/livrables/{id}/documents/{documentId}:
  *   delete:
  *     summary: Supprime un document d'un livrable
  *     description: Supprime un document associé à un livrable spécifique
@@ -456,7 +456,7 @@ router.delete("/:id/documents/:documentId", livrableController.deleteDocument);
 
 /**
  * @swagger
- * /api/livrables/projet/{projetId}:
+ * /api/marketing_commercial/livrables/projet/{projetId}:
  *   get:
  *     summary: Récupère les livrables associés à un projet
  *     description: Retourne la liste des livrables appartenant à un projet spécifique

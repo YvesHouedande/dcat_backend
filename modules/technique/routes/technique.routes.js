@@ -37,7 +37,7 @@ const livrablesRoutes = require("./livrable.routes");
 
 /**
  * @swagger
- * /api/technique/projets:
+ * /api/marketing_commercial/technique/projets:
  *   get:
  *     summary: API de gestion des projets
  *     description: Point d'entrée pour toutes les opérations liées aux projets
@@ -47,7 +47,7 @@ router.use("/projets", projetsRoutes);
 
 /**
  * @swagger
- * /api/technique/taches:
+ * /api/marketing_commercial/technique/taches:
  *   get:
  *     summary: API de gestion des tâches
  *     description: Point d'entrée pour toutes les opérations liées aux tâches des projets
@@ -57,7 +57,7 @@ router.use("/taches", tachesRoutes);
 
 /**
  * @swagger
- * /api/technique/livrables:
+ * /api/marketing_commercial/technique/livrables:
  *   get:
  *     summary: API de gestion des livrables
  *     description: Point d'entrée pour toutes les opérations liées aux livrables des projets
@@ -67,7 +67,7 @@ router.use("/livrables", livrablesRoutes);
 
 /**
  * @swagger
- * /api/technique/interventions:
+ * /api/marketing_commercial/technique/interventions:
  *   get:
  *     summary: API de gestion des interventions
  *     description: Point d'entrée pour toutes les opérations liées aux interventions techniques

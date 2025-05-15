@@ -44,7 +44,7 @@ const produitsController = require('../controllers/produits.controller');
  *           type: string
  *           description: Nom de la famille/catégorie
  *
- * /api/produits/famille/{familleId}:
+ * /api/marketing_commercial/produits/famille/{familleId}:
  *   get:
  *     summary: Récupère les équipements par famille
  *     description: Retourne tous les produits de type équipement appartenant à une famille spécifique
@@ -80,7 +80,7 @@ router.get('/famille/:familleId', produitsController.getEquipementsByFamille);
 
 /**
  * @swagger
- * /api/produits:
+ * /api/marketing_commercial/produits:
  *   get:
  *     summary: Liste tous les équipements
  *     description: Retourne tous les produits de type équipement disponibles dans le catalogue
@@ -109,7 +109,7 @@ router.get('/', produitsController.getAllEquipements);
 
 /**
  * @swagger
- * /api/produits/nouveautes:
+ * /api/marketing_commercial/produits/nouveautes:
  *   get:
  *     summary: Récupère les derniers produits ajoutés
  *     description: Retourne les produits les plus récemment ajoutés au catalogue
@@ -145,7 +145,7 @@ router.get('/nouveautes', produitsController.getLatestProducts);
 
 /**
  * @swagger
- * /api/produits/{productId}/details:
+ * /api/marketing_commercial/produits/{productId}/details:
  *   get:
  *     summary: Récupère les détails d'un produit
  *     description: Retourne les informations détaillées d'un produit spécifique
@@ -181,7 +181,7 @@ router.get('/:productId/details', produitsController.getProductDetails);
 
 /**
  * @swagger
- * /api/produits/familles:
+ * /api/marketing_commercial/produits/familles:
  *   get:
  *     summary: Liste toutes les familles de produits
  *     description: Retourne toutes les familles/catégories disponibles pour les produits
@@ -210,7 +210,7 @@ router.get('/familles', produitsController.getAllFamilles);
 
 /**
  * @swagger
- * /api/produits/{productId}/similaires:
+ * /api/marketing_commercial/produits/{productId}/similaires:
  *   get:
  *     summary: Récupère des produits similaires
  *     description: Utilise les mots-clés du libellé et de la description pour trouver des produits similaires

@@ -11,7 +11,7 @@ const affichesRoutes = require("./affiches.routes");
 
 /**
  * @swagger
- * /api/clients:
+ * /api/marketing_commercial/clients:
  *   description: Routes liées aux clients
  *   get:
  *     summary: Accède à la gestion des clients
@@ -21,7 +21,7 @@ router.use("/clients", clientsRoutes);
 
 /**
  * @swagger
- * /api/produits:
+ * /api/marketing_commercial/produits:
  *   description: Routes liées aux produits marketing
  *   get:
  *     summary: Accède au catalogue de produits marketing
@@ -31,7 +31,7 @@ router.use("/produits", produitsRoutes);
 
 /**
  * @swagger
- * /api/commandes:
+ * /api/marketing_commercial/commandes:
  *   description: Routes liées aux commandes marketing
  *   get:
  *     summary: Accède aux commandes clients marketing
@@ -41,7 +41,7 @@ router.use("/commandes", commandesRoutes);
 
 /**
  * @swagger
- * /api/services:
+ * /api/marketing_commercial/services:
  *   description: Routes liées aux services DCAT
  *   get:
  *     summary: Accède aux services proposés par DCAT
@@ -51,7 +51,7 @@ router.use("/services", servicesDcatRoutes);
 
 /**
  * @swagger
- * /api/affiches:
+ * /api/marketing_commercial/affiches:
  *   description: Routes liées aux affiches promotionnelles
  *   get:
  *     summary: Accède aux affiches promotionnelles
