@@ -5,7 +5,7 @@ const controller = require("../controllers/commande.controller");
 
 /**
  * @swagger
- * /commandes:
+ * /stocks/commandes:
  *   post:
  *     summary: Crée une nouvelle commande
  *     tags: [Commandes]
@@ -14,7 +14,7 @@ router.post("/", controller.createCommande);
 
 /**
  * @swagger
- * /commandes:
+ * /stocks/commandes:
  *   get:
  *     summary: Récupère toutes les commandes
  *     tags: [Commandes]
@@ -57,7 +57,7 @@ router.get("/", controller.getAllCommandes);
 
 /**
  * @swagger
- * /commandes/{id}:
+ * /stocks/commandes/{id}:
  *   get:
  *     summary: Récupère une commande par ID
  *     tags: [Commandes]
@@ -66,7 +66,7 @@ router.get("/:id", controller.getCommandeById);
 
 /**
  * @swagger
- * /commandes/{id}:
+ * /stocks/commandes/{id}:
  *   put:
  *     summary: Met à jour une commande par ID
  *     tags: [Commandes]
@@ -75,7 +75,7 @@ router.put("/:id", controller.updateCommande);
 
 /**
  * @swagger
- * /commandes/{id}:
+ * /stocks/commandes/{id}:
  *   delete:
  *     summary: Supprime une commande par ID
  *     tags: [Commandes]

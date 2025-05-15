@@ -11,7 +11,7 @@ const maintenanceMoyenTravailRoutes = require("./maintenance.route");
 
 // /**
 //  * @swagger
-//  * /outils:
+//  * /moyens-generaux/outils:
 //  *   description: Routes liées aux outils
 //  *   get:
 //  *     summary: Accède aux outils
@@ -21,7 +21,7 @@ router.use("/outils", outilsRoutes);
 
 // /**
 //  * @swagger
-//  * /moyens-travail:
+//  * /moyens-generaux/moyens-travail:
 //  *   description: Routes liées aux moyens de travail
 //  *   get:
 //  *     summary: Accède aux moyens de travail
@@ -31,7 +31,7 @@ router.use("/moyens-travail", moyenstravailRoutes);
 
 // /**
 //  * @swagger
-//  * /maintenances:
+//  * /moyens-generaux/maintenances:
 //  *   description: Routes liées aux maintenances
 //  *   get:
 //  *     summary: Accède aux maintenances
@@ -42,12 +42,12 @@ router.use("/maintenances", maintenanceRoutes);
 
 // /**
 //  * @swagger
-//  * /maintenances:
-//  *   description: Routes liées aux maintenances
+//  * /moyens-generaux/moyen-travails:
+//  *   description: Routes liées aux moyens de travail
 //  *   get:
 //  *     summary: Accède aux maintenances
-//  *     tags: [Maintenances]
+//  *     tags: [moyen-travails]
 //  */
-router.use("/maintenance-moyen-travails", maintenanceMoyenTravailRoutes);
+router.use("/moyen-travails", maintenanceMoyenTravailRoutes);
 
 module.exports = router;

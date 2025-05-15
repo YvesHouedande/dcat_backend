@@ -11,7 +11,7 @@ const controller = require("../controllers/famille.controller");
 
 /**
  * @swagger
- * /familles:
+ * /stocks/familles:
  *   post:
  *     summary: Crée une nouvelle famille
  *     tags: [Familles]
@@ -20,7 +20,7 @@ router.post("/", controller.createFamille);
 
 /**
  * @swagger
- * /familles:
+ * /stocks/familles:
  *   get:
  *     summary: Récupère toutes les familles
  *     tags: [Familles]
@@ -48,7 +48,7 @@ router.get("/", controller.getFamilles);
 
 /**
  * @swagger
- * /familles/{id}:
+ * /stocks/familles/{id}:
  *   get:
  *     summary: Récupère une famille par ID
  *     tags: [Familles]
@@ -57,7 +57,7 @@ router.get("/:id", controller.getFamilleById);
 
 /**
  * @swagger
- * /familles/{id}:
+ * /stocks/familles/{id}:
  *   put:
  *     summary: Met à jour une famille par ID
  *     tags: [Familles]
@@ -66,7 +66,7 @@ router.put("/:id", controller.updateFamille);
 
 /**
  * @swagger
- * /familles/{id}:
+ * /stocks/familles/{id}:
  *   delete:
  *     summary: Supprime une famille par ID
  *     tags: [Familles]

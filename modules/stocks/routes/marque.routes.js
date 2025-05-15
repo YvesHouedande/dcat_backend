@@ -11,7 +11,7 @@ const controller = require("../controllers/marque.controller");
 
 /**
  * @swagger
- * /marques:
+ * /stocks/marques:
  *   post:
  *     summary: Crée une nouvelle marque
  *     tags: [Marques]
@@ -20,7 +20,7 @@ router.post("/", controller.createMarque);
 
 /**
  * @swagger
- * /marques:
+ * /stocks/marques:
  *   get:
  *     summary: Récupère toutes les marques
  *     tags: [Marques]
@@ -44,7 +44,7 @@ router.get("/", controller.getMarques);
 
 /**
  * @swagger
- * /marques/{id}:
+ * /stocks/marques/{id}:
  *   get:
  *     summary: Récupère une marque par ID
  *     tags: [Marques]
@@ -53,7 +53,7 @@ router.get("/:id", controller.getMarqueById);
 
 /**
  * @swagger
- * /marques/{id}:
+ * /stocks/marques/{id}:
  *   put:
  *     summary: Met à jour une marque par ID
  *     tags: [Marques]
@@ -62,7 +62,7 @@ router.put("/:id", controller.updateMarque);
 
 /**
  * @swagger
- * /marques/{id}:
+ * /stocks/marques/{id}:
  *   delete:
  *     summary: Supprime une marque par ID
  *     tags: [Marques]

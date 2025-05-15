@@ -19,7 +19,7 @@ const controller = require("../controllers/exemplaire.controller");
 
 /**
  * @swagger
- * /exemplaires:
+ * /stocks/exemplaires:
  *   post:
  *     summary: Crée un nouvel exemplaire
  *     tags: [Exemplaires]
@@ -28,7 +28,7 @@ router.post("/", controller.createExemplaire);
 
 /**
  * @swagger
- * /exemplaires:
+ * /stocks/exemplaires:
  *   get:
  *     summary: Récupère tous les exemplaires
  *     tags: [Exemplaires]
@@ -60,7 +60,7 @@ router.get("/", controller.getExemplaires);
 
 /**
  * @swagger
- * /exemplaires/{id}:
+ * /stocks/exemplaires/{id}:
  *   get:
  *     summary: Récupère un exemplaire par ID
  *     tags: [Exemplaires]
@@ -91,7 +91,7 @@ router.get("/:id", controller.getExemplaireById);
 
 /**
  * @swagger
- * /exemplaires/series/{num_serie}:
+ * /stocks/exemplaires/series/{num_serie}:
  *   get:
  *     summary: Récupère un exemplaire par numéro de série
  *     tags: [Exemplaires]
@@ -100,7 +100,7 @@ router.get("/series/:num_serie", controller.getExemplaireByNumSerie);
 
 /**
  * @swagger
- * /exemplaires/{id}:
+ * /stocks/exemplaires/{id}:
  *   put:
  *     summary: Met à jour un exemplaire par ID
  *     tags: [Exemplaires]
@@ -109,7 +109,7 @@ router.put("/:id", controller.updateExemplaire);
 
 /**
  * @swagger
- * /exemplaires/{id}:
+ * /stocks/exemplaires/{id}:
  *   delete:
  *     summary: Supprime un exemplaire par ID
  *     tags: [Exemplaires]
@@ -118,7 +118,7 @@ router.delete("/:id", controller.deleteExemplaire);
 
 /**
  * @swagger
- * /exemplaires/produit/{id}:
+ * /stocks/exemplaires/produit/{id}:
  *   get:
  *     summary: Récupère les exemplaires d’un produit
  *     tags: [Exemplaires]
@@ -157,7 +157,7 @@ router.get("/produit/:id", controller.getExemplairesByProduit);
 
 /**
  * @swagger
- * /exemplaires/produit/{id}/etat/{etat}:
+ * /stocks/exemplaires/produit/{id}/etat/{etat}:
  *   get:
  *     summary: Filtre les exemplaires d'un produit selon leur état
  *     tags: [Exemplaires]
