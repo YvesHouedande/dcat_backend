@@ -51,7 +51,7 @@ function isValidDate(dateString) {
   return !isNaN(date.getTime());
 }
 
-// Fonction utilitaire pour formater les dates en JJ/MM/AAAA
+// Fonction utilitaire pour formater les dates en JJ/MM/AAAA tel qu'on a 
 function formatDate(date) {
   if (!date) return 'Non définie';
   try {
