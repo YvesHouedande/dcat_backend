@@ -1,9 +1,14 @@
 const {eq} = require("drizzle-orm");
 const {db} = require("../../../../core/database/config")
-const {contrats} = require("../../../../core/database/models")
+const {contrats,documents} = require("../../../../core/database/models")
 
 const createContrat=async(data)=>{
     const [result]=await db.insert(contrats).values(data).returning()
+    return result
+}
+
+const addDocument=async(data)=>{
+    const [result]=await db.insert(documents).values(data).returning()
     return result
 }
 
@@ -13,6 +18,11 @@ const getContrats=async()=>{
 
 const getContratsbyPartenaire=async(id)=>{
     const [result]=await db.select().from(contrats).where(eq(contrats.id_partenaire,id))
+    return result
+}
+
+const getContratById=async(id)=>{
+    const [result]=await db.select().from(contrats).where(eq(contrats.id_contrat,id))
     return result
 }
 
@@ -29,10 +39,12 @@ const deleteContrat=async(id)=>{
     return result
 }
 
-module.export={
+module.exports={
     createContrat,
-    getContrats, 
+    getContrats,
     getContratsbyPartenaire,
     updateContrat,
-    deleteContrat
+    deleteContrat,
+    addDocument,
+    getContratById
 }

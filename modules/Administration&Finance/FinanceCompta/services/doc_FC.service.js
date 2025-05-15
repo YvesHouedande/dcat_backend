@@ -18,7 +18,7 @@ const getDocumentbyId = async(id)=> {
 }
 
 const getDocumentbyNature = async(id)=> {
-    const [result] = await db
+    const result = await db
     .select()
     .from(documents)
     .where(eq(documents.id_nature_document, id));
@@ -36,8 +36,8 @@ const addDocument = async(data)=> {
 const updateDocument = async(id, data)=> {
     const [result] = await db
     .update(documents)
-    .set(data)
-    .where(eq(documents.id_document, id))
+    .set({...data , updated_at: new Date()})
+    .where(eq(documents.id_documents, id))
     .returning();
     return result;
 }
@@ -45,7 +45,7 @@ const updateDocument = async(id, data)=> {
 const deleteDocument = async(id)=> {
     const [result] = await db
     .delete(documents)
-    .where(eq(documents.id_document, id))
+    .where(eq(documents.id_documents, id))
     .returning();
     return result;
 }
