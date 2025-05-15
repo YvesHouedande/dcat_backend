@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const servicesDcatController = require('../controllers/services_dcat.controller');
 const uploadMiddleware = require('../../utils/middleware/uploadMiddleware');
+const uploadOriginalNameMiddleware = require('../../utils/middleware/uploadOriginalNameMiddleware');
 const path = require('path');
 
 // Configuration du chemin d'upload
@@ -253,5 +254,51 @@ router.put('/:id', uploadMiddleware.single('image'), servicesDcatController.upda
  *         description: Erreur serveur
  */
 router.delete('/:id', servicesDcatController.deleteService);
+
+/**
+ * @swagger
+ * /api/services/upload-image:
+ *   post:
+ *     summary: Télécharge une image de service DCAT
+ *     description: Télécharge une image en conservant son nom original
+ *     tags: [Services DCAT]
+ *     consumes:
+ *       - multipart/form-data
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - image
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image à télécharger (JPG, PNG)
+ *     responses:
+ *       201:
+ *         description: Image téléchargée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 imagePath:
+ *                   type: string
+ *                   example: "media/images/services_dcat/image.jpg"
+ *                 message:
+ *                   type: string
+ *                   example: "Image téléchargée avec succès"
+ *       400:
+ *         description: Aucune image envoyée ou format invalide
+ *       500:
+ *         description: Erreur serveur
+ */
+router.post('/upload-image', uploadOriginalNameMiddleware.single('image'), servicesDcatController.uploadServiceImage);
 
 module.exports = router;
