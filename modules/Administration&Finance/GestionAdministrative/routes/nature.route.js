@@ -9,5 +9,4 @@ router.get('/:id', natureController.getNaturebyId);
 router.put('/:id', natureController.updateNature);
 router.delete('/:id', natureController.deleteNature);
 
-
 module.exports = router;

@@ -105,6 +105,16 @@ const livrableController = {
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
+  },
+  
+  getLivrablesByProjet: async (req, res) => {
+    try {
+      const { projetId } = req.params;
+      const livrables = await livrableService.getLivrablesByProjet(parseInt(projetId));
+      res.status(200).json({ success: true, data: livrables });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
   }
 };
 
