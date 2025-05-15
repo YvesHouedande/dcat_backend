@@ -20,6 +20,12 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // =============== KEYCLOAK ===============
 app.use(initKeycloak());
 
+// =============== CORS ===============
+const cors = require('cors');
+app.use(cors({
+  origin: 'http://localhost:5173'
+}));
+
 // =============== CHARGEMENT DES MODULES ===============
 function loadModule(moduleName) {
   try {
