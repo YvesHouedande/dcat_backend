@@ -1,4 +1,4 @@
-const { eq, sql, and, inArray, isNull } = require("drizzle-orm");
+const { eq, sql, and, inArray, isNull, count } = require("drizzle-orm");
 const { db } = require("../../../core/database/config");
 // const db = require("../utils/drizzle-wrapper");
 const { exemplaires, produits } = require("../../../core/database/models");
@@ -29,7 +29,7 @@ const etatExemplaire = [
  * Créer un nouvel exemplaire et incrémenter la quantité du produit associé.
  */
 async function createExemplaire(data) {
-  const { id_produit, code_produit } = data;
+  const { id_produit } = data;
   const [newExemplaire] = await db.insert(exemplaires).values(data).returning();
 
   // Incrémenter la quantité du produit lié
@@ -178,18 +178,22 @@ async function getExemplairesByProduit(id) {
 }
 
 //filtrer les exemplaires selon leur etat (disponible,vendu...)
+// id : id du produit de l'exemplaire ; etat : etat de l'exemplaire ("Vendu"...)
 async function filterExemplairesByEtat(id, etat) {
-  return db
+  const exemplairesFiltres = await db
     .select()
     .from(exemplaires)
     .where(
-      and(
-        eq(exemplaires.id_produit, id),
-        eq(exemplaires.etat_exemplaire, etat)
-      )
+      and(eq(exemplaires.id_produit, id), eq(exemplaires.etat_exemplaire, etat))
     );
-}
 
+  const total = exemplairesFiltres.length;
+
+  return {
+    total,
+    data: exemplairesFiltres,
+  };
+}
 
 // // // Vérifie si un exemplaire spécifique est en cours d'utilisation
 // // async function isExemplaireInUse(exId) {
