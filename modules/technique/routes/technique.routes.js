@@ -11,43 +11,68 @@ const livrablesRoutes = require("./livrable.routes");
 
 /**
  * @swagger
- * /api/interventions:
- *   description: Routes liées aux interventions
- *   get:
- *     summary: Accède aux interventions techniques
- *     tags: [Interventions]
+ * tags:
+ *   - name: Projets
+ *     description: Gestion des projets techniques
+ *   - name: Tâches
+ *     description: Gestion des tâches liées aux projets
+ *   - name: Livrables
+ *     description: Gestion des livrables des projets
+ *   - name: Interventions
+ *     description: Gestion des interventions techniques
+ * 
+ * @swagger
+ * components:
+ *   schemas:
+ *     ApiResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           description: Indique si la requête a réussi
+ *         message:
+ *           type: string
+ *           description: Message décrivant le résultat de l'opération
  */
-router.use("/interventions", interventionsRoutes);
 
 /**
  * @swagger
- * /api/projets:
- *   description: Routes liées aux projets
+ * /api/technique/projets:
  *   get:
- *     summary: Accède aux projets
+ *     summary: API de gestion des projets
+ *     description: Point d'entrée pour toutes les opérations liées aux projets
  *     tags: [Projets]
  */
 router.use("/projets", projetsRoutes);
 
-
 /**
  * @swagger
- * /api/taches:
- *   description: Routes liées aux tâches
+ * /api/technique/taches:
  *   get:
- *     summary: Accède aux tâches
+ *     summary: API de gestion des tâches
+ *     description: Point d'entrée pour toutes les opérations liées aux tâches des projets
  *     tags: [Tâches]
  */
 router.use("/taches", tachesRoutes);
 
 /**
  * @swagger
- * /api/livrables:
- *   description: Routes liées aux livrables
+ * /api/technique/livrables:
  *   get:
- *     summary: Accède aux livrables
+ *     summary: API de gestion des livrables
+ *     description: Point d'entrée pour toutes les opérations liées aux livrables des projets
  *     tags: [Livrables]
  */
 router.use("/livrables", livrablesRoutes);
+
+/**
+ * @swagger
+ * /api/technique/interventions:
+ *   get:
+ *     summary: API de gestion des interventions
+ *     description: Point d'entrée pour toutes les opérations liées aux interventions techniques
+ *     tags: [Interventions]
+ */
+router.use("/interventions", interventionsRoutes);
 
 module.exports = router;

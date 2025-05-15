@@ -48,6 +48,24 @@ const produitsController = {
       res.status(400).json({ success: false, error: error.message });
     }
   },
+
+  // Récupérer des produits similaires basés sur le libellé
+  getSimilarProductsByLibelle: async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const limit = req.query.limit ? parseInt(req.query.limit) : 4;
+      
+      const produits = await produitsService.getSimilarProductsByLibelle(productId, limit);
+      res.json({ success: true, produits });
+    } catch (error) {
+      // Si le produit n'est pas trouvé, renvoyer 404
+      if (error.message.includes("trouvé")) {
+        return res.status(404).json({ success: false, error: error.message });
+      }
+      // Pour les autres erreurs, renvoyer 400
+      res.status(400).json({ success: false, error: error.message });
+    }
+  },
 };
 
 module.exports = produitsController;

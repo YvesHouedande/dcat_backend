@@ -494,58 +494,58 @@ const commandesService = {
   // Récupérer l'historique des commandes d'un client
   getClientCommandes: async (clientId) => {
     try {
-      // Obtenir les commandes avec information du client
-      const commandesList = await db
-        .select({
-          id_commande: commandes.id_commande,
-          date_de_commande: commandes.date_de_commande,
-          etat_commande: commandes.etat_commande,
-          date_livraison: commandes.date_livraison,
-          lieu_de_livraison: commandes.lieu_de_livraison,
-          mode_de_paiement: commandes.mode_de_paiement,
-          id_client: commandes.id_client,
-          created_at: commandes.created_at,
-          updated_at: commandes.updated_at,
-          client_nom: clients_en_ligne.nom, // Joindre le nom du client
-          client_contact: clients_en_ligne.contact, // Joindre le contact du client
-          client_email: clients_en_ligne.email, // Joindre l'email du client
-        })
-        .from(commandes)
-        .leftJoin(clients_en_ligne, eq(commandes.id_client, clients_en_ligne.id_client))
-        .where(eq(commandes.id_client, clientId))
-        .orderBy(desc(commandes.created_at));
+    // Obtenir les commandes avec information du client
+    const commandesList = await db
+      .select({
+        id_commande: commandes.id_commande,
+        date_de_commande: commandes.date_de_commande,
+        etat_commande: commandes.etat_commande,
+        date_livraison: commandes.date_livraison,
+        lieu_de_livraison: commandes.lieu_de_livraison,
+        mode_de_paiement: commandes.mode_de_paiement,
+        id_client: commandes.id_client,
+        created_at: commandes.created_at,
+        updated_at: commandes.updated_at,
+        client_nom: clients_en_ligne.nom, // Joindre le nom du client
+        client_contact: clients_en_ligne.contact, // Joindre le contact du client
+        client_email: clients_en_ligne.email, // Joindre l'email du client
+      })
+      .from(commandes)
+      .leftJoin(clients_en_ligne, eq(commandes.id_client, clients_en_ligne.id_client))
+      .where(eq(commandes.id_client, clientId))
+      .orderBy(desc(commandes.created_at));
         
       if (commandesList.length === 0) {
         return [];
       }
+    
+    // Pour chaque commande, calculer le montant total
+    const commandesWithTotal = await Promise.all(commandesList.map(async (commande) => {
+      // Récupérer les produits pour cette commande avec leur prix unitaire et quantité
+      const commandeProduits = await db
+        .select({
+          prix_unitaire: commande_produits.prix_unitaire,
+          quantite: commande_produits.quantite,
+        })
+        .from(commande_produits)
+        .where(eq(commande_produits.id_commande, commande.id_commande));
       
-      // Pour chaque commande, calculer le montant total
-      const commandesWithTotal = await Promise.all(commandesList.map(async (commande) => {
-        // Récupérer les produits pour cette commande avec leur prix unitaire et quantité
-        const commandeProduits = await db
-          .select({
-            prix_unitaire: commande_produits.prix_unitaire,
-            quantite: commande_produits.quantite,
-          })
-          .from(commande_produits)
-          .where(eq(commande_produits.id_commande, commande.id_commande));
-        
-        // Calculer le montant total
-        let montantTotal = 0;
-        if (commandeProduits.length > 0) {
-          montantTotal = commandeProduits.reduce((total, item) => {
-            return total + (parseFloat(item.prix_unitaire) * item.quantite);
-          }, 0);
-        }
-        
-        // Ajouter le montant total à l'objet commande
-        return {
-          ...commande,
-          montant_total: montantTotal
-        };
-      }));
+      // Calculer le montant total
+      let montantTotal = 0;
+      if (commandeProduits.length > 0) {
+        montantTotal = commandeProduits.reduce((total, item) => {
+          return total + (parseFloat(item.prix_unitaire) * item.quantite);
+        }, 0);
+      }
       
-      return commandesWithTotal;
+      // Ajouter le montant total à l'objet commande
+      return {
+        ...commande,
+        montant_total: montantTotal
+      };
+    }));
+    
+    return commandesWithTotal;
     } catch (error) {
       throw error;
     }
