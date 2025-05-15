@@ -147,7 +147,7 @@ const UPLOAD_PATHS = {
 
 /**
  * @swagger
- * /api/marketing_commercial/projets:
+ * /api/technique/projets:
  *   get:
  *     summary: Liste tous les projets
  *     description: Récupère la liste complète des projets avec leurs informations
@@ -174,7 +174,7 @@ router.get("/", projetsController.getAllProjets);
 
 /**
  * @swagger
- * /api/marketing_commercial/projets/{id}:
+ * /api/technique/projets/{id}:
  *   get:
  *     summary: Récupère un projet par son ID
  *     description: Retourne les détails d'un projet spécifique
@@ -208,7 +208,7 @@ router.get("/:id", projetsController.getProjetById);
 
 /**
  * @swagger
- * /api/marketing_commercial/projets:
+ * /api/technique/projets:
  *   post:
  *     summary: Crée un nouveau projet
  *     description: Enregistre un nouveau projet technique
@@ -284,7 +284,7 @@ router.post("/", projetsController.createProjet);
 
 /**
  * @swagger
- * /api/marketing_commercial/projets/{id}:
+ * /api/technique/projets/{id}:
  *   put:
  *     summary: Met à jour un projet
  *     description: Modifie les informations d'un projet existant
@@ -366,7 +366,7 @@ router.put("/:id", projetsController.updateProjet);
 
 /**
  * @swagger
- * /api/marketing_commercial/projets/{id}:
+ * /api/technique/projets/{id}:
  *   delete:
  *     summary: Supprime un projet
  *     description: Supprime un projet existant par son ID
@@ -401,7 +401,7 @@ router.delete("/:id", projetsController.deleteProjet);
 
 /**
  * @swagger
- * /api/marketing_commercial/projets/{id}/documents:
+ * /api/technique/projets/{id}/documents:
  *   post:
  *     summary: Ajoute un document à un projet
  *     description: Télécharge et associe un document à un projet existant
@@ -482,7 +482,7 @@ router.post("/:id/documents",
 
 /**
  * @swagger
- * /api/marketing_commercial/projets/{id}/documents:
+ * /api/technique/projets/{id}/documents:
  *   get:
  *     summary: Récupère les documents d'un projet
  *     description: Retourne la liste des documents associés à un projet spécifique
@@ -518,7 +518,7 @@ router.get("/:id/documents", projetsController.getProjetDocuments);
 
 /**
  * @swagger
- * /api/marketing_commercial/projets/{id}/documents/{documentId}:
+ * /api/technique/projets/{id}/documents/{documentId}:
  *   delete:
  *     summary: Supprime un document d'un projet
  *     description: Supprime un document associé à un projet spécifique
@@ -559,7 +559,7 @@ router.delete("/:id/documents/:documentId", projetsController.deleteDocument);
 
 /**
  * @swagger
- * /api/marketing_commercial/projets/{id}/partenaires:
+ * /api/technique/projets/{id}/partenaires:
  *   post:
  *     summary: Ajoute un partenaire à un projet
  *     description: Associe un partenaire à un projet existant
@@ -608,7 +608,7 @@ router.post("/:id/partenaires", projetsController.addPartenaireToProjet);
 
 /**
  * @swagger
- * /api/marketing_commercial/projets/{id}/partenaires/{partenaireId}:
+ * /api/technique/projets/{id}/partenaires/{partenaireId}:
  *   delete:
  *     summary: Retire un partenaire d'un projet
  *     description: Dissocie un partenaire d'un projet existant
@@ -649,7 +649,7 @@ router.delete("/:id/partenaires/:partenaireId", projetsController.removePartenai
 
 /**
  * @swagger
- * /api/marketing_commercial/projets/{id}/partenaires:
+ * /api/technique/projets/{id}/partenaires:
  *   get:
  *     summary: Récupère les partenaires d'un projet
  *     description: Retourne la liste des partenaires associés à un projet spécifique
@@ -685,7 +685,7 @@ router.get("/:id/partenaires", projetsController.getProjetPartenaires);
 
 /**
  * @swagger
- * /api/marketing_commercial/projets/{id}/livrables-with-documents:
+ * /api/technique/projets/{id}/livrables-with-documents:
  *   get:
  *     summary: Récupère les livrables avec documents d'un projet
  *     description: Retourne la liste des livrables avec leurs documents associés pour un projet spécifique
