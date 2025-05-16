@@ -4,6 +4,35 @@ const clientsController = require("../controllers/clients.controller");
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     Client:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: ID unique du client
+ *         nom:
+ *           type: string
+ *           description: Nom complet du client
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: Adresse email du client
+ *         role:
+ *           type: string
+ *           description: Rôle du client (client, admin, etc.)
+ *         contact:
+ *           type: string
+ *           description: Numéro de téléphone du client
+ *         token:
+ *           type: string
+ *           description: JWT pour authentifier les requêtes
+ *         refreshToken:
+ *           type: string
+ *           description: Token permettant de rafraîchir le token d'accès
+ * 
+ * @swagger
  * /api/marketing_commercial/clients/login:
  *   post:
  *     summary: Connecte un client

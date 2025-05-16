@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
 const emailFrom = '"DCAT" <sales@dcat.ci>';
 
 // Chemin vers le logo de l'entreprise - utiliser un chemin d'URL absolue
-const baseUrl = 'erpback.dcat.ci';
+const baseUrl = 'https://erpback.dcat.ci';
 // Utiliser le chemin avec des slashes pour les URLs (compatible avec tous les OS)
 const logoPath = 'media/images/services_dcat/entreprise_logo.png';
 const logoUrl = `${baseUrl}/${logoPath}`;
@@ -29,7 +29,7 @@ const emailStyles = `
   body { font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
   .container { max-width: 600px; margin: 0 auto; padding: 20px; }
   .header { text-align: center; padding: 20px 0; }
-  .logo { max-width: 150px; height: auto; }
+  .logo { max-width: 100px; height: auto; }
   h1 { color: #0056b3; margin-top: 20px; }
   .content { padding: 20px; background-color: #f9f9f9; border-radius: 5px; }
   .footer { padding: 20px; text-align: center; font-size: 12px; color: #777; margin-top: 20px; }

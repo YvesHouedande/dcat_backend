@@ -97,7 +97,6 @@ const entites = pgTable("entites", {
 });
 
 // Client_en_ligne
-// Client_en_ligne
 const clients_en_ligne = pgTable("clients_en_ligne", {
   id_client: serial("id_client").primaryKey(),
   nom: varchar("nom", { length: 50 }),
