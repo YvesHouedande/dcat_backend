@@ -288,7 +288,7 @@ const paniers = pgTable("paniers", {
 const images = pgTable("images", {
   id_image: serial("id_image").primaryKey(),
   libelle_image: text("libelle_image"),
-  numero_image: varchar("numero_image", { length: 50 }),
+  numero_image: integer("numero_image"),
   lien_image: text("lien_image"),
   id_produit: integer("id_produit").references(() => produits.id_produit),
   created_at: timestamp("created_at").defaultNow().notNull(),
