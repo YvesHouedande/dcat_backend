@@ -7,7 +7,7 @@ const { eq } = require("drizzle-orm");
 const JWT_SECRET = process.env.JWT_SECRET || "sorosamuel";
 
 /**
- * Middleware d'authentification qui vérifie la validité du token JWT
+ * Mon Middleware d'authentification qui vérifie la validité du token JWT
  * et extrait les informations de l'utilisateur
  */
 const authMiddleware = async (req, res, next) => {
