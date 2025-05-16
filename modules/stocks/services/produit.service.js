@@ -15,15 +15,18 @@ const createProduit = async (data) => {
   return result;
 };
 
-const addProduitImages = async (produitId, imageUrls) => {
-  const imagesToInsert = imageUrls.map((url) => ({
-    lien_image: url,
+const addProduitImages = async (produitId, imagesData = []) => {
+  const imagesToInsert = imagesData.map((img) => ({
+    libelle_image: img.libelle,
+    numero_image: img.numero,
+    lien_image: img.lien,
     id_produit: produitId,
+    created_at: new Date(),
+    updated_at: new Date(),
   }));
 
   return await db.insert(images).values(imagesToInsert).returning();
 };
-
 
 const getProduits = async (options = {}) => {
   const {
@@ -51,7 +54,9 @@ const getProduits = async (options = {}) => {
       images: sql`(
         SELECT json_agg(json_build_object(
           'id_image', images.id_image,
+          'libelle_image', images.libelle_image,
           'lien_image', images.lien_image,
+          'numero_image', images.numero_image,
           'created_at', images.created_at
         )) 
         FROM images 
@@ -60,9 +65,12 @@ const getProduits = async (options = {}) => {
     })
     .from(produits)
     .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
-    .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
+    .leftJoin(
+      type_produits,
+      eq(produits.id_type_produit, type_produits.id_type_produit)
+    )
     .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
-    .leftJoin(familles, eq(produits.id_famille, familles.id_famille)) 
+    .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
     .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
     .limit(limit)
     .offset(offset);
@@ -108,10 +116,7 @@ const getProduits = async (options = {}) => {
       .where(and(...filters));
   }
 
-  const [results, totalResult] = await Promise.all([
-    query,
-    countQuery,
-  ]);
+  const [results, totalResult] = await Promise.all([query, countQuery]);
 
   const total = Number(totalResult[0].count);
 
@@ -125,8 +130,6 @@ const getProduits = async (options = {}) => {
     },
   };
 };
-
-
 
 const getProduitById = async (id) => {
   const [result] = await db
@@ -226,4 +229,3 @@ module.exports = {
   deleteProduitImage,
   getProduitsByTypes,
 };
-//test
