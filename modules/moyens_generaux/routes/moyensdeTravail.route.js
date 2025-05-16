@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/moyensdeTravail.controller");
 
-// CRUD Routes  
+// CRUD Routes
 /**
  * @swagger
  * /moyens-generaux/moyens-travails:
@@ -47,7 +47,5 @@ router.put("/:id", controller.updateMoyensTravail);
  *     tags: [Moyens de Travail]
  */
 router.delete("/:id", controller.deleteMoyensTravail);
-
-//test
 
 module.exports = router;

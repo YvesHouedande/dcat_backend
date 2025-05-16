@@ -38,7 +38,7 @@ const getDocumentByNature = async (req, res) => {
     try {
         const { id_nature_document } = req.params;
         
-        if (!natureId || isNaN(parseInt(id_nature_document))) {
+        if (!id_nature_document || isNaN(parseInt(id_nature_document))) {
             return res.status(400).json({
                 success: false,
                 message: "ID de nature de document invalide"
@@ -143,9 +143,9 @@ const addDocument = async (req, res) => {
  */
 const updateDocument = async (req, res) => {
     try {
-        const { id_documents } = req.params;
+        const { id } = req.params;
         
-        if (!id_documents || isNaN(parseInt(id_documents))) {
+        if (!id || isNaN(parseInt(id))) {
             return res.status(400).json({
                 success: false,
                 message: "ID de document invalide"
@@ -158,14 +158,14 @@ const updateDocument = async (req, res) => {
         // Si un nouveau fichier est fourni
         if (req.file) {
             // Récupérer l'ancien lien avant la mise à jour
-            const oldDocument = await documentService.getDocumentById(parseInt(id_documents));
+            const oldDocument = await documentService.getDocumentbyId(parseInt(id));
             
             if (!oldDocument) {
                 // Supprimer le nouveau fichier si l'ancien document n'existe pas
                 fs.unlinkSync(req.file.path);
                 return res.status(404).json({
                     success: false,
-                    message: `Document avec l'ID ${id_documents} non trouvé`
+                    message: `Document avec l'ID ${id} non trouvé`
                 });
             }
             
@@ -185,6 +185,13 @@ const updateDocument = async (req, res) => {
             }
         }
         
+        // Nettoyer les champs vides pour éviter les erreurs SQL
+        Object.keys(updateData).forEach(key => {
+            if (updateData[key] === "") {
+                delete updateData[key];
+            }
+        });
+
         // Mettre à jour la date de modification
         updateData.updated_at = new Date();
         
@@ -192,7 +199,7 @@ const updateDocument = async (req, res) => {
         if (updateData.id_employes) updateData.id_employes = parseInt(updateData.id_employes);
         if (updateData.id_nature_document) updateData.id_nature_document = parseInt(updateData.id_nature_document);
         
-        const updatedDocument = await documentService.updateDocument(parseInt(id_documents), updateData);
+        const updatedDocument = await documentService.updateDocument(parseInt(id), updateData);
         
         if (!updatedDocument) {
             // Supprimer le nouveau fichier si la mise à jour a échoué
@@ -201,7 +208,7 @@ const updateDocument = async (req, res) => {
             }
             return res.status(404).json({
                 success: false,
-                message: `Document avec l'ID ${id_documents} non trouvé`
+                message: `Document avec l'ID ${id} non trouvé`
             });
         }
         
@@ -232,9 +239,9 @@ const updateDocument = async (req, res) => {
  */
 const deleteDocument = async (req, res) => {
     try {
-        const { id_documents } = req.params;
+        const { id } = req.params;
         
-        if (!id_documents || isNaN(parseInt(id_documents))) {
+        if (!id || isNaN(parseInt(id))) {
             return res.status(400).json({
                 success: false,
                 message: "ID de document invalide"
@@ -242,22 +249,22 @@ const deleteDocument = async (req, res) => {
         }
         
         // Récupérer le document avant suppression pour obtenir le chemin du fichier
-        const documentToDelete = await documentService.getDocumentById(parseInt(id_documents));
+        const documentToDelete = await documentService.getDocumentbyId(parseInt(id));
         
         if (!documentToDelete) {
             return res.status(404).json({
                 success: false,
-                message: `Document avec l'ID ${id_documents} non trouvé`
+                message: `Document avec l'ID ${id} non trouvé`
             });
         }
         
         // Supprimer le document de la base de données
-        const deletedDocument = await documentService.deleteDocument(parseInt(id_documents));
+        const deletedDocument = await documentService.deleteDocument(parseInt(id));
         
         if (!deletedDocument) {
             return res.status(404).json({
                 success: false,
-                message: `Erreur lors de la suppression du document avec l'ID ${id_documents}`
+                message: `Erreur lors de la suppression du document avec l'ID ${id}`
             });
         }
         

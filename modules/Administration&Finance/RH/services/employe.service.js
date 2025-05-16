@@ -35,11 +35,12 @@ const getEmployeByStatut = async (statut) => {
 }
 
 const updateEmploye = async (id, data) => {
+    if (!data || Object.keys(data).length === 0) return null;
     const [result] = await db
-    .update(employes)
-    .set({...data, updated_at: new Date()})
-    .where(eq(employes.id_employe, id))
-    .returning();
+        .update(employes)
+        .set({...data, updated_at: new Date()})
+        .where(eq(employes.id_employes, id))
+        .returning();
     return result;
 }
 

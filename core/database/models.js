@@ -100,7 +100,7 @@ const entites = pgTable("entites", {
 const clients_en_ligne = pgTable("clients_en_ligne", {
   id_client: serial("id_client").primaryKey(),
   nom: varchar("nom", { length: 50 }),
-  role: varchar("role", { length: 50 }).default('client'),
+  role: varchar("role", { length: 50 }).default("client"),
   email: varchar("email", { length: 50 }).unique(),
   password: varchar("password", { length: 255 }),
   contact: varchar("contact", { length: 50 }),
@@ -108,16 +108,16 @@ const clients_en_ligne = pgTable("clients_en_ligne", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-const refresh_tokens = pgTable("refresh_tokens", { 
+//refresh_tokens
+const refresh_tokens = pgTable("refresh_tokens", {
   id: serial("id").primaryKey(),
   user_id: integer("user_id")
     .notNull()
-    .references(() => clients_en_ligne.id_client, { onDelete: 'cascade' }),
+    .references(() => clients_en_ligne.id_client, { onDelete: "cascade" }),
   token: varchar("token", { length: 255 }).notNull().unique(),
   expires_at: timestamp("expires_at").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
-
 
 // Commande
 const commandes = pgTable("commandes", {
@@ -144,6 +144,14 @@ const type_produits = pgTable("type_produits", {
 const categories = pgTable("categories", {
   id_categorie: serial("id_categorie").primaryKey(),
   libelle: varchar("libelle", { length: 50 }),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// panier
+const paniers = pgTable("paniers", {
+  id_panier: serial("id_panier").primaryKey(),
+  id_client: integer("id_client").references(() => clients_en_ligne.id_client),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -228,7 +236,7 @@ const moyens_de_travail = pgTable("moyens_de_travail", {
 const services = pgTable("services", {
   id_service: serial("id_service").primaryKey(),
   titre_service: varchar("titre_service", { length: 100 }),
-  sous_titre_service: varchar("sous_titre_service", { length:  200}),
+  sous_titre_service: varchar("sous_titre_service", { length: 200 }),
   detail_service: text("detail_service"),
   image_service: varchar("image", { length: 255 }),
   created_at: timestamp("created_at").defaultNow().notNull(),
@@ -251,7 +259,6 @@ const produits = pgTable("produits", {
   code_produit: varchar("code_produit", { length: 100 }).unique(),
   desi_produit: varchar("desi_produit", { length: 50 }),
   desc_produit: text("desc_produit"),
-  image_produit: text("image_produit"),
   qte_produit: integer("qte_produit").default(0),
   emplacement_produit: text("emplacement"),
   caracteristiques_produit: text("caracteristiques"),
@@ -268,6 +275,15 @@ const produits = pgTable("produits", {
   id_modele: integer("id_modele").references(() => modeles.id_modele),
   id_famille: integer("id_famille").references(() => familles.id_famille),
   id_marque: integer("id_marque").references(() => marques.id_marque),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
+//images
+const images = pgTable("images", {
+  id_image: serial("id_image").primaryKey(),
+  lien_image: text("lien_image"),
+  id_produit: integer("id_produit").references(() => produits.id_produit),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -425,7 +441,7 @@ const exemplaires = pgTable("exemplaires", {
   id_livraison: integer("id_livraison").references(
     () => livraisons.id_livraison
   ),
-  id_produit: integer("id_produit").references(() => produits.id_produit), // Référence simplifiée
+  id_produit: integer("id_produit").references(() => produits.id_produit),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -641,6 +657,7 @@ module.exports = {
   entites,
   clients_en_ligne,
   refresh_tokens,
+  paniers,
   commandes,
   type_produits,
   categories,
@@ -652,6 +669,7 @@ module.exports = {
   services,
   affiches,
   produits,
+  images,
   partenaires,
   contrats,
   interlocuteurs,
