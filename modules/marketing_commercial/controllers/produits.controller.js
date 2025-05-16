@@ -40,6 +40,16 @@ const produitsController = {
     }
   },
 
+  getProductImages: async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const images = await produitsService.getProductImages(productId);
+      res.json({ success: true, images });
+    } catch (error) {
+      res.status(404).json({ success: false, error: error.message });
+    }
+  },
+
   getAllFamilles: async (req, res) => {
     try {
       const familles = await produitsService.getAllFamilles();

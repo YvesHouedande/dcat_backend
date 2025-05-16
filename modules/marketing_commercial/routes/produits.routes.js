@@ -252,4 +252,49 @@ router.get('/familles', produitsController.getAllFamilles);
  */
 router.get('/:productId/similaires', produitsController.getSimilarProductsByLibelle);
 
+/**
+ * @swagger
+ * /api/marketing_commercial/produits/{productId}/images:
+ *   get:
+ *     summary: Récupère les images d'un produit
+ *     description: Retourne toutes les images associées à un produit spécifique
+ *     tags: [Produits Marketing]
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du produit
+ *     responses:
+ *       200:
+ *         description: Images récupérées avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 images:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_image:
+ *                         type: integer
+ *                         description: ID unique de l'image
+ *                       lien_image:
+ *                         type: string
+ *                         description: Chemin vers l'image du produit
+ *       404:
+ *         description: Produit non trouvé
+ *       400:
+ *         description: Erreur de requête
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/:productId/images', produitsController.getProductImages);
+
 module.exports = router;
