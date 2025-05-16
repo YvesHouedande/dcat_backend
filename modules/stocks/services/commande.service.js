@@ -43,6 +43,7 @@ async function createCommande({
     // 2. Vérification des stocks et récupération des exemplaires disponibles
     const produitsACommander = Object.entries(produitsQuantites);
     const exemplairesReserves = [];
+    const produitsInfos = {}; // Pour stocker les infos produits
 
     for (const [produitId, quantite] of produitsACommander) {
       // Vérifier la quantité disponible
@@ -54,6 +55,8 @@ async function createCommande({
       if (!produit || produit.qte_produit < quantite) {
         throw new Error(`Stock insuffisant pour le produit ${produitId}`);
       }
+
+      produitsInfos[produitId] = produit; // 🧠 Mémoriser pour plus tard
 
       // Récupérer des exemplaires disponibles
       const exemplairesDispos = await tx
@@ -100,10 +103,13 @@ async function createCommande({
 
     // 5. Liaison commande-produits
     for (const [produitId, quantite] of produitsACommander) {
+      const produit = produitsInfos[produitId];
+
       await tx.insert(commande_produits).values({
         id_commande: newCommande.id_commande,
         id_produit: Number(produitId),
         quantite: quantite,
+        prix_unitaire: produit.prix_produit,
         created_at: new Date(),
         updated_at: new Date(),
       });
@@ -181,7 +187,6 @@ async function getCommandeById(id) {
     throw error;
   }
 }
-
 
 // 📜 Liste paginée ou filtrée des commandes
 async function getAllCommandes({ limit = 50, offset = 0, etat = null } = {}) {
