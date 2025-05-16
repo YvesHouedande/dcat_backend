@@ -1,17 +1,46 @@
 const { db } = require('../../../core/database/config');
 const { produits, type_produits, familles, marques, modeles, images } = require("../../../core/database/models");
-const { eq, and, isNotNull, desc } = require("drizzle-orm");
+const { eq, and, isNotNull, desc, asc, sql } = require("drizzle-orm");
 
 const produitsService = {
   // Récupérer les images d'un produit
   getProductImages: async (productId) => {
-    return await db
-      .select({
-        id_image: images.id_image,
-        lien_image: images.lien_image,
-      })
-      .from(images)
-      .where(eq(images.id_produit, productId));
+    try {
+      return await db
+        .select({
+          id_image: images.id_image,
+          lien_image: images.lien_image,
+          numero_image: images.numero_image
+        })
+        .from(images)
+        .where(eq(images.id_produit, productId))
+        .orderBy(asc(images.numero_image));
+    } catch (error) {
+      console.error("Erreur lors de la récupération des images du produit:", error);
+      throw new Error("Impossible de récupérer les images du produit");
+    }
+  },
+
+  // Récupérer l'image principale d'un produit (numéro 1)
+  getProductMainImage: async (productId) => {
+    try {
+      const result = await db
+        .select({
+          id_image: images.id_image,
+          lien_image: images.lien_image
+        })
+        .from(images)
+        .where(and(
+          eq(images.id_produit, productId),
+          eq(images.numero_image, 1)
+        ))
+        .limit(1);
+      
+      return result.length > 0 ? result[0] : null;
+    } catch (error) {
+      console.error("Erreur lors de la récupération de l'image principale:", error);
+      return null;
+    }
   },
 
   // Récupérer tous les produits de type équipement par famille
@@ -40,19 +69,14 @@ const produitsService = {
     // Pour chaque produit, récupérer ses images
     const productsWithImages = [];
     for (const product of productsData) {
-      const productImages = await db
-        .select({
-          id_image: images.id_image,
-          lien_image: images.lien_image,
-        })
-        .from(images)
-        .where(eq(images.id_produit, product.id));
+      const productImages = await produitsService.getProductImages(product.id);
+      const mainImage = await produitsService.getProductMainImage(product.id);
       
-      // Ajouter les images et une image principale
+      // Ajouter les images et l'image principale
       const productWithImages = {
         ...product,
         images: productImages.map(img => img.lien_image),
-        image: productImages.length > 0 ? productImages[0].lien_image : null,
+        image: mainImage ? mainImage.lien_image : (productImages.length > 0 ? productImages[0].lien_image : null),
       };
       
       productsWithImages.push(productWithImages);
@@ -86,25 +110,98 @@ const produitsService = {
     // Pour chaque produit, récupérer ses images
     const productsWithImages = [];
     for (const product of productsData) {
-      const productImages = await db
-        .select({
-          id_image: images.id_image,
-          lien_image: images.lien_image,
-        })
-        .from(images)
-        .where(eq(images.id_produit, product.id));
+      const productImages = await produitsService.getProductImages(product.id);
+      const mainImage = await produitsService.getProductMainImage(product.id);
       
-      // Ajouter les images et une image principale
+      // Ajouter les images et l'image principale
       const productWithImages = {
         ...product,
-        images: productImages.map(img => img.lien_image), 
-        image: productImages.length > 0 ? productImages[0].lien_image : null,
+        images: productImages.map(img => img.lien_image),
+        image: mainImage ? mainImage.lien_image : (productImages.length > 0 ? productImages[0].lien_image : null),
       };
       
       productsWithImages.push(productWithImages);
     }
     
     return productsWithImages;
+  },
+
+  // Nouvelle fonction: Récupérer les produits avec pagination
+  getEquipementsWithPagination: async (page = 1, limit = 20, familleId = null) => {
+    // Calculer l'offset
+    const offset = (page - 1) * limit;
+    
+    // Construire la requête de base
+    let query = db
+      .select({
+        id: produits.id_produit,
+        designation: produits.desi_produit,
+        description: produits.desc_produit,
+        prix: produits.prix_produit,
+        caracteristiques: produits.caracteristiques_produit,
+        famille_id: familles.id_famille,
+        famille_libelle: familles.libelle_famille,
+      })
+      .from(produits)
+      .where(
+        and(
+          eq(type_produits.libelle, 'equipement'),
+          isNotNull(produits.prix_produit)
+        )
+      )
+      .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
+      .leftJoin(familles, eq(produits.id_famille, familles.id_famille));
+    
+    // Filtrer par famille si spécifié
+    if (familleId) {
+      query = query.where(eq(produits.id_famille, familleId));
+    }
+    
+    // Ajouter pagination
+    const productsData = await query
+      .limit(limit)
+      .offset(offset)
+      .orderBy(desc(produits.id_produit)); // Par défaut, les plus récents d'abord
+    
+    // Obtenir le nombre total pour calculer le nombre de pages
+    const totalCount = await db
+      .select({ count: sql`count(*)` })
+      .from(produits)
+      .where(
+        and(
+          eq(type_produits.libelle, 'equipement'),
+          isNotNull(produits.prix_produit),
+          familleId ? eq(produits.id_famille, familleId) : undefined
+        ).filter(Boolean)
+      )
+      .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit));
+    
+    // Pour chaque produit, récupérer ses images
+    const productsWithImages = [];
+    for (const product of productsData) {
+      const productImages = await produitsService.getProductImages(product.id);
+      const mainImage = await produitsService.getProductMainImage(product.id);
+      
+      // Ajouter les images et l'image principale
+      const productWithImages = {
+        ...product,
+        images: productImages.map(img => img.lien_image),
+        image: mainImage ? mainImage.lien_image : (productImages.length > 0 ? productImages[0].lien_image : null),
+      };
+      
+      productsWithImages.push(productWithImages);
+    }
+    
+    return {
+      products: productsWithImages,
+      pagination: {
+        page,
+        limit,
+        total: totalCount[0]?.count || 0,
+        totalPages: Math.ceil((totalCount[0]?.count || 0) / limit),
+        hasMore: page * limit < (totalCount[0]?.count || 0)
+      }
+    };
   },
 
   // Récupérer les 5 derniers produits ajoutés (nouveautés)
@@ -134,19 +231,14 @@ const produitsService = {
     // Pour chaque produit, récupérer ses images
     const productsWithImages = [];
     for (const product of productsData) {
-      const productImages = await db
-        .select({
-          id_image: images.id_image,
-          lien_image: images.lien_image,
-        })
-        .from(images)
-        .where(eq(images.id_produit, product.id));
+      const productImages = await produitsService.getProductImages(product.id);
+      const mainImage = await produitsService.getProductMainImage(product.id);
       
-      // Ajouter les images et une image principale
+      // Ajouter les images et l'image principale
       const productWithImages = {
         ...product,
         images: productImages.map(img => img.lien_image),
-        image: productImages.length > 0 ? productImages[0].lien_image : null,
+        image: mainImage ? mainImage.lien_image : (productImages.length > 0 ? productImages[0].lien_image : null),
       };
       
       productsWithImages.push(productWithImages);
@@ -183,19 +275,19 @@ const produitsService = {
     
     if (details.length === 0) throw new Error("Produit non trouvé");
     
-    // Récupérer les images associées au produit
-    const productImages = await db
-      .select({
-        id_image: images.id_image,
-        lien_image: images.lien_image,
-      })
-      .from(images)
-      .where(eq(images.id_produit, productId));
+    // Récupérer les images associées au produit avec leur numéro
+    const productImages = await produitsService.getProductImages(productId);
+    const mainImage = await produitsService.getProductMainImage(productId);
     
     // Ajouter les images au résultat
     const result = details[0];
-    result.images = productImages.map(img => img.lien_image);
-    result.image = productImages.length > 0 ? productImages[0].lien_image : null;
+    result.images = productImages.map(img => ({
+      id: img.id_image,
+      lien: img.lien_image,
+      numero: img.numero_image
+    }));
+    result.imagesUrls = productImages.map(img => img.lien_image); // Pour compatibilité
+    result.image = mainImage ? mainImage.lien_image : (productImages.length > 0 ? productImages[0].lien_image : null);
     
     return result;
   },
@@ -263,19 +355,14 @@ const produitsService = {
       // Pour chaque produit, récupérer ses images
       const productsWithImages = [];
       for (const product of productsData) {
-        const productImages = await db
-          .select({
-            id_image: images.id_image,
-            lien_image: images.lien_image,
-          })
-          .from(images)
-          .where(eq(images.id_produit, product.id));
+        const productImages = await produitsService.getProductImages(product.id);
+        const mainImage = await produitsService.getProductMainImage(product.id);
         
-        // Ajouter les images et une image principale
+        // Ajouter les images et l'image principale
         const productWithImages = {
           ...product,
           images: productImages.map(img => img.lien_image),
-          image: productImages.length > 0 ? productImages[0].lien_image : null,
+          image: mainImage ? mainImage.lien_image : (productImages.length > 0 ? productImages[0].lien_image : null),
         };
         
         productsWithImages.push(productWithImages);
@@ -310,19 +397,14 @@ const produitsService = {
     // Pour chaque produit, récupérer ses images puis calculer son score
     const scoredProducts = [];
     for (const product of productsData) {
-      const productImages = await db
-        .select({
-          id_image: images.id_image,
-          lien_image: images.lien_image,
-        })
-        .from(images)
-        .where(eq(images.id_produit, product.id));
+      const productImages = await produitsService.getProductImages(product.id);
+      const mainImage = await produitsService.getProductMainImage(product.id);
       
       // Ajouter les images au produit
       const productWithImages = {
         ...product,
         images: productImages.map(img => img.lien_image),
-        image: productImages.length > 0 ? productImages[0].lien_image : null,
+        image: mainImage ? mainImage.lien_image : (productImages.length > 0 ? productImages[0].lien_image : null),
       };
       
       // Calculer le score

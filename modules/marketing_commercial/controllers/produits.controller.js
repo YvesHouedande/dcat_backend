@@ -20,6 +20,24 @@ const produitsController = {
     }
   },
 
+  getPaginatedEquipements: async (req, res) => {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+      const familleId = req.query.familleId ? parseInt(req.query.familleId) : null;
+      
+      const result = await produitsService.getEquipementsWithPagination(page, limit, familleId);
+      
+      res.json({ 
+        success: true, 
+        produits: result.products,
+        pagination: result.pagination
+      });
+    } catch (error) {
+      res.status(400).json({ success: false, error: error.message });
+    }
+  },
+
   getLatestProducts: async (req, res) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit) : 5;

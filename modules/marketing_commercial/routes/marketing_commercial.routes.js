@@ -8,6 +8,7 @@ const produitsRoutes = require("./produits.routes");
 const commandesRoutes = require("./commandes.routes");
 const servicesDcatRoutes = require("./services_dcat.routes");
 const affichesRoutes = require("./affiches.routes");
+const panierRoutes = require("./panier.routes");
 
 /**
  * @swagger
@@ -58,5 +59,15 @@ router.use("/services", servicesDcatRoutes);
  *     tags: [Affiches]
  */
 router.use("/affiches", affichesRoutes);
+
+/**
+ * @swagger
+ * /api/marketing_commercial/panier:
+ *   description: Routes liées au panier d'achat
+ *   get:
+ *     summary: Accède au panier d'achat de l'utilisateur
+ *     tags: [Panier]
+ */
+router.use("/panier", panierRoutes);
 
 module.exports = router;
