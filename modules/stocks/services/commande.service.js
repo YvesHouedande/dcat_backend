@@ -224,7 +224,7 @@ async function createCommande({
       });
     }
 
-    // 8. Retour de la commande complète
+    // 6. Retour de la commande complète
     const completeCommande = {
       ...newCommande,
       produits: produitsACommander.map(([id, qte]) => ({
