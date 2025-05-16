@@ -53,7 +53,7 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin123}
       KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
-      KC_HEALTH_ENABLED: true
+      KC_HEALTH_ENABLED: "true"
       KC_PROXY: edge
     ports:
       - "8080:8080"

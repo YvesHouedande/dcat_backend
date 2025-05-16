@@ -3,60 +3,144 @@ const upload = require("../../utils/middleware/uploadMiddleware");
 const path = require("path");
 const fs = require("fs");
 
-// Configuration du dossier d'upload (depuis la racine du projet)
-const UPLOAD_DIR = path.join(process.cwd(), 'media', 'images', 'stock_moyensgeneraux', 'produits');
+// Configuration du dossier d'upload
+const UPLOAD_DIR = path.join(
+  process.cwd(),
+  "media",
+  "images",
+  "stock_moyensgeneraux",
+  "produits"
+);
 
+// Créer un produit avec gestion de plusieurs images
 const createProduit = async (req, res) => {
   try {
-    // Configuration du chemin d'upload pour cette requête
     req.uploadPath = UPLOAD_DIR;
-    
-    // Utilisation du middleware Multer pour gérer l'upload
-    upload.single('image_produit')(req, res, async (err) => {
+
+    // Configuration pour plusieurs fichiers
+    upload.array("images", 10)(req, res, async (err) => {
       if (err) {
-        return res.status(400).json({ 
-          error: "Erreur lors de l'upload de l'image",
-          details: err.message 
+        return res.status(400).json({
+          error: "Erreur lors de l'upload des images",
+          details: err.message,
         });
       }
 
-      // Préparation des données du produit
-      const produitData = {
-        ...req.body,
-        // Si un fichier a été uploadé, on stocke le chemin relatif
-        image_produit: req.file 
-          ? path.join('media', 'images', 'stock_moyensgeneraux', 'produits', req.file.filename)
-          : null
-      };
+      // Création du produit
+      const produitData = req.body;
+      const produit = await produitService.createProduit(produitData);
 
-      const result = await produitService.createProduit(produitData);
-      return res.status(201).json(result);
+      // Traitement des images uploadées
+      if (req.files && req.files.length > 0) {
+        const imageUrls = req.files.map((file) =>
+          path.join(
+            "media",
+            "images",
+            "stock_moyensgeneraux",
+            "produits",
+            file.filename
+          )
+        );
+
+        await produitService.addProduitImages(produit.id_produit, imageUrls);
+      }
+
+      // Récupérer le produit complet avec ses images
+      const completeProduit = await produitService.getProduitById(
+        produit.id_produit
+      );
+
+      return res.status(201).json(completeProduit);
     });
   } catch (error) {
-    res.status(500).json({ 
-      error: "Une erreur est survenue lors de la création du produit", 
-      details: error.message 
+    res.status(500).json({
+      error: "Une erreur est survenue lors de la création du produit",
+      details: error.message,
     });
   }
 };
 
+// Récupérer les produits avec pagination et filtres
 const getProduits = async (req, res) => {
   try {
-    const produits = await produitService.getProduits();
-    
-    // Transformer les chemins d'images en URLs accessibles si nécessaire
-    const result = produits.map(produit => ({
-      ...produit,
-      image_url: produit.image_produit 
-        ? `${req.protocol}://${req.get('host')}/${produit.image_produit.replace(/\\/g, '/')}`
-        : null
+    const {
+      page = 1,
+      limit = 10,
+      sortBy,
+      sortOrder,
+      search,
+      categoryId,
+      typeId,
+    } = req.query;
+
+    const options = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      sortBy,
+      sortOrder,
+      search,
+      categoryId: categoryId ? parseInt(categoryId) : undefined,
+      typeId: typeId ? parseInt(typeId) : undefined,
+    };
+
+    const result = await produitService.getProduits(options);
+
+    // Transformer les chemins d'images en URLs complètes
+    result.data = result.data.map((item) => ({
+      ...item,
+      images: item.images
+        ? item.images.map((img) => ({
+            ...img,
+            url: `${req.protocol}://${req.get("host")}/${img.lien_image.replace(
+              /\\/g,
+              "/"
+            )}`,
+          }))
+        : [],
     }));
 
-    return res.status(200).json(result || []);
+    return res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ 
-      error: "Une erreur est survenue lors de la récupération des produits", 
-      details: error.message 
+    res.status(500).json({
+      error: "Une erreur est survenue lors de la récupération des produits",
+      details: error.message,
+    });
+  }
+};
+
+// Récupérer un produit par son ID
+const getProduitById = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID de produit invalide" });
+    }
+
+    const produit = await produitService.getProduitById(id);
+
+    if (!produit) {
+      return res.status(404).json({ error: "Produit non trouvé" });
+    }
+
+    // Transformer les chemins d'images en URLs complètes
+    const result = {
+      ...produit,
+      images: produit.images
+        ? produit.images.map((img) => ({
+            ...img,
+            url: `${req.protocol}://${req.get("host")}/${img.lien_image.replace(
+              /\\/g,
+              "/"
+            )}`,
+          }))
+        : [],
+    };
+
+    return res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Une erreur est survenue lors de la récupération du produit",
+      details: error.message,
     });
   }
 };
@@ -64,59 +148,35 @@ const getProduits = async (req, res) => {
 const getProduitsByTypes = async (req, res) => {
   try {
     const idType = parseInt(req.params.idType);
+    const { limit = 50, offset = 0 } = req.query;
     if (isNaN(idType)) {
-      return res.status(400).json({ error: "ID de type de produit invalide" });
+      return res.status(400).json({ error: "ID de type invalide" });
     }
-    
-    const produits = await produitService.getProduitsByTypes(Number(idType));
-    
-    // Transformer les chemins d'images en URLs accessibles si nécessaire
-    const result = produits.map(produit => ({
+
+    const produits = await produitService.getProduitsByTypes(idType, {
+      limit: Number(limit),
+      offset: Number(offset),
+    });
+
+    // Ajouter les URLs accessibles aux images
+    const result = produits.map((produit) => ({
       ...produit,
-      image_url: produit.image_produit 
-        ? `${req.protocol}://${req.get('host')}/${produit.image_produit.replace(/\\/g, '/')}`
-        : null
+      images: produit.images.map((img) => ({
+        ...img,
+        url: `${req.protocol}://${req.get("host")}${img.lien_image}`,
+      })),
     }));
 
-    return res.json(result);
+    return res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ 
-      error: "Une erreur est survenue lors de la récupération des produits par type", 
-      details: error.message 
+    res.status(500).json({
+      error: "Erreur lors de la récupération des produits par type",
+      details: error.message,
     });
   }
 };
 
-const getProduitById = async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: "ID de produit invalide" });
-    }
-    
-    const produit = await produitService.getProduitById(Number(id));
-    
-    if (!produit) {
-      return res.status(404).json({ error: "Produit non trouvé" });
-    }
-
-    // Ajouter l'URL complète de l'image si elle existe
-    const result = {
-      ...produit,
-      image_url: produit.image_produit 
-        ? `${req.protocol}://${req.get('host')}/${produit.image_produit.replace(/\\/g, '/')}`
-        : null
-    };
-
-    return res.json(result);
-  } catch (error) {
-    res.status(500).json({ 
-      error: "Une erreur est survenue lors de la récupération du produit", 
-      details: error.message 
-    });
-  }
-};
-
+// Mettre à jour un produit
 const updateProduit = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -125,51 +185,46 @@ const updateProduit = async (req, res) => {
     }
 
     req.uploadPath = UPLOAD_DIR;
-    
-    upload.single('image_produit')(req, res, async (err) => {
+
+    upload.array("images", 10)(req, res, async (err) => {
       if (err) {
-        return res.status(400).json({ 
-          error: "Erreur lors de l'upload de l'image",
-          details: err.message 
+        return res.status(400).json({
+          error: "Erreur lors de l'upload des images",
+          details: err.message,
         });
       }
 
-      // Récupérer l'ancien produit pour supprimer l'image existante si nécessaire
-      const existingProduit = await produitService.getProduitById(id);
-      if (!existingProduit) {
-        return res.status(404).json({ error: "Produit non trouvé" });
-      }
-
-      // Préparation des données de mise à jour
+      // Mise à jour des données du produit
       const updateData = {
         ...req.body,
-        updated_at: new Date()
+        updated_at: new Date(),
       };
 
-      if (req.file) {
-        // Si une nouvelle image est uploadée
-        updateData.image_produit = path.join('media', 'images', 'stock_moyensgeneraux', 'produits', req.file.filename);
-        
-        // Supprimer l'ancienne image si elle existe
-        if (existingProduit.image_produit) {
-          const oldImagePath = path.join(process.cwd(), existingProduit.image_produit);
-          if (fs.existsSync(oldImagePath)) {
-            fs.unlinkSync(oldImagePath);
-          }
-        }
+      const updatedProduit = await produitService.updateProduit(id, updateData);
+
+      // Traitement des nouvelles images
+      if (req.files && req.files.length > 0) {
+        const imageUrls = req.files.map((file) =>
+          path.join("media", "images", "produits", file.filename)
+        );
+
+        await produitService.addProduitImages(id, imageUrls);
       }
 
-      const result = await produitService.updateProduit(id, updateData);
-      return res.json(result);
+      // Récupérer le produit complet avec ses images
+      const completeProduit = await produitService.getProduitById(id);
+
+      return res.json(completeProduit);
     });
   } catch (error) {
-    res.status(500).json({ 
-      error: "Une erreur est survenue lors de la mise à jour du produit", 
-      details: error.message 
+    res.status(500).json({
+      error: "Une erreur est survenue lors de la mise à jour du produit",
+      details: error.message,
     });
   }
 };
 
+// Supprimer un produit
 const deleteProduit = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -177,27 +232,61 @@ const deleteProduit = async (req, res) => {
       return res.status(400).json({ error: "ID de produit invalide" });
     }
 
-    // Récupérer le produit avant suppression pour supprimer son image
+    // Récupérer le produit avant suppression pour supprimer ses images
     const produit = await produitService.getProduitById(id);
     if (!produit) {
       return res.status(404).json({ error: "Produit non trouvé" });
     }
 
-    const result = await produitService.deleteProduit(id);
-
-    // Supprimer l'image associée si elle existe
-    if (produit.image_produit) {
-      const imagePath = path.join(process.cwd(), produit.image_produit);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
+    // Supprimer les fichiers image du serveur
+    if (produit.images && produit.images.length > 0) {
+      produit.images.forEach((img) => {
+        const imagePath = path.join(process.cwd(), img.lien_image);
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      });
     }
 
+    const result = await produitService.deleteProduit(id);
     return res.json(result);
   } catch (error) {
-    res.status(500).json({ 
-      error: "Une erreur est survenue lors de la suppression du produit", 
-      details: error.message 
+    res.status(500).json({
+      error: "Une erreur est survenue lors de la suppression du produit",
+      details: error.message,
+    });
+  }
+};
+
+// Supprimer une image d'un produit
+const deleteImage = async (req, res) => {
+  try {
+    const imageId = parseInt(req.params.imageId);
+    if (isNaN(imageId)) {
+      return res.status(400).json({ error: "ID d'image invalide" });
+    }
+
+    // Récupérer l'image avant suppression
+    const [image] = await db
+      .select()
+      .from(images)
+      .where(eq(images.id_image, imageId));
+    if (!image) {
+      return res.status(404).json({ error: "Image non trouvée" });
+    }
+
+    // Supprimer le fichier du serveur
+    const imagePath = path.join(process.cwd(), image.lien_image);
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
+
+    const result = await produitService.deleteProduitImage(imageId);
+    return res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Une erreur est survenue lors de la suppression de l'image",
+      details: error.message,
     });
   }
 };
@@ -208,5 +297,6 @@ module.exports = {
   getProduitById,
   updateProduit,
   deleteProduit,
-  getProduitsByTypes
+  deleteImage,
+  getProduitsByTypes,
 };
