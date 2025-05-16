@@ -24,6 +24,7 @@ const addProduitImages = async (produitId, imageUrls) => {
   return await db.insert(images).values(imagesToInsert).returning();
 };
 
+
 const getProduits = async (options = {}) => {
   const {
     page = 1,
@@ -33,11 +34,12 @@ const getProduits = async (options = {}) => {
     search = "",
     categoryId,
     typeId,
+    familleLibelle,
   } = options;
 
   const offset = (page - 1) * limit;
 
-  // Construction de la requête de base
+  // Base SELECT avec jointures
   let query = db
     .select({
       produit: produits,
@@ -58,19 +60,18 @@ const getProduits = async (options = {}) => {
     })
     .from(produits)
     .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
-    .leftJoin(
-      type_produits,
-      eq(produits.id_type_produit, type_produits.id_type_produit)
-    )
+    .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
     .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
-    .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+    .leftJoin(familles, eq(produits.id_famille, familles.id_famille)) 
     .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
     .limit(limit)
     .offset(offset);
 
-  // Filtres
+  // Construction des filtres dynamiques
+  const filters = [];
+
   if (search) {
-    query = query.where(
+    filters.push(
       or(
         sql`LOWER(${produits.desi_produit}) LIKE LOWER(${"%" + search + "%"})`,
         sql`LOWER(${produits.desc_produit}) LIKE LOWER(${"%" + search + "%"})`
@@ -79,24 +80,40 @@ const getProduits = async (options = {}) => {
   }
 
   if (categoryId) {
-    query = query.where(eq(produits.id_categorie, categoryId));
+    filters.push(eq(produits.id_categorie, categoryId));
   }
 
   if (typeId) {
-    query = query.where(eq(produits.id_type_produit, typeId));
+    filters.push(eq(produits.id_type_produit, typeId));
+  }
+
+  if (familleLibelle) {
+    filters.push(eq(familles.libelle_famille, familleLibelle));
+  }
+
+  if (filters.length) {
+    query = query.where(and(...filters));
   }
 
   // Tri
   const sortField = produits[sortBy] || produits.created_at;
   query = query.orderBy(sortOrder === "asc" ? asc(sortField) : desc(sortField));
 
-  // Comptage total pour la pagination
-  const countQuery = db.select({ count: sql`count(*)` }).from(produits);
+  // Compte total (avec même logique de filtre, mais sans offset/limit/images)
+  let countQuery = db.select({ count: sql`count(*)` }).from(produits);
 
-  const [results, total] = await Promise.all([
+  if (filters.length) {
+    countQuery = countQuery
+      .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+      .where(and(...filters));
+  }
+
+  const [results, totalResult] = await Promise.all([
     query,
-    countQuery.then((res) => Number(res[0].count)),
+    countQuery,
   ]);
+
+  const total = Number(totalResult[0].count);
 
   return {
     data: results,
@@ -108,6 +125,8 @@ const getProduits = async (options = {}) => {
     },
   };
 };
+
+
 
 const getProduitById = async (id) => {
   const [result] = await db
@@ -207,3 +226,4 @@ module.exports = {
   deleteProduitImage,
   getProduitsByTypes,
 };
+//test

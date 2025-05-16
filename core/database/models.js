@@ -148,13 +148,7 @@ const categories = pgTable("categories", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// panier
-const paniers = pgTable("paniers", {
-  id_panier: serial("id_panier").primaryKey(),
-  id_client: integer("id_client").references(() => clients_en_ligne.id_client),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-  updated_at: timestamp("updated_at").defaultNow().notNull(),
-});
+
 
 // Projet
 const projets = pgTable("projets", {
@@ -253,6 +247,7 @@ const affiches = pgTable("affiches", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
+
 // Produit
 const produits = pgTable("produits", {
   id_produit: serial("id_produit").primaryKey(), // Clé primaire simple
@@ -279,9 +274,21 @@ const produits = pgTable("produits", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
+
+// panier
+const paniers = pgTable("paniers", {
+  id_panier: serial("id_panier").primaryKey(),
+  id_client: integer("id_client").references(() => clients_en_ligne.id_client),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
+
 //images
 const images = pgTable("images", {
   id_image: serial("id_image").primaryKey(),
+  libelle_image: text("libelle_image"),
+  numero_image: varchar("numero_image", { length: 50 }),
   lien_image: text("lien_image"),
   id_produit: integer("id_produit").references(() => produits.id_produit),
   created_at: timestamp("created_at").defaultNow().notNull(),
@@ -646,6 +653,26 @@ const commande_produits = pgTable(
   })
 );
 
+const panier_produits = pgTable(
+  "panier_produits",
+  {
+    id_panier: integer("id_panier")
+      .notNull()
+      .references(() => paniers.id_panier),
+    id_produit: integer("id_produit")
+      .notNull()
+      .references(() => produits.id_produit),
+    quantite: integer("quantite"),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+    updated_at: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({
+      columns: [table.id_panier, table.id_produit],
+    }),
+  })
+);
+
 module.exports = {
   familles,
   modeles,
@@ -689,4 +716,5 @@ module.exports = {
   maintenance_employes,
   maintenance_moyens_travail,
   commande_produits,
+  panier_produits
 };
