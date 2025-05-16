@@ -71,6 +71,7 @@ const getProduits = async (req, res) => {
       search,
       categoryId,
       typeId,
+      familleLibelle
     } = req.query;
 
     const options = {
@@ -81,6 +82,7 @@ const getProduits = async (req, res) => {
       search,
       categoryId: categoryId ? parseInt(categoryId) : undefined,
       typeId: typeId ? parseInt(typeId) : undefined,
+      familleLibelle:familleLibelle ? familleLibelle : undefined,
     };
 
     const result = await produitService.getProduits(options);
