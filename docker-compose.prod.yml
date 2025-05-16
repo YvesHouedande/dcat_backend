@@ -4,6 +4,8 @@ services:
   # Service Backend
   app:
     build: .
+    volumes:
+      - /opt/dcat/media:/app/media  
     container_name: dcat_backend
     ports:
       - "2000:2000"
