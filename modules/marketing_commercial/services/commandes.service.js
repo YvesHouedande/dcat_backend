@@ -2,6 +2,7 @@ const { db } = require('../../../core/database/config');
 const { commandes, commande_produits, clients_en_ligne, produits, familles, marques, modeles, type_produits, images } = require("../../../core/database/models");
 const { eq, desc, and, sql } = require("drizzle-orm");
 const nodemailer = require('nodemailer');
+const notificationService = require('./notification_websocket.service');
 
 
 // Configuration de Nodemailer avec les variables d'environnement
@@ -268,6 +269,20 @@ const commandesService = {
           commandesService.sendCommandeNotificationToAdmin(result.commande, result.client, result.admins)
             .catch(err => {});
         }
+        
+        // Notification pour le client
+        await notificationService.sendToUser(result.commande.id_client, {
+          title: 'Commande confirmée',
+          message: `Votre commande #${result.commande.id_commande} a été enregistrée avec succès.`,
+          type: 'command',
+        });
+
+        // Notification pour tous les admins
+        await notificationService.sendToRole('admin', {
+          title: 'Nouvelle commande',
+          message: `Une nouvelle commande #${result.commande.id_commande} a été passée par ${result.client ? result.client.nom : 'N/A'}.`,
+          type: 'command_admin',
+        });
         
         return result.commande;
       } catch (error) {

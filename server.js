@@ -1,6 +1,7 @@
 ﻿const express = require("express");
 const path = require("path");
 const helmet = require("helmet");
+const http = require("http"); // Ajout pour créer un serveur HTTP
 const { keycloak } = require("./core/auth/keycloak.config");
 const { initKeycloak, protect } = require("./core/auth/middleware");
 const logger = require("./core/utils/logger");
@@ -10,6 +11,8 @@ require("dotenv").config();
 
 // Initialisation Express
 const app = express();
+// Création du serveur HTTP
+const server = http.createServer(app);
 
 // =============== MIDDLEWARES DE BASE ===============
 app.use(helmet());
@@ -23,8 +26,14 @@ app.use(initKeycloak());
 // =============== CORS ===============
 const cors = require('cors');
 app.use(cors({
-  origin: 'http://localhost:5173'
+  origin: '*' // Permettre toutes les origines pour WebSocket et API
 }));
+
+// =============== INITIALISATION WEBSOCKET ===============
+// Initialiser le serveur WebSocket AVANT le chargement des modules
+const { initializeWebSocket } = require('./modules/marketing_commercial/utils/websocket');
+initializeWebSocket(server);
+logger.info('Serveur WebSocket initialisé');
 
 // =============== CHARGEMENT DES MODULES ===============
 function loadModule(moduleName) {
@@ -54,9 +63,7 @@ app.use("/api/moyens-generaux", loadModule("moyens_generaux"));
 app.use("/api/administration", loadModule("Administration&Finance"));
 
 // CHARGEMENT DES ENDPOINT DU MODULZ TECHNIQUES
-
 app.use("/api/technique", loadModule("technique"));
-
 app.use("/api/marketing_commercial", loadModule("marketing_commercial"));
 
 // =============================================
@@ -110,8 +117,8 @@ app.use((err, req, res, next) => {
 // DÉMARRAGE DU SERVEUR
 // =============================================
 // const PORT = process.env.PORT || 3000;
-const PORT = 2000;
-app.listen(PORT, () => {
+const PORT = 200;
+server.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Keycloak configured for realm: ${keycloak.config.realm}`);
   logger.info("Available routes:");
@@ -123,6 +130,9 @@ app.listen(PORT, () => {
     `- POST http://localhost:${PORT}/api/stocks (protected, requires inventory-manager role)`
   );
   logger.info(`- GET  http://localhost:${PORT}/api/protected (protected)`);
+  logger.info(`- WebSocket ws://localhost:${PORT} (authentication required)`);
   logger.info(`- ###################NODE_ENV:${process.env.NODE_ENV}########################`);
-
 });
+
+// Exporter pour les tests
+module.exports = { app, server };
