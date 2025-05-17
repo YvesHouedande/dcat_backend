@@ -117,7 +117,7 @@ app.use((err, req, res, next) => {
 // DÉMARRAGE DU SERVEUR
 // =============================================
 // const PORT = process.env.PORT || 3000;
-const PORT = 200;
+const PORT = 2000;
 server.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Keycloak configured for realm: ${keycloak.config.realm}`);
