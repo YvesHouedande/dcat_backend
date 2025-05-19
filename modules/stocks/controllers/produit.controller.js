@@ -17,7 +17,6 @@ const createProduit = async (req, res) => {
   try {
     req.uploadPath = UPLOAD_DIR;
 
-    // Configuration pour plusieurs fichiers
     upload.array("images", 10)(req, res, async (err) => {
       if (err) {
         return res.status(400).json({
@@ -26,26 +25,30 @@ const createProduit = async (req, res) => {
         });
       }
 
-      // Création du produit
       const produitData = req.body;
       const produit = await produitService.createProduit(produitData);
 
-      // Traitement des images uploadées
+      // 🎯 Traitement des métadonnées
+      const imagesMeta = req.body.imagesMeta
+        ? JSON.parse(req.body.imagesMeta)
+        : [];
+
       if (req.files && req.files.length > 0) {
-        const imageUrls = req.files.map((file) =>
-          path.join(
+        const imagesInfos = req.files.map((file, index) => ({
+          lien: path.join(
             "media",
             "images",
             "stock_moyensgeneraux",
             "produits",
             file.filename
-          )
-        );
+          ),
+          libelle: imagesMeta[index]?.libelle || "",
+          numero: imagesMeta[index]?.numero || index + 1,
+        }));
 
-        await produitService.addProduitImages(produit.id_produit, imageUrls);
+        await produitService.addProduitImages(produit.id_produit, imagesInfos);
       }
 
-      // Récupérer le produit complet avec ses images
       const completeProduit = await produitService.getProduitById(
         produit.id_produit
       );
@@ -60,6 +63,7 @@ const createProduit = async (req, res) => {
   }
 };
 
+
 // Récupérer les produits avec pagination et filtres
 const getProduits = async (req, res) => {
   try {
@@ -71,6 +75,7 @@ const getProduits = async (req, res) => {
       search,
       categoryId,
       typeId,
+      familleLibelle
     } = req.query;
 
     const options = {
@@ -81,6 +86,7 @@ const getProduits = async (req, res) => {
       search,
       categoryId: categoryId ? parseInt(categoryId) : undefined,
       typeId: typeId ? parseInt(typeId) : undefined,
+      familleLibelle:familleLibelle ? familleLibelle : undefined,
     };
 
     const result = await produitService.getProduits(options);
@@ -194,7 +200,7 @@ const updateProduit = async (req, res) => {
         });
       }
 
-      // Mise à jour des données du produit
+      // 🔄 Mise à jour des champs du produit
       const updateData = {
         ...req.body,
         updated_at: new Date(),
@@ -202,16 +208,28 @@ const updateProduit = async (req, res) => {
 
       const updatedProduit = await produitService.updateProduit(id, updateData);
 
-      // Traitement des nouvelles images
-      if (req.files && req.files.length > 0) {
-        const imageUrls = req.files.map((file) =>
-          path.join("media", "images", "produits", file.filename)
-        );
+      // 📦 Traitement des nouvelles images
+      const imagesMeta = req.body.imagesMeta
+        ? JSON.parse(req.body.imagesMeta)
+        : [];
 
-        await produitService.addProduitImages(id, imageUrls);
+      if (req.files && req.files.length > 0) {
+        const imagesInfos = req.files.map((file, index) => ({
+          lien: path.join(
+            "media",
+            "images",
+            "stock_moyensgeneraux",
+            "produits",
+            file.filename
+          ),
+          libelle: imagesMeta[index]?.libelle || "",
+          numero: imagesMeta[index]?.numero || index + 1,
+        }));
+
+        await produitService.addProduitImages(id, imagesInfos);
       }
 
-      // Récupérer le produit complet avec ses images
+      // 🔍 Retourner le produit avec toutes ses infos à jour
       const completeProduit = await produitService.getProduitById(id);
 
       return res.json(completeProduit);
@@ -223,6 +241,8 @@ const updateProduit = async (req, res) => {
     });
   }
 };
+
+
 
 // Supprimer un produit
 const deleteProduit = async (req, res) => {

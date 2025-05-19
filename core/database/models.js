@@ -288,7 +288,7 @@ const paniers = pgTable("paniers", {
 const images = pgTable("images", {
   id_image: serial("id_image").primaryKey(),
   libelle_image: text("libelle_image"),
-  numero_image: varchar("numero_image", { length: 50 }),
+  numero_image: integer("numero_image"),
   lien_image: text("lien_image"),
   id_produit: integer("id_produit").references(() => produits.id_produit),
   created_at: timestamp("created_at").defaultNow().notNull(),
@@ -673,6 +673,18 @@ const panier_produits = pgTable(
   })
 );
 
+// Notifications
+const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => clients_en_ligne.id_client),
+  title: varchar("title", { length: 100 }).notNull(),
+  message: text("message").notNull(),
+  type: varchar("type", { length: 50 }).default("info"),
+  is_read: boolean("is_read").default(false),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
 module.exports = {
   familles,
   modeles,
@@ -716,5 +728,6 @@ module.exports = {
   maintenance_employes,
   maintenance_moyens_travail,
   commande_produits,
-  panier_produits
+  panier_produits,
+  notifications
 };

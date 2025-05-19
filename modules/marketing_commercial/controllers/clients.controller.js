@@ -176,11 +176,45 @@ const clientsController = {
   },
 
   logout: async (req, res) => {
-    const { refreshToken } = req.body;
-    if (!refreshToken) return res.status(400).json({ success: false, error: "Refresh token manquant" });
-
-    await db.delete(refresh_tokens).where(eq(refresh_tokens.token, refreshToken));
-    res.json({ success: true, message: "Déconnexion réussie" });
+    try {
+      const { refreshToken } = req.body;
+      if (!refreshToken) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Refresh token manquant", 
+          errorCode: "MISSING_TOKEN" 
+        });
+      }
+      
+      // Limiter le temps de l'opération de suppression
+      const deletePromise = db.delete(refresh_tokens)
+        .where(eq(refresh_tokens.token, refreshToken));
+        
+      // Ajouter un timeout à la suppression pour éviter les blocages
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 2000)
+      );
+      
+      // Utiliser Promise.race pour garantir que l'opération ne prend pas trop de temps
+      await Promise.race([deletePromise, timeoutPromise])
+        .catch(err => {
+          // Journaliser l'erreur mais ne pas la propager afin de répondre au client
+          console.error("Erreur de suppression du token:", err.message);
+        });
+      
+      // Répondre au client rapidement, même si l'opération de BD échoue
+      return res.json({ success: true, message: "Déconnexion réussie" });
+    } catch (error) {
+      // Journaliser l'erreur
+      console.error("Erreur durant la déconnexion:", error.message);
+      
+      // Répondre avec une erreur mais assurer que la réponse est envoyée
+      return res.status(500).json({ 
+        success: false, 
+        error: "Erreur lors de la déconnexion",
+        errorCode: "LOGOUT_ERROR"
+      });
+    }
   },
 
   // Récupérer tous les clients (fonctionnalité admin)

@@ -14,9 +14,59 @@ const controller = require("../controllers/produit.controller");
  * @swagger
  * /produits:
  *   post:
- *     summary: Crée un nouveau produit
+ *     summary: Crée un nouveau produit avec plusieurs images
  *     tags: [Produits]
+ *     consumes:
+ *       - multipart/form-data
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code_produit:
+ *                 type: string
+ *                 example: P123
+ *               desi_produit:
+ *                 type: string
+ *                 example: Tondeuse thermique
+ *               desc_produit:
+ *                 type: string
+ *                 example: Puissante tondeuse à essence 6CV
+ *               id_categorie:
+ *                 type: integer
+ *                 example: 1
+ *               id_type_produit:
+ *                 type: integer
+ *                 example: 2
+ *               id_modele:
+ *                 type: integer
+ *                 example: 3
+ *               id_famille:
+ *                 type: integer
+ *                 example: 4
+ *               id_marque:
+ *                 type: integer
+ *                 example: 5
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *               imagesMeta:
+ *                 type: string
+ *                 description: JSON contenant les libellés et numéros des images (même ordre que les fichiers)
+ *                 example: '[{"libelle": "Face avant", "numero": 1}, {"libelle": "Vue arrière", "numero": 2}]'
+ *     responses:
+ *       201:
+ *         description: Produit créé avec succès
+ *       400:
+ *         description: Erreur de validation ou d'upload
+ *       500:
+ *         description: Erreur interne du serveur
  */
+
 router.post("/", controller.createProduit);
 
 /**

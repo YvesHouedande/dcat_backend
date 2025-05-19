@@ -20,6 +20,24 @@ const produitsController = {
     }
   },
 
+  getPaginatedEquipements: async (req, res) => {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+      const familleId = req.query.familleId ? parseInt(req.query.familleId) : null;
+      
+      const result = await produitsService.getEquipementsWithPagination(page, limit, familleId);
+      
+      res.json({ 
+        success: true, 
+        produits: result.products,
+        pagination: result.pagination
+      });
+    } catch (error) {
+      res.status(400).json({ success: false, error: error.message });
+    }
+  },
+
   getLatestProducts: async (req, res) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit) : 5;
@@ -35,6 +53,16 @@ const produitsController = {
       const { productId } = req.params;
       const produit = await produitsService.getProductDetails(productId);
       res.json({ success: true, produit });
+    } catch (error) {
+      res.status(404).json({ success: false, error: error.message });
+    }
+  },
+
+  getProductImages: async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const images = await produitsService.getProductImages(productId);
+      res.json({ success: true, images });
     } catch (error) {
       res.status(404).json({ success: false, error: error.message });
     }
