@@ -23,7 +23,7 @@ app.use(initKeycloak());
 // =============== CORS ===============
 const cors = require('cors');
 app.use(cors({
-  origin: 'http://localhost:5173'
+  origin: 'http://localhost:9090'
 }));
 
 // =============== CHARGEMENT DES MODULES ===============
