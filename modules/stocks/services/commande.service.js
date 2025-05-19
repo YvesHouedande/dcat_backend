@@ -23,8 +23,17 @@ const commande = await createCommande({
   dateLivraison: "2025-05-10",
   modePaiement: "carte"
 });
+
  */
 
+/**
+ *
+ * Explication :
+ *
+ * ici on achète les produits directement chez le gestionnaire de stock ;
+ * donc on fait une vérification des exemplaires disponibles
+ *
+ */
 async function createCommande({
   produitsQuantites, // {id_produit: quantite}
   partenaireId,
@@ -43,6 +52,7 @@ async function createCommande({
     // 2. Vérification des stocks et récupération des exemplaires disponibles
     const produitsACommander = Object.entries(produitsQuantites);
     const exemplairesReserves = [];
+    const produitsInfos = {}; // Pour stocker les infos produits
 
     for (const [produitId, quantite] of produitsACommander) {
       // Vérifier la quantité disponible
@@ -54,6 +64,8 @@ async function createCommande({
       if (!produit || produit.qte_produit < quantite) {
         throw new Error(`Stock insuffisant pour le produit ${produitId}`);
       }
+
+      produitsInfos[produitId] = produit; // 🧠 Mémoriser pour plus tard
 
       // Récupérer des exemplaires disponibles
       const exemplairesDispos = await tx
@@ -100,16 +112,19 @@ async function createCommande({
 
     // 5. Liaison commande-produits
     for (const [produitId, quantite] of produitsACommander) {
+      const produit = produitsInfos[produitId];
+
       await tx.insert(commande_produits).values({
         id_commande: newCommande.id_commande,
         id_produit: Number(produitId),
         quantite: quantite,
+        prix_unitaire: produit.prix_produit,
         created_at: new Date(),
         updated_at: new Date(),
       });
     }
 
-    // 6. Mise à jour des exemplaires (marqués comme vendus)
+    // 6. Mise à jour des exemplaires (marqués comme Reservé à la vente)
     const exemplairesIds = exemplairesReserves.map((e) => e.id_exemplaire);
     await tx
       .update(exemplaires)
@@ -138,6 +153,84 @@ async function createCommande({
         quantite: qte,
       })),
       exemplaires: exemplairesReserves,
+      partenaire: { id_partenaire: partenaireId },
+    };
+
+    return completeCommande;
+  });
+}
+
+/**
+ *
+ * Explication :
+ *
+ * ici on achète les produits directement chez le gestionnaire de stock ;
+ * Sans faire de vérification des exemplaires disponibles
+ * Utile dans le cas où il n'y a pas d'exemplaire disponible, mais le client vu patienter pour le réapprovisionnement de notre stock
+ *
+ */
+async function createCommande({
+  produitsQuantites, // {id_produit: quantite}
+  partenaireId,
+  lieuLivraison,
+  dateCommande = new Date(),
+  dateLivraison,
+  modePaiement,
+}) {
+  return await db.transaction(async (tx) => {
+    // 1. Validation des entrées
+    if (!produitsQuantites || !Object.keys(produitsQuantites).length) {
+      throw new Error("Aucun produit spécifié");
+    }
+    if (!partenaireId) throw new Error("Partenaire non spécifié");
+
+    // 3. Création de la commande
+
+    const produitsACommander = Object.entries(produitsQuantites);
+    const produitsInfos = {}; // Pour stocker les infos produits
+
+    const [newCommande] = await tx
+      .insert(commandes)
+      .values({
+        date_de_commande: new Date(dateCommande),
+        etat_commande: "en cours",
+        date_livraison: new Date(dateLivraison),
+        lieu_de_livraison: lieuLivraison,
+        mode_de_paiement: modePaiement,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      .returning();
+
+    // 4. Liaison commande-partenaire (étape cruciale ajoutée)
+    await tx.insert(partenaire_commandes).values({
+      id_partenaire: partenaireId,
+      id_commande: newCommande.id_commande,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+
+    // 5. Liaison commande-produits
+    for (const [produitId, quantite] of produitsACommander) {
+      const produit = produitsInfos[produitId];
+
+      await tx.insert(commande_produits).values({
+        id_commande: newCommande.id_commande,
+        id_produit: Number(produitId),
+        quantite: quantite,
+        prix_unitaire: produit.prix_produit,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+    }
+
+    // 6. Retour de la commande complète
+    const completeCommande = {
+      ...newCommande,
+      produits: produitsACommander.map(([id, qte]) => ({
+        id_produit: Number(id),
+        quantite: qte,
+      })),
       partenaire: { id_partenaire: partenaireId },
     };
 
@@ -181,7 +274,6 @@ async function getCommandeById(id) {
     throw error;
   }
 }
-
 
 // 📜 Liste paginée ou filtrée des commandes
 async function getAllCommandes({ limit = 50, offset = 0, etat = null } = {}) {

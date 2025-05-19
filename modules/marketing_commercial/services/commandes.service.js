@@ -1,7 +1,8 @@
 const { db } = require('../../../core/database/config');
-const { commandes, commande_produits, clients_en_ligne, produits, familles, marques, modeles, type_produits } = require("../../../core/database/models");
+const { commandes, commande_produits, clients_en_ligne, produits, familles, marques, modeles, type_produits, images } = require("../../../core/database/models");
 const { eq, desc, and, sql } = require("drizzle-orm");
 const nodemailer = require('nodemailer');
+const notificationService = require('./notification_websocket.service');
 
 
 // Configuration de Nodemailer avec les variables d'environnement
@@ -19,7 +20,7 @@ const transporter = nodemailer.createTransport({
 const emailFrom = '"DCAT" <sales@dcat.ci>';
 
 // Chemin vers le logo de l'entreprise - utiliser un chemin d'URL absolue
-const baseUrl = 'erpback.dcat.ci';
+const baseUrl = 'https://erpback.dcat.ci';
 // Utiliser le chemin avec des slashes pour les URLs (compatible avec tous les OS)
 const logoPath = 'media/images/services_dcat/entreprise_logo.png';
 const logoUrl = `${baseUrl}/${logoPath}`;
@@ -29,7 +30,7 @@ const emailStyles = `
   body { font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
   .container { max-width: 600px; margin: 0 auto; padding: 20px; }
   .header { text-align: center; padding: 20px 0; }
-  .logo { max-width: 150px; height: auto; }
+  .logo { max-width: 100px; height: auto; }
   h1 { color: #0056b3; margin-top: 20px; }
   .content { padding: 20px; background-color: #f9f9f9; border-radius: 5px; }
   .footer { padding: 20px; text-align: center; font-size: 12px; color: #777; margin-top: 20px; }
@@ -269,6 +270,20 @@ const commandesService = {
             .catch(err => {});
         }
         
+        // Notification pour le client
+        await notificationService.sendToUser(result.commande.id_client, {
+          title: 'Commande confirmée',
+          message: `Votre commande #${result.commande.id_commande} a été enregistrée avec succès.`,
+          type: 'command',
+        });
+
+        // Notification pour tous les admins
+        await notificationService.sendToRole('admin', {
+          title: 'Nouvelle commande',
+          message: `Une nouvelle commande #${result.commande.id_commande} a été passée par ${result.client ? result.client.nom : 'N/A'}.`,
+          type: 'command_admin',
+        });
+        
         return result.commande;
       } catch (error) {
         // On renvoie quand même la commande car elle a été créée avec succès
@@ -475,7 +490,6 @@ const commandesService = {
         description: produits.desc_produit,
         prix: commande_produits.prix_unitaire, // Utiliser le prix_unitaire de la table commande_produits
         quantite: commande_produits.quantite,
-        image: produits.image_produit,
         caracteristiques: produits.caracteristiques_produit,
         famille_libelle: familles.libelle_famille,
         marque_libelle: marques.libelle_marque,
@@ -488,7 +502,28 @@ const commandesService = {
       .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
       .where(eq(commande_produits.id_commande, commandeId));
     
-    return result;
+    // Pour chaque produit, récupérer ses images
+    const productsWithImages = [];
+    for (const product of result) {
+      const productImages = await db
+        .select({
+          id_image: images.id_image,
+          lien_image: images.lien_image,
+        })
+        .from(images)
+        .where(eq(images.id_produit, product.id_produit));
+      
+      // Ajouter les images au produit
+      const productWithImages = {
+        ...product,
+        images: productImages.map(img => img.lien_image),
+        image: productImages.length > 0 ? productImages[0].lien_image : null,
+      };
+      
+      productsWithImages.push(productWithImages);
+    }
+    
+    return productsWithImages;
   },
 
   // Récupérer l'historique des commandes d'un client
