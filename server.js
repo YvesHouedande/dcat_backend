@@ -82,6 +82,11 @@ app.get("/health", (req, res) => {
 });
 
 // Pour les fichiers
+app.use('/media', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+});
+
 app.use("/media", express.static(path.join(process.cwd(), "media")));
 
 // =============== ROUTES PROTÉGÉES ===============
