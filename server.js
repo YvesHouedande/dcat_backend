@@ -82,12 +82,22 @@ app.get("/health", (req, res) => {
 });
 
 // Pour les fichiers
+// Pour les fichiers média (images, PDF, etc.)
 app.use('/media', (req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none'); // utile si tu utilises des iframes
+  res.setHeader('Content-Security-Policy',
+    "default-src 'self' data: blob: *; " +
+    "img-src 'self' data: blob: *; " +
+    "script-src 'self' 'unsafe-inline'; " +
+    "style-src 'self' 'unsafe-inline';"
+  );
   next();
 });
 
 app.use("/media", express.static(path.join(process.cwd(), "media")));
+
 
 // =============== ROUTES PROTÉGÉES ===============
 app.get("/api/protected", protect(), (req, res) => {
