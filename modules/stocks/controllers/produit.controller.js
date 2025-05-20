@@ -63,7 +63,6 @@ const createProduit = async (req, res) => {
   }
 };
 
-
 // Récupérer les produits avec pagination et filtres
 const getProduits = async (req, res) => {
   try {
@@ -75,7 +74,10 @@ const getProduits = async (req, res) => {
       search,
       categoryId,
       typeId,
-      familleLibelle
+      familleLibelle,
+      marqueLibelle,
+      prixMin,
+      prixMax,
     } = req.query;
 
     const options = {
@@ -86,7 +88,10 @@ const getProduits = async (req, res) => {
       search,
       categoryId: categoryId ? parseInt(categoryId) : undefined,
       typeId: typeId ? parseInt(typeId) : undefined,
-      familleLibelle:familleLibelle ? familleLibelle : undefined,
+      familleLibelle: familleLibelle ? familleLibelle : undefined,
+      marqueLibelle: marqueLibelle ? marqueLibelle : undefined,
+      prixMin: prixMin ? parseFloat(prixMin) : undefined,
+      prixMax: prixMax ? parseFloat(prixMax) : undefined,
     };
 
     const result = await produitService.getProduits(options);
@@ -241,8 +246,6 @@ const updateProduit = async (req, res) => {
     });
   }
 };
-
-
 
 // Supprimer un produit
 const deleteProduit = async (req, res) => {

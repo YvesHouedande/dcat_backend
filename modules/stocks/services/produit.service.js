@@ -38,6 +38,10 @@ const getProduits = async (options = {}) => {
     categoryId,
     typeId,
     familleLibelle,
+    marqueLibelle,
+    modeleLibelle,
+    prixMin,
+    prixMax,
   } = options;
 
   const offset = (page - 1) * limit;
@@ -65,10 +69,7 @@ const getProduits = async (options = {}) => {
     })
     .from(produits)
     .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
-    .leftJoin(
-      type_produits,
-      eq(produits.id_type_produit, type_produits.id_type_produit)
-    )
+    .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
     .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
     .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
     .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
@@ -96,24 +97,45 @@ const getProduits = async (options = {}) => {
   }
 
   if (familleLibelle) {
-    filters.push(eq(familles.libelle_famille, familleLibelle));
+    filters.push(sql`LOWER(${familles.libelle_famille}) = LOWER(${familleLibelle})`);
+  }
+
+  if (marqueLibelle) {
+    filters.push(sql`LOWER(${marques.libelle_marque}) = LOWER(${marqueLibelle})`);
+  }
+
+  if (modeleLibelle) {
+    filters.push(sql`LOWER(${modeles.libelle_modele}) = LOWER(${modeleLibelle})`);
+  }
+
+  if (prixMin !== undefined) {
+    filters.push(sql`${produits.prix_produit} >= ${prixMin}`);
+  }
+
+  if (prixMax !== undefined) {
+    filters.push(sql`${produits.prix_produit} <= ${prixMax}`);
   }
 
   if (filters.length) {
     query = query.where(and(...filters));
   }
 
-  // Tri
+  // Tri dynamique
   const sortField = produits[sortBy] || produits.created_at;
   query = query.orderBy(sortOrder === "asc" ? asc(sortField) : desc(sortField));
 
-  // Compte total (avec même logique de filtre, mais sans offset/limit/images)
-  let countQuery = db.select({ count: sql`count(*)` }).from(produits);
+  // Compte total (avec les mêmes filtres)
+  let countQuery = db
+    .select({ count: sql`count(*)` })
+    .from(produits)
+    .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
+    .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
+    .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
+    .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+    .leftJoin(marques, eq(produits.id_marque, marques.id_marque));
 
   if (filters.length) {
-    countQuery = countQuery
-      .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
-      .where(and(...filters));
+    countQuery = countQuery.where(and(...filters));
   }
 
   const [results, totalResult] = await Promise.all([query, countQuery]);
@@ -131,6 +153,9 @@ const getProduits = async (options = {}) => {
   };
 };
 
+
+
+
 const getProduitById = async (id) => {
   const [result] = await db
     .select({
@@ -138,7 +163,9 @@ const getProduitById = async (id) => {
       images: sql`(
         SELECT json_agg(json_build_object(
           'id_image', images.id_image,
+          'libelle_image', images.libelle_image,
           'lien_image', images.lien_image,
+          'numero_image', images.numero_image,
           'created_at', images.created_at
         )) 
         FROM images 
