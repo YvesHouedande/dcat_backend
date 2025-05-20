@@ -88,8 +88,8 @@ const prepareUploadPath = (req, res, next) => {
 router.post('/ajouter',
   prepareUploadPath,
   upload.single("document"),
-
   doc_FCController.addDocument
+  
 );
 
 /**
