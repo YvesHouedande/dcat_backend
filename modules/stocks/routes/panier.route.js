@@ -78,3 +78,4 @@ router.delete("/", controller.removeFromPanier);
 router.get("/:id_client", controller.getPanierByClient);
 
 module.exports = router;
+//test
