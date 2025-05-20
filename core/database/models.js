@@ -123,7 +123,7 @@ const refresh_tokens = pgTable("refresh_tokens", {
 const commandes = pgTable("commandes", {
   id_commande: serial("id_commande").primaryKey(),
   date_de_commande: date("date_de_commande"),
-  etat_commande: varchar("etat_commande", { length: 50 }).default("En cours"),
+  etat_commande: varchar("etat_commande", { length: 50 }).default("En attente"), //En attente ; Annule ; Termine
   date_livraison: date("date_livraison"),
   lieu_de_livraison: varchar("lieu_de_livraison", { length: 50 }),
   mode_de_paiement: varchar("mode_de_paiement", { length: 50 }),
@@ -147,8 +147,6 @@ const categories = pgTable("categories", {
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
-
-
 
 // Projet
 const projets = pgTable("projets", {
@@ -247,12 +245,11 @@ const affiches = pgTable("affiches", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-
 // Produit
 const produits = pgTable("produits", {
   id_produit: serial("id_produit").primaryKey(), // Clé primaire simple
-  code_produit: varchar("code_produit", { length: 100 }).unique(),
-  desi_produit: varchar("desi_produit", { length: 50 }),
+  code_produit: text("code_produit").unique(),
+  desi_produit: varchar("desi_produit", { length: 255 }),
   desc_produit: text("desc_produit"),
   qte_produit: integer("qte_produit").default(0),
   emplacement_produit: text("emplacement"),
@@ -274,7 +271,6 @@ const produits = pgTable("produits", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-
 // panier
 const paniers = pgTable("paniers", {
   id_panier: serial("id_panier").primaryKey(),
@@ -282,7 +278,6 @@ const paniers = pgTable("paniers", {
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
-
 
 //images
 const images = pgTable("images", {
@@ -716,5 +711,5 @@ module.exports = {
   maintenance_employes,
   maintenance_moyens_travail,
   commande_produits,
-  panier_produits
+  panier_produits,
 };

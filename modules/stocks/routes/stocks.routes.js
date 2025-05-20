@@ -13,6 +13,7 @@ const typesProduitRoutes = require("./typesProduit.routes");
 const commandeRoutes = require("./commande.route");
 const sortiesExemplairesRoutes = require("./sortiesExemplaire.route");
 const achatRoutes = require("./achat.route");
+const panierRoutes = require("./panier.route");
 
 // Montage des routes
 // router.use("/familles", familleRoutes);
@@ -136,5 +137,9 @@ router.use("/sorties-exemplaires", sortiesExemplairesRoutes);
 //  *     tags: [Achats]
 //  */
 router.use("/achats", achatRoutes);
+
+
+router.use("/paniers", panierRoutes);
+
 
 module.exports = router;

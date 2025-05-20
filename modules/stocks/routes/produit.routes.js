@@ -73,49 +73,122 @@ router.post("/", controller.createProduit);
  * @swagger
  * /stocks/produits:
  *   get:
- *     summary: Récupère tous les produits
+ *     summary: Récupère tous les produits avec leurs informations et images
  *     tags: [Produits]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Recherche par nom ou description du produit
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: integer
+ *         description: ID de la catégorie
+ *       - in: query
+ *         name: typeId
+ *         schema:
+ *           type: integer
+ *         description: ID du type de produit
+ *       - in: query
+ *         name: familleLibelle
+ *         schema:
+ *           type: string
+ *         description: Libellé de la famille
+ *       - in: query
+ *         name: marqueLibelle
+ *         schema:
+ *           type: string
+ *         description: Libellé de la marque
+ *       - in: query
+ *         name: modeleLibelle
+ *         schema:
+ *           type: string
+ *         description: Libellé du modèle
+ *       - in: query
+ *         name: prixMin
+ *         schema:
+ *           type: number
+ *         description: Prix minimum
+ *       - in: query
+ *         name: prixMax
+ *         schema:
+ *           type: number
+ *         description: Prix maximum
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *         description: Champ à trier 
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: Ordre de tri
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Numéro de page
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Nombre de produits par page
  *     responses:
  *       200:
- *         description: Liste des produits
+ *         description: Liste des produits enrichis
  *         content:
  *           application/json:
  *             example:
- *               - id_produit: 5
- *                 code_produit: "produit-4"
- *                 desi_produit: "produit-4"
- *                 desc_produit: null
- *                 image_produit: "media\\images\\stock_moyensgeneraux\\produits\\tomate_1745603051631.jpeg"
- *                 qte_produit: 1
- *                 emplacement_produit: "salle 4"
- *                 caracteristiques_produit: null
- *                 prix_produit: null
- *                 id_categorie: 2
- *                 id_type_produit: 1
- *                 id_modele: 2
- *                 id_famille: 2
- *                 id_marque: 3
- *                 created_at: "2025-04-25T17:44:12.643Z"
- *                 updated_at: "2025-04-28T16:19:41.264Z"
- *                 image_url: "http://localhost:2000/media/images/stock_moyensgeneraux/produits/tomate_1745603051631.jpeg"
- *               - id_produit: 7
- *                 code_produit: "outils-1"
- *                 desi_produit: "outils-1"
- *                 desc_produit: "test"
- *                 image_produit: "media\\images\\stock_moyensgeneraux\\produits\\tomate_1745872525356.jpeg"
- *                 qte_produit: 1
- *                 emplacement_produit: null
- *                 caracteristiques_produit: null
- *                 prix_produit: null
- *                 id_categorie: null
- *                 id_type_produit: 5
- *                 id_modele: null
- *                 id_famille: null
- *                 id_marque: null
- *                 created_at: "2025-04-28T20:20:28.899Z"
- *                 updated_at: "2025-04-28T20:35:25.365Z"
- *                 image_url: "http://localhost:2000/media/images/stock_moyensgeneraux/produits/tomate_1745872525356.jpeg"
+ *               data:
+ *                 - produit:
+ *                     id_produit: 5
+ *                     code_produit: "AV008"
+ *                     desi_produit: "Caméra intérieure Somfy"
+ *                     desc_produit: "Caméra de surveillance 1080p avec détection de mouvement"
+ *                     qte_produit: 10
+ *                     emplacement_produit: "Salle de stock 1"
+ *                     caracteristiques_produit: "Connectée, vision nocturne, micro intégré"
+ *                     prix_produit: 65000
+ *                     id_categorie: 2
+ *                     id_type_produit: 1
+ *                     id_modele: 3
+ *                     id_famille: 4
+ *                     id_marque: 5
+ *                     created_at: "2025-05-16T16:43:35.504Z"
+ *                     updated_at: "2025-05-16T16:43:35.504Z"
+ *                   images:
+ *                     - id_image: 5
+ *                       libelle_image: "Vue Avant"
+ *                       lien_image: "media/images/stock_moyensgeneraux/produits/CameradesurveillanceinterieureSomfy_1747413815391.jpeg"
+ *                       numero_image: 1
+ *                       created_at: "2025-05-16T16:43:35.588Z"
+ *                       url: "http://localhost:2000/media/images/..."
+ *                   category:
+ *                     id_categorie: 2
+ *                     libelle: "Sécurité"
+ *                   type:
+ *                     id_type_produit: 1
+ *                     libelle: "Caméra"
+ *                   modele:
+ *                     id_modele: 3
+ *                     libelle_modele: "Somfy Indoor 2"
+ *                   famille:
+ *                     id_famille: 4
+ *                     libelle_famille: "Caméras connectées"
+ *                   marque:
+ *                     id_marque: 5
+ *                     libelle_marque: "Somfy"
+ *               pagination:
+ *                 total: 30
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 3
  */
+
 
 router.get("/", controller.getProduits);
 
@@ -125,7 +198,58 @@ router.get("/", controller.getProduits);
  *   get:
  *     summary: Récupère un produit par ID
  *     tags: [Produits]
+ *     responses:
+ *       200:
+ *         description: Liste des produits enrichis
+ *         content:
+ *           application/json:
+ *             example:
+ *               - produit:
+ *                   id_produit: 5
+ *                   code_produit: "AV008"
+ *                   desi_produit: "Caméra intérieure Somfy"
+ *                   desc_produit: "Caméra de surveillance 1080p avec détection de mouvement"
+ *                   qte_produit: 10
+ *                   emplacement_produit: "Salle de stock 1"
+ *                   caracteristiques_produit: "Connectée, vision nocturne, micro intégré"
+ *                   prix_produit: 65000
+ *                   id_categorie: 2
+ *                   id_type_produit: 1
+ *                   id_modele: 3
+ *                   id_famille: 4
+ *                   id_marque: 5
+ *                   created_at: "2025-05-16T16:43:35.504Z"
+ *                   updated_at: "2025-05-16T16:43:35.504Z"
+ *                 images:
+ *                   - id_image: 5
+ *                     libelle_image: "Vue Avant"
+ *                     lien_image: "media/images/stock_moyensgeneraux/produits/CameradesurveillanceinterieureSomfy_1747413815391.jpeg"
+ *                     numero_image: 1
+ *                     created_at: "2025-05-16T16:43:35.588Z"
+ *                     url: "http://localhost:2000/media/images/stock_moyensgeneraux/produits/CameradesurveillanceinterieureSomfy_1747413815391.jpeg"
+ *                   - id_image: 6
+ *                     libelle_image: "Vue Arrière"
+ *                     lien_image: "media/images/stock_moyensgeneraux/produits/camerasomfy_1747413815393.jpeg"
+ *                     numero_image: 2
+ *                     created_at: "2025-05-16T16:43:35.588Z"
+ *                     url: "http://localhost:2000/media/images/stock_moyensgeneraux/produits/camerasomfy_1747413815393.jpeg"
+ *                 category:
+ *                   id_categorie: 2
+ *                   libelle_categorie: "Sécurité"
+ *                 type:
+ *                   id_type_produit: 1
+ *                   libelle_type_produit: "Caméra"
+ *                 modele:
+ *                   id_modele: 3
+ *                   libelle_modele: "Somfy Indoor 2"
+ *                 famille:
+ *                   id_famille: 4
+ *                   libelle_famille: "Caméras connectées"
+ *                 marque:
+ *                   id_marque: 5
+ *                   nom_marque: "Somfy"
  */
+
 router.get("/:id", controller.getProduitById);
 
 /**
@@ -155,5 +279,48 @@ router.put("/:id", controller.updateProduit);
  */
 router.delete("/:id", controller.deleteProduit);
 
+/**
+ * @swagger
+ * /stocks/produits/image/{id}:
+ *   delete:
+ *     summary: Supprime une image associée à un produit
+ *     description: |
+ *       Cette route permet de supprimer une image spécifique d’un produit à partir de son identifiant (`id`).
+ *       L’image sera supprimée de la base de données ainsi que du système de fichiers si elle existe.
+ *     tags: [Produits]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID de l’image à supprimer
+ *         schema:
+ *           type: integer
+ *           example: 7
+ *     responses:
+ *       200:
+ *         description: Image supprimée avec succès
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Image supprimée"
+ *               deleted:
+ *                 id_image: 7
+ *                 lien_image: "media/images/stock_moyensgeneraux/produits/vue_avant_1747413815393.jpeg"
+ *       404:
+ *         description: Image non trouvée
+ *         content:
+ *           application/json:
+ *             example:
+ *               error: "Image introuvable"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             example:
+ *               error: "Une erreur est survenue"
+ *               details: "Erreur système"
+ */
+
+router.delete("/image/:id", controller.deleteImage);
 
 module.exports = router;
