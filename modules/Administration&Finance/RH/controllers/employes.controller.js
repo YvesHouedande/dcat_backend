@@ -89,10 +89,27 @@ const updateEmploye = async (req, res) => {
     }
 };
 
+const deleteEmploye = async (req, res) => {
+    try {
+        const {id} = req.params;
+        if (!id || isNaN(Number(id))) {
+            return res.status(400).json({ message: "ID invalide" });
+        }
+        const employe = await employeservice.deleteEmploye(id);
+        if (!employe) {
+            return res.status(404).json({message: "Employé non trouvé"});
+        }
+        return res.status(200).json(employe);
+    } catch (error) {
+        console.error("Erreur lors de la suppression de l'employé:", error);
+        return res.status(500).json({ message: "Erreur interne lors de la suppression de l'employé" });
+    }
+};
 module.exports = {
     getEmployes,
     getEmployeById,
     getEmployeByFonction,
     getEmployeByStatut,
-    updateEmploye
+    updateEmploye,
+    deleteEmploye
 };

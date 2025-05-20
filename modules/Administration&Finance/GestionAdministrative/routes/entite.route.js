@@ -12,7 +12,7 @@ const router = express.Router();
  *         - name
  *       properties:
  *         id:
- *           type: string
+ *           type: integer
  *           description: ID auto-généré de l'entité
  *         name:
  *           type: string
@@ -28,17 +28,11 @@ const router = express.Router();
  *           type: string
  *           format: date-time
  *           description: Date de dernière mise à jour
- *       example:
- *         id: d5fE_asz
- *         name: Exemple d'entité
- *         description: Une description détaillée de l'entité
- *         createdAt: 2023-01-01T00:00:00.000Z
- *         updatedAt: 2023-01-01T00:00:00.000Z
  */
 
 /**
  * @swagger
- * /entites:
+ * /administration/entites:
  *   post:
  *     summary: Créer une nouvelle entité
  *     tags: [Entites]
@@ -62,7 +56,7 @@ router.post('/', entiteController.createEntite);
 
 /**
  * @swagger
- * /entites:
+ * /administration/entites:
  *   get:
  *     summary: Récupérer toutes les entités
  *     tags: [Entites]
@@ -82,7 +76,7 @@ router.get('/', entiteController.getEntites);
 
 /**
  * @swagger
- * /entites/{id}:
+ * /administration/entites/{id}:
  *   get:
  *     summary: Récupérer une entité par son ID
  *     tags: [Entites]
@@ -109,7 +103,7 @@ router.get('/:id', entiteController.getEntiteById);
 
 /**
  * @swagger
- * /entites/{id}:
+ * /administration/entites/{id}:
  *   put:
  *     summary: Mettre à jour une entité existante
  *     tags: [Entites]
@@ -142,7 +136,7 @@ router.put('/:id', entiteController.updateEntite);
 
 /**
  * @swagger
- * /entites/{id}:
+ * /administration/entites/{id}:
  *   delete:
  *     summary: Supprimer une entité
  *     tags: [Entites]
