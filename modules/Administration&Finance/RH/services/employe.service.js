@@ -44,11 +44,20 @@ const updateEmploye = async (id, data) => {
     return result;
 }
 
+const deleteEmploye = async (id) => {
+    const [result] = await db
+        .delete(employes)
+        .where(eq(employes.id_employes, id))
+        .returning();
+    return result;
+}
+
 module.exports = {
     getEmployes,
     getEmployeById,
     getEmployeByFonction,
     getEmployeByStatut,
-    updateEmploye
+    updateEmploye,
+    deleteEmploye
 }
 
