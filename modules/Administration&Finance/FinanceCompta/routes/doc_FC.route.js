@@ -85,9 +85,10 @@ const prepareUploadPath = (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/Document'
  */
-router.post('/ajouter', 
+router.post('/ajouter',
   prepareUploadPath,
-  upload.single("document"), 
+  upload.single("document"),
+
   doc_FCController.addDocument
 );
 
