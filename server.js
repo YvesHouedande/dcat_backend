@@ -36,8 +36,8 @@ app.use(initKeycloak());
 
 // =============== INITIALISATION WEBSOCKET ===============
 // Initialiser le serveur WebSocket AVANT le chargement des modules
-// const { initializeWebSocket } = require('./modules/marketing_commercial/utils/websocket');
-// initializeWebSocket(server);
+const { initializeWebSocket } = require('./modules/marketing_commercial/utils/websocket');
+initializeWebSocket(server);
 logger.info('Serveur WebSocket initialisé');
 
 // =============== CHARGEMENT DES MODULES ===============
@@ -66,7 +66,7 @@ app.use('/api', swaggerRoutes);
 app.use("/api/stocks", loadModule("stocks"));
 app.use("/api/moyens-generaux", loadModule("moyens_generaux"));
 app.use("/api/administration", loadModule("Administration&Finance"));
-app.use("/api/ecommerceweb", loadModule("ecommerceweb"));
+// app.use("/api/ecommerceweb", loadModule("ecommerceweb"));
 
 
 // CHARGEMENT DES ENDPOINT DU MODULZ TECHNIQUES
@@ -158,9 +158,6 @@ server.listen(PORT, () => {
 
 // Exporter pour les tests
 module.exports = { app, server };
-
-
-
 
 
 
