@@ -63,7 +63,7 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 // =============== KEYCLOAK INITIALIZATION ===============
-app.use(initKeycloak());
+// app.use(initKeycloak());
 
 // =============== WEBSOCKET INITIALIZATION ===============
 const { initializeWebSocket } = require('./modules/marketing_commercial/utils/websocket');
