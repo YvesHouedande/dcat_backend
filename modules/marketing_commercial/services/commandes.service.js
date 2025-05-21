@@ -82,7 +82,7 @@ async function notifyClient(clientId, notification) {
       .limit(1);
     
     if (client.length === 0 || !client[0].email) {
-      console.log(`Client ID ${clientId} non trouvé ou email manquant pour la notification.`);
+      // Client non trouvé ou email manquant
       return;
     }
     
@@ -152,7 +152,7 @@ async function notifyClient(clientId, notification) {
         break;
         
       default:
-        console.log(`Type de notification inconnu: ${notification.type}`);
+        // Type de notification inconnu
         return; // Ne pas envoyer d'email si le type est inconnu
     }
     
@@ -185,8 +185,6 @@ async function notifyClient(clientId, notification) {
         </html>
       `
     });
-    
-    console.log(`Email de notification envoyé avec succès à ${clientEmail} pour la commande ${notification.commandeId}`);
     
   } catch (error) {
     console.error(`Erreur lors de l'envoi de l'email de notification pour la commande ${notification.commandeId}:`, error);

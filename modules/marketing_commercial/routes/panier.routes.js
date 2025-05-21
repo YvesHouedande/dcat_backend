@@ -72,7 +72,7 @@ const { authMiddleware, checkRoles } = require('../middleware/auth');
 
 /**
  * @swagger
- * /api/marketing_commercial/panier:
+ * /marketing_commercial/panier:
  *   get:
  *     summary: Récupère le panier de l'utilisateur connecté
  *     description: Retourne le panier de l'utilisateur actuellement connecté
@@ -103,7 +103,7 @@ router.get('/', authMiddleware, panierController.getPanier);
 
 /**
  * @swagger
- * /api/marketing_commercial/panier/produit:
+ * /marketing_commercial/panier/produit:
  *   post:
  *     summary: Ajoute un produit au panier
  *     description: Ajoute un produit au panier de l'utilisateur connecté
@@ -150,7 +150,7 @@ router.post('/produit', authMiddleware, panierController.addProduit);
 
 /**
  * @swagger
- * /api/marketing_commercial/panier/produit/quantite:
+ * /marketing_commercial/panier/produit/quantite:
  *   put:
  *     summary: Met à jour la quantité d'un produit
  *     description: Met à jour la quantité d'un produit dans le panier
@@ -197,7 +197,7 @@ router.put('/produit/quantite', authMiddleware, panierController.updateQuantite)
 
 /**
  * @swagger
- * /api/marketing_commercial/panier/produit/{produitId}:
+ * /marketing_commercial/panier/produit/{produitId}:
  *   delete:
  *     summary: Supprime un produit du panier
  *     description: Supprime un produit du panier de l'utilisateur connecté
@@ -235,7 +235,7 @@ router.delete('/produit/:produitId', authMiddleware, panierController.removeProd
 
 /**
  * @swagger
- * /api/marketing_commercial/panier:
+ * /marketing_commercial/panier:
  *   delete:
  *     summary: Vide le panier
  *     description: Supprime tous les produits du panier de l'utilisateur connecté
@@ -266,7 +266,7 @@ router.delete('/', authMiddleware, panierController.clearPanier);
 
 /**
  * @swagger
- * /api/marketing_commercial/panier/sync:
+ * /marketing_commercial/panier/sync:
  *   post:
  *     summary: Synchronise le panier local avec le serveur
  *     description: Remplace le contenu du panier serveur avec les produits du panier local

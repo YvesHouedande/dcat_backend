@@ -1,0 +1,145 @@
+Directory structure:
+└── ecommerceweb/
+    ├── controllers/
+    │   └── commande.controller.js
+    ├── routes/
+    │   └── commande.routes.js
+    └── services/
+        ├── commande.services.js
+        └── email.service.js
+
+================================================
+File: controllers/commande.controller.js
+================================================
+const commandeService = require('../services/commande.services');
+const emailService = require('../services/email.service');
+
+exports.creerCommande = async (req, res) => {
+  try {
+    const panier = req.body;
+    
+    // 1. CrÃ©er la commande en DB
+    const commande = await commandeService.creerCommande(panier);
+    
+    // 2. Envoyer l'email de confirmation
+    await emailService.envoyerEmailCommande({
+      email: panier.infos.email_client,
+      commandeId: commande.id_commande,
+      produits: panier.produits
+    });
+
+    // 3. Vider le localStorage cÃ´tÃ© front aprÃ¨s confirmation
+    res.status(201).json({ 
+      success: true,
+      commande
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
+  }
+};
+
+
+================================================
+File: routes/commande.routes.js
+================================================
+const express = require('express');
+const router = express.Router();
+const commandeController = require('../controllers/commande.controller');
+
+router.post('/', commandeController.creerCommande);
+router.get('/client/:id', commandeController.getCommandesParClient);
+
+module.exports = router;
+
+
+================================================
+File: services/commande.services.js
+================================================
+const { db } = require('../../../core/database/config');
+const { commandes, commande_produits } = require("../../../core/database/models");
+const { eq, and } = require("drizzle-orm");
+
+class CommandeService {
+  async creerCommande(commandeData) {
+    return await db.transaction(async (tx) => {
+      // CrÃ©er la commande principale
+      const [nouvelleCommande] = await tx.insert(commandes)
+        .values({
+          ...commandeData.infos,
+          date_de_commande: new Date()
+        })
+        .returning();
+
+      // Ajouter les produits
+      const produits = commandeData.produits.map(produit => ({
+        id_commande: nouvelleCommande.id_commande,
+        id_produit: produit.id_produit,
+        quantite: produit.quantite,
+        prix_unitaire: produit.prix
+      }));
+
+      await tx.insert(commande_produits).values(produits);
+
+      return {
+        ...nouvelleCommande,
+        produits
+      };
+    });
+  }
+
+  async getCommandesParClient(id_client) {
+    return await db.select()
+      .from(commandes)
+      .where(eq(commandes.id_client, id_client))
+      .orderBy(desc(commandes.created_at));
+  }
+}
+
+module.exports = new CommandeService();
+
+
+================================================
+File: services/email.service.js
+================================================
+const nodemailer = require('nodemailer');
+const { db } = require('../../../core/database/config');
+
+class EmailService {
+  constructor() {
+    this.transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_SUPPORT,
+        pass: process.env.EMAIL_PASSWORD
+      }
+    });
+  }
+
+  async envoyerEmailCommande({ email, commandeId, produits }) {
+    const html = `
+      <h1>Nouvelle commande #${commandeId}</h1>
+      <h2>Produits commandÃ©s :</h2>
+      <ul>
+        ${produits.map(p => `
+          <li>
+            ${p.nom} - ${p.quantite}x ${p.prix}â‚¬
+          </li>
+        `).join('')}
+      </ul>
+      <p>Total: ${produits.reduce((sum, p) => sum + (p.prix * p.quantite), 0)}â‚¬</p>
+    `;
+
+    await this.transporter.sendMail({
+      from: process.env.EMAIL_SUPPORT,
+      to: [email, process.env.EMAIL_SUPPORT], // Envoi au client et au support
+      subject: `Confirmation de commande #${commandeId}`,
+      html
+    });
+  }
+}
+
+module.exports = new EmailService();
+

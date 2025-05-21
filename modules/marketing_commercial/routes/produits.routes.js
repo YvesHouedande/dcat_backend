@@ -44,7 +44,7 @@ const produitsController = require('../controllers/produits.controller');
  *           type: string
  *           description: Nom de la famille/catégorie
  *
- * /api/marketing_commercial/produits/famille/{familleId}:
+ * /marketing_commercial/produits/famille/{familleId}:
  *   get:
  *     summary: Récupère les équipements par famille
  *     description: Retourne tous les produits de type équipement appartenant à une famille spécifique
@@ -80,7 +80,7 @@ router.get('/famille/:familleId', produitsController.getEquipementsByFamille);
 
 /**
  * @swagger
- * /api/marketing_commercial/produits:
+ * /marketing_commercial/produits:
  *   get:
  *     summary: Liste tous les équipements
  *     description: Retourne tous les produits de type équipement disponibles dans le catalogue
@@ -109,7 +109,7 @@ router.get('/', produitsController.getAllEquipements);
 
 /**
  * @swagger
- * /api/marketing_commercial/produits/nouveautes:
+ * /marketing_commercial/produits/nouveautes:
  *   get:
  *     summary: Récupère les derniers produits ajoutés
  *     description: Retourne les produits les plus récemment ajoutés au catalogue
@@ -145,7 +145,7 @@ router.get('/nouveautes', produitsController.getLatestProducts);
 
 /**
  * @swagger
- * /api/marketing_commercial/produits/{productId}/details:
+ * /marketing_commercial/produits/{productId}/details:
  *   get:
  *     summary: Récupère les détails d'un produit
  *     description: Retourne les informations détaillées d'un produit spécifique
@@ -181,7 +181,7 @@ router.get('/:productId/details', produitsController.getProductDetails);
 
 /**
  * @swagger
- * /api/marketing_commercial/produits/familles:
+ * /marketing_commercial/produits/familles:
  *   get:
  *     summary: Liste toutes les familles de produits
  *     description: Retourne toutes les familles/catégories disponibles pour les produits
@@ -210,7 +210,7 @@ router.get('/familles', produitsController.getAllFamilles);
 
 /**
  * @swagger
- * /api/marketing_commercial/produits/{productId}/similaires:
+ * /marketing_commercial/produits/{productId}/similaires:
  *   get:
  *     summary: Récupère des produits similaires
  *     description: Utilise les mots-clés du libellé et de la description pour trouver des produits similaires
@@ -254,7 +254,7 @@ router.get('/:productId/similaires', produitsController.getSimilarProductsByLibe
 
 /**
  * @swagger
- * /api/marketing_commercial/produits/{productId}/images:
+ * /marketing_commercial/produits/{productId}/images:
  *   get:
  *     summary: Récupère les images d'un produit
  *     description: Retourne toutes les images associées à un produit spécifique
@@ -299,7 +299,7 @@ router.get('/:productId/images', produitsController.getProductImages);
 
 /**
  * @swagger
- * /api/marketing_commercial/produits/paginated:
+ * /marketing_commercial/produits/paginated:
  *   get:
  *     summary: Liste les équipements avec pagination
  *     description: Retourne une liste paginée de produits de type équipement
