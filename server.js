@@ -23,7 +23,7 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // =============== CORS ===============
 const cors = require('cors');
 app.use(cors({
-  origin: '*',
+  origin: ['http://localhost:3000', 'https://erpfront.dcat.ci'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 204
