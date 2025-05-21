@@ -28,12 +28,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 204
 }));
+// Gestion explicite des requêtes OPTIONS
+app.options('*', cors());
 
 // =============== KEYCLOAK ===============
 app.use(initKeycloak());
 
-// Gestion explicite des requêtes OPTIONS
-app.options('*', cors());
 
 // =============== INITIALISATION WEBSOCKET ===============
 // Initialiser le serveur WebSocket AVANT le chargement des modules
