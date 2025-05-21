@@ -20,7 +20,11 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
 // =============== CORS CONFIGURATION ===============
 const cors = require('cors');
-const allowedOrigins = ['http://localhost:3000', 'https://erpfront.dcat.ci'];
+const allowedOrigins = [
+  'http://localhost:3000', 
+  'https://erpfront.dcat.ci',
+   'https://shop.dcat.ci',
+   'http://localhost:9090'];
 
 const corsOptions = {
   origin: function (origin, callback) {
