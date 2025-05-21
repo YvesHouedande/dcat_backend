@@ -20,9 +20,6 @@ app.disable("x-powered-by");
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
-// =============== KEYCLOAK ===============
-app.use(initKeycloak());
-
 // =============== CORS ===============
 const cors = require('cors');
 app.use(cors({
@@ -31,6 +28,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 204
 }));
+
+// =============== KEYCLOAK ===============
+app.use(initKeycloak());
 
 // Gestion explicite des requêtes OPTIONS
 app.options('*', cors());
@@ -67,6 +67,8 @@ app.use('/api', swaggerRoutes);
 app.use("/api/stocks", loadModule("stocks"));
 app.use("/api/moyens-generaux", loadModule("moyens_generaux"));
 app.use("/api/administration", loadModule("Administration&Finance"));
+app.use("/api/ecommerceweb", loadModule("ecommerceweb"));
+
 
 // CHARGEMENT DES ENDPOINT DU MODULZ TECHNIQUES
 app.use("/api/technique", loadModule("technique"));
