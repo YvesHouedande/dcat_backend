@@ -83,6 +83,8 @@ const deletePartenaire = async (req, res) => {
   }
 };
 
+
+
 module.exports = {
   createPartenaire,
   getPartenaires,
