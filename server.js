@@ -34,7 +34,6 @@ app.options('*', cors());
 // =============== KEYCLOAK ===============
 app.use(initKeycloak());
 
-
 // =============== INITIALISATION WEBSOCKET ===============
 // Initialiser le serveur WebSocket AVANT le chargement des modules
 const { initializeWebSocket } = require('./modules/marketing_commercial/utils/websocket');
