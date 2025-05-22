@@ -286,3 +286,4 @@ module.exports = {
   deleteProduitImage,
   getProduitsByTypes,
 };
+//test
