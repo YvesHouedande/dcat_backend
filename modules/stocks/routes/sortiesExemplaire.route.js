@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/sortiesExemplaire.controller");
 
+//Routes liées aux sorties d'exemplaires (les exemplaires qui ont été commander par exemplaire)
 
 // router.post("/", controller.createSortie);
 // router.get("/", controller.getSorties);
@@ -53,6 +54,5 @@ router.put("/:id", controller.updateSortie);
  *     tags: [Sorties Exemplaire]
  */
 router.delete("/:id", controller.deleteSortie);
-
 
 module.exports = router;

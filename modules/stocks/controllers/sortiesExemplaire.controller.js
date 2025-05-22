@@ -1,6 +1,8 @@
 const { json } = require("sequelize");
 const sortieService = require("../services/sortieExemplaire.service");
 
+//Routes liées aux sorties d'exemplaires (les exemplaires qui ont été commander par exemplaire)
+
 // Créer une sortie
 const createSortie = async (req, res) => {
   try {
@@ -126,7 +128,7 @@ const deleteSortie = async (req, res) => {
 
     return res
       .status(200)
-      .json({ message: "Sortie supprimée et exemplaire réactivé" },deleted);
+      .json({ message: "Sortie supprimée et exemplaire réactivé" }, deleted);
   } catch (error) {
     if (error.message === "Sortie non trouvée") {
       return res.status(404).json({

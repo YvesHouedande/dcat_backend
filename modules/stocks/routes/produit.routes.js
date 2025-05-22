@@ -24,47 +24,101 @@ const controller = require("../controllers/produit.controller");
  *         multipart/form-data:
  *           schema:
  *             type: object
+ *             required:
+ *               - code_produit
+ *               - desi_produit
+ *               - prix_produit
+ *               - id_categorie
+ *               - id_type_produit
  *             properties:
  *               code_produit:
+ *                 description: "Code unique du produit (ex: AV001)"
  *                 type: string
- *                 example: P123
+ *                 example: "AV001"
+ *
  *               desi_produit:
+ *                 description: "Désignation du produit (ex: Téléviseur 4K Sony Bravia)"
  *                 type: string
- *                 example: Tondeuse thermique
+ *                 example: "Téléviseur 4K Sony Bravia"
+ *
  *               desc_produit:
+ *                 description: "Description détaillée du produit"
  *                 type: string
- *                 example: Puissante tondeuse à essence 6CV
+ *                 example: "Téléviseur 4K HDR 55 pouces avec Android TV"
+ *
+ *               emplacement_produit:
+ *                 description: "Emplacement en magasin (ex: RAYON-A1)"
+ *                 type: string
+ *                 example: "RAYON-A1"
+ *
+ *               caracteristique_produit:
+ *                 description: "Caractéristiques techniques"
+ *                 type: string
+ *                 example: "Résolution 3840x2160, HDMI x4, Dolby Vision"
+ *
+ *               prix_produit:
+ *                 description: "Prix du produit (nombre décimal, ex: 800.00)"
+ *                 type: number
+ *                 format: float
+ *                 example: 80000
+ *
  *               id_categorie:
- *                 type: integer
- *                 example: 1
- *               id_type_produit:
+ *                 description: "ID de la catégorie (nombre entier, ex: 2)"
  *                 type: integer
  *                 example: 2
+ *
+ *               id_type_produit:
+ *                 description: "ID du type de produit (nombre entier, ex: 1)"
+ *                 type: integer
+ *                 example: 1
+ *
  *               id_modele:
+ *                 description: "ID du modèle (nombre entier, ex: 2)"
  *                 type: integer
- *                 example: 3
+ *                 example: 2
+ *
  *               id_famille:
+ *                 description: "ID de la famille (nombre entier, ex: 1)"
  *                 type: integer
- *                 example: 4
+ *                 example: 1
+ *
  *               id_marque:
+ *                 description: "ID de la marque (nombre entier, ex: 2)"
  *                 type: integer
- *                 example: 5
+ *                 example: 2
+ *
  *               images:
+ *                 description: "Fichiers images (formats acceptés: jpeg, png, gif)"
  *                 type: array
  *                 items:
  *                   type: string
  *                   format: binary
+ *
  *               imagesMeta:
+ *                 description: |
+ *                   Métadonnées des images au format JSON :
+ *                   [
+ *                     {"libelle": "Vue Avant", "numero": 1},
+ *                     {"libelle": "Vue Arrière", "numero": 2}
+ *                   ]
  *                 type: string
- *                 description: JSON contenant les libellés et numéros des images (même ordre que les fichiers)
- *                 example: '[{"libelle": "Face avant", "numero": 1}, {"libelle": "Vue arrière", "numero": 2}]'
+ *                 example: '[{"libelle": "Vue Avant", "numero": 1}, {"libelle": "Vue Arrière", "numero": 2}]'
+ *
  *     responses:
  *       201:
  *         description: Produit créé avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Produit'
  *       400:
- *         description: Erreur de validation ou d'upload
+ *         description: |
+ *           Erreurs possibles :
+ *           - Champs obligatoires manquants
+ *           - Format de fichier non supporté
+ *           - Données JSON invalides
  *       500:
- *         description: Erreur interne du serveur
+ *         description: Erreur serveur lors du traitement
  */
 
 router.post("/", controller.createProduit);
@@ -120,7 +174,7 @@ router.post("/", controller.createProduit);
  *         name: sortBy
  *         schema:
  *           type: string
- *         description: Champ à trier 
+ *         description: Champ à trier
  *       - in: query
  *         name: sortOrder
  *         schema:
@@ -188,7 +242,6 @@ router.post("/", controller.createProduit);
  *                 limit: 10
  *                 totalPages: 3
  */
-
 
 router.get("/", controller.getProduits);
 

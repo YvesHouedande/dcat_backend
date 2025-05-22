@@ -148,8 +148,6 @@ const categories = pgTable("categories", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-
-
 // Projet
 const projets = pgTable("projets", {
   id_projet: serial("id_projet").primaryKey(),
@@ -247,11 +245,10 @@ const affiches = pgTable("affiches", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-
 // Produit
 const produits = pgTable("produits", {
   id_produit: serial("id_produit").primaryKey(), // Clé primaire simple
-  code_produit: varchar("code_produit", { length: 100 }).unique(),
+  code_produit: text("code_produit").unique(),
   desi_produit: varchar("desi_produit", { length: 50 }),
   desc_produit: text("desc_produit"),
   qte_produit: integer("qte_produit").default(0),
@@ -274,7 +271,6 @@ const produits = pgTable("produits", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-
 // panier
 const paniers = pgTable("paniers", {
   id_panier: serial("id_panier").primaryKey(),
@@ -282,7 +278,6 @@ const paniers = pgTable("paniers", {
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
-
 
 //images
 const images = pgTable("images", {
@@ -440,7 +435,7 @@ const documents = pgTable("documents", {
 // Exemplaire_produit
 const exemplaires = pgTable("exemplaires", {
   id_exemplaire: serial("id_exemplaire").primaryKey(),
-  num_serie: varchar("num_serie", { length: 50 }),
+  num_serie: text("num_serie").unique(),
   date_entree: date("date_entree"),
   etat_exemplaire: varchar("etat_exemplaire", { length: 75 }).default(
     "Disponible"
@@ -729,5 +724,5 @@ module.exports = {
   maintenance_moyens_travail,
   commande_produits,
   panier_produits,
-  notifications
+  notifications,
 };

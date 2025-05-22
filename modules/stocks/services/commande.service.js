@@ -142,7 +142,7 @@ async function createCommande({
       await tx
         .update(exemplaires)
         .set({
-          etat_exemplaire: "Reservé", // ou etatExemplaire[5] si c'est une constante définie
+          etat_exemplaire: etatExemplaire[5], // Reserve
           updated_at: new Date(),
         })
         .where(inArray(exemplaires.id_exemplaire, exemplairesIds));

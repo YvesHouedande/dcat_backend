@@ -11,6 +11,10 @@ const typeSortie = ["vente directe", "vente en ligne", "projet"];
 
 const etatExemplaire=require("./exemplaire.service")
 
+//Routes liées aux sorties d'exemplaires (les exemplaires qui ont été commander par exemplaire)
+
+
+
 // Création d'une sortie (et marquage de l'exemplaire comme "Vendu")
 async function createSortie({
   type_sortie,
