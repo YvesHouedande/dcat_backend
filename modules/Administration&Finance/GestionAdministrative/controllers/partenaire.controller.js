@@ -2,8 +2,8 @@ const partenaireService = require("../services/partenaire.service");
 
 const createPartenaire = async (req, res) => {
   try {
-    const { nom, type, telephone } = req.body;
-    if (!nom || !type || !telephone) {
+    const { nom_partenaire, type_partenaire, telephone_partenaire } = req.body;
+    if (!nom_partenaire || !type_partenaire || !telephone_partenaire) {
       return res.status(400).json({ error: "Tous les champs obligatoires doivent être remplis (nom, type, adresse, téléphone)." });
     }
     const result = await partenaireService.createPartenaire(req.body);
