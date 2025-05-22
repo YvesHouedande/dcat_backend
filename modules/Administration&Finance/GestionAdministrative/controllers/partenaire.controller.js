@@ -28,13 +28,31 @@ const getPartenaires = async (req, res) => {
   }
 };
 
+
+const getPartenaireById = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await partenaireService.getPartenaireById(id);
+    if (!result) {
+      return res.status(404).json({ error: "Partenaire non trouvé." });
+    }
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Erreur lors de la récupération du partenaire :", error);
+    res.status(500).json({ error: "Erreur serveur lors de la récupération du partenaire", details: error.message });
+  }
+
+};
 const getPartenairebyType = async (req, res) => {
   try {
     const type = req.params.type;
     if (!type) {
       return res.status(400).json({ error: "Le type de partenaire est requis." });
     }
-    const result = await partenaireService.getPartenaireByType(type);
+    const result = await partenaireService.getPartenairebyType(type);
     if (!result || result.length === 0) {
       return res.status(404).json({ error: "Aucun partenaire trouvé pour ce type." });
     }
@@ -89,6 +107,7 @@ module.exports = {
   createPartenaire,
   getPartenaires,
   getPartenairebyType,
+  getPartenaireById,
   updatePartenaire,
   deletePartenaire,
 };

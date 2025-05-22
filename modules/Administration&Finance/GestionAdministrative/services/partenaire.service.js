@@ -48,6 +48,12 @@ const getPartenaires = async () => {
   return await db.select().from(partenaires);
 }
 
+const getPartenairebyType = async (type) => {
+  const [result] = await db
+  .select().from(partenaires)
+  .where(eq(partenaires.type_partenaire, type));
+  return result;
+}
 const getPartenaireById = async (id) => {
   const [result] = await db.select().from(partenaires).where(eq(partenaires.id_partenaire, id));
   return result;
@@ -62,14 +68,19 @@ const updatePartenaire = async (id, data) => {
 }
 
 const deletePartenaire = async (id) => {
-  const [result] = await db.delete(partenaires).where(eq(partenaires.id_partenaire, id)).returning();
+  const [result] = await db
+  .delete(partenaires)
+  .where(eq(partenaires.id_partenaire, id))
+  .returning();
   return result;
 }
+
 
 module.exports = {
   createPartenaire,
   getPartenaires,
   getPartenaireById,
   updatePartenaire,
-  deletePartenaire
+  deletePartenaire,
+  getPartenairebyType
 }
