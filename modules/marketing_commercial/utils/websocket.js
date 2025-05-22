@@ -61,15 +61,13 @@ function initializeWebSocket(server) {
 
   // Gestion des connexions
   io.on('connection', (socket) => {
-    console.log(`Nouvel utilisateur connecté: ${socket.id}, User ID: ${socket.user.id}, Role: ${socket.user.role}`);
-    
     // Rejoindre les canaux appropriés
     socket.join(`user:${socket.user.id}`);
     socket.join(`role:${socket.user.role}`);
     
     // Écouter les déconnexions
     socket.on('disconnect', () => {
-      console.log(`Utilisateur déconnecté: ${socket.id}`);
+      // Socket déconnecté
     });
   });
 

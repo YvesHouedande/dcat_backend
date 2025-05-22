@@ -27,7 +27,9 @@ const keycloakConfig = {
   'use-resource-role-mappings': true, // Prend en compte les rôles client
   credentials: {
     secret: process.env.KEYCLOAK_BACKEND_CLIENT_SECRET
-  }
+  },
+  'policy-enforcer': {},
+  'enable-cors': true // Important pour les requêtes cross-origin
 };
 
 // Validation de la configuration

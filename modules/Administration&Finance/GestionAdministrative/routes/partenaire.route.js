@@ -92,7 +92,7 @@ const controller = require('../controllers/partenaire.controller');
  *       500:
  *         description: Erreur serveur
  *
- * /administration/partenaires/{type}:
+ * /administration/partenaires/type/{type}:
  *   get:
  *     summary: Récupérer les partenaires par type
  *     tags: [Partenaires]
@@ -230,7 +230,8 @@ const controller = require('../controllers/partenaire.controller');
 
 router.post("/", controller.createPartenaire);
 router.get("/", controller.getPartenaires);
-router.get("/:type", controller.getPartenairebyType);
+router.get("/:id", controller.getPartenaireById);
+router.get("/type/:type", controller.getPartenairebyType);
 router.put("/:id", controller.updatePartenaire);
 router.delete("/:id", controller.deletePartenaire);
 
