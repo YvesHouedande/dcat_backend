@@ -12,7 +12,7 @@ const controller = require("../controllers/produit.controller");
 
 /**
  * @swagger
- * /produits:
+ * /stocks/produits:
  *   post:
  *     summary: Crée un nouveau produit avec plusieurs images
  *     tags: [Produits]

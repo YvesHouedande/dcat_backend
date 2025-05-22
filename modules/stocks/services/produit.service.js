@@ -1,4 +1,14 @@
-const { eq, and, or, inArray, desc, asc, sql } = require("drizzle-orm");
+const {
+  eq,
+  and,
+  or,
+  inArray,
+  desc,
+  asc,
+  sql,
+  gte,
+  lte,
+} = require("drizzle-orm");
 const { db } = require("../../../core/database/config");
 const {
   produits,
@@ -42,6 +52,8 @@ const getProduits = async (options = {}) => {
     modeleLibelle,
     prixMin,
     prixMax,
+    qteMin, // Quantité du produit "minimale" (>=)
+    qteMax, // Quantité du produit "maximale" (<=)
   } = options;
 
   const offset = (page - 1) * limit;
@@ -69,7 +81,10 @@ const getProduits = async (options = {}) => {
     })
     .from(produits)
     .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
-    .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
+    .leftJoin(
+      type_produits,
+      eq(produits.id_type_produit, type_produits.id_type_produit)
+    )
     .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
     .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
     .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
@@ -97,15 +112,21 @@ const getProduits = async (options = {}) => {
   }
 
   if (familleLibelle) {
-    filters.push(sql`LOWER(${familles.libelle_famille}) = LOWER(${familleLibelle})`);
+    filters.push(
+      sql`LOWER(${familles.libelle_famille}) = LOWER(${familleLibelle})`
+    );
   }
 
   if (marqueLibelle) {
-    filters.push(sql`LOWER(${marques.libelle_marque}) = LOWER(${marqueLibelle})`);
+    filters.push(
+      sql`LOWER(${marques.libelle_marque}) = LOWER(${marqueLibelle})`
+    );
   }
 
   if (modeleLibelle) {
-    filters.push(sql`LOWER(${modeles.libelle_modele}) = LOWER(${modeleLibelle})`);
+    filters.push(
+      sql`LOWER(${modeles.libelle_modele}) = LOWER(${modeleLibelle})`
+    );
   }
 
   if (prixMin !== undefined) {
@@ -114,6 +135,15 @@ const getProduits = async (options = {}) => {
 
   if (prixMax !== undefined) {
     filters.push(sql`${produits.prix_produit} <= ${prixMax}`);
+  }
+
+  // Filtres sur la quantité
+  if (qteMin !== undefined) {
+    filters.push(gte(produits.qte_produit, qteMin)); // Supérieur ou égal
+  }
+
+  if (qteMax !== undefined) {
+    filters.push(lte(produits.qte_produit, qteMax)); // Inférieur ou égal
   }
 
   if (filters.length) {
@@ -129,7 +159,10 @@ const getProduits = async (options = {}) => {
     .select({ count: sql`count(*)` })
     .from(produits)
     .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
-    .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
+    .leftJoin(
+      type_produits,
+      eq(produits.id_type_produit, type_produits.id_type_produit)
+    )
     .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
     .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
     .leftJoin(marques, eq(produits.id_marque, marques.id_marque));
@@ -152,9 +185,6 @@ const getProduits = async (options = {}) => {
     },
   };
 };
-
-
-
 
 const getProduitById = async (id) => {
   const [result] = await db

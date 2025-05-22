@@ -78,6 +78,8 @@ const getProduits = async (req, res) => {
       marqueLibelle,
       prixMin,
       prixMax,
+      qteMin,
+      qteMax,
     } = req.query;
 
     const options = {
@@ -92,6 +94,8 @@ const getProduits = async (req, res) => {
       marqueLibelle: marqueLibelle ? marqueLibelle : undefined,
       prixMin: prixMin ? parseFloat(prixMin) : undefined,
       prixMax: prixMax ? parseFloat(prixMax) : undefined,
+      qteMin: qteMin ? parseInt(qteMin) : undefined,
+      qteMax: qteMax ? parseInt(qteMax) : undefined,
     };
 
     const result = await produitService.getProduits(options);
@@ -313,6 +317,7 @@ const deleteImage = async (req, res) => {
     });
   }
 };
+
 
 module.exports = {
   createProduit,
