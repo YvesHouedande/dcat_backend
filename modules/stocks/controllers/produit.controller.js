@@ -3,6 +3,10 @@ const upload = require("../../utils/middleware/uploadMiddleware");
 const path = require("path");
 const fs = require("fs");
 
+const { eq } = require("drizzle-orm");
+const { db } = require("../../../core/database/config");
+const { images } = require("../../../core/database/models");
+
 // Configuration du dossier d'upload
 const UPLOAD_DIR = path.join(
   process.cwd(),
@@ -11,6 +15,76 @@ const UPLOAD_DIR = path.join(
   "stock_moyensgeneraux",
   "produits"
 );
+
+//ajouter des images au produit ; utile dans le cas où on a deja enregistré le produit et on plus tard on veut lui ajouter d'autres images
+
+const addProduitImages = async (req, res) => {
+  try {
+    req.uploadPath = UPLOAD_DIR;
+
+    // Utilisation de multer pour plusieurs fichiers
+    upload.array("images", 10)(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({
+          error: "Erreur lors de l'upload des images",
+          details: err.message,
+        });
+      }
+
+      const produitId = parseInt(req.params.id);
+      if (isNaN(produitId)) {
+        return res.status(400).json({ error: "ID de produit invalide" });
+      }
+
+      const { libelles = [], numeros = [] } = req.body;
+
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: "Aucune image envoyée" });
+      }
+
+      // Validation : libelles et numeros doivent être des tableaux de même longueur
+      const libelleArray = Array.isArray(libelles) ? libelles : [libelles];
+      const numeroArray = Array.isArray(numeros) ? numeros : [numeros];
+
+      if (
+        req.files.length !== libelleArray.length ||
+        req.files.length !== numeroArray.length
+      ) {
+        return res.status(400).json({
+          error:
+            "Le nombre d'images, de libellés et de numéros doit correspondre",
+        });
+      }
+
+      const imagesData = req.files.map((file, index) => ({
+        libelle: libelleArray[index],
+        numero: parseInt(numeroArray[index]),
+        lien: path.join(
+          "media",
+          "images",
+          "stock_moyensgeneraux",
+          "produits",
+          file.filename
+        ),
+      }));
+
+      const inserted = await produitService.addProduitImages(
+        produitId,
+        imagesData
+      );
+
+      return res
+        .status(201)
+        .json({ message: "Images enregistrées", images: inserted });
+    });
+  } catch (error) {
+    console.error("Erreur lors de l'ajout d'images :", error);
+    res.status(500).json({
+      error: "Erreur interne",
+      details: error.message,
+    });
+  }
+};
 
 // Créer un produit avec gestion de plusieurs images
 const createProduit = async (req, res) => {
@@ -163,29 +237,23 @@ const getProduitById = async (req, res) => {
 const getProduitsByTypes = async (req, res) => {
   try {
     const idType = parseInt(req.params.idType);
-    const { limit = 50, offset = 0 } = req.query;
     if (isNaN(idType)) {
-      return res.status(400).json({ error: "ID de type invalide" });
+      return res.status(400).json({ error: "ID de type de produit invalide" });
     }
 
-    const produits = await produitService.getProduitsByTypes(idType, {
+    const { page = 1, limit = 10 } = req.query;
+
+    const result = await produitService.getProduitsByTypes(idType, {
+      page: Number(page),
       limit: Number(limit),
-      offset: Number(offset),
     });
 
-    // Ajouter les URLs accessibles aux images
-    const result = produits.map((produit) => ({
-      ...produit,
-      images: produit.images.map((img) => ({
-        ...img,
-        url: `${req.protocol}://${req.get("host")}${img.lien_image}`,
-      })),
-    }));
-
-    return res.status(200).json(result);
+    return res.status(200).json(result); // on retourne directement { data, pagination }
   } catch (error) {
+    console.error("Erreur getProduitsByTypes:", error);
     res.status(500).json({
-      error: "Erreur lors de la récupération des produits par type",
+      error:
+        "Une erreur est survenue lors de la récupération des produits par type",
       details: error.message,
     });
   }
@@ -215,7 +283,7 @@ const updateProduit = async (req, res) => {
         updated_at: new Date(),
       };
 
-      const updatedProduit = await produitService.updateProduit(id, updateData);
+      await produitService.updateProduit(id, updateData);
 
       // 📦 Traitement des nouvelles images
       const imagesMeta = req.body.imagesMeta
@@ -289,6 +357,7 @@ const deleteProduit = async (req, res) => {
 const deleteImage = async (req, res) => {
   try {
     const imageId = parseInt(req.params.imageId);
+
     if (isNaN(imageId)) {
       return res.status(400).json({ error: "ID d'image invalide" });
     }
@@ -298,6 +367,7 @@ const deleteImage = async (req, res) => {
       .select()
       .from(images)
       .where(eq(images.id_image, imageId));
+
     if (!image) {
       return res.status(404).json({ error: "Image non trouvée" });
     }
@@ -309,7 +379,9 @@ const deleteImage = async (req, res) => {
     }
 
     const result = await produitService.deleteProduitImage(imageId);
-    return res.json(result);
+    return res
+      .status(200)
+      .json({ message: "suppression effectuée avec succès", result: result });
   } catch (error) {
     res.status(500).json({
       error: "Une erreur est survenue lors de la suppression de l'image",
@@ -318,8 +390,8 @@ const deleteImage = async (req, res) => {
   }
 };
 
-
 module.exports = {
+  addProduitImages,
   createProduit,
   getProduits,
   getProduitById,

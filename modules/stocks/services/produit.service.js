@@ -222,27 +222,56 @@ const getProduitById = async (id) => {
   return result;
 };
 
-const getProduitsByTypes = async (idType, { limit = 50, offset = 0 } = {}) => {
-  const produitsList = await db
-    .select()
+const getProduitsByTypes = async (idType, { page = 1, limit = 10 } = {}) => {
+  const offset = (page - 1) * limit;
+
+  const query = db
+    .select({
+      produit: produits,
+      category: categories,
+      type: type_produits,
+      modele: modeles,
+      famille: familles,
+      marque: marques,
+      images: sql`(
+        SELECT json_agg(json_build_object(
+          'id_image', images.id_image,
+          'libelle_image', images.libelle_image,
+          'lien_image', images.lien_image,
+          'numero_image', images.numero_image,
+          'created_at', images.created_at
+        )) 
+        FROM images 
+        WHERE images.id_produit = produits.id_produit
+      )`.as("images"),
+    })
     .from(produits)
+    .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
+    .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
+    .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
+    .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+    .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
     .where(eq(produits.id_type_produit, idType))
     .limit(limit)
     .offset(offset);
 
-  if (!produitsList.length) return [];
+  const countQuery = db
+    .select({ count: sql`count(*)` })
+    .from(produits)
+    .where(eq(produits.id_type_produit, idType));
 
-  const ids = produitsList.map((p) => p.id_produit);
+  const [results, totalResult] = await Promise.all([query, countQuery]);
+  const total = Number(totalResult[0].count);
 
-  const imagesList = await db
-    .select()
-    .from(images)
-    .where(inArray(images.id_produit, ids));
-
-  return produitsList.map((produit) => ({
-    ...produit,
-    images: imagesList.filter((img) => img.id_produit === produit.id_produit),
-  }));
+  return {
+    data: results,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 const updateProduit = async (id, data) => {

@@ -309,8 +309,79 @@ router.get("/:id", controller.getProduitById);
  * @swagger
  * /stocks/produits/type/{idType}:
  *   get:
- *     summary: Récupère tous les produits par type (outils/équipements)
+ *     summary: Récupère les produits par type (équipements/outils)
+ *     description: Retourne une liste paginée de produits filtrés par type avec leurs détails complets
  *     tags: [Produits]
+ *     parameters:
+ *       - in: path
+ *         name: idType
+ *         required: true
+ *         description: ID du type de produit (1=équipement, 2=outil)
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: page
+ *         description: Numéro de page pour la pagination
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: limit
+ *         description: Nombre d'éléments par page
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *     responses:
+ *       200:
+ *         description: Liste des produits avec pagination
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       produit:
+ *                         $ref: '#/components/schemas/Produit'
+ *                       category:
+ *                         $ref: '#/components/schemas/Categorie'
+ *                       type:
+ *                         $ref: '#/components/schemas/TypeProduit'
+ *                       modele:
+ *                         $ref: '#/components/schemas/Modele'
+ *                       famille:
+ *                         $ref: '#/components/schemas/Famille'
+ *                       marque:
+ *                         $ref: '#/components/schemas/Marque'
+ *                       images:
+ *                         type: array
+ *                         items:
+ *                           $ref: '#/components/schemas/Image'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                       example: 1
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 1
+ *       400:
+ *         description: ID type invalide
+ *       404:
+ *         description: Aucun produit trouvé pour ce type
+ *       500:
+ *         description: Erreur serveur
  */
 router.get("/type/:idType", controller.getProduitsByTypes);
 
@@ -374,6 +445,52 @@ router.delete("/:id", controller.deleteProduit);
  *               details: "Erreur système"
  */
 
-router.delete("/image/:id", controller.deleteImage);
+router.delete("/image/:imageId", controller.deleteImage);
 
+/**
+ * @swagger
+ * /stocks/produits/images/add/:id:
+ *   post:
+ *     summary: Upload et ajout d'images pour un produit
+ *     tags: [Produits]
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du produit
+ *       - in: formData
+ *         name: images
+ *         type: file
+ *         description: Fichiers image du produit
+ *         required: true
+ *         allowMultiple: true
+ *       - in: formData
+ *         name: libelles
+ *         type: string
+ *         description: Libellé de l'image
+ *         required: false
+ *       - in: formData
+ *         name: numeros
+ *         type: integer
+ *         description: Numéro de l'image (pour l'ordre)
+ *         required: false
+ *     responses:
+ *       201:
+ *         description: Images enregistrées avec succès
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Images enregistrées
+ *               images:
+ *                 - id_image: 1
+ *                   libelle_image: "Vue avant"
+ *                   numero_image: 1
+ *                   lien_image: "media/images/stock_moyensgeneraux/produits/image1.jpeg"
+ */
+
+router.post("/images/add/:id", controller.addProduitImages);
 module.exports = router;
