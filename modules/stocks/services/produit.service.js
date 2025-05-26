@@ -22,6 +22,7 @@ const {
 
 const createProduit = async (data) => {
   const [result] = await db.insert(produits).values(data).returning();
+  console.log(result);
   return result;
 };
 
