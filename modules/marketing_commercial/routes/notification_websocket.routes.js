@@ -36,7 +36,7 @@ const { authMiddleware } = require('../middleware/auth');
 
 /**
  * @swagger
- * /api/marketing_commercial/notifications:
+ * /marketing_commercial/notifications:
  *   get:
  *     summary: Récupère les notifications de l'utilisateur connecté
  *     description: Retourne toutes les notifications de l'utilisateur
@@ -67,7 +67,7 @@ router.get('/', authMiddleware, notificationController.getUserNotifications);
 
 /**
  * @swagger
- * /api/marketing_commercial/notifications/count:
+ * /marketing_commercial/notifications/count:
  *   get:
  *     summary: Compte les notifications non lues
  *     description: Retourne le nombre de notifications non lues pour l'utilisateur connecté
@@ -97,7 +97,7 @@ router.get('/count', authMiddleware, notificationController.countUnread);
 
 /**
  * @swagger
- * /api/marketing_commercial/notifications/{notificationId}/read:
+ * /marketing_commercial/notifications/{notificationId}/read:
  *   put:
  *     summary: Marque une notification comme lue
  *     description: Change le statut d'une notification spécifique à "lue"
@@ -136,7 +136,7 @@ router.put('/:notificationId/read', authMiddleware, notificationController.markA
 
 /**
  * @swagger
- * /api/marketing_commercial/notifications/read-all:
+ * /marketing_commercial/notifications/read-all:
  *   put:
  *     summary: Marque toutes les notifications comme lues
  *     description: Change le statut de toutes les notifications de l'utilisateur à "lues"

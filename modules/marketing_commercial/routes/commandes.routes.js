@@ -89,7 +89,7 @@ const commandesController = require('../controllers/commandes.controller');
  *           type: string
  *           description: Libellé du modèle du produit
  * 
- * /api/marketing_commercial/commandes:
+ * /marketing_commercial/commandes:
  *   post:
  *     summary: Crée une nouvelle commande
  *     description: Crée une nouvelle commande avec les produits spécifiés
@@ -152,7 +152,7 @@ router.post('/', commandesController.createCommande);
 
 /**
  * @swagger
- * /api/marketing_commercial/commandes/{id}:
+ * /marketing_commercial/commandes/{id}:
  *   get:
  *     summary: Récupère une commande par son ID
  *     description: Retourne les détails d'une commande spécifique avec ses produits
@@ -186,7 +186,7 @@ router.get('/:id', commandesController.getCommandeById);
 
 /**
  * @swagger
- * /api/marketing_commercial/commandes/client/{clientId}:
+ * /marketing_commercial/commandes/client/{clientId}:
  *   get:
  *     summary: Récupère les commandes d'un client
  *     description: Retourne l'historique des commandes d'un client spécifique
@@ -222,7 +222,7 @@ router.get('/client/:clientId', commandesController.getClientCommandes);
 
 /**
  * @swagger
- * /api/marketing_commercial/commandes/status/{status}:
+ * /marketing_commercial/commandes/status/{status}:
  *   get:
  *     summary: Récupère les commandes par statut
  *     description: Retourne toutes les commandes ayant un statut spécifique
@@ -259,7 +259,7 @@ router.get('/status/:status', commandesController.getCommandesByStatus);
 
 /**
  * @swagger
- * /api/marketing_commercial/commandes/{id}/products:
+ * /marketing_commercial/commandes/{id}/products:
  *   get:
  *     summary: Récupère les produits d'une commande
  *     description: Retourne la liste détaillée des produits dans une commande spécifique
@@ -297,7 +297,7 @@ router.get('/:id/products', commandesController.getCommandeProducts);
 
 /**
  * @swagger
- * /api/marketing_commercial/commandes/{id}/update-status:
+ * /marketing_commercial/commandes/{id}/update-status:
  *   patch:
  *     summary: Met à jour le statut d'une commande
  *     description: Modifie le statut d'une commande existante
@@ -349,7 +349,7 @@ router.patch('/:id/update-status', commandesController.updateCommandeStatus);
 
 /**
  * @swagger
- * /api/marketing_commercial/commandes/{id}/update-date:
+ * /marketing_commercial/commandes/{id}/update-date:
  *   patch:
  *     summary: Met à jour la date de livraison d'une commande
  *     description: Modifie la date de livraison prévue d'une commande existante
@@ -401,7 +401,7 @@ router.patch('/:id/update-date', commandesController.updateLivraisonDate);
 
 /**
  * @swagger
- * /api/marketing_commercial/commandes/{id}/update:
+ * /marketing_commercial/commandes/{id}/update:
  *   patch:
  *     summary: Met à jour le statut et la date de livraison d'une commande
  *     description: Modifie à la fois le statut et la date de livraison d'une commande existante

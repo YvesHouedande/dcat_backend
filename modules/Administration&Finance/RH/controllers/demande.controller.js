@@ -106,7 +106,7 @@ const createDemande = async (req, res) => {
 
             // Création du chemin relatif
             const relativePath = req.file.path
-                .replace(process.cwd(), '')
+                .replace(process.cwd(), '') 
                 .replace(/\\/g, '/')
                 .replace(/^\//, '');
 

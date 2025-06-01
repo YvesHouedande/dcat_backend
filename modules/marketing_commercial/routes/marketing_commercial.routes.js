@@ -13,7 +13,7 @@ const notificationRoutes = require("./notification_websocket.routes");
 
 /**
  * @swagger
- * /api/marketing_commercial/clients:
+ * /marketing_commercial/clients:
  *   description: Routes liées aux clients
  *   get:
  *     summary: Accède à la gestion des clients
@@ -23,7 +23,7 @@ router.use("/clients", clientsRoutes);
 
 /**
  * @swagger
- * /api/marketing_commercial/produits:
+ * /marketing_commercial/produits:
  *   description: Routes liées aux produits marketing
  *   get:
  *     summary: Accède au catalogue de produits marketing
@@ -33,7 +33,7 @@ router.use("/produits", produitsRoutes);
 
 /**
  * @swagger
- * /api/marketing_commercial/commandes:
+ * /marketing_commercial/commandes:
  *   description: Routes liées aux commandes marketing
  *   get:
  *     summary: Accède aux commandes clients marketing
@@ -43,7 +43,7 @@ router.use("/commandes", commandesRoutes);
 
 /**
  * @swagger
- * /api/marketing_commercial/services:
+ * /marketing_commercial/services:
  *   description: Routes liées aux services DCAT
  *   get:
  *     summary: Accède aux services proposés par DCAT
@@ -53,7 +53,7 @@ router.use("/services", servicesDcatRoutes);
 
 /**
  * @swagger
- * /api/marketing_commercial/affiches:
+ * /marketing_commercial/affiches:
  *   description: Routes liées aux affiches promotionnelles
  *   get:
  *     summary: Accède aux affiches promotionnelles
@@ -63,7 +63,7 @@ router.use("/affiches", affichesRoutes);
 
 /**
  * @swagger
- * /api/marketing_commercial/panier:
+ * /marketing_commercial/panier:
  *   description: Routes liées au panier d'achat
  *   get:
  *     summary: Accède au panier d'achat de l'utilisateur
@@ -73,7 +73,7 @@ router.use("/panier", panierRoutes);
 
 /**
  * @swagger
- * /api/marketing_commercial/notifications:
+ * /marketing_commercial/notifications:
  *   description: Routes liées aux notifications utilisateur
  *   get:
  *     summary: Accède aux notifications de l'utilisateur

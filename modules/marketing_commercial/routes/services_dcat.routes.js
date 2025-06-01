@@ -42,7 +42,7 @@ router.use((req, res, next) => {
  *           format: date-time
  *           description: Dernière date de mise à jour du service
  *
- * /api/marketing_commercial/services:
+ * /marketing_commercial/services:
  *   get:
  *     summary: Liste tous les services DCAT
  *     description: Retourne la liste complète des services proposés par DCAT
@@ -69,7 +69,7 @@ router.get('/', servicesDcatController.getAllServices);
 
 /**
  * @swagger
- * /api/marketing_commercial/services/{id}:
+ * /marketing_commercial/services/{id}:
  *   get:
  *     summary: Récupère un service DCAT par son ID
  *     description: Retourne les détails d'un service spécifique
@@ -105,7 +105,7 @@ router.get('/:id', servicesDcatController.getServiceById);
 
 /**
  * @swagger
- * /api/marketing_commercial/services:
+ * /marketing_commercial/services:
  *   post:
  *     summary: Crée un nouveau service DCAT
  *     description: Ajoute un nouveau service avec son image et sa description
@@ -160,7 +160,7 @@ router.post('/', uploadMiddleware.single('image'), servicesDcatController.create
 
 /**
  * @swagger
- * /api/marketing_commercial/services/{id}:
+ * /marketing_commercial/services/{id}:
  *   put:
  *     summary: Met à jour un service DCAT
  *     description: Modifie un service existant
@@ -220,7 +220,7 @@ router.put('/:id', uploadMiddleware.single('image'), servicesDcatController.upda
 
 /**
  * @swagger
- * /api/marketing_commercial/services/{id}:
+ * /marketing_commercial/services/{id}:
  *   delete:
  *     summary: Supprime un service DCAT
  *     description: Supprime définitivement un service et son image
@@ -257,7 +257,7 @@ router.delete('/:id', servicesDcatController.deleteService);
 
 /**
  * @swagger
- * /api/marketing_commercial/services/upload-image:
+ * /marketing_commercial/services/upload-image:
  *   post:
  *     summary: Télécharge une image de service DCAT
  *     description: Télécharge une image en conservant son nom original
