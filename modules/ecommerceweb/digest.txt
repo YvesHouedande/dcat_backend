@@ -1,17 +1,81 @@
 Directory structure:
 └── ecommerceweb/
     ├── controllers/
+    │   ├── auth.controller.js
     │   └── commande.controller.js
+    ├── middlewares/
+    │   └── auth.middleware.js
     ├── routes/
-    │   └── commande.routes.js
+    │   ├── auth.routes.js
+    │   ├── commande.routes.js
+    │   └── ecommerceweb.routes.js
     └── services/
-        ├── commande.services.js
+        ├── commande.service.js
         └── email.service.js
+
+================================================
+File: controllers/auth.controller.js
+================================================
+// controllers/auth.controller.js
+const { db } = require('../core/database/config');
+const { clients_en_ligne } = require('../core/database/models');
+const { eq } = require('drizzle-orm');
+
+exports.syncUser = async (req, res) => {
+  try {
+    const { uid, email, nom, contact, photoURL, provider } = req.body;
+
+    // VÃ©rifier si l'utilisateur existe dÃ©jÃ 
+    const [existingUser] = await db.select()
+      .from(clients_en_ligne)
+      .where(eq(clients_en_ligne.email, email))
+      .limit(1);
+
+    let user;
+    
+    if (existingUser) {
+      // Mettre Ã  jour si nÃ©cessaire
+      user = existingUser;
+    } else {
+      // CrÃ©er un nouveau client
+      [user] = await db.insert(clients_en_ligne)
+        .values({
+          email,
+          nom,
+          contact,
+          password: null, // Pas de mot de passe pour les connexions sociales
+          role: 'client'
+        })
+        .returning();
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id_client: user.id_client,
+        email: user.email,
+        nom: user.nom,
+        contact: user.contact,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la synchronisation du compte'
+    });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  // ImplÃ©mentation similaire pour la mise Ã  jour du profil
+};
+
 
 ================================================
 File: controllers/commande.controller.js
 ================================================
-const commandeService = require('../services/commande.services');
+const commandeService = require('../services/commande.service');
 const emailService = require('../services/email.service');
 
 exports.creerCommande = async (req, res) => {
@@ -43,20 +107,51 @@ exports.creerCommande = async (req, res) => {
 
 
 ================================================
-File: routes/commande.routes.js
+File: middlewares/auth.middleware.js
+================================================
+
+
+
+================================================
+File: routes/auth.routes.js
 ================================================
 const express = require('express');
 const router = express.Router();
-const commandeController = require('../controllers/commande.controller');
+const authController = require('../controllers/auth.controller');
+const { verifyFirebaseToken } = require('../middlewares/auth.middleware');
 
-router.post('/', commandeController.creerCommande);
-router.get('/client/:id', commandeController.getCommandesParClient);
+router.post('/sync-user', verifyFirebaseToken, authController.syncUser);
 
 module.exports = router;
 
 
 ================================================
-File: services/commande.services.js
+File: routes/commande.routes.js
+================================================
+const express = require('express');
+const router = express.Router();
+const commandeController = require('../controllers/commande.controller');
+const { verifyFirebaseToken } = require('../middlewares/auth.middleware');
+
+router.post('/', verifyFirebaseToken, commandeController.creerCommande);
+
+module.exports = router;
+
+
+================================================
+File: routes/ecommerceweb.routes.js
+================================================
+const commandeRouter = require('./commande.routes');
+const express = require('express');
+const router = express.Router();
+
+router.use('/commandes', commandeRouter);
+
+module.exports = router;
+
+
+================================================
+File: services/commande.service.js
 ================================================
 const { db } = require('../../../core/database/config');
 const { commandes, commande_produits } = require("../../../core/database/models");
