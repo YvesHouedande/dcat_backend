@@ -1,0 +1,705 @@
+Directory structure:
+└── ecommerceweb/
+    ├── controllers/
+    │   ├── auth.controller.js
+    │   └── commande.controller.js
+    ├── middlewares/
+    │   └── jwt.middleware.js
+    ├── routes/
+    │   ├── auth.routes.js
+    │   ├── commande.routes.js
+    │   └── ecommerceweb.routes.js
+    ├── services/
+    │   └── commande.service.js
+    └── validations/
+        ├── auth.validation.js
+        └── validate.js
+
+================================================
+File: controllers/auth.controller.js
+================================================
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const { db } = require('../../../core/database/config');
+const { clients_en_ligne } = require('../../../core/database/models');
+const { eq } = require('drizzle-orm');
+
+// Helpers
+const generateJWT = (user) => {
+  return jwt.sign(
+    {
+      id: user.id_client,
+      email: user.email,
+      role: user.role
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '30d' }
+  );
+};
+
+const formatUserResponse = (user) => {
+  return {
+    id_client: user.id_client,
+    email: user.email,
+    nom: user.nom,
+    contact: user.contact,
+    role: user.role
+  };
+};
+
+
+exports.firebaseAuth = async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    // VÃ©rifier le token Firebase
+    const decoded = await admin.auth().verifyIdToken(token);
+    
+    // Chercher ou crÃ©er l'utilisateur
+    const [user] = await db.select()
+      .from(clients_en_ligne)
+      .where(eq(clients_en_ligne.email, decoded.email));
+
+    if (!user) {
+      // CrÃ©er un nouvel utilisateur si non trouvÃ©
+      const [newUser] = await db.insert(clients_en_ligne)
+        .values({
+          email: decoded.email,
+          nom: decoded.name || decoded.email.split('@')[0],
+          contact: decoded.phone_number || '',
+          password: null,
+          role: 'client',
+          source: 'firebase',
+          firebase_uid: decoded.uid
+        })
+        .returning();
+
+      return res.json({
+        success: true,
+        token: generateJWT(newUser),
+        user: formatUserResponse(newUser)
+      });
+    }
+
+    // Utilisateur existant
+    res.json({
+      success: true,
+      token: generateJWT(user),
+      user: formatUserResponse(user)
+    });
+
+  } catch (error) {
+    console.error('Firebase auth error:', error);
+    res.status(401).json({
+      success: false,
+      message: 'Firebase authentication failed'
+    });
+  }
+};
+// Firebase Sync
+exports.syncUser = async (req, res) => {
+  try {
+    // const { uid, email, nom, contact, provider } = req.body;
+    const { email, nom, contact, provider } = req.body;
+    
+
+    const [user] = await db.select()
+      .from(clients_en_ligne)
+      .where(eq(clients_en_ligne.email, email));
+
+    if (user) {
+      return res.json({
+        success: true,
+        token: generateJWT(user),
+        user: formatUserResponse(user)
+      });
+    }
+
+    const [newUser] = await db.insert(clients_en_ligne)
+      .values({
+        email,
+        nom: nom || email.split('@')[0],
+        contact,
+        password: null,
+        role: 'client',
+        source: provider
+      })
+      .returning();
+
+    res.json({
+      success: true,
+      token: generateJWT(newUser),
+      user: formatUserResponse(newUser)
+    });
+
+  } catch (error) {
+    console.error('Sync error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error syncing user'
+    });
+  }
+};
+
+// Local Registration
+exports.register = async (req, res) => {
+  try {
+    const { email, password, nom, contact } = req.body;
+
+    const [existing] = await db.select()
+      .from(clients_en_ligne)
+      .where(eq(clients_en_ligne.email, email));
+
+    if (existing) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Email already exists' 
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    
+    const [user] = await db.insert(clients_en_ligne)
+      .values({
+        email,
+        nom,
+        contact,
+        password: hashedPassword,
+        role: 'client',
+        source: 'local'
+      })
+      .returning();
+
+    res.status(201).json({
+      success: true,
+      token: generateJWT(user),
+      user: formatUserResponse(user)
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Registration failed'
+    });
+  }
+};
+
+// Local Login
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const [user] = await db.select()
+      .from(clients_en_ligne)
+      .where(eq(clients_en_ligne.email, email));
+
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+    res.json({
+      success: true,
+      token: generateJWT(user),
+      user: formatUserResponse(user)
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Login failed'
+    });
+  }
+};
+
+
+// RÃ©cupÃ©rer l'utilisateur connectÃ©
+exports.getCurrentUser = async (req, res) => {
+  try {
+    const [user] = await db.select()
+      .from(clients_en_ligne)
+      .where(eq(clients_en_ligne.id_client, req.user.id_client));
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Utilisateur non trouvÃ©'
+      });
+    }
+
+    res.json({
+      success: true,
+      user: formatUserResponse(user)
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur'
+    });
+  }
+};
+
+// Mettre Ã  jour le profil
+exports.updateProfile = async (req, res) => {
+  try {
+    const { nom, contact } = req.body;
+
+    const [updatedUser] = await db.update(clients_en_ligne)
+      .set({
+        nom,
+        contact,
+        updated_at: new Date()
+      })
+      .where(eq(clients_en_ligne.id_client, req.user.id_client))
+      .returning();
+
+    res.json({
+      success: true,
+      user: formatUserResponse(updatedUser)
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la mise Ã  jour'
+    });
+  }
+};
+
+
+================================================
+File: controllers/commande.controller.js
+================================================
+
+
+exports.creerCommande = async (req, res) => {
+  try {
+    const { panier } = req.body;
+    const id_client = req.user.id_client; // RÃ©cupÃ©rÃ© du middleware
+
+    // Validation supplÃ©mentaire
+    if (!panier?.infos?.adresse_livraison || !panier?.infos?.methode_paiement) {
+      return res.status(400).json({
+        success: false,
+        message: 'Adresse de livraison et mÃ©thode de paiement sont requises'
+      });
+    }
+
+    const commande = await commandeService.creerCommande({
+      ...panier,
+      id_client
+    });
+
+    res.status(201).json({
+      success: true,
+      commande
+    });
+  } catch (error) {
+    console.error('Erreur crÃ©ation commande:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+
+// RÃ©cupÃ©rer l'historique des commandes
+const commandeService = require('../services/commande.service');
+
+exports.getHistoriqueCommandes = async (req, res) => {
+  try {
+    // VÃ©rification de l'authentification
+    if (!req.user?.id_client) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentification requise'
+      });
+    }
+
+    // Appel au service
+    const historique = await commandeService.getHistoriqueCommandes(req.user.id_client);
+    
+    // RÃ©ponse formatÃ©e
+    res.json({
+      success: true,
+      commandes: historique
+    });
+
+  } catch (error) {
+    console.error('Erreur dans getHistoriqueCommandes:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erreur serveur'
+    });
+  }
+};
+
+
+
+================================================
+File: middlewares/jwt.middleware.js
+================================================
+const jwt = require('jsonwebtoken');
+const admin = require('firebase-admin');
+
+// Initialisation Firebase
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n')
+    })
+  });
+}
+
+exports.verifyToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ 
+      code: 'MISSING_AUTH_HEADER',
+      message: 'Authorization header required (Bearer token)' 
+    });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  // Essayer d'abord avec JWT local
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = {
+      id_client: decoded.id,
+      email: decoded.email,
+      role: decoded.role || 'client',
+      authType: 'local'
+    };
+    return next();
+  } catch (jwtError) {
+    // Si Ã©chec, essayer avec Firebase
+    try {
+      const decoded = await admin.auth().verifyIdToken(token);
+      
+      // Chercher l'utilisateur dans la base de donnÃ©es
+      const [user] = await db.select()
+        .from(clients_en_ligne)
+        .where(eq(clients_en_ligne.email, decoded.email));
+
+      if (!user) {
+        return res.status(403).json({
+          code: 'USER_NOT_FOUND',
+          message: 'Firebase user not registered in system'
+        });
+      }
+
+      req.user = {
+        id_client: user.id_client,
+        email: user.email,
+        role: user.role,
+        authType: 'firebase'
+      };
+      return next();
+    } catch (firebaseError) {
+      console.error('Token verification failed:', { jwtError, firebaseError });
+      return res.status(403).json({ 
+        code: 'INVALID_TOKEN',
+        message: 'Failed to authenticate token' 
+      });
+    }
+  }
+};
+
+
+================================================
+File: routes/auth.routes.js
+================================================
+const express = require('express');
+const router = express.Router();
+const authController = require('../controllers/auth.controller');
+const { validate } = require('../validations/validate');
+const { verifyToken } = require('../middlewares/jwt.middleware');
+const { 
+  registerSchema, 
+  loginSchema,
+  syncUserSchema,
+  updateProfileSchema,
+} = require('../validations/auth.validation');
+
+
+router.post('/sync-user',
+  validate(syncUserSchema),
+  authController.syncUser
+);
+
+// Local Auth
+router.post('/register',
+  validate(registerSchema),
+  authController.register
+);
+
+router.post('/login',
+  validate(loginSchema),
+  authController.login
+);
+
+// Ajouter ces nouvelles routes
+router.get('/me', 
+  verifyToken, 
+  authController.getCurrentUser
+);
+
+router.put('/update-profile',
+  verifyToken,
+  validate(updateProfileSchema),
+  authController.updateProfile
+);
+
+module.exports = router;
+
+
+================================================
+File: routes/commande.routes.js
+================================================
+const express = require('express');
+const router = express.Router();
+const commandeController = require('../controllers/commande.controller');
+const { verifyToken } = require('../middlewares/jwt.middleware');
+
+router.post('/', verifyToken, commandeController.creerCommande);
+
+// Nouvelle route pour l'historique des commandes
+router.get('/historique', 
+    verifyToken, 
+    commandeController.getHistoriqueCommandes
+  );
+
+module.exports = router;
+
+
+================================================
+File: routes/ecommerceweb.routes.js
+================================================
+const express = require('express');
+const router = express.Router();
+const authRouter = require('./auth.routes');
+const commandeRouter = require('./commande.routes');
+
+// Public routes
+router.use('/auth', authRouter);
+
+// Protected routes
+router.use('/commande', 
+  // verifyJWT ou verifyFirebaseToken selon besoin
+  commandeRouter
+);
+
+module.exports = router;
+
+
+================================================
+File: services/commande.service.js
+================================================
+const { db } = require('../../../core/database/config');
+const { commandes, commande_produits, produits, images } = require("../../../core/database/models");
+const { eq, desc, and, inArray } = require("drizzle-orm");
+
+class CommandeService {
+  async creerCommande(commandeData) {
+    return await db.transaction(async (tx) => {
+      if (!commandeData.infos || !commandeData.produits) {
+        throw new Error('DonnÃ©es de commande invalides');
+      }
+
+      const [nouvelleCommande] = await tx.insert(commandes)
+        .values({
+          date_de_commande: new Date(),
+          etat_commande: 'en_attente',
+          lieu_de_livraison: commandeData.infos.adresse_livraison,
+          mode_de_paiement: commandeData.infos.methode_paiement,
+          id_client: commandeData.id_client,
+          created_at: new Date(),
+          updated_at: new Date()
+        })
+        .returning();
+
+      const produits = commandeData.produits.map(produit => ({
+        id_commande: nouvelleCommande.id_commande,
+        id_produit: produit.id_produit,
+        quantite: produit.quantite,
+        prix_unitaire: produit.prix
+      }));
+
+      await tx.insert(commande_produits).values(produits);
+
+      return {
+        ...nouvelleCommande,
+        produits
+      };
+    });
+  };
+
+  async getHistoriqueCommandes(idClient) {
+    try {
+      // 1. RÃ©cupÃ©rer les commandes de base
+      const commandesList = await db.select({
+        id_commande: commandes.id_commande,
+        date_de_commande: commandes.date_de_commande,
+        etat_commande: commandes.etat_commande,
+        lieu_de_livraison: commandes.lieu_de_livraison,
+        mode_de_paiement: commandes.mode_de_paiement
+      })
+      .from(commandes)
+      .where(eq(commandes.id_client, idClient))
+      .orderBy(desc(commandes.date_de_commande));
+
+      if (commandesList.length === 0) return [];
+
+      // 2. RÃ©cupÃ©rer les produits avec leurs images
+      const produitsWithImages = await db.select({
+        commandeId: commande_produits.id_commande,
+        id_produit: produits.id_produit,
+        quantite: commande_produits.quantite,
+        prix_unitaire: commande_produits.prix_unitaire,
+        designation: produits.desi_produit,
+        code_produit: produits.code_produit,
+        lien_image: images.lien_image
+      })
+      .from(commande_produits)
+      .leftJoin(produits, eq(commande_produits.id_produit, produits.id_produit))
+      .leftJoin(images, eq(produits.id_produit, images.id_produit))
+      .where(
+        and(
+          inArray(
+            commande_produits.id_commande,
+            commandesList.map(c => c.id_commande)
+          ),
+          // Optionnel: filtrer seulement les images principales si nÃ©cessaire
+          // eq(images.numero_image, 1)
+        )
+      );
+
+      // 3. Regroupement des rÃ©sultats
+      const commandesMap = new Map();
+      
+      // Initialiser les commandes
+      commandesList.forEach(commande => {
+        commandesMap.set(commande.id_commande, {
+          ...commande,
+          produits: []
+        });
+      });
+
+      // Grouper les produits et images
+      const produitsMap = new Map();
+      produitsWithImages.forEach(item => {
+        if (!produitsMap.has(`${item.commandeId}_${item.id_produit}`)) {
+          produitsMap.set(`${item.commandeId}_${item.id_produit}`, {
+            id_commande: item.commandeId,
+            id_produit: item.id_produit,
+            quantite: item.quantite,
+            prix_unitaire: item.prix_unitaire,
+            designation: item.designation,
+            code_produit: item.code_produit,
+            images: []
+          });
+        }
+        
+        if (item.lien_image) {
+          produitsMap.get(`${item.commandeId}_${item.id_produit}`).images.push(item.lien_image);
+        }
+      });
+
+      // Associer les produits aux commandes
+      produitsMap.forEach((produit, key) => {
+        const [commandeId] = key.split('_');
+        if (commandesMap.has(parseInt(commandeId))) {
+          commandesMap.get(parseInt(commandeId)).produits.push(produit);
+        }
+      });
+
+      return Array.from(commandesMap.values());
+
+    } catch (error) {
+      console.error('Erreur dans commandeService.getHistoriqueCommandes:', {
+        error: error.message,
+        stack: error.stack
+      });
+      throw new Error('Erreur lors de la rÃ©cupÃ©ration des commandes');
+    }
+  }
+}
+
+module.exports = new CommandeService();
+
+
+================================================
+File: validations/auth.validation.js
+================================================
+const Joi = require('joi');
+
+exports.registerSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).required(),
+  nom: Joi.string().min(2).required(),
+  contact: Joi.string().pattern(/^\+?[0-9]{8,15}$/)
+});
+
+exports.loginSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().required()
+});
+
+exports.syncUserSchema = Joi.object({
+  uid: Joi.string().required(),
+  email: Joi.string().email().required(),
+  nom: Joi.string().optional(),
+  contact: Joi.string().allow('').optional(),
+  provider: Joi.string().valid('google', 'email').required()
+});
+
+// Ajouter ce nouveau schÃ©ma
+exports.updateProfileSchema = Joi.object({
+  nom: Joi.string().min(2).required(),
+  contact: Joi.string().pattern(/^\+?[0-9]{8,15}$/).required()
+});
+
+
+================================================
+File: validations/validate.js
+================================================
+
+  exports.validate = (schema) => {
+  return async (req, res, next) => {
+    try {
+      const value = await schema.validateAsync(req.body, { abortEarly: false });
+      req.body = value; // DonnÃ©es validÃ©es et nettoyÃ©es
+      next();
+    } catch (error) {
+      if (error.details) {
+        const formattedErrors = error.details.map(err => ({
+          param: err.context.key,
+          message: err.message,
+          location: 'body'
+        }));
+
+        return res.status(400).json({
+          success: false,
+          errors: formattedErrors
+        });
+      }
+
+      // Autres types d'erreurs non liÃ©es Ã  Joi
+      console.error('Validation middleware error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erreur interne lors de la validation'
+      });
+    }
+  };
+};
+
+
