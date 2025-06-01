@@ -82,7 +82,6 @@
 # EOSQL
 
 
-
 set -e
 
 # Charge les variables depuis le fichier .env monté
