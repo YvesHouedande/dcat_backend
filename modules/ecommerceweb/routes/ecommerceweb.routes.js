@@ -3,7 +3,13 @@ const router = express.Router();
 const authRouter = require('./auth.routes');
 const commandeRouter = require('./commande.routes');
 
+// Public routes
 router.use('/auth', authRouter);
-router.use('/commandes', commandeRouter);
+
+// Protected routes
+router.use('/commande', 
+  // verifyJWT ou verifyFirebaseToken selon besoin
+  commandeRouter
+);
 
 module.exports = router;
