@@ -7,9 +7,11 @@ const {
   projets,
 } = require("../../../core/database/models");
 
-const typeSortie = ["vente directe", "vente en ligne", "projet"];
+const typeSortie = ["vente_directe", "vente_en_ligne", "projet"];
 
-const etatExemplaire=require("./exemplaire.service")
+const etatExemplaire = require("./exemplaire.service");
+
+//Routes liées aux sorties d'exemplaires (les exemplaires qui ont été commander par exemplaire)
 
 // Création d'une sortie (et marquage de l'exemplaire comme "Vendu")
 async function createSortie({

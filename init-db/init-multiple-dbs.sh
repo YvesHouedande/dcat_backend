@@ -18,23 +18,22 @@
 
 
 
-set -e
+# set -e
 
-# Charge les variables depuis le fichier monté
-source /tmp/.env
+# # Charge les variables depuis le fichier monté
+# source /tmp/.env
 
-# Debug: Affiche les variables chargées
-echo "KEYCLOAK_DB_USER: $KEYCLOAK_DB_USER" >&2
-echo "APP_DB_USER: $APP_DB_USER" >&2
+# # Debug: Affiche les variables chargées
+# echo "KEYCLOAK_DB_USER: $KEYCLOAK_DB_USER" >&2
+# echo "APP_DB_USER: $APP_DB_USER" >&2
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
+# psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
 
-    CREATE DATABASE "$KEYCLOAK_DB_NAME" OWNER "$KEYCLOAK_DB_USER";
+#     CREATE DATABASE "$KEYCLOAK_DB_NAME" OWNER "$KEYCLOAK_DB_USER";
     
-    CREATE USER "$APP_DB_USER" WITH PASSWORD '$APP_DB_PASSWORD';
-    CREATE DATABASE "$APP_DB_NAME" OWNER "$APP_DB_USER";
-EOSQL
-
+#     CREATE USER "$APP_DB_USER" WITH PASSWORD '$APP_DB_PASSWORD';
+#     CREATE DATABASE "$APP_DB_NAME" OWNER "$APP_DB_USER";
+# EOSQL
 
 
 # #!/bin/bash
@@ -81,3 +80,26 @@ EOSQL
 #     -- Accorder tous les privilèges à l'utilisateur App sur sa base
 #     GRANT ALL PRIVILEGES ON SCHEMA public TO "$APP_DB_USER";
 # EOSQL
+
+
+set -e
+
+# Charge les variables depuis le fichier .env monté
+source /tmp/.env
+
+echo "Création des utilisateurs et bases de données..." >&2
+
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
+    -- Création de l'utilisateur et DB pour l'application
+    CREATE USER "$APP_DB_USER" WITH PASSWORD '$APP_DB_PASSWORD';
+    CREATE DATABASE "$APP_DB_NAME" OWNER "$APP_DB_USER";
+    
+    -- Création de la DB pour Keycloak (utilisateur postgres existant)
+    CREATE DATABASE "$KEYCLOAK_DB_NAME" OWNER "$POSTGRES_USER";
+    
+    -- Extension nécessaire pour Keycloak
+    \c "$KEYCLOAK_DB_NAME"
+    CREATE EXTENSION IF NOT EXISTS dblink;
+EOSQL
+
+echo "Initialisation terminée avec succès!" >&2

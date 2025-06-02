@@ -1,0 +1,1334 @@
+Directory structure:
+└── moyens_generaux/
+    ├── controllers/
+    │   ├── maintenance.controller.js
+    │   ├── maintenanceMoyenTravail.controller.js
+    │   ├── mouvementOutil.controller.js
+    │   └── moyensdeTravail.controller.js
+    ├── routes/
+    │   ├── maintenance.route.js
+    │   ├── maintenanceMoyenTravail.route.js
+    │   ├── mouvementOutil.route.js
+    │   ├── moyens_generaux.routes.js
+    │   └── moyensdeTravail.route.js
+    └── services/
+        ├── maintenance.service.js
+        ├── maintenanceMoyenTravail.service.js
+        ├── mouvementOutil.service.js
+        └── moyensdeTravail.service.js
+
+================================================
+File: controllers/maintenance.controller.js
+================================================
+const maintenanceService = require("../services/maintenance.service");
+
+// CREATE
+const createMaintenance = async (req, res) => {
+  try {
+    // if (!req.body.denomination) {
+    //   return res.status(400).json({ error: "La denomination est requise" });
+    // }
+    const result = await maintenanceService.createMaintenance(req.body);
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la crÃ©ation",
+      details: error.message 
+    });
+  }
+};
+
+// READ ALL
+const getMaintenances = async (req, res) => {
+  try {
+    const result = await maintenanceService.getMaintenances();
+    res.json(result || []);
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la rÃ©cupÃ©ration",
+      details: error.message 
+    });
+  }
+};
+
+// READ ONE
+const getMaintenanceById = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await maintenanceService.getMaintenanceById(id);
+    if (!result) {
+      return res.status(404).json({ error: "Maintenance non trouvÃ©e" });
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la rÃ©cupÃ©ration",
+      details: error.message 
+    });
+  }
+};
+
+// UPDATE
+const updateMaintenance = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await maintenanceService.updateMaintenance(id, req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la mise Ã  jour",
+      details: error.message 
+    });
+  }
+};
+
+// DELETE
+const deleteMaintenance = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    await maintenanceService.deleteMaintenance(id);
+    res.json({ message: "Maintenance supprimÃ©e avec succÃ¨s" });
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la suppression",
+      details: error.message 
+    });
+  }
+};
+
+
+module.exports = {
+  createMaintenance,
+  getMaintenances,
+  getMaintenanceById,
+  updateMaintenance,
+  deleteMaintenance
+};
+
+
+================================================
+File: controllers/maintenanceMoyenTravail.controller.js
+================================================
+// Table de liaison entre maintenant et  moyens de travail
+// maintenanceMoyenTravail.controller.js
+const maintenanceMoyenTravailService = require("../services/maintenanceMoyenTravail.service");
+
+// CREATE
+const createMaintenanceMoyenTravail = async (req, res) => {
+  try {
+    const result = await maintenanceMoyenTravailService.createMaintenanceMoyenTravail(req.body);
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la crÃ©ation",
+      details: error.message,
+    });
+  }
+};
+
+// READ ALL
+const getMaintenanceMoyenTravails = async (req, res) => {
+  try {
+    const result = await maintenanceMoyenTravailService.getMaintenanceMoyenTravails();
+    res.json(result || []);
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la rÃ©cupÃ©ration",
+      details: error.message,
+    });
+  }
+};
+
+// READ ONE
+const getMaintenanceMoyenTravailById = async (req, res) => {
+  try {
+    const id_moyens_de_travail = parseInt(req.params.id_moyens_de_travail);
+    const id_maintenance = parseInt(req.params.id_maintenance);
+    if (isNaN(id_moyens_de_travail) || isNaN(id_maintenance)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await maintenanceMoyenTravailService.getMaintenanceMoyenTravailById(id_moyens_de_travail, id_maintenance);
+    if (!result) {
+      return res.status(404).json({ error: "Maintenance Moyen Travail non trouvÃ©e" });
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la rÃ©cupÃ©ration",
+      details: error.message,
+    });
+  }
+};
+
+// UPDATE
+const updateMaintenanceMoyenTravail = async (req, res) => {
+  try {
+    const id_moyens_de_travail = parseInt(req.params.id_moyens_de_travail);
+    const id_maintenance = parseInt(req.params.id_maintenance);
+    if (isNaN(id_moyens_de_travail) || isNaN(id_maintenance)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await maintenanceMoyenTravailService.updateMaintenanceMoyenTravail(id_moyens_de_travail, id_maintenance, req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la mise Ã  jour",
+      details: error.message,
+    });
+  }
+};
+
+// DELETE
+const deleteMaintenanceMoyenTravail = async (req, res) => {
+  try {
+    const id_moyens_de_travail = parseInt(req.params.id_moyens_de_travail);
+    const id_maintenance = parseInt(req.params.id_maintenance);
+    if (isNaN(id_moyens_de_travail) || isNaN(id_maintenance)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    await maintenanceMoyenTravailService.deleteMaintenanceMoyenTravail(id_moyens_de_travail, id_maintenance);
+    res.json({ message: "Maintenance Moyen Travail supprimÃ©e avec succÃ¨s" });
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la suppression",
+      details: error.message,
+    });
+  }
+};
+
+module.exports = {
+  createMaintenanceMoyenTravail,
+  getMaintenanceMoyenTravails,
+  getMaintenanceMoyenTravailById,
+  updateMaintenanceMoyenTravail,
+  deleteMaintenanceMoyenTravail,
+};
+
+
+
+================================================
+File: controllers/mouvementOutil.controller.js
+================================================
+const toolsService = require("../services/mouvementOutil.service");
+
+// RÃ©cupÃ©rer la liste de tous les produits de type "outil".
+const getAllOutils = async (req, res) => {
+  try {
+    const outils = await toolsService.getAllOutils();
+    res.status(200).json(outils);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+//RÃ©cupÃ©rer tous les exemplaires des outils.
+const getExemplairesOutils = async (req, res) => {
+  try {
+    const exemplaires = await toolsService.getExemplairesOutils();
+    res.status(200).json(exemplaires);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+//Enregistrer la sortie d'un exemplaire d'outil par un employÃ© (prÃªt temporaire).
+const enregistrerSortieOutil = async (req, res) => {
+  try {
+    await toolsService.enregistrerSortieOutil(req.body);
+    res.status(201).json({ message: "Sortie enregistrÃ©e avec succÃ¨s." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+//Enregistrer la retour (entrÃ©e) d'un outil utilisÃ© par un employÃ©.
+const enregistrerEntreeOutil = async (req, res) => {
+  try {
+    await toolsService.enregistrerEntreeOutil(req.body);
+    res.status(201).json({ message: "EntrÃ©e enregistrÃ©e avec succÃ¨s." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+//VÃ©rifier si un produit sorti a Ã©tÃ© dÃ©posÃ© (retournÃ©)
+const estOutilRetourne = async (req, res) => {
+  try {
+    const { id_exemplaire, id_employes } = req.params;
+
+    // VÃ©rification des paramÃ¨tres
+    if (
+      !id_exemplaire ||
+      !id_employes ||
+      isNaN(parseInt(id_exemplaire)) ||
+      isNaN(parseInt(id_employes))
+    ) {
+      return res.status(400).json({ error: "ParamÃ¨tres invalides" });
+    }
+
+    const retourne = await toolsService.estOutilRetourne(
+      parseInt(id_exemplaire),
+      parseInt(id_employes)
+    );
+
+    res.status(200).json({ retourne });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+//Avoir l'historique des entrÃ©es et sorties d'outils
+const getHistoriqueOutils = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: "ID requis" });
+    }
+
+    const historique = await toolsService.getHistoriqueOutils(parseInt(id));
+    res.status(200).json(historique);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+const getHistoriqueGlobal = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const data = await toolsService.getHistoriqueGlobal(page, limit);
+    res.status(200).json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+module.exports = {
+  getAllOutils,
+  getExemplairesOutils,
+  enregistrerSortieOutil,
+  enregistrerEntreeOutil,
+  estOutilRetourne,
+  getHistoriqueOutils,
+  getHistoriqueGlobal
+};
+
+
+
+================================================
+File: controllers/moyensdeTravail.controller.js
+================================================
+const moyenstravailService = require("../services/moyensdeTravail.service");
+
+// CREATE
+const createMoyensTravail = async (req, res) => {
+  try {
+    if (!req.body.denomination) {
+      return res.status(400).json({ error: "La denomination est requise" });
+    }
+    const result = await moyenstravailService.createMoyensTravail(req.body);
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la crÃ©ation",
+      details: error.message 
+    });
+  }
+};
+
+// READ ALL
+const getMoyensTravails = async (req, res) => {
+  try {
+    const result = await moyenstravailService.getMoyensTravails();
+    res.json(result || []);
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la rÃ©cupÃ©ration",
+      details: error.message 
+    });
+  }
+};
+
+// READ ONE
+const getMoyensTravailById = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await moyenstravailService.getMoyensTravailById(id);
+    if (!result) {
+      return res.status(404).json({ error: "MoyensTravail non trouvÃ©e" });
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la rÃ©cupÃ©ration",
+      details: error.message 
+    });
+  }
+};
+
+// UPDATE
+const updateMoyensTravail = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await moyenstravailService.updateMoyensTravail(id, req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la mise Ã  jour",
+      details: error.message 
+    });
+  }
+};
+
+// DELETE
+const deleteMoyensTravail = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    await moyenstravailService.deleteMoyensTravail(id);
+    res.json({ message: "MoyensTravail supprimÃ©e avec succÃ¨s" });
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Erreur lors de la suppression",
+      details: error.message 
+    });
+  }
+};
+
+
+module.exports = {
+  createMoyensTravail,
+  getMoyensTravails,
+  getMoyensTravailById,
+  updateMoyensTravail,
+  deleteMoyensTravail
+};
+
+
+================================================
+File: routes/maintenance.route.js
+================================================
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/maintenance.controller");
+
+// CRUD Routes
+/**
+ * @swagger
+ * /moyens-generaux/maintenances:
+ *   post:
+ *     summary: CrÃ©e une nouvelle maintenance
+ *     tags: [Maintenances]
+ */
+router.post("/", controller.createMaintenance);
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenances:
+ *   get:
+ *     summary: RÃ©cupÃ¨re toutes les maintenances
+ *     tags: [Maintenances]
+ *     responses:
+ *       200:
+ *         description: Liste des maintenances
+ *         content:
+ *           application/json:
+ *             example:
+ *               - id_maintenance: 1
+ *                 recurrence: "1 an"
+ *                 operations: "test-1"
+ *                 recommandations: "test-1"
+ *                 type_maintenance: "test-1"
+ *                 autre_intervenant: null
+ *                 id_partenaire: null
+ *                 created_at: "2025-04-30T16:39:23.040Z"
+ *                 updated_at: "2025-04-30T16:39:23.040Z"
+ *               - id_maintenance: 2
+ *                 recurrence: "1 an"
+ *                 operations: "test-2"
+ *                 recommandations: "test-2"
+ *                 type_maintenance: "test-2"
+ *                 autre_intervenant: null
+ *                 id_partenaire: null
+ *                 created_at: "2025-04-30T16:39:41.009Z"
+ *                 updated_at: "2025-04-30T16:39:41.009Z"
+ */
+
+router.get("/", controller.getMaintenances);
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenances/{id}:
+ *   get:
+ *     summary: RÃ©cupÃ¨re une maintenance par ID
+ *     tags: [Maintenances]
+ */
+router.get("/:id", controller.getMaintenanceById);
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenances/{id}:
+ *   put:
+ *     summary: Met Ã  jour une maintenance par ID
+ *     tags: [Maintenances]
+ */
+router.put("/:id", controller.updateMaintenance);
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenances/{id}:
+ *   delete:
+ *     summary: Supprime une maintenance par ID
+ *     tags: [Maintenances]
+ */
+router.delete("/:id", controller.deleteMaintenance);
+
+module.exports = router;
+
+
+
+================================================
+File: routes/maintenanceMoyenTravail.route.js
+================================================
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/maintenanceMoyenTravail.controller");
+
+// CRUD Routes  
+/**
+ * @swagger
+ * /moyens-generaux/maintenance-moyen-travails:
+ *   post:
+ *     summary: CrÃ©e une nouvelle maintenance de moyen de travail
+ *     tags: [Maintenances Moyens de Travail]
+ */
+router.post("/", controller.createMaintenanceMoyenTravail);
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenance-moyen-travails:
+ *   get:
+ *     summary: RÃ©cupÃ¨re toutes les maintenances des moyens de travail
+ *     tags: [Maintenances Moyens de Travail]
+ */
+router.get("/", controller.getMaintenanceMoyenTravails);
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenance-moyen-travails/{id}:
+ *   get:
+ *     summary: RÃ©cupÃ¨re une maintenance de moyen de travail par ID
+ *     tags: [Maintenances Moyens de Travail]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la maintenance
+ *     responses:
+ *       200:
+ *         description: Maintenance rÃ©cupÃ©rÃ©e avec succÃ¨s
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id_maintenance:
+ *                   type: integer
+ *                   example: 1
+ *                 recurrence:
+ *                   type: string
+ *                   example: "1 an"
+ *                 operations:
+ *                   type: string
+ *                   example: "test-1"
+ *                 recommandations:
+ *                   type: string
+ *                   example: "test-1"
+ *                 type_maintenance:
+ *                   type: string
+ *                   example: "test-1"
+ *                 autre_intervenant:
+ *                   type: string
+ *                   nullable: true
+ *                   example: null
+ *                 id_partenaire:
+ *                   type: integer
+ *                   nullable: true
+ *                   example: null
+ *                 created_at:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2025-04-30T16:39:23.040Z"
+ *                 updated_at:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2025-04-30T16:39:23.040Z"
+ *       404:
+ *         description: Maintenance non trouvÃ©e
+ */
+
+router.get("/:id", controller.getMaintenanceMoyenTravailById);
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenance-moyen-travails/{id}:
+ *   put:
+ *     summary: Met Ã  jour une maintenance de moyen de travail par ID
+ *     tags: [Maintenances Moyens de Travail]
+ */
+router.put("/:id", controller.updateMaintenanceMoyenTravail);
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenance-moyen-travails/{id}:
+ *   delete:
+ *     summary: Supprime une maintenance de moyen de travail par ID
+ *     tags: [Maintenances Moyens de Travail]
+ */
+router.delete("/:id", controller.deleteMaintenanceMoyenTravail);
+
+
+module.exports = router;
+
+
+
+================================================
+File: routes/mouvementOutil.route.js
+================================================
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/mouvementOutil.controller");
+
+// router.get("/", controller.getAllOutils);
+// router.get("/exemplaires", controller.getExemplairesOutils);
+// // router.get("/employe/:id_employe", controller.outilsSortisEmploye);
+// router.post("/sortie", controller.enregistrerSortieOutil);
+// router.post("/entree", controller.enregistrerEntreeOutil);
+
+// router.get("/etat/:id_exemplaire/:id_employes", controller.estOutilRetourne); //VÃ©rifier si un produit sorti a Ã©tÃ© dÃ©posÃ© (retournÃ©)
+// router.get("/historique/:id", controller.getHistoriqueOutils); //[ id : id_produit] Avoir lâ€™historique des entrÃ©es et sorties dâ€™outils
+
+// router.get("/historiques", controller.getHistoriqueGlobal); //Avoir lâ€™historique des entrÃ©es et sorties de tout les outils
+
+/**
+ * @swagger
+ * /moyens-generaux/outils:
+ *   get:
+ *     summary: RÃ©cupÃ¨re tous les outils
+ *     tags: [Outils]
+ *     responses:
+ *       200:
+ *         description: Liste des outils avec leurs dÃ©tails
+ *         content:
+ *           application/json:
+ *             example:
+ *               - produits:
+ *                   id_produit: 7
+ *                   code_produit: "outils-1"
+ *                   desi_produit: "outils-1"
+ *                   desc_produit: "test"
+ *                   image_produit: "media\\images\\stock_moyensgeneraux\\produits\\tomate_1745872525356.jpeg"
+ *                   qte_produit: 1
+ *                   emplacement_produit: null
+ *                   caracteristiques_produit: null
+ *                   prix_produit: null
+ *                   id_categorie: null
+ *                   id_type_produit: 5
+ *                   id_modele: null
+ *                   id_famille: null
+ *                   id_marque: null
+ *                   created_at: "2025-04-28T20:20:28.899Z"
+ *                   updated_at: "2025-04-28T20:35:25.365Z"
+ *                 type_produits:
+ *                   id_type_produit: 5
+ *                   libelle: "Outil"
+ *                   created_at: "2025-04-28T17:30:41.395Z"
+ *                   updated_at: "2025-04-28T17:30:41.395Z"
+ */
+
+router.get("/", controller.getAllOutils);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/exemplaires:
+ *   get:
+ *     summary: RÃ©cupÃ¨re les exemplaires d'outils
+ *     tags: [Outils]
+ *     responses:
+ *       200:
+ *         description: Liste des exemplaires d'outils avec leurs informations
+ *         content:
+ *           application/json:
+ *             example:
+ *               - exemplaires:
+ *                   id_exemplaire: 13
+ *                   num_serie: "serie-6"
+ *                   date_entree: "2025-04-23"
+ *                   etat_exemplaire: "Reserve"
+ *                   id_livraison: 3
+ *                   id_produit: 7
+ *                   created_at: "2025-04-28T15:08:37.092Z"
+ *                   updated_at: "2025-04-28T16:19:41.256Z"
+ *                 produits:
+ *                   id_produit: 7
+ *                   code_produit: "outils-1"
+ *                   desi_produit: "outils-1"
+ *                   desc_produit: "test"
+ *                   image_produit: "media\\images\\stock_moyensgeneraux\\produits\\tomate_1745872525356.jpeg"
+ *                   qte_produit: 1
+ *                   emplacement_produit: null
+ *                   caracteristiques_produit: null
+ *                   prix_produit: null
+ *                   id_categorie: null
+ *                   id_type_produit: 5
+ *                   id_modele: null
+ *                   id_famille: null
+ *                   id_marque: null
+ *                   created_at: "2025-04-28T20:20:28.899Z"
+ *                   updated_at: "2025-04-28T20:35:25.365Z"
+ *                 type_produits:
+ *                   id_type_produit: 5
+ *                   libelle: "Outil"
+ *                   created_at: "2025-04-28T17:30:41.395Z"
+ *                   updated_at: "2025-04-28T17:30:41.395Z"
+ */
+
+router.get("/exemplaires", controller.getExemplairesOutils);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/sortie:
+ *   post:
+ *     summary: Enregistre une sortie d'outil
+ *     tags: [Outils]
+ */
+router.post("/sortie", controller.enregistrerSortieOutil);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/entree:
+ *   post:
+ *     summary: Enregistre une entrÃ©e d'outil
+ *     tags: [Outils]
+ */
+router.post("/entree", controller.enregistrerEntreeOutil);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/etat/{id_exemplaire}/{id_employes}:
+ *   get:
+ *     summary: VÃ©rifie si un outil sorti a Ã©tÃ© retournÃ©
+ *     tags: [Outils]
+ *     parameters:
+ *       - name: id_exemplaire
+ *         in: path
+ *         required: true
+ *         description: L'ID de l'exemplaire de l'outil
+ *         schema:
+ *           type: integer
+ *       - name: id_employes
+ *         in: path
+ *         required: true
+ *         description: L'ID de l'employÃ©
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Indique si l'outil a Ã©tÃ© retournÃ©
+ *         content:
+ *           application/json:
+ *             example:
+ *               retourne: true
+ */
+
+router.get("/etat/:id_exemplaire/:id_employes", controller.estOutilRetourne);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/historique/{id}:
+ *   get:
+ *     summary: RÃ©cupÃ¨re l'historique des entrÃ©es et sorties d'un outil spÃ©cifique
+ *     tags: [Outils]
+ */
+router.get("/historique/:id", controller.getHistoriqueOutils);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/historiques:
+ *   get:
+ *     summary: RÃ©cupÃ¨re l'historique global des entrÃ©es et sorties de tous les outils
+ *     tags: [Outils]
+ *     responses:
+ *       200:
+ *         description: L'historique des entrÃ©es et sorties de tous les outils
+ *         content:
+ *           application/json:
+ *             examples:
+ *               ExempleHistorique:
+ *                 value:
+ *                   - id_exemplaire: "13"
+ *                     historique:
+ *                       - id_exemplaire: 13
+ *                         type: "sortie"
+ *                         date: "2025-04-29T12:03:38.157Z"
+ *                         employe: 1
+ *                         etat: "bon"
+ *                         commentaire: "test"
+ *                         site: "test"
+ *                         usage: "test"
+ *                       - id_exemplaire: 13
+ *                         type: "entrÃ©e"
+ *                         date: "2025-04-29T12:07:36.981Z"
+ *                         employe: 1
+ *                         etat: "mauvais"
+ *                         commentaire: "test retour"
+ */
+
+router.get("/historiques", controller.getHistoriqueGlobal);
+
+module.exports = router;
+
+
+
+================================================
+File: routes/moyens_generaux.routes.js
+================================================
+const express = require("express");
+const router = express.Router();
+
+// Import des sous-routes
+const outilsRoutes = require("./mouvementOutil.route");
+const moyenstravailRoutes = require("./moyensdeTravail.route"); //moyens de travail
+const maintenanceRoutes = require("./maintenance.route"); 
+const maintenanceMoyenTravailRoutes = require("./maintenance.route"); 
+
+// Montage des routes
+
+// /**
+//  * @swagger
+//  * /moyens-generaux/outils:
+//  *   description: Routes liÃ©es aux outils
+//  *   get:
+//  *     summary: AccÃ¨de aux outils
+//  *     tags: [Outils]
+//  */
+router.use("/outils", outilsRoutes);
+
+// /**
+//  * @swagger
+//  * /moyens-generaux/moyens-travail:
+//  *   description: Routes liÃ©es aux moyens de travail
+//  *   get:
+//  *     summary: AccÃ¨de aux moyens de travail
+//  *     tags: [Moyens de Travail]
+//  */
+router.use("/moyens-travail", moyenstravailRoutes);
+
+// /**
+//  * @swagger
+//  * /moyens-generaux/maintenances:
+//  *   description: Routes liÃ©es aux maintenances
+//  *   get:
+//  *     summary: AccÃ¨de aux maintenances
+//  *     tags: [Maintenances]
+//  */
+router.use("/maintenances", maintenanceRoutes);
+
+
+// /**
+//  * @swagger
+//  * /moyens-generaux/moyen-travails:
+//  *   description: Routes liÃ©es aux moyens de travail
+//  *   get:
+//  *     summary: AccÃ¨de aux maintenances
+//  *     tags: [moyen-travails]
+//  */
+router.use("/moyen-travails", maintenanceMoyenTravailRoutes);
+
+module.exports = router;
+
+
+
+================================================
+File: routes/moyensdeTravail.route.js
+================================================
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/moyensdeTravail.controller");
+
+// CRUD Routes
+/**
+ * @swagger
+ * /moyens-generaux/moyens-travails:
+ *   post:
+ *     summary: CrÃ©e un nouveau moyen de travail
+ *     tags: [Moyens de Travail]
+ */
+router.post("/", controller.createMoyensTravail);
+
+/**
+ * @swagger
+ * /moyens-generaux/moyens-travails:
+ *   get:
+ *     summary: RÃ©cupÃ¨re tous les moyens de travail
+ *     tags: [Moyens de Travail]
+ */
+router.get("/", controller.getMoyensTravails);
+
+/**
+ * @swagger
+ * /moyens-generaux/moyens-travails/{id}:
+ *   get:
+ *     summary: RÃ©cupÃ¨re un moyen de travail par ID
+ *     tags: [Moyens de Travail]
+ */
+router.get("/:id", controller.getMoyensTravailById);
+
+/**
+ * @swagger
+ * /moyens-generaux/moyens-travails/{id}:
+ *   put:
+ *     summary: Met Ã  jour un moyen de travail par ID
+ *     tags: [Moyens de Travail]
+ */
+router.put("/:id", controller.updateMoyensTravail);
+
+/**
+ * @swagger
+ * /moyens-generaux/moyens-travails/{id}:
+ *   delete:
+ *     summary: Supprime un moyen de travail par ID
+ *     tags: [Moyens de Travail]
+ */
+router.delete("/:id", controller.deleteMoyensTravail);
+
+module.exports = router;
+
+
+
+================================================
+File: services/maintenance.service.js
+================================================
+const { eq } = require("drizzle-orm");
+const {db} = require("../../../core/database/config");
+const { maintenances } = require("../../../core/database/models");
+
+// CRUD complet avec Drizzle
+const createMaintenance = async (data) => {
+  const [result] = await db.insert(maintenances).values(data).returning();
+  return result;
+};
+
+const getMaintenances = async () => {
+  return await db.select().from(maintenances);
+};
+
+const getMaintenanceById = async (id) => {
+  const [result] = await db.select().from(maintenances).where(eq(maintenances.id_maintenance, id));
+  return result;
+};
+
+const updateMaintenance = async (id, data) => {
+  const [result] = await db
+    .update(maintenances)
+    .set({
+      ...data,
+      updated_at: new Date(),
+    })
+    .where(eq(maintenances.id_maintenance, id))
+    .returning();
+  return result;
+};
+
+const deleteMaintenance = async (id) => {
+  const [result] = await db
+    .delete(maintenances)
+    .where(eq(maintenances.id_maintenance, id))
+    .returning();
+  return result;
+};
+
+module.exports = {
+  createMaintenance,
+  getMaintenances,
+  getMaintenanceById,
+  updateMaintenance,
+  deleteMaintenance,
+};
+
+
+
+================================================
+File: services/maintenanceMoyenTravail.service.js
+================================================
+// Table de liaison entre maintenant et  moyens de travail
+// maintenanceMoyenTravail.service.js
+const { eq, and } = require("drizzle-orm");
+const { db } = require("../../../core/database/config");
+const { maintenance_moyens_travail, maintenances, moyens_de_travail } = require("../../../core/database/models");
+
+// CREATE
+const createMaintenanceMoyenTravail = async (data) => {
+  const [result] = await db.insert(maintenance_moyens_travail).values(data).returning();
+  return result;
+};
+
+// READ ALL
+const getMaintenanceMoyenTravails = async () => {
+  return await db.select({
+    id_moyens_de_travail: maintenance_moyens_travail.id_moyens_de_travail,
+    id_maintenance: maintenance_moyens_travail.id_maintenance,
+    date_maintenance: maintenance_moyens_travail.date_maintenance,
+    moyenTravail: {
+      id_moyens_de_travail: moyens_de_travail.id_moyens_de_travail,
+      denomination: moyens_de_travail.denomination,
+    },
+    maintenance: {
+      id_maintenance: maintenances.id_maintenance,
+      recurrence: maintenances.recurrence,
+    },
+  })
+    .from(maintenance_moyens_travail)
+    .leftJoin(moyens_de_travail, eq(maintenance_moyens_travail.id_moyens_de_travail, moyens_de_travail.id_moyens_de_travail))
+    .leftJoin(maintenances, eq(maintenance_moyens_travail.id_maintenance, maintenances.id_maintenance));
+};
+
+// READ ONE
+const getMaintenanceMoyenTravailById = async (id_moyens_de_travail, id_maintenance) => {
+  const [result] = await db.select({
+    id_moyens_de_travail: maintenance_moyens_travail.id_moyens_de_travail,
+    id_maintenance: maintenance_moyens_travail.id_maintenance,
+    date_maintenance: maintenance_moyens_travail.date_maintenance,
+    moyenTravail: {
+      id_moyens_de_travail: moyens_de_travail.id_moyens_de_travail,
+      denomination: moyens_de_travail.denomination,
+    },
+    maintenance: {
+      id_maintenance: maintenances.id_maintenance,
+      recurrence: maintenances.recurrence,
+    },
+  })
+    .from(maintenance_moyens_travail)
+    .leftJoin(moyens_de_travail, eq(maintenance_moyens_travail.id_moyens_de_travail, moyens_de_travail.id_moyens_de_travail))
+    .leftJoin(maintenances, eq(maintenance_moyens_travail.id_maintenance, maintenances.id_maintenance))
+    .where(and(eq(maintenance_moyens_travail.id_moyens_de_travail, id_moyens_de_travail), eq(maintenance_moyens_travail.id_maintenance, id_maintenance)));
+  return result;
+};
+
+// UPDATE
+const updateMaintenanceMoyenTravail = async (id_moyens_de_travail, id_maintenance, data) => {
+  const [result] = await db
+    .update(maintenance_moyens_travail)
+    .set({
+      ...data,
+      updated_at: new Date(),
+    })
+    .where(and(eq(maintenance_moyens_travail.id_moyens_de_travail, id_moyens_de_travail), eq(maintenance_moyens_travail.id_maintenance, id_maintenance)))
+    .returning();
+  return result;
+};
+
+// DELETE
+const deleteMaintenanceMoyenTravail = async (id_moyens_de_travail, id_maintenance) => {
+  const [result] = await db
+    .delete(maintenance_moyens_travail)
+    .where(and(eq(maintenance_moyens_travail.id_moyens_de_travail, id_moyens_de_travail), eq(maintenance_moyens_travail.id_maintenance, id_maintenance)))
+    .returning();
+  return result;
+};
+
+module.exports = {
+  createMaintenanceMoyenTravail,
+  getMaintenanceMoyenTravails,
+  getMaintenanceMoyenTravailById,
+  updateMaintenanceMoyenTravail,
+  deleteMaintenanceMoyenTravail,
+};
+
+
+
+================================================
+File: services/mouvementOutil.service.js
+================================================
+const { eq, and, or, like, sql, asc, desc, inArray } = require("drizzle-orm");
+const { db } = require("../../../core/database/config");
+const {
+  exemplaires,
+  produits,
+  type_produits,
+  employe_sortir_exemplaires,
+  employe_entrer_exemplaires,
+} = require("../../../core/database/models");
+
+const LIBELLE_OUTIL = "Outil";
+
+const getAllOutils = async () => {
+  return await db
+    .select()
+    .from(produits)
+    .innerJoin(
+      type_produits,
+      eq(produits.id_type_produit, type_produits.id_type_produit)
+    )
+    .where(eq(type_produits.libelle, LIBELLE_OUTIL));
+};
+
+const getExemplairesOutils = async () => {
+  return await db
+    .select()
+    .from(exemplaires)
+    .innerJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
+    .innerJoin(
+      type_produits,
+      eq(produits.id_type_produit, type_produits.id_type_produit)
+    )
+    .where(eq(type_produits.libelle, LIBELLE_OUTIL));
+};
+
+const enregistrerSortieOutil = async (data) => {
+  await db.insert(employe_sortir_exemplaires).values(data);
+};
+
+const enregistrerEntreeOutil = async (data) => {
+  await db.insert(employe_entrer_exemplaires).values(data);
+};
+
+// VÃ©rifie si un exemplaire sorti a bien Ã©tÃ© retournÃ© par l'employÃ©
+async function estOutilRetourne(id_exemplaire, id_employes) {
+  const derniereSortie = await db
+    .select({ created_at: employe_sortir_exemplaires.created_at })
+    .from(employe_sortir_exemplaires)
+    .where(
+      and(
+        eq(employe_sortir_exemplaires.id_exemplaire, id_exemplaire),
+        eq(employe_sortir_exemplaires.id_employes, id_employes)
+      )
+    )
+    .orderBy(desc(employe_sortir_exemplaires.created_at))
+    .limit(1);
+
+  if (derniereSortie.length === 0) {
+    return false; // Jamais sorti
+  }
+
+  const derniereEntree = await db
+    .select({ created_at: employe_entrer_exemplaires.created_at })
+    .from(employe_entrer_exemplaires)
+    .where(
+      and(
+        eq(employe_entrer_exemplaires.id_exemplaire, id_exemplaire),
+        eq(employe_entrer_exemplaires.id_employes, id_employes)
+      )
+    )
+    .orderBy(desc(employe_entrer_exemplaires.created_at))
+    .limit(1);
+
+  if (derniereEntree.length === 0) {
+    return false; // Sorti mais jamais retournÃ©
+  }
+
+  // Comparaison : si l'entrÃ©e est postÃ©rieure Ã  la sortie, alors c'est retournÃ©
+  return (
+    new Date(derniereEntree[0].created_at) >
+    new Date(derniereSortie[0].created_at)
+  );
+}
+
+// Renvoie l'historique des sorties et retours pour un outil donnÃ© (via son libellÃ©)
+async function getHistoriqueOutils(id_produit) {
+  if (!id_produit) {
+    throw new Error("ID requis");
+  }
+
+  const exemplairesResult = await db
+    .select({ id: exemplaires.id_exemplaire })
+    .from(exemplaires)
+    .where(eq(exemplaires.id_produit, id_produit));
+
+  if (exemplairesResult.length === 0) {
+    return { sorties: [], entrees: [] };
+  }
+
+  const ids_exemplaires = exemplairesResult.map((e) => e.id);
+
+  const sorties = await db
+    .select({
+      id_exemplaire: employe_sortir_exemplaires.id_exemplaire,
+      id_employes: employe_sortir_exemplaires.id_employes,
+      etat_avant: employe_sortir_exemplaires.etat_avant,
+      date_de_sortie: employe_sortir_exemplaires.date_de_sortie,
+      site_intervention: employe_sortir_exemplaires.site_intervention,
+      but_usage: employe_sortir_exemplaires.but_usage,
+      commentaire: employe_sortir_exemplaires.commentaire,
+      created_at: employe_sortir_exemplaires.created_at,
+    })
+    .from(employe_sortir_exemplaires)
+    .where(inArray(employe_sortir_exemplaires.id_exemplaire, ids_exemplaires))
+    .orderBy(desc(employe_sortir_exemplaires.created_at));
+
+  const entrees = await db
+    .select({
+      id_exemplaire: employe_entrer_exemplaires.id_exemplaire,
+      id_employes: employe_entrer_exemplaires.id_employes,
+      etat_apres: employe_entrer_exemplaires.etat_apres,
+      date_de_retour: employe_entrer_exemplaires.date_de_retour,
+      commentaire: employe_entrer_exemplaires.commentaire,
+      created_at: employe_entrer_exemplaires.created_at,
+    })
+    .from(employe_entrer_exemplaires)
+    .where(inArray(employe_entrer_exemplaires.id_exemplaire, ids_exemplaires))
+    .orderBy(desc(employe_entrer_exemplaires.created_at));
+
+  return { sorties, entrees };
+}
+
+/**
+ * RÃ©cupÃ¨re l'historique global des entrÃ©es et sorties de tous les exemplaires.
+ * Les actions sont regroupÃ©es par `id_exemplaire`, puis triÃ©es par date.
+ * @param {number} page - NumÃ©ro de page.
+ * @param {number} limit - Nombre d'Ã©lÃ©ments par page.
+ * @returns {Promise<Array>} Historique structurÃ© par exemplaire.
+ */
+async function getHistoriqueGlobal(page = 1, limit = 10) {
+  const offset = (page - 1) * limit;
+
+  // On rÃ©cupÃ¨re les sorties
+  const sorties = await db
+    .select({
+      id_exemplaire: employe_sortir_exemplaires.id_exemplaire,
+      type: sql`'sortie'`,
+      date: employe_sortir_exemplaires.created_at,
+      employe: employe_sortir_exemplaires.id_employes,
+      etat: employe_sortir_exemplaires.etat_avant,
+      commentaire: employe_sortir_exemplaires.commentaire,
+      site: employe_sortir_exemplaires.site_intervention,
+      usage: employe_sortir_exemplaires.but_usage,
+    })
+    .from(employe_sortir_exemplaires);
+
+  // On rÃ©cupÃ¨re les entrÃ©es
+  const entrees = await db
+    .select({
+      id_exemplaire: employe_entrer_exemplaires.id_exemplaire,
+      type: sql`'entrÃ©e'`,
+      date: employe_entrer_exemplaires.created_at,
+      employe: employe_entrer_exemplaires.id_employes,
+      etat: employe_entrer_exemplaires.etat_apres,
+      commentaire: employe_entrer_exemplaires.commentaire,
+    })
+    .from(employe_entrer_exemplaires);
+
+  // On fusionne les deux
+  const tous = [...sorties, ...entrees];
+
+  // On regroupe par id_exemplaire
+  const regroupÃ© = tous.reduce((acc, event) => {
+    if (!acc[event.id_exemplaire]) {
+      acc[event.id_exemplaire] = [];
+    }
+    acc[event.id_exemplaire].push(event);
+    return acc;
+  }, {});
+
+  // On convertit l'objet en tableau formatÃ© et on trie chaque historique
+  const resultat = Object.entries(regroupÃ©)
+    .map(([id_exemplaire, historique]) => ({
+      id_exemplaire,
+      historique: historique.sort(
+        (a, b) => new Date(a.date) - new Date(b.date)
+      ),
+    }))
+    .sort((a, b) =>
+      b.historique.at(-1)?.date?.localeCompare(a.historique.at(-1)?.date)
+    ); // Tri par derniÃ¨re activitÃ©
+
+  // Pagination sur le tableau final
+  const paginÃ© = resultat.slice(offset, offset + limit);
+  return paginÃ©;
+}
+
+module.exports = {
+  getAllOutils,
+  getExemplairesOutils,
+  enregistrerSortieOutil,
+  enregistrerEntreeOutil,
+  estOutilRetourne,
+  getHistoriqueOutils,
+  getHistoriqueGlobal,
+};
+
+
+
+================================================
+File: services/moyensdeTravail.service.js
+================================================
+const { eq } = require("drizzle-orm");
+const {db} = require("../../../core/database/config");
+const { moyens_de_travail } = require("../../../core/database/models");
+
+// CRUD complet avec Drizzle
+const createMoyensTravail = async (data) => {
+  const [result] = await db.insert(moyens_de_travail).values(data).returning();
+  return result;
+};
+
+const getMoyensTravails = async () => {
+  return await db.select().from(moyens_de_travail);
+};
+
+const getMoyensTravailById = async (id) => {
+  const [result] = await db.select().from(moyens_de_travail).where(eq(moyens_de_travail.id_moyens_de_travail, id));
+  return result;
+};
+
+const updateMoyensTravail = async (id, data) => {
+  const [result] = await db
+    .update(moyens_de_travail)
+    .set({
+      ...data,
+      updated_at: new Date(),
+    })
+    .where(eq(moyens_de_travail.id_moyens_de_travail, id))
+    .returning();
+  return result;
+};
+
+const deleteMoyensTravail = async (id) => {
+  const [result] = await db
+    .delete(moyens_de_travail)
+    .where(eq(moyens_de_travail.id_moyens_de_travail, id))
+    .returning();
+  return result;
+};
+
+module.exports = {
+  createMoyensTravail,
+  getMoyensTravails,
+  getMoyensTravailById,
+  updateMoyensTravail,
+  deleteMoyensTravail,
+};
+
+

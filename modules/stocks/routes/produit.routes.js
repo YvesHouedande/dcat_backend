@@ -12,7 +12,7 @@ const controller = require("../controllers/produit.controller");
 
 /**
  * @swagger
- * /produits:
+ * /stocks/produits:
  *   post:
  *     summary: Crée un nouveau produit avec plusieurs images
  *     tags: [Produits]
@@ -24,47 +24,101 @@ const controller = require("../controllers/produit.controller");
  *         multipart/form-data:
  *           schema:
  *             type: object
+ *             required:
+ *               - code_produit
+ *               - desi_produit
+ *               - prix_produit
+ *               - id_categorie
+ *               - id_type_produit
  *             properties:
  *               code_produit:
+ *                 description: "Code unique du produit (ex: AV001)"
  *                 type: string
- *                 example: P123
+ *                 example: "AV001"
+ *
  *               desi_produit:
+ *                 description: "Désignation du produit (ex: Téléviseur 4K Sony Bravia)"
  *                 type: string
- *                 example: Tondeuse thermique
+ *                 example: "Téléviseur 4K Sony Bravia"
+ *
  *               desc_produit:
+ *                 description: "Description détaillée du produit"
  *                 type: string
- *                 example: Puissante tondeuse à essence 6CV
+ *                 example: "Téléviseur 4K HDR 55 pouces avec Android TV"
+ *
+ *               emplacement_produit:
+ *                 description: "Emplacement en magasin (ex: RAYON-A1)"
+ *                 type: string
+ *                 example: "RAYON-A1"
+ *
+ *               caracteristique_produit:
+ *                 description: "Caractéristiques techniques"
+ *                 type: string
+ *                 example: "Résolution 3840x2160, HDMI x4, Dolby Vision"
+ *
+ *               prix_produit:
+ *                 description: "Prix du produit (nombre décimal, ex: 800.00)"
+ *                 type: number
+ *                 format: float
+ *                 example: 80000
+ *
  *               id_categorie:
- *                 type: integer
- *                 example: 1
- *               id_type_produit:
+ *                 description: "ID de la catégorie (nombre entier, ex: 2)"
  *                 type: integer
  *                 example: 2
+ *
+ *               id_type_produit:
+ *                 description: "ID du type de produit (nombre entier, ex: 1)"
+ *                 type: integer
+ *                 example: 1
+ *
  *               id_modele:
+ *                 description: "ID du modèle (nombre entier, ex: 2)"
  *                 type: integer
- *                 example: 3
+ *                 example: 2
+ *
  *               id_famille:
+ *                 description: "ID de la famille (nombre entier, ex: 1)"
  *                 type: integer
- *                 example: 4
+ *                 example: 1
+ *
  *               id_marque:
+ *                 description: "ID de la marque (nombre entier, ex: 2)"
  *                 type: integer
- *                 example: 5
+ *                 example: 2
+ *
  *               images:
+ *                 description: "Fichiers images (formats acceptés: jpeg, png, gif)"
  *                 type: array
  *                 items:
  *                   type: string
  *                   format: binary
+ *
  *               imagesMeta:
+ *                 description: |
+ *                   Métadonnées des images au format JSON :
+ *                   [
+ *                     {"libelle": "Vue Avant", "numero": 1},
+ *                     {"libelle": "Vue Arrière", "numero": 2}
+ *                   ]
  *                 type: string
- *                 description: JSON contenant les libellés et numéros des images (même ordre que les fichiers)
- *                 example: '[{"libelle": "Face avant", "numero": 1}, {"libelle": "Vue arrière", "numero": 2}]'
+ *                 example: '[{"libelle": "Vue Avant", "numero": 1}, {"libelle": "Vue Arrière", "numero": 2}]'
+ *
  *     responses:
  *       201:
  *         description: Produit créé avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Produit'
  *       400:
- *         description: Erreur de validation ou d'upload
+ *         description: |
+ *           Erreurs possibles :
+ *           - Champs obligatoires manquants
+ *           - Format de fichier non supporté
+ *           - Données JSON invalides
  *       500:
- *         description: Erreur interne du serveur
+ *         description: Erreur serveur lors du traitement
  */
 
 router.post("/", controller.createProduit);
@@ -120,7 +174,7 @@ router.post("/", controller.createProduit);
  *         name: sortBy
  *         schema:
  *           type: string
- *         description: Champ à trier 
+ *         description: Champ à trier
  *       - in: query
  *         name: sortOrder
  *         schema:
@@ -189,7 +243,6 @@ router.post("/", controller.createProduit);
  *                 totalPages: 3
  */
 
-
 router.get("/", controller.getProduits);
 
 /**
@@ -256,8 +309,79 @@ router.get("/:id", controller.getProduitById);
  * @swagger
  * /stocks/produits/type/{idType}:
  *   get:
- *     summary: Récupère tous les produits par type (outils/équipements)
+ *     summary: Récupère les produits par type (équipements/outils)
+ *     description: Retourne une liste paginée de produits filtrés par type avec leurs détails complets
  *     tags: [Produits]
+ *     parameters:
+ *       - in: path
+ *         name: idType
+ *         required: true
+ *         description: ID du type de produit (1=équipement, 2=outil)
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: page
+ *         description: Numéro de page pour la pagination
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: limit
+ *         description: Nombre d'éléments par page
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *     responses:
+ *       200:
+ *         description: Liste des produits avec pagination
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       produit:
+ *                         $ref: '#/components/schemas/Produit'
+ *                       category:
+ *                         $ref: '#/components/schemas/Categorie'
+ *                       type:
+ *                         $ref: '#/components/schemas/TypeProduit'
+ *                       modele:
+ *                         $ref: '#/components/schemas/Modele'
+ *                       famille:
+ *                         $ref: '#/components/schemas/Famille'
+ *                       marque:
+ *                         $ref: '#/components/schemas/Marque'
+ *                       images:
+ *                         type: array
+ *                         items:
+ *                           $ref: '#/components/schemas/Image'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                       example: 1
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 1
+ *       400:
+ *         description: ID type invalide
+ *       404:
+ *         description: Aucun produit trouvé pour ce type
+ *       500:
+ *         description: Erreur serveur
  */
 router.get("/type/:idType", controller.getProduitsByTypes);
 
@@ -321,6 +445,52 @@ router.delete("/:id", controller.deleteProduit);
  *               details: "Erreur système"
  */
 
-router.delete("/image/:id", controller.deleteImage);
+router.delete("/image/:imageId", controller.deleteImage);
 
+/**
+ * @swagger
+ * /stocks/produits/images/add/:id:
+ *   post:
+ *     summary: Upload et ajout d'images pour un produit
+ *     tags: [Produits]
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du produit
+ *       - in: formData
+ *         name: images
+ *         type: file
+ *         description: Fichiers image du produit
+ *         required: true
+ *         allowMultiple: true
+ *       - in: formData
+ *         name: libelles
+ *         type: string
+ *         description: Libellé de l'image
+ *         required: false
+ *       - in: formData
+ *         name: numeros
+ *         type: integer
+ *         description: Numéro de l'image (pour l'ordre)
+ *         required: false
+ *     responses:
+ *       201:
+ *         description: Images enregistrées avec succès
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Images enregistrées
+ *               images:
+ *                 - id_image: 1
+ *                   libelle_image: "Vue avant"
+ *                   numero_image: 1
+ *                   lien_image: "media/images/stock_moyensgeneraux/produits/image1.jpeg"
+ */
+
+router.post("/images/add/:id", controller.addProduitImages);
 module.exports = router;

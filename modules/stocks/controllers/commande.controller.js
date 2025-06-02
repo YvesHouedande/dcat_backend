@@ -66,7 +66,11 @@ const updateCommande = async (req, res) => {
 
 const deleteCommande = async (req, res) => {
   try {
-    const result = await commandeService.deleteCommande(Number(req.params.id));
+    // const {id,type_sortie}=req.params;
+    const result = await commandeService.deleteCommande(
+      Number(req.params.id),
+      req.params.type_sortie
+    );
     res.status(200).json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });

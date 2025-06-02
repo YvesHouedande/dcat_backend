@@ -121,9 +121,9 @@ router.use("/commandes", commandeRoutes);
 // /**
 //  * @swagger
 //  * /stocks/sorties-exemplaires:
-//  *   description: Routes liées aux sorties d'exemplaires
+//  *   description: Routes liées aux sorties d'exemplaires (Reservé)
 //  *   get:
-//  *     summary: Accède aux sorties d'exemplaires
+//  *     summary: Accède aux sorties d'exemplaires 
 //  *     tags: [Sorties Exemplaires]
 //  */
 router.use("/sorties-exemplaires", sortiesExemplairesRoutes);

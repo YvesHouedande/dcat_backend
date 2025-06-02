@@ -128,6 +128,7 @@ const commandes = pgTable("commandes", {
   lieu_de_livraison: varchar("lieu_de_livraison", { length: 50 }),
   mode_de_paiement: varchar("mode_de_paiement", { length: 50 }),
   id_client: integer("id_client").references(() => clients_en_ligne.id_client),
+  id_partenaire: integer("id_partenaire").references(() => partenaires.id_partenaire),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -147,8 +148,6 @@ const categories = pgTable("categories", {
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
-
-
 
 // Projet
 const projets = pgTable("projets", {
@@ -247,11 +246,10 @@ const affiches = pgTable("affiches", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-
 // Produit
 const produits = pgTable("produits", {
   id_produit: serial("id_produit").primaryKey(), // Clé primaire simple
-  code_produit: varchar("code_produit", { length: 100 }).unique(),
+  code_produit: text("code_produit").unique(),
   desi_produit: varchar("desi_produit", { length: 50 }),
   desc_produit: text("desc_produit"),
   qte_produit: integer("qte_produit").default(0),
@@ -274,7 +272,6 @@ const produits = pgTable("produits", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-
 // panier
 const paniers = pgTable("paniers", {
   id_panier: serial("id_panier").primaryKey(),
@@ -282,7 +279,6 @@ const paniers = pgTable("paniers", {
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
-
 
 //images
 const images = pgTable("images", {
@@ -440,7 +436,7 @@ const documents = pgTable("documents", {
 // Exemplaire_produit
 const exemplaires = pgTable("exemplaires", {
   id_exemplaire: serial("id_exemplaire").primaryKey(),
-  num_serie: varchar("num_serie", { length: 50 }),
+  num_serie: text("num_serie").unique(),
   date_entree: date("date_entree"),
   etat_exemplaire: varchar("etat_exemplaire", { length: 75 }).default(
     "Disponible"
@@ -456,7 +452,7 @@ const exemplaires = pgTable("exemplaires", {
 // Sortie_exemplaire
 const sortie_exemplaires = pgTable("sortie_exemplaires", {
   id_sortie_exemplaire: serial("id_sortie_exemplaire").primaryKey(),
-  type_sortie: varchar("type_sortie", { length: 50 }),
+  type_sortie: varchar("type_sortie", { length: 50 }), // "vente_directe", "vente_en_ligne", "projet"
   reference_id: integer("reference_id"),
   date_sortie: date("date_sortie"),
   id_exemplaire: integer("id_exemplaire").references(
@@ -499,23 +495,6 @@ const intervention_employes = pgTable(
   },
   (table) => ({
     pk: primaryKey({ columns: [table.id_employes, table.id_intervention] }),
-  })
-);
-
-const partenaire_commandes = pgTable(
-  "partenaire_commandes",
-  {
-    id_partenaire: integer("id_partenaire")
-      .notNull()
-      .references(() => partenaires.id_partenaire),
-    id_commande: integer("id_commande")
-      .notNull()
-      .references(() => commandes.id_commande),
-    created_at: timestamp("created_at").defaultNow().notNull(),
-    updated_at: timestamp("updated_at").defaultNow().notNull(),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.id_partenaire, table.id_commande] }),
   })
 );
 
@@ -720,7 +699,6 @@ module.exports = {
   sortie_exemplaires,
   partenaire_projets,
   intervention_employes,
-  partenaire_commandes,
   employe_entrer_exemplaires,
   employe_prestations,
   intervention_taches,
@@ -729,5 +707,5 @@ module.exports = {
   maintenance_moyens_travail,
   commande_produits,
   panier_produits,
-  notifications
+  notifications,
 };
