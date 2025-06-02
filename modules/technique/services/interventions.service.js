@@ -1,13 +1,104 @@
 const { db } = require('../../../core/database/config');
 const { interventions, intervention_employes, employes, intervention_taches, documents } = require("../../../core/database/models");
 
-const { eq, and } = require("drizzle-orm");
+const { eq, and, desc, asc, sql } = require("drizzle-orm");
 const fs = require('fs').promises;  // Ajoutez cette importation
 const path = require('path');       // Ajoutez cette importation
 
 const interventionsService = {
-  getAllInterventions: async () => {
-    return await db.select().from(interventions);
+  getAllInterventions: async (options = {}) => {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "created_at",
+      sortOrder = "desc",
+      search = "",
+      type,
+      statut,
+      lieu,
+      dateDebut,
+      dateFin,
+      typeIntervention,
+      modeIntervention
+    } = options;
+
+    const offset = (page - 1) * limit;
+
+    // Base query avec limites de pagination
+    let query = db
+      .select()
+      .from(interventions)
+      .limit(limit)
+      .offset(offset);
+
+    // Construction des filtres dynamiques
+    const filters = [];
+
+    if (search) {
+      filters.push(
+        sql`LOWER(${interventions.rapport_intervention}) LIKE LOWER(${"%" + search + "%"}) OR 
+            LOWER(${interventions.probleme_signale}) LIKE LOWER(${"%" + search + "%"})`
+      );
+    }
+
+    if (type) {
+      filters.push(sql`LOWER(${interventions.type}) = LOWER(${type})`);
+    }
+
+    if (statut) {
+      filters.push(sql`LOWER(${interventions.statut_intervention}) = LOWER(${statut})`);
+    }
+
+    if (lieu) {
+      filters.push(sql`LOWER(${interventions.lieu}) = LOWER(${lieu})`);
+    }
+
+    if (typeIntervention) {
+      filters.push(sql`LOWER(${interventions.type_intervention}) = LOWER(${typeIntervention})`);
+    }
+
+    if (modeIntervention) {
+      filters.push(sql`LOWER(${interventions.mode_intervention}) = LOWER(${modeIntervention})`);
+    }
+
+    if (dateDebut) {
+      filters.push(sql`${interventions.date_intervention} >= ${new Date(dateDebut)}`);
+    }
+
+    if (dateFin) {
+      filters.push(sql`${interventions.date_intervention} <= ${new Date(dateFin)}`);
+    }
+
+    if (filters.length) {
+      query = query.where(and(...filters));
+    }
+
+    // Tri dynamique
+    const sortField = interventions[sortBy] || interventions.created_at;
+    query = query.orderBy(sortOrder === "asc" ? asc(sortField) : desc(sortField));
+
+    // Compte total (avec les mêmes filtres)
+    let countQuery = db
+      .select({ count: sql`count(*)` })
+      .from(interventions);
+
+    if (filters.length) {
+      countQuery = countQuery.where(and(...filters));
+    }
+
+    const [results, totalResult] = await Promise.all([query, countQuery]);
+
+    const total = Number(totalResult[0].count);
+
+    return {
+      data: results,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   },
 
   getInterventionById: async (id) => {

@@ -10,6 +10,29 @@ const path = require('path');      // Importe le module path pour manipuler les 
 const fs = require('fs');          // Importe le module fs (file system) pour manipuler les fichiers
 
 /**
+ * Nettoie un nom de fichier en retirant les caractères spéciaux et les espaces
+ * et en limitant la longueur à 200 caractères
+ * @param {string} filename - Le nom du fichier à nettoyer
+ * @returns {string} - Le nom du fichier nettoyé
+ */
+function cleanFileName(filename) {
+  // Extraction du nom et de l'extension
+  const { name, ext } = path.parse(filename);
+  
+  // Nettoyer le nom en supprimant les caractères spéciaux et en remplaçant les espaces par des underscores
+  let cleanName = name.replace(/[^\w\s.-]/g, '').replace(/\s+/g, '_');
+  
+  // Limiter la longueur à 200 caractères maximum (en tenant compte de l'extension)
+  const maxLength = 200 - ext.length;
+  if (cleanName.length > maxLength) {
+    cleanName = cleanName.substring(0, maxLength);
+  }
+  
+  // Reconstituer le nom complet avec l'extension
+  return cleanName + ext;
+}
+
+/**
  * Configuration du stockage des fichiers téléchargés
  * Définit comment et où les fichiers seront enregistrés
  */
@@ -43,8 +66,11 @@ const storage = multer.diskStorage({
     // Ajoute un timestamp au nom du fichier pour éviter les collisions
     const timestamp = Date.now();
     
-    // Extrait le nom et l'extension du fichier original
-    const originalName = path.parse(file.originalname);
+    // Nettoie le nom du fichier original
+    const cleanedName = cleanFileName(file.originalname);
+    
+    // Extrait le nom et l'extension du fichier nettoyé
+    const originalName = path.parse(cleanedName);
     
     // Crée un nouveau nom avec le format: nom-original_timestamp.extension
     const newFilename = `${originalName.name}_${timestamp}${originalName.ext}`;
@@ -55,54 +81,12 @@ const storage = multer.diskStorage({
 });
 
 /**
- * Fonction de filtrage des types de fichiers autorisés
- * @param {Object} req - La requête HTTP
- * @param {Object} file - Informations sur le fichier téléchargé
- * @param {Function} cb - Fonction de callback pour accepter ou refuser le fichier
- */
-const fileFilter = (req, file, cb) => {
-  // Liste des types MIME autorisés pour l'upload
-  const allowedMimeTypes = [
-    // Images
-    'image/jpeg', 'image/png', 'image/gif',
-    
-    // Documents PDF
-    'application/pdf',
-    
-    // Documents Microsoft Office
-    'application/msword',  // Word (.doc)
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // Word (.docx)
-    'application/vnd.ms-excel', // Excel (.xls)
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // Excel (.xlsx)
-    'application/vnd.ms-powerpoint', // PowerPoint (.ppt)
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation', // PowerPoint (.pptx)
-    
-    // Fichiers texte
-    'text/plain',
-    
-    // Archives
-    'application/zip',
-    'application/x-rar-compressed'
-  ];
-  
-  // Vérifie si le type MIME du fichier est autorisé
-  if (allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true); // Accepte le fichier
-  } else {
-    // Rejette le fichier avec un message d'erreur
-    cb(new Error(`Type de fichier non autorisé: ${file.mimetype}`), false);
-  }
-};
-
-/**
  * Configuration complète de Multer avec les options définies
  * - storage: définit comment et où stocker les fichiers
- * - fileFilter: définit quels types de fichiers sont acceptés
  * - limits: définit les limites pour l'upload (taille, nombre de fichiers, etc.)
  */
 const upload = multer({ 
   storage: storage,
-  fileFilter: fileFilter,
   limits: { fileSize: Infinity } // Permet des fichiers de taille illimitée
 });
 

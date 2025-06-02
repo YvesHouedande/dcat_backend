@@ -1,44 +1,9 @@
 const { db } = require('../../../core/database/config');
 const { commandes, commande_produits, clients_en_ligne, produits, familles, marques, modeles, type_produits, images } = require("../../../core/database/models");
 const { eq, desc, and, sql } = require("drizzle-orm");
-const nodemailer = require('nodemailer');
 const notificationService = require('./notification_websocket.service');
-
-
-// Configuration de Nodemailer avec les variables d'environnement
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'node180-eu.n0c.com',
-  port: process.env.EMAIL_PORT || 465,
-  secure: true, // true pour le port 465, false pour les autres ports comme 587
-  auth: {
-    user: process.env.EMAIL_USER || 'sales@dcat.ci',
-    pass: process.env.EMAIL_PASSWORD || 'Dcat@2018!'
-  }
-});
-
-// Adresse email d'expédition
-const emailFrom = '"DCAT" <sales@dcat.ci>';
-
-// Chemin vers le logo de l'entreprise - utiliser un chemin d'URL absolue
-const baseUrl = 'https://erpback.dcat.ci';
-// Utiliser le chemin avec des slashes pour les URLs (compatible avec tous les OS)
-const logoPath = 'media/images/services_dcat/entreprise_logo.png';
-const logoUrl = `${baseUrl}/${logoPath}`;
-
-// Style commun pour les emails
-const emailStyles = `
-  body { font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-  .header { text-align: center; padding: 20px 0; }
-  .logo { max-width: 100px; height: auto; }
-  h1 { color: #0056b3; margin-top: 20px; }
-  .content { padding: 20px; background-color: #f9f9f9; border-radius: 5px; }
-  .footer { padding: 20px; text-align: center; font-size: 12px; color: #777; margin-top: 20px; }
-  ul { padding-left: 20px; }
-  li { margin-bottom: 8px; }
-  .highlight { background-color: #f5f5f5; padding: 10px; border-left: 4px solid #0056b3; margin: 10px 0; }
-  .button { display: inline-block; background-color: #0056b3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 15px; }
-`;
+const emailNotificationService = require('./email.notification.service');
+const panierService = require('./panier.service');
 
 // Fonction utilitaire pour valider les dates
 function isValidDate(dateString) {
@@ -68,129 +33,6 @@ function formatDate(date) {
   }
 }
 
-// Fonction pour envoyer une notification email structurée au client
-async function notifyClient(clientId, notification) {
-  try {
-    // Récupérer les informations du client
-    const client = await db
-      .select({
-        email: clients_en_ligne.email,
-        nom: clients_en_ligne.nom,
-      })
-      .from(clients_en_ligne)
-      .where(eq(clients_en_ligne.id_client, clientId))
-      .limit(1);
-    
-    if (client.length === 0 || !client[0].email) {
-      // Client non trouvé ou email manquant
-      return;
-    }
-    
-    const clientEmail = client[0].email;
-    const clientName = client[0].nom || 'Client';
-    
-    // Variables pour le contenu de l'email
-    let subject = '';
-    let htmlContent = '';
-    
-    // Construire le sujet et le contenu en fonction du type de notification
-    switch (notification.type) {
-      case 'status_update':
-      case 'commande_update':
-        if (notification.newStatus === 'Livré') {
-          subject = `Votre commande a été livrée`;
-          htmlContent = `
-            <h1>Commande livrée !</h1>
-            <p>Cher(e) <strong>${clientName}</strong>,</p>
-            <p>Bonne nouvelle ! Votre commande a été marquée comme <strong>livrée</strong>.</p>
-            ${notification.newDate ? `<p class="highlight">Date de livraison effective : ${notification.newDate}</p>` : ''}
-            <p>Nous espérons que vous êtes satisfait(e) de vos produits. N'hésitez pas à nous contacter pour toute question ou assistance.</p>
-            <p>Merci d'avoir choisi DCAT !</p>
-          `;
-        } else if (notification.newStatus === 'Annulé') {
-          subject = `Annulation de votre commande`;
-          htmlContent = `
-            <h1>Commande annulée</h1>
-            <p>Cher(e) <strong>${clientName}</strong>,</p>
-            <p>Nous vous informons que votre commande a été <strong>annulée</strong>.</p>
-            <p>Si vous n'êtes pas à l'origine de cette annulation ou si vous avez des questions, veuillez contacter notre service client.</p>
-          `;
-        } else if (notification.newDate) { // Commande validée (implicitement car newDate est défini)
-          subject = `Votre commande est validée`;
-          htmlContent = `
-            <h1>Commande validée !</h1>
-            <p>Cher(e) <strong>${clientName}</strong>,</p>
-            <p>Excellente nouvelle ! Votre commande a été <strong>validée</strong>.</p>
-            <div class="highlight">
-              <p><strong>Date de livraison prévue : ${notification.newDate}</strong></p>
-            </div>
-            <p>Nous préparons votre commande pour expédition. Vous serez informé(e) dès qu'elle sera en route.</p>
-          `;
-        } else { // Mise à jour de statut générique (sans date)
-           subject = `Mise à jour de votre commande`;
-           htmlContent = `
-            <h1>Mise à jour de commande</h1>
-            <p>Cher(e) <strong>${clientName}</strong>,</p>
-            <p>Le statut de votre commande a été mis à jour.</p>
-            <p class="highlight">Nouveau statut : <strong>${notification.newStatus || 'Inconnu'}</strong></p>
-            <p>Vous pouvez suivre l'évolution de votre commande depuis votre espace client.</p>
-          `;
-        }
-        break;
-        
-      case 'date_update': // Utilisé spécifiquement si seule la date est mise à jour
-         subject = `Votre commande est validée`;
-         htmlContent = `
-            <h1>Commande validée !</h1>
-            <p>Cher(e) <strong>${clientName}</strong>,</p>
-            <p>Excellente nouvelle ! Votre commande a été <strong>validée</strong>.</p>
-            <div class="highlight">
-              <p><strong>Date de livraison prévue : ${notification.newDate}</strong></p>
-            </div>
-            <p>Nous préparons votre commande pour expédition. Vous serez informé(e) dès qu'elle sera en route.</p>
-          `;
-        break;
-        
-      default:
-        // Type de notification inconnu
-        return; // Ne pas envoyer d'email si le type est inconnu
-    }
-    
-    // Envoyer l'email HTML
-    await transporter.sendMail({
-      from: emailFrom,
-      to: clientEmail,
-      subject: `${subject} - DCAT`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-          <style>${emailStyles}</style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <img src="${logoUrl}" alt="DCAT Logo" class="logo">
-            </div>
-            <div class="footer">
-              <p>Merci de votre confiance,<br><strong>L'équipe DCAT</strong></p>
-              <p>© ${new Date().getFullYear()} DCAT - Tous droits réservés</p>
-              <p>Cocody Angré 7ème Tranche, Abidjan, Côte d'Ivoire | +225 27 21 24 16 84</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `
-    });
-    
-  } catch (error) {
-    console.error(`Erreur lors de l'envoi de l'email de notification pour la commande ${notification.commandeId}:`, error);
-  }
-}
-
 const commandesService = {
   // Créer une nouvelle commande
   createCommande: async (commandeData) => {
@@ -199,12 +41,12 @@ const commandesService = {
       try {
         // 1. Insérer la commande
         const commandeInserted = await tx.insert(commandes).values({
-      date_de_commande: new Date(),
+          date_de_commande: new Date(),
           etat_commande: 'En attente', // Etat initial corrigé
-      lieu_de_livraison: commandeData.lieu_de_livraison,
-      mode_de_paiement: commandeData.mode_de_paiement,
-      id_client: commandeData.id_client,
-    }).returning();
+          lieu_de_livraison: commandeData.lieu_de_livraison,
+          mode_de_paiement: commandeData.mode_de_paiement,
+          id_client: commandeData.id_client,
+        }).returning();
         
         if (!commandeInserted || commandeInserted.length === 0) {
           throw new Error("Échec de l'insertion de la commande");
@@ -257,178 +99,47 @@ const commandesService = {
       try {
         // Envoi des notifications après la transaction réussie, mais ne pas bloquer le retour
         
-        // Envoi des notifications de manière asynchrone
+        // Envoi des notifications par email de manière asynchrone
         if (result.client) {
-          commandesService.sendCommandeNotificationToClient(result.commande, result.client)
-            .catch(err => {});
+          emailNotificationService.sendCommandeConfirmationToClient(result.commande, result.client)
+            .catch(err => console.error("Erreur d'envoi notification email client:", err));
         }
         
         if (result.admins && result.admins.length > 0) {
-          commandesService.sendCommandeNotificationToAdmin(result.commande, result.client, result.admins)
-            .catch(err => {});
+          emailNotificationService.sendCommandeNotificationToAdmin(result.commande, result.client, result.admins)
+            .catch(err => console.error("Erreur d'envoi notification email admin:", err));
         }
         
-        // Notification pour le client
+        // Notification WebSocket pour le client
         await notificationService.sendToUser(result.commande.id_client, {
           title: 'Commande confirmée',
-          message: `Votre commande #${result.commande.id_commande} a été enregistrée avec succès.`,
+          message: `Votre commande a été enregistrée avec succès.`,
           type: 'command',
         });
 
-        // Notification pour tous les admins
+        // Notification WebSocket pour tous les admins
         await notificationService.sendToRole('admin', {
           title: 'Nouvelle commande',
-          message: `Une nouvelle commande #${result.commande.id_commande} a été passée par ${result.client ? result.client.nom : 'N/A'}.`,
+          message: `Une nouvelle commande a été passée par ${result.client ? result.client.nom : 'un client'}.`,
           type: 'command_admin',
         });
         
+        // Vider le panier du client après une commande réussie
+        try {
+          await panierService.clearPanier(result.commande.id_client);
+          console.log(`Panier vidé pour le client ${result.commande.id_client} après la commande ${result.commande.id_commande}`);
+        } catch (err) {
+          console.error(`Erreur lors du vidage du panier pour le client ${result.commande.id_client}:`, err);
+          // Ne pas bloquer le processus si le vidage du panier échoue
+        }
+        
         return result.commande;
       } catch (error) {
+        console.error("Erreur post-transaction:", error);
         // On renvoie quand même la commande car elle a été créée avec succès
         return result.commande;
       }
     });
-  },
-
-  // Envoyer une notification par email au client
-  sendCommandeNotificationToClient: async (commande, client) => {
-    if (!client || !client.email) {
-      return;
-    }
-    
-    try {
-      const formattedDate = new Date(commande.date_de_commande).toLocaleDateString('fr-FR', {
-        day: 'numeric', 
-        month: 'long', 
-        year: 'numeric'
-      });
-      
-      await transporter.sendMail({
-        from: emailFrom,
-        to: client.email,
-        subject: `Confirmation de votre commande - DCAT`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Confirmation de commande</title>
-            <style>${emailStyles}</style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <img src="${logoUrl}" alt="DCAT Logo" class="logo">
-              </div>
-              <div class="content">
-                <h1>Confirmation de commande</h1>
-                <p>Cher(e) <strong>${client.nom}</strong>,</p>
-                <p>Nous vous remercions pour votre commande sur notre plateforme. Nous avons bien reçu votre commande et nous nous engageons à la traiter dans les plus brefs délais.</p>
-                
-                <div class="highlight">
-                  <p><strong>Date:</strong> ${formattedDate}</p>
-                  <p><strong>Lieu de livraison:</strong> ${commande.lieu_de_livraison}</p>
-                  <p><strong>Mode de paiement:</strong> ${commande.mode_de_paiement}</p>
-                </div>
-                
-                <p>Un de nos agents vous contactera prochainement pour confirmer les détails de la livraison et répondre à toutes vos questions.</p>
-                
-                <p>Pour toute question concernant votre commande, n'hésitez pas à nous contacter par email à <a href="mailto:sales@dcat.ci">sales@dcat.ci</a> ou par téléphone au +225 27 21 24 16 84.</p>
-              </div>
-              <div class="footer">
-                <p>Merci de votre confiance,<br><strong>L'équipe DCAT</strong></p>
-                <p>© ${new Date().getFullYear()} DCAT - Tous droits réservés</p>
-                <p>Cocody Angré 7ème Tranche, Abidjan, Côte d'Ivoire</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `
-      });
-    } catch (error) {
-      // Ne pas bloquer le processus si l'envoi d'email échoue
-      console.error('Erreur d\'envoi d\'email au client:', error);
-    }
-  },
-
-  // Envoyer une notification par email aux administrateurs
-  sendCommandeNotificationToAdmin: async (commande, client, admins) => {
-    if (!admins || admins.length === 0) {
-      return;
-    }
-    
-    try {
-      const adminEmails = admins.map(admin => admin.email).filter(email => email);
-      
-      if (adminEmails.length === 0) {
-        return;
-      }
-      
-      const formattedDate = new Date(commande.date_de_commande).toLocaleDateString('fr-FR', {
-        day: 'numeric', 
-        month: 'long', 
-        year: 'numeric'
-      });
-      
-      await transporter.sendMail({
-        from: emailFrom,
-        to: adminEmails.join(','),
-        subject: `Nouvelle commande - Action requise`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Nouvelle commande</title>
-            <style>${emailStyles}</style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <img src="${logoUrl}" alt="DCAT Logo" class="logo">
-              </div>
-              <div class="content">
-                <h1>Nouvelle commande à traiter</h1>
-                <p>Une nouvelle commande a été passée et nécessite votre attention.</p>
-                
-                <div class="highlight">
-                  <p><strong>Client:</strong> ${client ? client.nom : 'N/A'}</p>
-                  <p><strong>Email client:</strong> ${client ? client.email : 'N/A'}</p>
-                  <p><strong>Téléphone client:</strong> ${client ? client.contact || 'N/A' : 'N/A'}</p>
-                  <p><strong>Date:</strong> ${formattedDate}</p>
-                  <p><strong>Lieu de livraison:</strong> ${commande.lieu_de_livraison}</p>
-                  <p><strong>Mode de paiement:</strong> ${commande.mode_de_paiement}</p>
-                </div>
-                
-                <p>Veuillez contacter le client dans les plus brefs délais pour confirmer les détails de livraison et traiter cette commande.</p>
-                
-              </div>
-              <div class="footer">
-                <p>© ${new Date().getFullYear()} DCAT - Tous droits réservés</p>
-                <p>Système automatique de notification - Ne pas répondre à cet email</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `
-      });
-    } catch (error) {
-      // Ne pas bloquer le processus si l'envoi d'email échoue
-      console.error('Erreur d\'envoi d\'email aux administrateurs:', error);
-    }
-  },
-
-  // Fonction combinée pour la rétrocompatibilité
-  sendNotifications: async (commande, client, admins) => {
-    try {
-      // Appeler les deux nouvelles fonctions
-      await commandesService.sendCommandeNotificationToClient(commande, client);
-      await commandesService.sendCommandeNotificationToAdmin(commande, client, admins);
-    } catch (error) {
-      // Ne pas bloquer le processus si l'envoi d'email échoue
-    }
   },
 
   // Récupérer une commande par son ID
@@ -680,8 +391,8 @@ const commandesService = {
     } // Pas de notif pour 'En attente' sans date
     
     if (notificationMessage) {
-      await notifyClient(existingCommande[0].id_client, {
-        type: 'status_update', // Conserver type pour la fonction notifyClient
+      await emailNotificationService.notifyClient(existingCommande[0].id_client, {
+        type: 'status_update',
         message: notificationMessage, // Message brut (utilisé si l'email échoue)
         commandeId: id,
         newStatus: newStatus
@@ -734,8 +445,8 @@ const commandesService = {
       .returning();
     
     // Envoyer une notification de validation au client
-    await notifyClient(commandeExistante[0].id_client, {
-      type: 'date_update', // Conserver type pour la fonction notifyClient
+    await emailNotificationService.notifyClient(commandeExistante[0].id_client, {
+      type: 'date_update',
       message: `Votre commande a été validée. Date de livraison prévue: ${newDateFormatted}.`, // Message brut
       commandeId: id,
       newDate: newDateFormatted
@@ -828,7 +539,7 @@ const commandesService = {
     }
     
     if (notificationMessage) {
-      await notifyClient(existingCommande[0].id_client, {
+      await emailNotificationService.notifyClient(existingCommande[0].id_client, {
         type: notificationType,
         message: notificationMessage, // Message brut
         commandeId: id,

@@ -1,4 +1,4 @@
-const commandesService = require('../services/commandes.service');
+const { commandesService } = require('../services');
 
 const commandesController = {
   createCommande: async (req, res) => {

@@ -9,6 +9,29 @@ const path = require('path');
 const fs = require('fs');
 
 /**
+ * Nettoie un nom de fichier en retirant les caractères spéciaux et les espaces
+ * et en limitant la longueur à 200 caractères
+ * @param {string} filename - Le nom du fichier à nettoyer
+ * @returns {string} - Le nom du fichier nettoyé
+ */
+function cleanFileName(filename) {
+  // Extraction du nom et de l'extension
+  const { name, ext } = path.parse(filename);
+  
+  // Nettoyer le nom en supprimant les caractères spéciaux et en remplaçant les espaces par des underscores
+  let cleanName = name.replace(/[^\w\s.-]/g, '').replace(/\s+/g, '_');
+  
+  // Limiter la longueur à 200 caractères maximum (en tenant compte de l'extension)
+  const maxLength = 200 - ext.length;
+  if (cleanName.length > maxLength) {
+    cleanName = cleanName.substring(0, maxLength);
+  }
+  
+  // Reconstituer le nom complet avec l'extension
+  return cleanName + ext;
+}
+
+/**
  * Configuration du stockage des fichiers téléchargés avec préservation du nom d'origine
  */
 const storage = multer.diskStorage({
@@ -32,49 +55,23 @@ const storage = multer.diskStorage({
   },
   
   /**
-   * Conserve le nom original du fichier
+   * Conserve le nom original du fichier mais nettoyé des caractères spéciaux
    * @param {Object} req - La requête HTTP
    * @param {Object} file - Informations sur le fichier téléchargé
    * @param {Function} cb - Fonction de callback à appeler avec le nom du fichier
    */
   filename: function (req, file, cb) {
-    // Utilise directement le nom original du fichier
-    cb(null, file.originalname);
+    // Utilise le nom original du fichier mais nettoyé
+    const cleanedFilename = cleanFileName(file.originalname);
+    cb(null, cleanedFilename);
   }
 });
-
-/**
- * Fonction de filtrage des types de fichiers autorisés
- * @param {Object} req - La requête HTTP
- * @param {Object} file - Informations sur le fichier téléchargé
- * @param {Function} cb - Fonction de callback pour accepter ou refuser le fichier
- */
-const fileFilter = (req, file, cb) => {
-  // Pour les images, on limite aux formats courants
-  const allowedMimeTypes = [
-    // Images uniquement
-    'image/jpeg', 
-    'image/png', 
-    'image/gif',
-    'image/webp',
-    'image/svg+xml'
-  ];
-  
-  // Vérifie si le type MIME du fichier est autorisé
-  if (allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true); // Accepte le fichier
-  } else {
-    // Rejette le fichier avec un message d'erreur
-    cb(new Error(`Type de fichier non autorisé: ${file.mimetype}. Seules les images sont acceptées.`), false);
-  }
-};
 
 /**
  * Configuration complète de Multer avec les options définies
  */
 const upload = multer({ 
   storage: storage,
-  fileFilter: fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 } // Limite à 5 Mo
 });
 

@@ -3,8 +3,38 @@ const tachesService = require("../services/taches.service");
 const tachesController = {
   getAllTaches: async (req, res) => {
     try {
-      const taches = await tachesService.getAllTaches();
-      res.status(200).json({ success: true, data: taches });
+      const {
+        page = 1,
+        limit = 10,
+        sortBy,
+        sortOrder,
+        search,
+        statut,
+        priorite,
+        dateDebut,
+        dateFin,
+        projetId
+      } = req.query;
+
+      const options = {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        sortBy,
+        sortOrder,
+        search,
+        statut,
+        priorite,
+        dateDebut,
+        dateFin,
+        projetId: projetId ? parseInt(projetId) : undefined
+      };
+
+      const result = await tachesService.getAllTaches(options);
+      res.status(200).json({ 
+        success: true, 
+        data: result.data, 
+        pagination: result.pagination 
+      });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }

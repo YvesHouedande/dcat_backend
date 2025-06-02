@@ -73,9 +73,67 @@ const tachesController = require("../controllers/taches.controller");
  * @swagger
  * /technique/taches:
  *   get:
- *     summary: Liste toutes les tâches
- *     description: Récupère la liste complète des tâches avec leurs informations
+ *     summary: Liste toutes les tâches avec pagination
+ *     description: Récupère la liste paginée des tâches avec filtres optionnels
  *     tags: [Tâches]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Recherche par nom ou description de la tâche
+ *       - in: query
+ *         name: statut
+ *         schema:
+ *           type: string
+ *         description: Filtrer par statut de la tâche (À faire, En cours, Terminée, etc.)
+ *       - in: query
+ *         name: priorite
+ *         schema:
+ *           type: string
+ *         description: Filtrer par priorité de la tâche (Basse, Moyenne, Haute, Urgente)
+ *       - in: query
+ *         name: projetId
+ *         schema:
+ *           type: integer
+ *         description: ID du projet associé à la tâche
+ *       - in: query
+ *         name: dateDebut
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Date de début minimum (YYYY-MM-DD)
+ *       - in: query
+ *         name: dateFin
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Date de fin maximum (YYYY-MM-DD)
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: created_at
+ *         description: Champ à utiliser pour le tri
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Ordre de tri (ascendant ou descendant)
  *     responses:
  *       200:
  *         description: Liste des tâches récupérée avec succès
@@ -87,10 +145,25 @@ const tachesController = require("../controllers/taches.controller");
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 taches:
+ *                 data:
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Tache'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                       example: 50
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 5
  *       500:
  *         description: Erreur serveur
  */
