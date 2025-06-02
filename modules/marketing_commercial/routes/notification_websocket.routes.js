@@ -164,4 +164,34 @@ router.put('/:notificationId/read', authMiddleware, notificationController.markA
  */
 router.put('/read-all', authMiddleware, notificationController.markAllAsRead);
 
+/**
+ * @swagger
+ * /marketing_commercial/notifications/delete-read:
+ *   delete:
+ *     summary: Supprime toutes les notifications lues
+ *     description: Supprime définitivement toutes les notifications lues de l'utilisateur
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Notifications supprimées avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Notifications lues supprimées avec succès
+ *       401:
+ *         description: Non authentifié
+ *       500:
+ *         description: Erreur serveur
+ */
+router.delete('/delete-read', authMiddleware, notificationController.deleteReadNotifications);
+
 module.exports = router;

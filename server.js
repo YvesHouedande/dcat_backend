@@ -29,7 +29,7 @@ app.use(cors({
   origin: '*' // Permettre toutes les origines pour WebSocket et API
 }));
 
-// =============== INITIALISATION WEBSOCKET ===============
+// =============== INITIALISATION WEBSOCKET fait pour la notification serveur ===============
 // Initialiser le serveur WebSocket AVANT le chargement des modules
 const { initializeWebSocket } = require('./modules/marketing_commercial/utils/websocket');
 initializeWebSocket(server);

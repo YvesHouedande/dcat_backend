@@ -86,6 +86,26 @@ const notificationController = {
         error: "Erreur lors du comptage des notifications" 
       });
     }
+  },
+  
+  // Supprimer les notifications lues
+  deleteReadNotifications: async (req, res) => {
+    try {
+      const userId = req.params.userId || req.user.id;
+      
+      await notificationService.deleteReadNotifications(userId);
+      
+      res.json({ 
+        success: true, 
+        message: "Notifications lues supprimées avec succès" 
+      });
+    } catch (error) {
+      console.error("Erreur lors de la suppression des notifications:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Erreur lors de la suppression des notifications" 
+      });
+    }
   }
 };
 

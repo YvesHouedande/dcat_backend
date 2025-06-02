@@ -116,6 +116,25 @@ const notificationService = {
       return 0;
     }
   },
+  
+  // Supprimer les notifications lues d'un utilisateur
+  deleteReadNotifications: async (userId) => {
+    try {
+      await db
+        .delete(notifications)
+        .where(
+          and(
+            eq(notifications.user_id, userId),
+            eq(notifications.is_read, true)
+          )
+        );
+      
+      return true;
+    } catch (error) {
+      console.error("Erreur lors de la suppression des notifications lues:", error);
+      throw error;
+    }
+  },
 };
 
 module.exports = notificationService;
