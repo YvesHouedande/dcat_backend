@@ -123,7 +123,7 @@ const emailNotificationService = {
                 <div class="footer">
                   <p>Merci de votre confiance,<br><strong>L'équipe Boutique</strong></p>
                   <p>© ${new Date().getFullYear()} Boutique - Tous droits réservés</p>
-                  <p>Cocody Angré 7ème Tranche, Abidjan, Côte d'Ivoire | +225 27 21 24 16 84</p>
+                  <p>Angré Château, Immeuble BATIM II, 1er Étage, Porte A108, Cocody, Abidjan, Côte d'Ivoire | +225 27 21 37 33 63</p>
                 </div>
               ` : ''}
             </div>
@@ -204,7 +204,7 @@ const emailNotificationService = {
               <div class="contact-info">
                 <p><strong>Besoin d'aide ?</strong></p>
                 <p>Email: <a href="mailto:sales@dcat.ci">sales@dcat.ci</a></p>
-                <p>Téléphone: +225 27 21 24 16 84</p>
+                <p>Téléphone: +225 27 21 37 33 63</p>
               </div>
             `;
           } else if (notification.newStatus === 'Annulé') {
@@ -225,7 +225,7 @@ const emailNotificationService = {
               <div class="contact-info">
                 <p><strong>Besoin d'aide ?</strong></p>
                 <p>Email: <a href="mailto:sales@dcat.ci">sales@dcat.ci</a></p>
-                <p>Téléphone: +225 27 21 24 16 84</p>
+                <p>Téléphone: +225 27 21 37 33 63</p>
               </div>
             `;
           } else if (notification.newDate) { // Commande validée (implicitement car newDate est défini)
@@ -251,7 +251,7 @@ const emailNotificationService = {
               <div class="contact-info">
                 <p><strong>Besoin d'aide ?</strong></p>
                 <p>Email: <a href="mailto:sales@dcat.ci">sales@dcat.ci</a></p>
-                <p>Téléphone: +225 27 21 24 16 84</p>
+                <p>Téléphone: +225 27 21 37 33 63</p>
               </div>
             `;
           } else { // Mise à jour de statut générique (sans date)
@@ -272,7 +272,7 @@ const emailNotificationService = {
               <div class="contact-info">
                 <p><strong>Besoin d'aide ?</strong></p>
                 <p>Email: <a href="mailto:sales@dcat.ci">sales@dcat.ci</a></p>
-                <p>Téléphone: +225 27 21 24 16 84</p>
+                <p>Téléphone: +225 27 21 37 33 63</p>
               </div>
             `;
           }
@@ -302,7 +302,7 @@ const emailNotificationService = {
               <div class="contact-info">
                 <p><strong>Besoin d'aide ?</strong></p>
                 <p>Email: <a href="mailto:sales@dcat.ci">sales@dcat.ci</a></p>
-                <p>Téléphone: +225 27 21 24 16 84</p>
+                <p>Téléphone: +225 27 21 37 33 63</p>
               </div>
             `;
           break;
@@ -375,10 +375,13 @@ const emailNotificationService = {
               <span>${formatPrice(montantTotal)}</span>
             </div>
           </div>`;
+        } else {
+          produitsHTML = '<p>Aucun produit trouvé dans votre commande. Veuillez consulter votre compte pour les détails complets.</p>';
         }
       } catch (error) {
         console.error('Erreur lors de la récupération des produits pour l\'email:', error);
-        produitsHTML = '<p>Impossible de charger les détails des produits. Veuillez consulter votre compte pour voir votre commande.</p>';
+        // Message d'erreur plus professionnel
+        produitsHTML = '<p>Le récapitulatif des produits n\'est pas disponible dans cet email. Veuillez consulter votre espace client pour voir tous les détails de votre commande.</p>';
       }
       
       const statusBadge = `<div class="status-badge status-pending">En attente</div>`;
@@ -406,7 +409,7 @@ const emailNotificationService = {
         <div class="contact-info">
           <p><strong>Besoin d'aide ?</strong></p>
           <p>Email: <a href="mailto:sales@dcat.ci">sales@dcat.ci</a></p>
-          <p>Téléphone: +225 27 21 24 16 84</p>
+          <p>Téléphone: +225 27 21 37 33 63</p>
         </div>
       `;
       
@@ -477,10 +480,12 @@ const emailNotificationService = {
               <span>${formatPrice(montantTotal)}</span>
             </div>
           </div>`;
+        } else {
+          produitsHTML = '<p>Aucun produit trouvé dans cette commande.</p>';
         }
       } catch (error) {
         console.error('Erreur lors de la récupération des produits pour l\'email admin:', error);
-        produitsHTML = '<p>Erreur lors du chargement des détails des produits.</p>';
+        produitsHTML = '<p>Les détails des produits ne sont pas disponibles. Veuillez vérifier cette commande dans le système d\'administration.</p>';
       }
       
       const htmlContent = `
@@ -502,13 +507,16 @@ const emailNotificationService = {
         <p>Veuillez contacter le client dans les plus brefs délais pour confirmer les détails de livraison et traiter cette commande.</p>
       `;
       
-      return await emailNotificationService.sendEmail(adminEmails, 'Nouvelle commande', htmlContent);
+      return await emailNotificationService.sendEmail(
+        adminEmails,
+        'Nouvelle commande',
+        htmlContent
+      );
     } catch (error) {
-      // Ne pas bloquer le processus si l'envoi d'email échoue
-      console.error('Erreur d\'envoi d\'email aux administrateurs:', error);
+      console.error('Erreur lors de l\'envoi de la notification de commande:', error);
       return false;
     }
-  }
+  },
 };
 
-module.exports = emailNotificationService; 
+module.exports = emailNotificationService;

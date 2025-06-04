@@ -1,6 +1,6 @@
 const { db } = require('../../../core/database/config');
 const { commandes, commande_produits, clients_en_ligne, produits, familles, marques, modeles, type_produits, images } = require("../../../core/database/models");
-const { eq, desc, and, sql } = require("drizzle-orm");
+const { eq, desc, and, sql, inArray } = require("drizzle-orm");
 const notificationService = require('./notification_websocket.service');
 const emailNotificationService = require('./email.notification.service');
 const panierService = require('./panier.service');
@@ -192,47 +192,66 @@ const commandesService = {
 
   // Récupérer les produits d'une commande
   getCommandeProducts: async (commandeId) => {
-    const result = await db
-      .select({
-        id_produit: produits.id_produit,
-        designation: produits.desi_produit,
-        description: produits.desc_produit,
-        prix: commande_produits.prix_unitaire, // Utiliser le prix_unitaire de la table commande_produits
-        quantite: commande_produits.quantite,
-        caracteristiques: produits.caracteristiques_produit,
-        famille_libelle: familles.libelle_famille,
-        marque_libelle: marques.libelle_marque,
-        modele_libelle: modeles.libelle_modele
-      })
-      .from(commande_produits)
-      .innerJoin(produits, eq(commande_produits.id_produit, produits.id_produit))
-      .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
-      .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
-      .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
-      .where(eq(commande_produits.id_commande, commandeId));
-    
-    // Pour chaque produit, récupérer ses images
-    const productsWithImages = [];
-    for (const product of result) {
-      const productImages = await db
+    try {
+      const result = await db
+        .select({
+          id_produit: produits.id_produit,
+          designation: produits.desi_produit,
+          description: produits.desc_produit,
+          prix: commande_produits.prix_unitaire, // Utiliser le prix_unitaire de la table commande_produits
+          quantite: commande_produits.quantite,
+          caracteristiques: produits.caracteristiques_produit,
+          famille_libelle: familles.libelle_famille,
+          marque_libelle: marques.libelle_marque,
+          modele_libelle: modeles.libelle_modele
+        })
+        .from(commande_produits)
+        .innerJoin(produits, eq(commande_produits.id_produit, produits.id_produit))
+        .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+        .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
+        .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
+        .where(eq(commande_produits.id_commande, commandeId));
+      
+      if (!result || result.length === 0) {
+        return [];
+      }
+      
+      // Récupérer toutes les images pour tous les produits en une seule requête
+      const productIds = result.map(product => product.id_produit);
+      
+      const allImages = await db
         .select({
           id_image: images.id_image,
           lien_image: images.lien_image,
+          id_produit: images.id_produit
         })
         .from(images)
-        .where(eq(images.id_produit, product.id_produit));
+        .where(inArray(images.id_produit, productIds));
       
-      // Ajouter les images au produit
-      const productWithImages = {
-        ...product,
-        images: productImages.map(img => img.lien_image),
-        image: productImages.length > 0 ? productImages[0].lien_image : null,
-      };
+      // Organiser les images par id_produit
+      const imagesByProductId = {};
+      allImages.forEach(img => {
+        if (!imagesByProductId[img.id_produit]) {
+          imagesByProductId[img.id_produit] = [];
+        }
+        imagesByProductId[img.id_produit].push(img.lien_image);
+      });
       
-      productsWithImages.push(productWithImages);
+      // Ajouter les images à chaque produit
+      const productsWithImages = result.map(product => {
+        const productImages = imagesByProductId[product.id_produit] || [];
+        return {
+          ...product,
+          images: productImages,
+          image: productImages.length > 0 ? productImages[0] : null,
+        };
+      });
+      
+      return productsWithImages;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des produits de la commande:', error);
+      return [];
     }
-    
-    return productsWithImages;
   },
 
   // Récupérer l'historique des commandes d'un client
