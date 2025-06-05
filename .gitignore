@@ -27,3 +27,6 @@ digest
 migrations/
 drizzle/
 media/
+
+# Documentation temporaire
+CORRECTION_EMAILS_README.md

@@ -273,4 +273,8 @@ router.post('/logout', clientsController.logout);
  */
 router.get('/admin/all', clientsController.getAllClients);
 
+// Routes pour la réinitialisation de mot de passe
+router.post('/request-password-reset', clientsController.requestPasswordReset);
+router.post('/reset-password', clientsController.resetPassword);
+
 module.exports = router;

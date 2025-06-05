@@ -16,10 +16,10 @@ const transporter = nodemailer.createTransport({
 });
 
 // Adresse email d'expédition
-const emailFrom = '"Boutique" <sales@dcat.ci>';
+const emailFrom = '"Boutique" <boutique@dcat.ci>';
 
-// Chemin vers le logo de l'entreprise - utiliser un chemin d'URL absolue
-const baseUrl = 'https://erpback.dcat.ci';
+// Assurez-vous que cette URL est accessible publiquement
+const baseUrl = process.env.PUBLIC_URL || 'https://erpback.dcat.ci';
 // Utiliser le chemin avec des slashes pour les URLs (compatible avec tous les OS)
 const logoPath = 'media/images/services_dcat/entreprise_logo.png';
 const logoUrl = `${baseUrl}/${logoPath}`;
@@ -39,14 +39,13 @@ const emailStyles = `
   .highlight { background-color: #f8f9fa; padding: 15px; border-left: 4px solid #1976D2; margin: 15px 0; border-radius: 4px; }
   .button { display: inline-block; background-color: #1976D2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin-top: 15px; font-weight: 600; }
   .order-summary { margin-top: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .product-item { display: flex; margin-bottom: 15px; padding: 15px; border-bottom: 1px solid #eee; }
-  .product-image { width: 90px; height: 90px; margin-right: 15px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
+  .product-item { display: flex; align-items: center; margin-bottom: 15px; padding: 15px; border-bottom: 1px solid #eee; }
+  .product-image { width: 80px; height: 80px; margin-right: 15px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; flex-shrink: 0; }
   .product-details { flex: 1; }
-  .product-name { font-weight: 700; margin-bottom: 5px; color: #333; font-size: 16px; }
-  .product-description { font-size: 13px; color: #666; margin-bottom: 8px; line-height: 1.4; }
-  .product-price { font-weight: 600; color: #1976D2; font-size: 15px; }
-  .product-quantity { color: #666; font-size: 14px; margin-top: 5px; }
-  .total-row { display: flex; justify-content: space-between; padding: 15px; font-weight: 700; border-top: 2px solid #eee; margin-top: 0; background-color: #f8f9fa; border-radius: 0 0 8px 8px; }
+  .product-name { font-weight: 700; margin-bottom: 8px; color: #333; font-size: 16px; }
+  .product-price { font-weight: 600; color: #1976D2; font-size: 15px; margin-bottom: 5px; }
+  .product-quantity { color: #666; font-size: 14px; }
+  .total-row { display: flex; justify-content: space-between; padding: 15px; font-weight: 700; border-top: 2px solid #eee; margin-top: 0; background-color: #f8f9f9; border-radius: 0 0 8px 8px; }
   .total-row span:last-child { color: #1976D2; font-size: 18px; }
   .contact-info { background-color: #e3f2fd; padding: 18px; border-radius: 8px; margin-top: 25px; }
   .contact-info p { margin: 8px 0; }
@@ -60,6 +59,16 @@ const emailStyles = `
   .status-confirmed { background-color: #e3f2fd; color: #0277bd; }
   .status-delivered { background-color: #e8f5e9; color: #2e7d32; }
   .status-cancelled { background-color: #ffebee; color: #c62828; }
+  .step-indicator { display: flex; align-items: center; justify-content: center; margin: 20px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px; }
+  .step { display: flex; flex-direction: column; align-items: center; position: relative; flex: 1; max-width: 120px; }
+  .step-line { width: 60px; height: 2px; background-color: #ddd; margin: 0 10px; }
+  .step-line.completed-line { background-color: #1976D2; }
+  .step.active .step-circle { background-color: #1976D2; color: white; border-color: #1976D2; }
+  .step.completed .step-circle { background-color: #2e7d32; color: white; border-color: #2e7d32; }
+  .step-circle { width: 32px; height: 32px; border-radius: 50%; background-color: #f5f5f5; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; border: 2px solid #ddd; font-size: 12px; font-weight: bold; transition: all 0.3s ease; }
+  .step-label { font-size: 12px; text-align: center; color: #666; font-weight: 500; }
+  .step.active .step-label { color: #1976D2; font-weight: 600; }
+  .step.completed .step-label { color: #2e7d32; font-weight: 600; }
 `;
 
 // Fonction utilitaire pour formater les dates
@@ -88,6 +97,40 @@ function formatPrice(price) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   }).format(price).replace('XOF', 'FCFA');
+}
+
+// Fonction pour générer l'indicateur d'étapes
+function generateStepIndicator(currentStatus) {
+  const steps = [
+    { name: 'En attente', status: 'en_attente' },
+    { name: 'Livrée', status: 'Livré' }
+  ];
+  
+  let currentIndex = -1;
+  steps.forEach((step, index) => {
+    if (step.status === currentStatus) {
+      currentIndex = index;
+    }
+  });
+  
+  let stepsHTML = '<div class="step-indicator">';
+  
+  steps.forEach((step, index) => {
+    const isActive = index <= currentIndex;
+    const isCompleted = index < currentIndex;
+    stepsHTML += `
+      <div class="step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}">
+        <div class="step-circle">${isCompleted ? '✓' : index + 1}</div>
+        <div class="step-label">${step.name}</div>
+      </div>
+    `;
+    if (index < steps.length - 1) {
+      stepsHTML += `<div class="step-line ${isCompleted ? 'completed-line' : ''}"></div>`;
+    }
+  });
+  
+  stepsHTML += '</div>';
+  return stepsHTML;
 }
 
 const emailNotificationService = {
@@ -203,7 +246,7 @@ const emailNotificationService = {
               
               <div class="contact-info">
                 <p><strong>Besoin d'aide ?</strong></p>
-                <p>Email: <a href="mailto:sales@dcat.ci">sales@dcat.ci</a></p>
+                <p>Email: <a href="mailto:boutique@dcat.ci">boutique@dcat.ci</a></p>
                 <p>Téléphone: +225 27 21 37 33 63</p>
               </div>
             `;
@@ -224,7 +267,28 @@ const emailNotificationService = {
               
               <div class="contact-info">
                 <p><strong>Besoin d'aide ?</strong></p>
-                <p>Email: <a href="mailto:sales@dcat.ci">sales@dcat.ci</a></p>
+                <p>Email: <a href="mailto:boutique@dcat.ci">boutique@dcat.ci</a></p>
+                <p>Téléphone: +225 27 21 37 33 63</p>
+              </div>
+            `;
+          } else if (notification.newStatus === 'Retourné') {
+            subject = `Retour de votre commande`;
+            statusClass = 'status-cancelled';
+            htmlContent = `
+              <h1>Commande retournée</h1>
+              <div class="highlight">
+                <p>Votre commande a été retournée.</p>
+              </div>
+              
+              <p>Cher(e) <strong>${clientName}</strong>,</p>
+              
+              <p>Nous vous informons que votre commande a été marquée comme retournée.</p>
+              
+              <p>Notre équipe va traiter ce retour dans les meilleurs délais. Si vous avez des questions concernant ce retour, n'hésitez pas à nous contacter.</p>
+              
+              <div class="contact-info">
+                <p><strong>Besoin d'aide ?</strong></p>
+                <p>Email: <a href="mailto:boutique@dcat.ci">boutique@dcat.ci</a></p>
                 <p>Téléphone: +225 27 21 37 33 63</p>
               </div>
             `;
@@ -250,7 +314,7 @@ const emailNotificationService = {
               
               <div class="contact-info">
                 <p><strong>Besoin d'aide ?</strong></p>
-                <p>Email: <a href="mailto:sales@dcat.ci">sales@dcat.ci</a></p>
+                <p>Email: <a href="mailto:boutique@dcat.ci">boutique@dcat.ci</a></p>
                 <p>Téléphone: +225 27 21 37 33 63</p>
               </div>
             `;
@@ -271,7 +335,7 @@ const emailNotificationService = {
               
               <div class="contact-info">
                 <p><strong>Besoin d'aide ?</strong></p>
-                <p>Email: <a href="mailto:sales@dcat.ci">sales@dcat.ci</a></p>
+                <p>Email: <a href="mailto:boutique@dcat.ci">boutique@dcat.ci</a></p>
                 <p>Téléphone: +225 27 21 37 33 63</p>
               </div>
             `;
@@ -301,7 +365,7 @@ const emailNotificationService = {
               
               <div class="contact-info">
                 <p><strong>Besoin d'aide ?</strong></p>
-                <p>Email: <a href="mailto:sales@dcat.ci">sales@dcat.ci</a></p>
+                <p>Email: <a href="mailto:boutique@dcat.ci">boutique@dcat.ci</a></p>
                 <p>Téléphone: +225 27 21 37 33 63</p>
               </div>
             `;
@@ -315,6 +379,17 @@ const emailNotificationService = {
       // Ajouter un badge de statut au début du contenu
       const statusBadge = `<div class="status-badge ${statusClass}">${notification.newStatus || (notification.newDate ? 'Confirmée' : 'En traitement')}</div>`;
       htmlContent = statusBadge + htmlContent;
+      
+      // Ajouter l'indicateur d'étapes seulement pour les statuts "en_attente" et "Livré"
+      // Pas d'indicateur pour les annulations et retours
+      const shouldShowStepIndicator = notification.newStatus === 'Livré' || 
+                                     notification.newStatus === 'en_attente' || 
+                                     notification.type === 'date_update';
+      
+      if (shouldShowStepIndicator) {
+        const stepIndicator = generateStepIndicator(notification.newStatus || 'en_attente');
+        htmlContent = stepIndicator + htmlContent;
+      }
       
       // Envoyer l'email
       return await emailNotificationService.sendEmail(clientEmail, subject, htmlContent);
@@ -340,27 +415,39 @@ const emailNotificationService = {
       
       try {
         const produits = await commandesService.getCommandeProducts(commande.id_commande);
+        console.log("Produits récupérés:", JSON.stringify(produits));
         
         if (produits && produits.length > 0) {
           produitsHTML = '<div class="order-summary">';
           
           // Construire le HTML pour chaque produit
           produits.forEach(produit => {
+            console.log(`Traitement du produit ${produit.id_produit}: ${produit.designation}`);
+            console.log(`Image: ${produit.image}`);
+            
             const prixTotal = produit.prix * produit.quantite;
             montantTotal += prixTotal;
             
-            const imageUrl = produit.image 
-              ? (produit.image.startsWith('http') 
-                 ? produit.image 
-                 : `${baseUrl}/${produit.image.replace(/\\/g, '/')}`)
-              : `${baseUrl}/media/images/placeholder-product.png`;
+            // Construire l'URL de l'image principale
+            let imageUrl = `${baseUrl}/media/images/placeholder-product.png`;
+            
+            if (produit.image) {
+              if (produit.image.startsWith('http')) {
+                imageUrl = produit.image;
+              } else {
+                // Nettoyer le chemin et construire l'URL correctement
+                const cleanPath = produit.image.replace(/\\/g, '/').replace(/^\/+/, '');
+                imageUrl = `${baseUrl}/${cleanPath}`;
+              }
+            }
+            
+            console.log(`URL d'image finale: ${imageUrl}`);
             
             produitsHTML += `
               <div class="product-item">
-                <img src="${imageUrl}" alt="${produit.designation}" class="product-image">
+                <img src="${imageUrl}" alt="${produit.designation}" class="product-image" onerror="this.src='${baseUrl}/media/images/placeholder-product.png';">
                 <div class="product-details">
                   <div class="product-name">${produit.designation}</div>
-                  <div class="product-description">${produit.description ? produit.description.substring(0, 100) + (produit.description.length > 100 ? '...' : '') : ''}</div>
                   <div class="product-price">${formatPrice(produit.prix)}</div>
                   <div class="product-quantity">Quantité: ${produit.quantite}</div>
                 </div>
@@ -385,8 +472,10 @@ const emailNotificationService = {
       }
       
       const statusBadge = `<div class="status-badge status-pending">En attente</div>`;
+      const stepIndicator = generateStepIndicator('en_attente');
       
       const htmlContent = `
+        ${stepIndicator}
         ${statusBadge}
         <h1>Confirmation de commande</h1>
         
@@ -408,7 +497,7 @@ const emailNotificationService = {
         
         <div class="contact-info">
           <p><strong>Besoin d'aide ?</strong></p>
-          <p>Email: <a href="mailto:sales@dcat.ci">sales@dcat.ci</a></p>
+          <p>Email: <a href="mailto:boutique@dcat.ci">boutique@dcat.ci</a></p>
           <p>Téléphone: +225 27 21 37 33 63</p>
         </div>
       `;
@@ -455,19 +544,26 @@ const emailNotificationService = {
             const prixTotal = produit.prix * produit.quantite;
             montantTotal += prixTotal;
             
-            const imageUrl = produit.image 
-              ? (produit.image.startsWith('http') 
-                 ? produit.image 
-                 : `${baseUrl}/${produit.image.replace(/\\/g, '/')}`)
-              : `${baseUrl}/media/images/placeholder-product.png`;
+            // Construire l'URL de l'image principale
+            let imageUrl = `${baseUrl}/media/images/placeholder-product.png`;
+            
+            if (produit.image) {
+              if (produit.image.startsWith('http')) {
+                imageUrl = produit.image;
+              } else {
+                // Nettoyer le chemin et construire l'URL correctement
+                const cleanPath = produit.image.replace(/\\/g, '/').replace(/^\/+/, '');
+                imageUrl = `${baseUrl}/${cleanPath}`;
+              }
+            }
             
             produitsHTML += `
               <div class="product-item">
-                <img src="${imageUrl}" alt="${produit.designation}" class="product-image">
+                <img src="${imageUrl}" alt="${produit.designation}" class="product-image" onerror="this.src='${baseUrl}/media/images/placeholder-product.png';">
                 <div class="product-details">
                   <div class="product-name">${produit.designation}</div>
-                  <div class="product-quantity">Quantité: ${produit.quantite}</div>
                   <div class="product-price">${formatPrice(produit.prix)} × ${produit.quantite}</div>
+                  <div class="product-quantity">Quantité: ${produit.quantite}</div>
                 </div>
               </div>
             `;
@@ -490,7 +586,6 @@ const emailNotificationService = {
       
       const htmlContent = `
         <h1>Nouvelle commande</h1>
-        <div class="status-badge status-pending">Nouvelle commande</div>
         
         <div class="highlight">
           <p><strong>Client:</strong> ${client ? client.nom : 'N/A'}</p>
@@ -514,6 +609,64 @@ const emailNotificationService = {
       );
     } catch (error) {
       console.error('Erreur lors de l\'envoi de la notification de commande:', error);
+      return false;
+    }
+  },
+
+  // Envoyer une notification d'annulation/retour aux administrateurs
+  sendStatusChangeNotificationToAdmin: async (commande, client, admins, newStatus) => {
+    if (!admins || admins.length === 0) {
+      return false;
+    }
+    
+    try {
+      const adminEmails = admins.map(admin => admin.email).filter(email => email);
+      
+      if (adminEmails.length === 0) {
+        return false;
+      }
+      
+      const formattedDate = formatDate(commande.date_de_commande);
+      
+      let subject = '';
+      let title = '';
+      
+      if (newStatus === 'Annulé') {
+        subject = 'Commande annulée';
+        title = 'Commande annulée';
+      } else if (newStatus === 'Retourné') {
+        subject = 'Commande retournée';
+        title = 'Commande retournée';
+      } else {
+        subject = 'Changement de statut de commande';
+        title = 'Changement de statut';
+      }
+      
+      const htmlContent = `
+        <h1>${title}</h1>
+        
+        <div class="highlight">
+          <p><strong>Nouveau statut:</strong> ${newStatus}</p>
+          <p><strong>Client:</strong> ${client ? client.nom : 'N/A'}</p>
+          <p><strong>Email client:</strong> ${client ? client.email : 'N/A'}</p>
+          <p><strong>Téléphone client:</strong> ${client ? client.contact || 'N/A' : 'N/A'}</p>
+          <p><strong>Date de commande:</strong> ${formattedDate}</p>
+          <p><strong>Lieu de livraison:</strong> ${commande.lieu_de_livraison}</p>
+          <p><strong>Mode de paiement:</strong> ${commande.mode_de_paiement}</p>
+        </div>
+        
+        <p>Une commande vient de changer de statut. Veuillez prendre les mesures appropriées selon votre procédure interne.</p>
+        
+        <p>Vous pouvez consulter les détails complets de cette commande dans le système d'administration.</p>
+      `;
+      
+      return await emailNotificationService.sendEmail(
+        adminEmails,
+        subject,
+        htmlContent
+      );
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi de la notification de changement de statut:', error);
       return false;
     }
   },

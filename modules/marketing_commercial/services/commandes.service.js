@@ -42,7 +42,7 @@ const commandesService = {
         // 1. Insérer la commande
         const commandeInserted = await tx.insert(commandes).values({
           date_de_commande: new Date(),
-          etat_commande: 'En attente', // Etat initial corrigé
+          etat_commande: 'en_attente', // Etat initial
           lieu_de_livraison: commandeData.lieu_de_livraison,
           mode_de_paiement: commandeData.mode_de_paiement,
           id_client: commandeData.id_client,
@@ -216,34 +216,43 @@ const commandesService = {
         return [];
       }
       
-      // Récupérer toutes les images pour tous les produits en une seule requête
+      // Récupérer l'image principale (numéro 1) pour chaque produit
       const productIds = result.map(product => product.id_produit);
       
-      const allImages = await db
+      const mainImages = await db
         .select({
           id_image: images.id_image,
           lien_image: images.lien_image,
+          numero_image: images.numero_image,
           id_produit: images.id_produit
         })
         .from(images)
         .where(inArray(images.id_produit, productIds));
       
-      // Organiser les images par id_produit
-      const imagesByProductId = {};
-      allImages.forEach(img => {
-        if (!imagesByProductId[img.id_produit]) {
-          imagesByProductId[img.id_produit] = [];
+      // Organiser les images par id_produit et récupérer l'image principale
+      const mainImagesByProductId = {};
+      mainImages.forEach(img => {
+        const productId = img.id_produit;
+        if (!mainImagesByProductId[productId]) {
+          mainImagesByProductId[productId] = [];
         }
-        imagesByProductId[img.id_produit].push(img.lien_image);
+        mainImagesByProductId[productId].push(img);
       });
       
-      // Ajouter les images à chaque produit
+      // Trier les images par numero_image et prendre la première (image principale)
+      Object.keys(mainImagesByProductId).forEach(productId => {
+        mainImagesByProductId[productId].sort((a, b) => (a.numero_image || 999) - (b.numero_image || 999));
+      });
+      
+      // Ajouter l'image principale à chaque produit
       const productsWithImages = result.map(product => {
-        const productImages = imagesByProductId[product.id_produit] || [];
+        const productImages = mainImagesByProductId[product.id_produit] || [];
+        const mainImage = productImages.length > 0 ? productImages[0].lien_image : null;
+        
         return {
           ...product,
-          images: productImages,
-          image: productImages.length > 0 ? productImages[0] : null,
+          image: mainImage, // Image principale uniquement
+          images: productImages.map(img => img.lien_image), // Toutes les images pour compatibilité
         };
       });
       
@@ -369,7 +378,7 @@ const commandesService = {
   // Mettre à jour le statut d'une commande
   updateCommandeStatus: async (id, newStatus) => {
     // Validation du statut
-    const validStatuses = ['En attente', 'Livré', 'Annulé', 'Retourné'];
+    const validStatuses = ['en_attente', 'Livré', 'Annulé', 'Retourné'];
     if (!validStatuses.includes(newStatus)) {
       throw new Error(`État de commande invalide. Les valeurs autorisées sont: ${validStatuses.join(', ')}`);
     }
@@ -379,7 +388,10 @@ const commandesService = {
       .select({
         id_commande: commandes.id_commande,
         etat_commande: commandes.etat_commande,
-        id_client: commandes.id_client
+        id_client: commandes.id_client,
+        date_de_commande: commandes.date_de_commande,
+        lieu_de_livraison: commandes.lieu_de_livraison,
+        mode_de_paiement: commandes.mode_de_paiement
       })
       .from(commandes)
       .where(eq(commandes.id_commande, id))
@@ -400,6 +412,18 @@ const commandesService = {
       .set({ etat_commande: newStatus, updated_at: new Date() }) // Ajouter updated_at
       .where(eq(commandes.id_commande, id));
     
+    // Récupérer les informations du client et des admins pour les notifications
+    const client = await db
+      .select()
+      .from(clients_en_ligne)
+      .where(eq(clients_en_ligne.id_client, existingCommande[0].id_client))
+      .limit(1);
+    
+    const admins = await db
+      .select()
+      .from(clients_en_ligne)
+      .where(eq(clients_en_ligne.role, 'admin'));
+    
     // Envoyer une notification au client
     let notificationMessage = "";
     
@@ -407,15 +431,31 @@ const commandesService = {
       notificationMessage = "Votre commande a été marquée comme livrée.";
     } else if (newStatus === 'Annulé') {
       notificationMessage = "Votre commande a été annulée.";
-    } // Pas de notif pour 'En attente' sans date
+    } else if (newStatus === 'Retourné') {
+      notificationMessage = "Votre commande a été retournée.";
+    } else if (newStatus === 'en_attente' && dateChanged) { // Cas de validation
+      notificationMessage = `Votre commande a été validée. Date de livraison prévue: ${newDateFormatted}.`;
+      notificationType = 'date_update';
+    } // Pas de notif pour 'en_attente' sans date
     
     if (notificationMessage) {
       await emailNotificationService.notifyClient(existingCommande[0].id_client, {
-        type: 'status_update',
-        message: notificationMessage, // Message brut (utilisé si l'email échoue)
+        type: notificationType,
+        message: notificationMessage, // Message brut
         commandeId: id,
-        newStatus: newStatus
-      }).catch(err => console.error("Erreur d'envoi notification (status):", err));
+        newStatus: statusChanged ? newStatus : undefined,
+        newDate: newDateFormatted // Toujours envoyer la date formatée si disponible
+      }).catch(err => console.error("Erreur d'envoi notification (combined):", err));
+      
+      // Envoyer une notification aux admins pour les cas d'annulation et de retour
+      if ((newStatus === 'Annulé' || newStatus === 'Retourné') && admins && admins.length > 0) {
+        await emailNotificationService.sendStatusChangeNotificationToAdmin(
+          existingCommande[0], 
+          client.length > 0 ? client[0] : null, 
+          admins, 
+          newStatus
+        ).catch(err => console.error("Erreur d'envoi notification admin (status):", err));
+      }
     }
       
     return await commandesService.getCommandeById(id);
@@ -477,7 +517,7 @@ const commandesService = {
   // Mettre à jour le statut et la date de livraison d'une commande
   updateCommandeStatusAndDate: async (id, newStatus, dateLivraison = null) => {
     // Validation du statut
-    const validStatuses = ['En attente', 'Livré', 'Annulé', 'Retourné'];
+    const validStatuses = ['en_attente', 'Livré', 'Annulé', 'Retourné'];
     if (!validStatuses.includes(newStatus)) {
       throw new Error(`État de commande invalide. Les valeurs autorisées sont: ${validStatuses.join(', ')}`);
     }
@@ -550,12 +590,12 @@ const commandesService = {
     } else if (newStatus === 'Annulé' && statusChanged) {
       notificationMessage = "Votre commande a été annulée.";
       notificationType = 'status_update';
-    } else if (newStatus === 'En attente' && dateChanged) { // Cas de validation
+    } else if (newStatus === 'Retourné') {
+      notificationMessage = "Votre commande a été retournée.";
+    } else if (newStatus === 'en_attente' && dateChanged) { // Cas de validation
       notificationMessage = `Votre commande a été validée. Date de livraison prévue: ${newDateFormatted}.`;
       notificationType = 'date_update';
-    } else if (statusChanged || dateChanged) { // Autres mises à jour combinées
-      notificationMessage = `Votre commande a été mise à jour. ${statusChanged ? `Nouveau statut: ${newStatus}.` : ''} ${dateChanged ? `Nouvelle date de livraison prévue: ${newDateFormatted}.` : ''}`;
-    }
+    } // Pas de notif pour 'en_attente' sans date
     
     if (notificationMessage) {
       await emailNotificationService.notifyClient(existingCommande[0].id_client, {
