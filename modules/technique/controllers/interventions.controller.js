@@ -311,6 +311,24 @@ const interventionsController = {
         message: error.message
       });
     }
+  },
+
+  getInterventionsByPartenaire: async (req, res) => {
+    try {
+      const { partenaireId } = req.params;
+      const interventions = await interventionsService.getInterventionsByPartenaire(parseInt(partenaireId));
+      
+      res.status(200).json({
+        success: true,
+        message: "Interventions du partenaire récupérées avec succès",
+        data: interventions
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
   }
 };
 

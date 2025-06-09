@@ -7,6 +7,25 @@ const notificationService = {
   // Envoyer une notification à un utilisateur spécifique
   sendToUser: async (userId, notification) => {
     try {
+      // Vérifier si une notification similaire non lue existe déjà
+      const existingNotification = await db
+        .select()
+        .from(notifications)
+        .where(
+          and(
+            eq(notifications.user_id, userId),
+            eq(notifications.title, notification.title),
+            eq(notifications.message, notification.message),
+            eq(notifications.is_read, false)
+          )
+        )
+        .limit(1);
+
+      // Si une notification similaire non lue existe déjà, ne pas en créer une nouvelle
+      if (existingNotification.length > 0) {
+        return existingNotification[0];
+      }
+
       // Sauvegarder la notification dans la base de données
       const [savedNotification] = await db
         .insert(notifications)
@@ -19,7 +38,7 @@ const notificationService = {
         })
         .returning();
       
-      // Envoyer via WebSocket
+      // Envoyer via WebSocket uniquement au destinataire concerné
       io.to(`user:${userId}`).emit('notification', {
         ...savedNotification,
         created_at: new Date()
@@ -35,14 +54,16 @@ const notificationService = {
   // Envoyer une notification à tous les utilisateurs d'un rôle spécifique
   sendToRole: async (role, notification) => {
     try {
-      // Pour les notifications à plusieurs utilisateurs, on pourrait
-      // utiliser une approche différente pour stocker en DB
-      
-      // Envoyer via WebSocket
-      io.to(`role:${role}`).emit('notification', {
-        ...notification,
-        created_at: new Date()
-      });
+      // Récupérer tous les utilisateurs avec ce rôle
+      const users = await db
+        .select()
+        .from(clients_en_ligne)
+        .where(eq(clients_en_ligne.role, role));
+
+      // Envoyer la notification à chaque utilisateur individuellement
+      for (const user of users) {
+        await notificationService.sendToUser(user.id_client, notification);
+      }
       
       return true;
     } catch (error) {
@@ -68,8 +89,25 @@ const notificationService = {
   },
   
   // Marquer une notification comme lue
-  markAsRead: async (notificationId) => {
+  markAsRead: async (notificationId, userId) => {
     try {
+      // Vérifier que la notification appartient bien à l'utilisateur
+      const notification = await db
+        .select()
+        .from(notifications)
+        .where(
+          and(
+            eq(notifications.id, notificationId),
+            eq(notifications.user_id, userId)
+          )
+        )
+        .limit(1);
+
+      if (notification.length === 0) {
+        throw new Error("Notification non trouvée ou non autorisée");
+      }
+
+      // Marquer comme lue
       await db
         .update(notifications)
         .set({ is_read: true })

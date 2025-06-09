@@ -764,5 +764,88 @@ router.get("/:id/documents", interventionsController.getInterventionDocuments);
  */
 router.delete("/:id/documents/:documentId", interventionsController.deleteDocument);
 
+/**
+ * @swagger
+ * /technique/interventions/partenaire/{partenaireId}:
+ *   get:
+ *     summary: Récupère toutes les interventions d'un partenaire
+ *     description: Retourne la liste complète des interventions associées à un partenaire spécifique, incluant les détails du partenaire, du contrat et des employés
+ *     tags: [Interventions]
+ *     parameters:
+ *       - in: path
+ *         name: partenaireId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du partenaire
+ *     responses:
+ *       200:
+ *         description: Liste des interventions récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Interventions du partenaire récupérées avec succès
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       intervention:
+ *                         $ref: '#/components/schemas/Intervention'
+ *                       partenaire:
+ *                         type: object
+ *                         properties:
+ *                           id_partenaire:
+ *                             type: integer
+ *                           nom_partenaire:
+ *                             type: string
+ *                           telephone_partenaire:
+ *                             type: string
+ *                           email_partenaire:
+ *                             type: string
+ *                           specialite:
+ *                             type: string
+ *                           localisation:
+ *                             type: string
+ *                           type_partenaire:
+ *                             type: string
+ *                           statut:
+ *                             type: string
+ *                       contrat:
+ *                         type: object
+ *                         properties:
+ *                           id_contrat:
+ *                             type: integer
+ *                           nom_contrat:
+ *                             type: string
+ *                           duree_contrat:
+ *                             type: string
+ *                           date_debut:
+ *                             type: string
+ *                           date_fin:
+ *                             type: string
+ *                           reference:
+ *                             type: string
+ *                           type_de_contrat:
+ *                             type: string
+ *                           statut:
+ *                             type: string
+ *                       employes:
+ *                         type: array
+ *                         items:
+ *                           $ref: '#/components/schemas/Employe'
+ *       404:
+ *         description: Partenaire non trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get("/partenaire/:partenaireId", interventionsController.getInterventionsByPartenaire);
 
 module.exports = router;

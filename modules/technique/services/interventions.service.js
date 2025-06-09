@@ -1,5 +1,5 @@
 const { db } = require('../../../core/database/config');
-const { interventions, intervention_employes, employes, intervention_taches, documents } = require("../../../core/database/models");
+const { interventions, intervention_employes, employes, intervention_taches, documents, partenaires, contrats } = require("../../../core/database/models");
 
 const { eq, and, desc, asc, sql } = require("drizzle-orm");
 const fs = require('fs').promises;  // Ajoutez cette importation
@@ -184,6 +184,67 @@ const interventionsService = {
         eq(intervention_employes.id_employes, employes.id_employes)
       )
       .where(eq(intervention_employes.id_intervention, interventionId));
+  },
+
+  getInterventionsByPartenaire: async (partenaireId) => {
+    try {
+      // Récupérer les interventions avec les informations du partenaire
+      const interventions = await db
+        .select({
+          intervention: interventions,
+          partenaire: {
+            id_partenaire: partenaires.id_partenaire,
+            nom_partenaire: partenaires.nom_partenaire,
+            telephone_partenaire: partenaires.telephone_partenaire,
+            email_partenaire: partenaires.email_partenaire,
+            specialite: partenaires.specialite,
+            localisation: partenaires.localisation,
+            type_partenaire: partenaires.type_partenaire,
+            statut: partenaires.statut
+          },
+          contrat: {
+            id_contrat: contrats.id_contrat,
+            nom_contrat: contrats.nom_contrat,
+            duree_contrat: contrats.duree_contrat,
+            date_debut: contrats.date_debut,
+            date_fin: contrats.date_fin,
+            reference: contrats.reference,
+            type_de_contrat: contrats.type_de_contrat,
+            statut: contrats.statut
+          }
+        })
+        .from(interventions)
+        .leftJoin(partenaires, eq(interventions.id_partenaire, partenaires.id_partenaire))
+        .leftJoin(contrats, eq(interventions.id_contrat, contrats.id_contrat))
+        .where(eq(interventions.id_partenaire, partenaireId));
+
+      // Pour chaque intervention, récupérer les employés associés
+      const interventionsWithDetails = await Promise.all(
+        interventions.map(async (intervention) => {
+          // Récupérer les employés
+          const employes = await db
+            .select({
+              id_employes: employes.id_employes,
+              nom_employes: employes.nom_employes,
+              prenom_employes: employes.prenom_employes,
+              email_employes: employes.email_employes,
+              contact_employes: employes.contact_employes
+            })
+            .from(intervention_employes)
+            .innerJoin(employes, eq(intervention_employes.id_employes, employes.id_employes))
+            .where(eq(intervention_employes.id_intervention, intervention.intervention.id_intervention));
+
+          return {
+            ...intervention,
+            employes
+          };
+        })
+      );
+
+      return interventionsWithDetails;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des interventions par partenaire: ${error.message}`);
+    }
   },
 
  

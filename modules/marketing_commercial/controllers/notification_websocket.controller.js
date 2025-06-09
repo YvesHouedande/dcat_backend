@@ -4,7 +4,7 @@ const notificationController = {
   // Récupérer toutes les notifications d'un utilisateur
   getUserNotifications: async (req, res) => {
     try {
-      const userId = req.params.userId || req.user.id;
+      const userId = req.user.id;
       
       const notifications = await notificationService.getUserNotifications(userId);
       
@@ -25,6 +25,7 @@ const notificationController = {
   markAsRead: async (req, res) => {
     try {
       const { notificationId } = req.params;
+      const userId = req.user.id;
       
       if (!notificationId) {
         return res.status(400).json({ 
@@ -33,7 +34,7 @@ const notificationController = {
         });
       }
       
-      await notificationService.markAsRead(notificationId);
+      await notificationService.markAsRead(notificationId, userId);
       
       res.json({ 
         success: true, 
@@ -43,7 +44,7 @@ const notificationController = {
       console.error("Erreur lors du marquage de la notification:", error);
       res.status(500).json({ 
         success: false, 
-        error: "Erreur lors du marquage de la notification" 
+        error: error.message || "Erreur lors du marquage de la notification" 
       });
     }
   },
@@ -51,7 +52,7 @@ const notificationController = {
   // Marquer toutes les notifications d'un utilisateur comme lues
   markAllAsRead: async (req, res) => {
     try {
-      const userId = req.params.userId || req.user.id;
+      const userId = req.user.id;
       
       await notificationService.markAllAsRead(userId);
       
@@ -71,7 +72,7 @@ const notificationController = {
   // Compter les notifications non lues
   countUnread: async (req, res) => {
     try {
-      const userId = req.params.userId || req.user.id;
+      const userId = req.user.id;
       
       const count = await notificationService.countUnread(userId);
       
@@ -91,7 +92,7 @@ const notificationController = {
   // Supprimer les notifications lues
   deleteReadNotifications: async (req, res) => {
     try {
-      const userId = req.params.userId || req.user.id;
+      const userId = req.user.id;
       
       await notificationService.deleteReadNotifications(userId);
       
