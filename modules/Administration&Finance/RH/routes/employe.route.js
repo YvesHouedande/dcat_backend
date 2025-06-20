@@ -152,7 +152,7 @@ router.put('/:id', employeController.updateEmploye);
 
 /**
  * @swagger
- * /{id}:
+ * /administration/employes/{id}:
  *   delete:
  *     summary: Supprime un employé par son ID
  *     tags: [Employes]

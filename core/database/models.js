@@ -72,7 +72,7 @@ const demandes = pgTable("demandes", {
   date_retour: date("date_retour"),
   motif: text("motif"),
   type_demande: varchar("type_demande", { length: 50 }),
-  durée: varchar("durée", { length: 50 }),
+  duree: varchar("durée", { length: 50 }),
   heure_debut: time("heure_debut"),
   heure_fin: time("heure_fin"),
   id_employes: integer("id_employes").references(() => employes.id_employes),
