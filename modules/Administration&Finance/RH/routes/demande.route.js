@@ -100,7 +100,7 @@
 
 /**
  * @swagger
- * /administration/demandes/{type}:
+ * /administration/demandes/type/{type}:
  *   get:
  *     summary: Lister les demandes RH par type
  *     tags: [Demandes]
@@ -246,7 +246,7 @@ router.post(
 router.get('/', demandeController.getAllDemandes);
 
 // Filtrer par type
-router.get('/:type', demandeController.getDemandeByType);
+router.get('/type/:type', demandeController.getDemandeByType);
 
 // Filtrer par employé
 router.get('/employe/:id_employe', demandeController.getDemandeByEmploye);
