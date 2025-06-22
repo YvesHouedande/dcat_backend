@@ -189,7 +189,7 @@ const interventionsService = {
   getInterventionsByPartenaire: async (partenaireId) => {
     try {
       // Récupérer les interventions avec les informations du partenaire
-      const interventions = await db
+      const interventionsResult = await db
         .select({
           intervention: interventions,
           partenaire: {
@@ -220,9 +220,9 @@ const interventionsService = {
 
       // Pour chaque intervention, récupérer les employés associés
       const interventionsWithDetails = await Promise.all(
-        interventions.map(async (intervention) => {
+        interventionsResult.map(async (intervention) => {
           // Récupérer les employés
-          const employes = await db
+          const employesResult = await db
             .select({
               id_employes: employes.id_employes,
               nom_employes: employes.nom_employes,
@@ -236,7 +236,7 @@ const interventionsService = {
 
           return {
             ...intervention,
-            employes
+            employes: employesResult
           };
         })
       );
