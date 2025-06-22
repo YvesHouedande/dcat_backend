@@ -22,11 +22,46 @@ const produitsController = {
 
   getPaginatedEquipements: async (req, res) => {
     try {
+      console.log('Requête de pagination reçue:', {
+        query: req.query,
+        method: req.method,
+        url: req.url
+      });
+
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 20;
       const familleId = req.query.familleId ? parseInt(req.query.familleId) : null;
       
+      // Validation des paramètres
+      if (page < 1) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Le numéro de page doit être supérieur à 0' 
+        });
+      }
+      
+      if (limit < 1 || limit > 100) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'La limite doit être entre 1 et 100' 
+        });
+      }
+      
+      if (familleId !== null && isNaN(familleId)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'familleId doit être un nombre valide' 
+        });
+      }
+
+      console.log('Paramètres validés:', { page, limit, familleId });
+      
       const result = await produitsService.getEquipementsWithPagination(page, limit, familleId);
+      
+      console.log('Résultat du service:', {
+        productsCount: result.products.length,
+        pagination: result.pagination
+      });
       
       res.json({ 
         success: true, 
@@ -34,7 +69,16 @@ const produitsController = {
         pagination: result.pagination
       });
     } catch (error) {
-      res.status(400).json({ success: false, error: error.message });
+      console.error('Erreur dans getPaginatedEquipements:', {
+        message: error.message,
+        stack: error.stack,
+        query: req.query
+      });
+      
+      res.status(500).json({ 
+        success: false, 
+        error: `Erreur serveur: ${error.message}` 
+      });
     }
   },
 
