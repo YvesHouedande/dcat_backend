@@ -145,7 +145,7 @@ const produitsService = {
         familleId 
       });
       
-      // Construire les conditions de base
+      // Conditions de base - comme dans getAllEquipements
       const baseConditions = [
         eq(type_produits.libelle, 'equipement'),
         isNotNull(produits.prix_produit)
@@ -156,35 +156,47 @@ const produitsService = {
         baseConditions.push(eq(produits.id_famille, parseInt(familleId)));
       }
       
-      console.log('Conditions de requête:', baseConditions);
+      console.log('Conditions de requête (simplifiées):', baseConditions);
       
-      // Construire la requête pour les produits (même ordre que getAllEquipements)
-      const productsData = await db
-        .select({
-          id: produits.id_produit,
-          designation: produits.desi_produit,
-          description: produits.desc_produit,
-          prix: produits.prix_produit,
-          caracteristiques: produits.caracteristiques_produit,
-          famille_id: familles.id_famille,
-          famille_libelle: familles.libelle_famille,
-        })
-        .from(produits)
-        .where(and(...baseConditions))
-        .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
-        .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
-        .limit(validatedLimit)
-        .offset(offset)
-        .orderBy(desc(produits.id_produit)); // Les plus récents d'abord
+              // TEMPORAIRE: Requête la plus simple possible
+        let query = db
+          .select({
+            id: produits.id_produit,
+            designation: produits.desi_produit,
+            description: produits.desc_produit,
+            prix: produits.prix_produit,
+            caracteristiques: produits.caracteristiques_produit,
+            famille_id: familles.id_famille,
+            famille_libelle: familles.libelle_famille,
+          })
+          .from(produits);
+          
+        // Ajouter les conditions seulement si il y en a
+        if (baseConditions.length > 0) {
+          query = query.where(and(...baseConditions));
+        }
+        
+        const productsData = await query
+          .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit)) // AJOUTER le JOIN manquant !
+          .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+          .limit(validatedLimit)
+          .offset(offset)
+          .orderBy(desc(produits.id_produit));
       
       console.log(`Produits récupérés: ${productsData.length}`);
       
-      // Obtenir le nombre total pour calculer le nombre de pages (même ordre que la requête principale)
-      const totalCountResult = await db
-        .select({ count: sql`count(*)` })
-        .from(produits)
-        .where(and(...baseConditions))
-        .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit));
+              // TEMPORAIRE: Compter TOUS les produits
+        let countQuery = db
+          .select({ count: sql`count(*)` })
+          .from(produits);
+          
+        // Ajouter les conditions seulement si il y en a
+        if (baseConditions.length > 0) {
+          countQuery = countQuery.where(and(...baseConditions));
+        }
+        
+        const totalCountResult = await countQuery
+          .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit)); // AJOUTER le JOIN pour le count aussi !
       
       const totalCount = parseInt(totalCountResult[0]?.count) || 0;
       console.log(`Nombre total de produits: ${totalCount}`);
