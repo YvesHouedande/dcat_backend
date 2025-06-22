@@ -158,7 +158,7 @@ const produitsService = {
       
       console.log('Conditions de requête:', baseConditions);
       
-      // Construire la requête pour les produits
+      // Construire la requête pour les produits (même ordre que getAllEquipements)
       const productsData = await db
         .select({
           id: produits.id_produit,
@@ -170,21 +170,21 @@ const produitsService = {
           famille_libelle: familles.libelle_famille,
         })
         .from(produits)
+        .where(and(...baseConditions))
         .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
         .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
-        .where(and(...baseConditions))
         .limit(validatedLimit)
         .offset(offset)
         .orderBy(desc(produits.id_produit)); // Les plus récents d'abord
       
       console.log(`Produits récupérés: ${productsData.length}`);
       
-      // Obtenir le nombre total pour calculer le nombre de pages
+      // Obtenir le nombre total pour calculer le nombre de pages (même ordre que la requête principale)
       const totalCountResult = await db
         .select({ count: sql`count(*)` })
         .from(produits)
-        .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
-        .where(and(...baseConditions));
+        .where(and(...baseConditions))
+        .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit));
       
       const totalCount = parseInt(totalCountResult[0]?.count) || 0;
       console.log(`Nombre total de produits: ${totalCount}`);
