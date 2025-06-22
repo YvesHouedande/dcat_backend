@@ -27,7 +27,7 @@ const emailStyles = `
   body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }
   .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
   .header { text-align: center; padding: 20px 0; }
-  .logo { max-width: 90px; height: auto; }
+  .logo { max-width: 85px; height: auto; }
   h1 { color: #1976D2; margin-top: 20px; font-weight: 700; font-size: 26px; text-align: center; }
   h2 { color: #1976D2; font-size: 20px; margin-top: 25px; margin-bottom: 15px; }
   .content { padding: 20px; background-color: #fff; border-radius: 5px; }
