@@ -13,7 +13,7 @@ const createDemande = async (data) => {
         console.error("Error creating demande:", error);
         throw error;
     }
-}
+};
 
 const getAllDemandes = async () => {
     try {
@@ -25,7 +25,7 @@ const getAllDemandes = async () => {
         console.error("Error fetching demandes:", error);
         throw error;
     }
-}
+};
 
 const getdemandeBytype = async (type) => {
     try {
@@ -38,7 +38,7 @@ const getdemandeBytype = async (type) => {
         console.error("Error fetching demande by type:", error);
         throw error;
     }
-}
+};
 
 const updateDemande = async (id, data) => {
     try {
@@ -52,7 +52,7 @@ const updateDemande = async (id, data) => {
         console.error("Error updating demande:", error);
         throw error;
     }
-}
+};
 
 const deleteDemande = async (id) => {
     try {
@@ -65,7 +65,7 @@ const deleteDemande = async (id) => {
         console.error("Error deleting demande:", error);
         throw error;
     }
-}
+};
 
 const addDocumentToDemande = async (documentData) => {
 
@@ -74,7 +74,7 @@ const addDocumentToDemande = async (documentData) => {
     .values(documentData)
     .returning();
     return result;
-}
+};
 
 const getdemandeById = async (id) =>{
     const result = await db
@@ -82,7 +82,15 @@ const getdemandeById = async (id) =>{
     .from(demandes)
     .where(eq(demandes.id_demandes, id))
     return result;
-}
+};
+
+const getDemnandeByEmploye = async (id_employe) => {
+    const result = await db
+    .select()
+    .from(demandes)
+    .where(eq(demandes.id_employes, id_employe))
+    return result;
+};
 
 
 module.exports = {
@@ -92,5 +100,6 @@ module.exports = {
     updateDemande,
     deleteDemande,
     addDocumentToDemande,
-    getdemandeById
+    getdemandeById,
+    getDemnandeByEmploye
 }
