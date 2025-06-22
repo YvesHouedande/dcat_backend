@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 // Configuration de Nodemailer avec les variables d'environnement
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'node180-eu.n0c.com',
   port: process.env.EMAIL_PORT || 465,
   secure: true, // true pour le port 465, false pour les autres ports comme 587
