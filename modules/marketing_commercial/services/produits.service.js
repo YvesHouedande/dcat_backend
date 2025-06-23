@@ -126,10 +126,10 @@ const produitsService = {
     return productsWithImages;
   },
 
-  // Nouvelle fonction: Récupérer les produits avec pagination
-  getEquipementsWithPagination: async (page = 1, limit = 20, familleId = null) => {
+  // Nouvelle fonction: Récupérer les produits avec pagination et recherche
+  getEquipementsWithPagination: async (page = 1, limit = 20, familleId = null, searchQuery = null) => {
     try {
-      console.log('Service getEquipementsWithPagination appelé avec:', { page, limit, familleId });
+      console.log('Service getEquipementsWithPagination appelé avec:', { page, limit, familleId, searchQuery });
       
       // Validation des paramètres
       const validatedPage = Math.max(1, parseInt(page) || 1);
@@ -142,7 +142,8 @@ const produitsService = {
         validatedPage, 
         validatedLimit, 
         offset,
-        familleId 
+        familleId,
+        searchQuery 
       });
       
       // Conditions de base - comme dans getAllEquipements
@@ -154,6 +155,18 @@ const produitsService = {
       // Ajouter le filtre par famille si spécifié
       if (familleId && !isNaN(parseInt(familleId))) {
         baseConditions.push(eq(produits.id_famille, parseInt(familleId)));
+      }
+      
+      // Ajouter la recherche si spécifiée (désignation et modèle uniquement)
+      if (searchQuery && searchQuery.trim().length > 0) {
+        const searchTerm = `%${searchQuery.trim().toLowerCase()}%`;
+        // Recherche dans la désignation et le modèle uniquement
+        baseConditions.push(
+          sql`(
+            LOWER(${produits.desi_produit}) LIKE ${searchTerm} OR 
+            LOWER(${modeles.libelle_modele}) LIKE ${searchTerm}
+          )`
+        );
       }
       
       console.log('Conditions de requête (simplifiées):', baseConditions);
@@ -177,8 +190,9 @@ const produitsService = {
         }
         
         const productsData = await query
-          .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit)) // AJOUTER le JOIN manquant !
+          .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
           .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+          .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
           .limit(validatedLimit)
           .offset(offset)
           .orderBy(desc(produits.id_produit));
@@ -196,7 +210,8 @@ const produitsService = {
         }
         
         const totalCountResult = await countQuery
-          .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit)); // AJOUTER le JOIN pour le count aussi !
+          .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
+          .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele));
       
       const totalCount = parseInt(totalCountResult[0]?.count) || 0;
       console.log(`Nombre total de produits: ${totalCount}`);

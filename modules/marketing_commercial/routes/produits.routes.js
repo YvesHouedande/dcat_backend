@@ -168,6 +168,11 @@ router.get('/nouveautes', produitsController.getLatestProducts);
  *         schema:
  *           type: integer
  *         description: Filtrer par ID de famille (optionnel)
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Terme de recherche pour filtrer les produits par désignation ou modèle (optionnel)
  *     responses:
  *       200:
  *         description: Liste paginée des produits récupérée avec succès

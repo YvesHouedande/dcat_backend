@@ -31,6 +31,7 @@ const produitsController = {
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 20;
       const familleId = req.query.familleId ? parseInt(req.query.familleId) : null;
+      const searchQuery = req.query.search ? req.query.search.trim() : null;
       
       // Validation des paramètres
       if (page < 1) {
@@ -54,9 +55,9 @@ const produitsController = {
         });
       }
 
-      console.log('Paramètres validés:', { page, limit, familleId });
+      console.log('Paramètres validés:', { page, limit, familleId, searchQuery });
       
-      const result = await produitsService.getEquipementsWithPagination(page, limit, familleId);
+      const result = await produitsService.getEquipementsWithPagination(page, limit, familleId, searchQuery);
       
       console.log('Résultat du service:', {
         productsCount: result.products.length,
