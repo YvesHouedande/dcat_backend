@@ -35,6 +35,21 @@ const { initializeWebSocket } = require('./modules/marketing_commercial/utils/we
 initializeWebSocket(server);
 logger.info('Serveur WebSocket initialisé');
 
+// Tâche de maintenance automatique pour les notifications
+const notificationService = require('./modules/marketing_commercial/services/notification_websocket.service');
+
+// Nettoyer les notifications anciennes toutes les heures
+setInterval(async () => {
+  try {
+    await notificationService.cleanupOldNotifications(7); // Supprimer celles de plus de 7 jours
+    console.log('✅ Maintenance automatique des notifications effectuée');
+  } catch (error) {
+    console.error('❌ Erreur lors de la maintenance des notifications:', error);
+  }
+}, 60 * 60 * 1000); // 1 heure
+
+console.log('🔄 Tâche de maintenance des notifications programmée (toutes les heures)');
+
 // =============== CHARGEMENT DES MODULES ===============
 function loadModule(moduleName) {
   try {

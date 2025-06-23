@@ -110,19 +110,12 @@ const commandesService = {
             .catch(err => console.error("Erreur d'envoi notification email admin:", err));
         }
         
-        // Notification WebSocket pour le client
-        await notificationService.sendToUser(result.commande.id_client, {
-          title: 'Commande confirmée',
-          message: `Votre commande a été enregistrée avec succès.`,
-          type: 'command',
-        });
-
-        // Notification WebSocket pour tous les admins
-        await notificationService.sendToRole('admin', {
-          title: 'Nouvelle commande',
-          message: `Une nouvelle commande a été passée par ${result.client ? result.client.nom : 'un client'}.`,
-          type: 'command_admin',
-        });
+        // Utiliser la nouvelle méthode intelligente pour éviter les doublons
+        await notificationService.sendCommandeNotifications(
+          result.commande.id_client,
+          result.client,
+          result.admins
+        );
         
         // Vider le panier du client après une commande réussie
         try {
@@ -439,6 +432,7 @@ const commandesService = {
     } // Pas de notif pour 'en_attente' sans date
     
     if (notificationMessage) {
+      // Notification par email
       await emailNotificationService.notifyClient(existingCommande[0].id_client, {
         type: notificationType,
         message: notificationMessage, // Message brut
@@ -447,7 +441,16 @@ const commandesService = {
         newDate: newDateFormatted // Toujours envoyer la date formatée si disponible
       }).catch(err => console.error("Erreur d'envoi notification (combined):", err));
       
-      // Envoyer une notification aux admins pour les cas d'annulation et de retour
+      // Notification WebSocket intelligente
+      await notificationService.sendStatusChangeNotifications(
+        id,
+        existingCommande[0].id_client,
+        client.length > 0 ? client[0] : null,
+        newStatus,
+        admins
+      ).catch(err => console.error("Erreur d'envoi notification WebSocket (status):", err));
+      
+      // Envoyer une notification aux admins pour les cas d'annulation et de retour (email)
       if ((newStatus === 'Annulé' || newStatus === 'Retourné') && admins && admins.length > 0) {
         await emailNotificationService.sendStatusChangeNotificationToAdmin(
           existingCommande[0], 

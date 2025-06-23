@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const commandesController = require('../controllers/commandes.controller');
+const { authMiddleware } = require('../middleware/auth');
 
 /**
  * @swagger
@@ -454,5 +455,48 @@ router.patch('/:id/update-date', commandesController.updateLivraisonDate);
  *         description: Erreur serveur
  */
 router.patch('/:id/update', commandesController.updateCommandeStatusAndDate);
+
+/**
+ * @swagger
+ * /marketing_commercial/commandes/{id}/cancel:
+ *   patch:
+ *     summary: Annule une commande client
+ *     description: Permet à un client d'annuler sa propre commande si elle est en attente
+ *     tags: [Commandes Marketing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la commande à annuler
+ *     responses:
+ *       200:
+ *         description: Commande annulée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Commande annulée avec succès
+ *                 commande:
+ *                   $ref: '#/components/schemas/Commande'
+ *       400:
+ *         description: Commande non annulable (pas en attente ou autres raisons)
+ *       403:
+ *         description: Non autorisé (pas le propriétaire de la commande)
+ *       404:
+ *         description: Commande non trouvée
+ *       500:
+ *         description: Erreur serveur
+ */
+router.patch('/:id/cancel', authMiddleware, commandesController.cancelCommande);
 
 module.exports = router;

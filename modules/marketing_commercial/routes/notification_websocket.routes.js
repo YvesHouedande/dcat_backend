@@ -39,7 +39,7 @@ const { authMiddleware } = require('../middleware/auth');
  * /marketing_commercial/notifications:
  *   get:
  *     summary: Récupère les notifications de l'utilisateur connecté
- *     description: Retourne toutes les notifications de l'utilisateur
+ *     description: Retourne les notifications non lues et les notifications lues récentes (moins de 5 minutes)
  *     tags: [Notifications]
  *     security:
  *       - bearerAuth: []
@@ -64,6 +64,37 @@ const { authMiddleware } = require('../middleware/auth');
  *         description: Erreur serveur
  */
 router.get('/', authMiddleware, notificationController.getUserNotifications);
+
+/**
+ * @swagger
+ * /marketing_commercial/notifications/all:
+ *   get:
+ *     summary: Récupère toutes les notifications de l'utilisateur
+ *     description: Retourne toutes les notifications (lues et non lues) de l'utilisateur
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Liste de toutes les notifications récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 notifications:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Notification'
+ *       401:
+ *         description: Non authentifié
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/all', authMiddleware, notificationController.getAllUserNotifications);
 
 /**
  * @swagger
@@ -166,6 +197,36 @@ router.put('/read-all', authMiddleware, notificationController.markAllAsRead);
 
 /**
  * @swagger
+ * /marketing_commercial/notifications/delete-old-read:
+ *   delete:
+ *     summary: Supprime les notifications lues anciennes
+ *     description: Supprime les notifications lues depuis plus de 5 minutes
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Notifications supprimées avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Notifications lues anciennes supprimées avec succès
+ *       401:
+ *         description: Non authentifié
+ *       500:
+ *         description: Erreur serveur
+ */
+router.delete('/delete-old-read', authMiddleware, notificationController.deleteOldReadNotifications);
+
+/**
+ * @swagger
  * /marketing_commercial/notifications/delete-read:
  *   delete:
  *     summary: Supprime toutes les notifications lues
@@ -193,5 +254,52 @@ router.put('/read-all', authMiddleware, notificationController.markAllAsRead);
  *         description: Erreur serveur
  */
 router.delete('/delete-read', authMiddleware, notificationController.deleteReadNotifications);
+
+/**
+ * @swagger
+ * /marketing_commercial/notifications/connection-stats:
+ *   get:
+ *     summary: Obtient les statistiques de connexion WebSocket
+ *     description: Retourne les informations sur les utilisateurs connectés via WebSocket (admin uniquement)
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistiques récupérées avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     totalConnectedUsers:
+ *                       type: integer
+ *                       example: 5
+ *                     connectedUserIds:
+ *                       type: array
+ *                       items:
+ *                         type: integer
+ *                       example: [1, 2, 3, 4, 5]
+ *                     currentUser:
+ *                       type: object
+ *                       properties:
+ *                         isConnected:
+ *                           type: boolean
+ *                         userId:
+ *                           type: integer
+ *       403:
+ *         description: Accès non autorisé (admin requis)
+ *       401:
+ *         description: Non authentifié
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/connection-stats', authMiddleware, notificationController.getConnectionStats);
 
 module.exports = router;
