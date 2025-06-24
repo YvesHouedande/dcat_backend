@@ -90,8 +90,9 @@ router.post("/", controller.createCommande);
  *                   created_at: "2025-04-23T11:12:51.310Z"
  *                   updated_at: "2025-04-23T11:12:51.310Z"
  */
-
 router.get("/", controller.getAllCommandes);
+
+
 /**
  * @swagger
  * /stocks/commandes/{id}:
@@ -404,17 +405,168 @@ router.get("/:id", controller.getCommandeById);
  * /stocks/commandes/{id}:
  *   put:
  *     summary: Met à jour une commande par ID
+ *     description: |
+ *       Modifie les informations d’une commande existante :
+ *       • dates, lieu, mode de paiement  
+ *       • état commande (ex. « Validé », « En cours », « Annulée » …)  
+ *       • rattachement client ou partenaire  
+ *       • (optionnel) mise à jour des produits / quantités si le service le gère
  *     tags: [Commandes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID numérique de la commande à mettre à jour
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               date_de_commande:   { type: string, format: date }
+ *               etat_commande:      { type: string, example: "Validé" }
+ *               date_livraison:     { type: string, format: date }
+ *               lieu_de_livraison:  { type: string }
+ *               mode_de_paiement:   { type: string, example: "espèce" }
+ *               id_client:          { type: integer, nullable: true }
+ *               id_partenaire:      { type: integer, nullable: true }
+ *             example:
+ *               date_de_commande: "2025-06-24"
+ *               etat_commande: "Validé"
+ *               date_livraison: "2025-06-24"
+ *               lieu_de_livraison: "RTI plateaux"
+ *               mode_de_paiement: "espèce"
+ *               id_partenaire: 1
+ *     responses:
+ *       200:
+ *         description: Commande mise à jour
+ *         content:
+ *           application/json:
+ *             example:
+ *               id_commande: 7
+ *               date_de_commande: "2025-06-24"
+ *               etat_commande: "Validé"
+ *               date_livraison: "2025-06-24"
+ *               lieu_de_livraison: "RTI plateaux"
+ *               mode_de_paiement: "espèce"
+ *               id_client: null
+ *               id_partenaire: 1
+ *               created_at: "2025-06-24T16:08:58.106Z"
+ *               updated_at: "2025-06-24T16:09:17.091Z"
+ *               partenaire:
+ *                 id_partenaire: 1
+ *                 nom_partenaire: "Axel"
+ *                 telephone_partenaire: "010203040506"
+ *                 email_partenaire: "axel@gmail.com"
+ *                 type_partenaire: "test"
+ *               produits:
+ *                 - produit:
+ *                     id_produit: 1
+ *                     code_produit: "AV0001"
+ *                     desi_produit: "Moniteur FM DEVA DB44"
+ *                     prix_produit: "75000.00"
+ *                   quantite: 2
+ *                   prix_unitaire: "75000.00"
+ *               montant_total: 150000
+ *               exemplaires: []
+ *       400:
+ *         description: Paramètres ou corps de requête invalides
+ *       404:
+ *         description: Commande introuvable
+ *       500:
+ *         description: Erreur serveur
  */
 router.put("/:id", controller.updateCommande);
 
+
 /**
  * @swagger
- * /stocks/commandes/{id}:
- *   delete:
- *     summary: Supprime une commande par ID
+ * /stocks/commandes/etat/{id}:
+ *   put:
+ *     summary: Modifier l'etat d'une commande 
  *     tags: [Commandes]
  */
-router.delete("/:id/:type_sortie", controller.deleteCommande);
+router.put("/etat/:id", controller.updateEtatCommande);
+
+
+/**
+ * @swagger
+ * /stocks/commandes/{id}/{type}:
+ *   delete:
+ *     summary: Supprime une commande (mode sécurisé)
+ *     description: |
+ *       • Remet tous les exemplaires associés à **Disponible**  
+ *       • Réincrémente le stock produit  
+ *       • Refuse la suppression si la commande est déjà **livrée** ou **facturée**
+ *     tags: [Commandes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID numérique de la commande
+ *       - in: query
+ *         name: type
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [vente directe, vente en ligne, projet]
+ *           default: vente directe
+ *         description: Type de sortie concerné
+ *     responses:
+ *       200:
+ *         description: Commande supprimée avec succès
+ *       400:
+ *         description: Paramètre invalide
+ *       404:
+ *         description: Commande introuvable
+ *       409:
+ *         description: La commande est livrée ou facturée ; suppression refusée
+ *       500:
+ *         description: Erreur serveur
+ */
+router.delete("/:id/:type_sortie", controller.safeDeleteCommande);
+
+/**
+ * @swagger
+ * /stocks/commandes/force/{id}/{type}:
+ *   delete:
+ *     summary: Supprime une commande (mode forcé, admin)
+ *     description: |
+ *       **Action irréversible !**  
+ *       Ignore l’état de la commande (en cours, livrée, facturée…).  
+ *       Réinitialise tous les exemplaires (Vendu, Réservé…) → **Disponible**  
+ *       et incrémente le stock produit.
+ *     tags: [Commandes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID numérique de la commande
+ *       - in: query
+ *         name: type
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [vente directe, vente en ligne, projet]
+ *           default: vente directe
+ *         description: Type de sortie concerné
+ *     responses:
+ *       200:
+ *         description: Commande et données associées supprimées
+ *       400:
+ *         description: Paramètre invalide
+ *       404:
+ *         description: Commande introuvable
+ *       500:
+ *         description: Erreur serveur
+ */
+router.delete("force/:id/:type_sortie", controller.forceDeleteCommande);
 
 module.exports = router;
