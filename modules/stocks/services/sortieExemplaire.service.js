@@ -9,14 +9,14 @@ const {
 
 const typeSortie = ["vente_directe", "vente_en_ligne", "projet"];
 
-const etatExemplaire = require("./exemplaire.service");
+const {etatExemplaire} = require("./exemplaire.service");
 
 //Routes liées aux sorties d'exemplaires (les exemplaires qui ont été commander par exemplaire)
 
 // Création d'une sortie (et marquage de l'exemplaire comme "Vendu")
 async function createSortie({
   type_sortie,
-  reference_id,
+  reference_id,  //id de la commande ou du projet par exemple
   id_exemplaire,
   date_sortie = new Date(),
 }) {
@@ -168,7 +168,7 @@ async function deleteSortie(id_sortie_exemplaire) {
 
     await tx
       .update(exemplaires)
-      .set({ etat_exemplaire: etatExemplaire[1], updated_at: new Date() }) //"Disponible"
+      .set({ etat_exemplaire: etatExemplaire[5], updated_at: new Date() }) //"Reservé"
       .where(eq(exemplaires.id_exemplaire, sortie.id_exemplaire));
 
     return deleted;

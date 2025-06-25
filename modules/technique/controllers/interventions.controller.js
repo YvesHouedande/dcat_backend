@@ -5,8 +5,42 @@ const interventionsService = require("../services/interventions.service");
 const interventionsController = {
   getAllInterventions: async (req, res) => {
     try {
-      const interventions = await interventionsService.getAllInterventions();
-      res.status(200).json({ success: true, data: interventions });
+      const {
+        page = 1,
+        limit = 10,
+        sortBy,
+        sortOrder,
+        search,
+        type,
+        statut,
+        lieu,
+        dateDebut,
+        dateFin,
+        typeIntervention,
+        modeIntervention
+      } = req.query;
+
+      const options = {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        sortBy,
+        sortOrder,
+        search,
+        type,
+        statut,
+        lieu,
+        dateDebut,
+        dateFin,
+        typeIntervention,
+        modeIntervention
+      };
+
+      const result = await interventionsService.getAllInterventions(options);
+      res.status(200).json({ 
+        success: true, 
+        data: result.data, 
+        pagination: result.pagination 
+      });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
@@ -28,7 +62,7 @@ const interventionsController = {
   createIntervention: async (req, res) => {
     try {
       const interventionData = {
-        date_: new Date(req.body.date_),
+        date_intervention: new Date(req.body.date_intervention),
         cause_defaillance: req.body.cause_defaillance,
         rapport_intervention: req.body.rapport_intervention,
         type_intervention: req.body.type_intervention,
@@ -70,7 +104,7 @@ const interventionsController = {
     try {
       const { id } = req.params;
       const updateData = req.body;
-      if (updateData.date_) updateData.date_ = new Date(updateData.date_);
+      if (updateData.date_intervention) updateData.date_intervention = new Date(updateData.date_intervention);
       if (updateData.id_partenaire) updateData.id_partenaire = parseInt(updateData.id_partenaire);
       if (updateData.id_contrat) updateData.id_contrat = parseInt(updateData.id_contrat);
 
@@ -270,6 +304,24 @@ const interventionsController = {
         success: true,
         message: "Liste des employés de l'intervention récupérée",
         data: employes
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  },
+
+  getInterventionsByPartenaire: async (req, res) => {
+    try {
+      const { partenaireId } = req.params;
+      const interventions = await interventionsService.getInterventionsByPartenaire(parseInt(partenaireId));
+      
+      res.status(200).json({
+        success: true,
+        message: "Interventions du partenaire récupérées avec succès",
+        data: interventions
       });
     } catch (error) {
       res.status(500).json({

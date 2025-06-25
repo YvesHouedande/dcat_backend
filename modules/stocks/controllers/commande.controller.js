@@ -25,6 +25,19 @@ const getCommandeById = async (req, res) => {
     const commande = await commandeService.getCommandeById(
       parseInt(req.params.id)
     );
+    
+    
+    // 🔁 Ajouter les URLs aux images des produits
+    commande.produits = commande.produits.map((item) => ({
+      ...item,
+      images: item.images
+        ? item.images.map((img) => ({
+            ...img,
+            url: `${req.protocol}://${req.get("host")}/${img.lien_image.replace(/\\/g, "/")}`,
+          }))
+        : [],
+    }));
+
     res.status(200).json(commande);
   } catch (err) {
     res.status(404).json({ error: err.message });
@@ -64,7 +77,33 @@ const updateCommande = async (req, res) => {
   }
 };
 
-const deleteCommande = async (req, res) => {
+//modifier l'etat d'une commande
+const updateEtatCommande = async (req, res) => {
+  try {
+    const commande = await commandeService.updateEtatCommande(
+      Number(req.params.id),
+      req.body
+    );
+    res.status(200).json(commande);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+const forceDeleteCommande = async (req, res) => {
+  try {
+    // const {id,type_sortie}=req.params;
+    const result = await commandeService.deleteCommande(
+      Number(req.params.id),
+      req.params.type_sortie
+    );
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+const safeDeleteCommande = async (req, res) => {
   try {
     // const {id,type_sortie}=req.params;
     const result = await commandeService.deleteCommande(
@@ -81,6 +120,8 @@ module.exports = {
   getCommandeById,
   getAllCommandes,
   updateCommande,
-  deleteCommande,
+  forceDeleteCommande,
+  safeDeleteCommande,
+  updateEtatCommande,
   createCommande,
 };

@@ -126,82 +126,151 @@ const produitsService = {
     return productsWithImages;
   },
 
-  // Nouvelle fonction: Récupérer les produits avec pagination
-  getEquipementsWithPagination: async (page = 1, limit = 20, familleId = null) => {
-    // Calculer l'offset
-    const offset = (page - 1) * limit;
-    
-    // Construire la requête de base
-    let query = db
-      .select({
-        id: produits.id_produit,
-        designation: produits.desi_produit,
-        description: produits.desc_produit,
-        prix: produits.prix_produit,
-        caracteristiques: produits.caracteristiques_produit,
-        famille_id: familles.id_famille,
-        famille_libelle: familles.libelle_famille,
-      })
-      .from(produits)
-      .where(
-        and(
-          eq(type_produits.libelle, 'equipement'),
-          isNotNull(produits.prix_produit)
-        )
-      )
-      .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
-      .leftJoin(familles, eq(produits.id_famille, familles.id_famille));
-    
-    // Filtrer par famille si spécifié
-    if (familleId) {
-      query = query.where(eq(produits.id_famille, familleId));
-    }
-    
-    // Ajouter pagination
-    const productsData = await query
-      .limit(limit)
-      .offset(offset)
-      .orderBy(desc(produits.id_produit)); // Par défaut, les plus récents d'abord
-    
-    // Obtenir le nombre total pour calculer le nombre de pages
-    const totalCount = await db
-      .select({ count: sql`count(*)` })
-      .from(produits)
-      .where(
-        and(
-          eq(type_produits.libelle, 'equipement'),
-          isNotNull(produits.prix_produit),
-          familleId ? eq(produits.id_famille, familleId) : undefined
-        ).filter(Boolean)
-      )
-      .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit));
-    
-    // Pour chaque produit, récupérer ses images
-    const productsWithImages = [];
-    for (const product of productsData) {
-      const productImages = await produitsService.getProductImages(product.id);
-      const mainImage = await produitsService.getProductMainImage(product.id);
+  // Nouvelle fonction: Récupérer les produits avec pagination et recherche
+  getEquipementsWithPagination: async (page = 1, limit = 20, familleId = null, searchQuery = null) => {
+    try {
+      console.log('Service getEquipementsWithPagination appelé avec:', { page, limit, familleId, searchQuery });
       
-      // Ajouter les images et l'image principale
-      const productWithImages = {
-        ...product,
-        images: productImages.map(img => img.lien_image),
-        image: mainImage ? mainImage.lien_image : (productImages.length > 0 ? productImages[0].lien_image : null),
+      // Validation des paramètres
+      const validatedPage = Math.max(1, parseInt(page) || 1);
+      const validatedLimit = Math.min(100, Math.max(1, parseInt(limit) || 20));
+      
+      // Calculer l'offset
+      const offset = (validatedPage - 1) * validatedLimit;
+      
+      console.log('Paramètres validés:', { 
+        validatedPage, 
+        validatedLimit, 
+        offset,
+        familleId,
+        searchQuery 
+      });
+      
+      // Conditions de base - comme dans getAllEquipements
+      const baseConditions = [
+        eq(type_produits.libelle, 'equipement'),
+        isNotNull(produits.prix_produit)
+      ];
+      
+      // Ajouter le filtre par famille si spécifié
+      if (familleId && !isNaN(parseInt(familleId))) {
+        baseConditions.push(eq(produits.id_famille, parseInt(familleId)));
+      }
+      
+      // Ajouter la recherche si spécifiée (désignation et modèle uniquement)
+      if (searchQuery && searchQuery.trim().length > 0) {
+        const searchTerm = `%${searchQuery.trim().toLowerCase()}%`;
+        // Recherche dans la désignation et le modèle uniquement
+        baseConditions.push(
+          sql`(
+            LOWER(${produits.desi_produit}) LIKE ${searchTerm} OR 
+            LOWER(${modeles.libelle_modele}) LIKE ${searchTerm}
+          )`
+        );
+      }
+      
+      console.log('Conditions de requête (simplifiées):', baseConditions);
+      
+              // TEMPORAIRE: Requête la plus simple possible
+        let query = db
+          .select({
+            id: produits.id_produit,
+            designation: produits.desi_produit,
+            description: produits.desc_produit,
+            prix: produits.prix_produit,
+            caracteristiques: produits.caracteristiques_produit,
+            famille_id: familles.id_famille,
+            famille_libelle: familles.libelle_famille,
+          })
+          .from(produits);
+          
+        // Ajouter les conditions seulement si il y en a
+        if (baseConditions.length > 0) {
+          query = query.where(and(...baseConditions));
+        }
+        
+        const productsData = await query
+          .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
+          .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+          .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
+          .limit(validatedLimit)
+          .offset(offset)
+          .orderBy(desc(produits.id_produit));
+      
+      console.log(`Produits récupérés: ${productsData.length}`);
+      
+              // TEMPORAIRE: Compter TOUS les produits
+        let countQuery = db
+          .select({ count: sql`count(*)` })
+          .from(produits);
+          
+        // Ajouter les conditions seulement si il y en a
+        if (baseConditions.length > 0) {
+          countQuery = countQuery.where(and(...baseConditions));
+        }
+        
+        const totalCountResult = await countQuery
+          .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
+          .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele));
+      
+      const totalCount = parseInt(totalCountResult[0]?.count) || 0;
+      console.log(`Nombre total de produits: ${totalCount}`);
+      
+      // Pour chaque produit, récupérer ses images
+      const productsWithImages = [];
+      for (const product of productsData) {
+        try {
+          const productImages = await produitsService.getProductImages(product.id);
+          const mainImage = await produitsService.getProductMainImage(product.id);
+          
+          // Ajouter les images et l'image principale
+          const productWithImages = {
+            ...product,
+            images: productImages.map(img => img.lien_image),
+            image: mainImage ? mainImage.lien_image : (productImages.length > 0 ? productImages[0].lien_image : null),
+          };
+          
+          productsWithImages.push(productWithImages);
+        } catch (imageError) {
+          console.warn(`Erreur lors de la récupération des images pour le produit ${product.id}:`, imageError.message);
+          // Ajouter le produit sans images plutôt que de faire échouer toute la requête
+          productsWithImages.push({
+            ...product,
+            images: [],
+            image: null,
+          });
+        }
+      }
+      
+      // Calculer les informations de pagination
+      const totalPages = Math.ceil(totalCount / validatedLimit);
+      const hasMore = validatedPage < totalPages;
+      
+      const result = {
+        products: productsWithImages,
+        pagination: {
+          page: validatedPage,
+          limit: validatedLimit,
+          total: totalCount,
+          totalPages,
+          hasMore
+        }
       };
       
-      productsWithImages.push(productWithImages);
+      console.log('Résultat final:', {
+        productsCount: result.products.length,
+        pagination: result.pagination
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('Erreur dans getEquipementsWithPagination:', {
+        message: error.message,
+        stack: error.stack,
+        params: { page, limit, familleId }
+      });
+      throw new Error(`Erreur lors de la récupération des produits paginés: ${error.message}`);
     }
-    
-    return {
-      products: productsWithImages,
-      pagination: {
-        page,
-        limit,
-        total: totalCount[0]?.count || 0,
-        totalPages: Math.ceil((totalCount[0]?.count || 0) / limit),
-        hasMore: page * limit < (totalCount[0]?.count || 0)
-      }
-    };
   },
 
   // Récupérer les 5 derniers produits ajoutés (nouveautés)

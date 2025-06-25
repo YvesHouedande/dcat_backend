@@ -4,8 +4,34 @@ const livrableService = require("../services/livrable.service");
 const livrableController = {
   getAllLivrables: async (req, res) => {
     try {
-      const data = await livrableService.getAllLivrables();
-      res.status(200).json({ success: true, data });
+      const {
+        page = 1,
+        limit = 10,
+        sortBy,
+        sortOrder,
+        search,
+        projetId,
+        dateDebut,
+        dateFin
+      } = req.query;
+
+      const options = {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        sortBy,
+        sortOrder,
+        search,
+        projetId: projetId ? parseInt(projetId) : undefined,
+        dateDebut,
+        dateFin
+      };
+
+      const result = await livrableService.getAllLivrables(options);
+      res.status(200).json({ 
+        success: true, 
+        data: result.data, 
+        pagination: result.pagination 
+      });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }

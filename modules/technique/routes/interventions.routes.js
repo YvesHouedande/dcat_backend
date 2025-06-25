@@ -132,9 +132,77 @@ const handleUploadError = (err, req, res, next) => {
  * @swagger
  * /technique/interventions:
  *   get:
- *     summary: Liste toutes les interventions
- *     description: Récupère la liste complète des interventions techniques
+ *     summary: Liste toutes les interventions avec pagination
+ *     description: Récupère la liste paginée des interventions avec filtres optionnels
  *     tags: [Interventions]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Recherche par rapport d'intervention ou problème signalé
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         description: Filtrer par type d'intervention
+ *       - in: query
+ *         name: statut
+ *         schema:
+ *           type: string
+ *         description: Filtrer par statut de l'intervention
+ *       - in: query
+ *         name: lieu
+ *         schema:
+ *           type: string
+ *         description: Filtrer par lieu de l'intervention
+ *       - in: query
+ *         name: typeIntervention
+ *         schema:
+ *           type: string
+ *         description: Filtrer par type spécifique d'intervention
+ *       - in: query
+ *         name: modeIntervention
+ *         schema:
+ *           type: string
+ *         description: Filtrer par mode d'intervention (Sur site, À distance, etc.)
+ *       - in: query
+ *         name: dateDebut
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Date d'intervention minimum (YYYY-MM-DD)
+ *       - in: query
+ *         name: dateFin
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Date d'intervention maximum (YYYY-MM-DD)
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: created_at
+ *         description: Champ à utiliser pour le tri
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Ordre de tri (ascendant ou descendant)
  *     responses:
  *       200:
  *         description: Liste des interventions récupérée avec succès
@@ -146,10 +214,25 @@ const handleUploadError = (err, req, res, next) => {
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 interventions:
+ *                 data:
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Intervention'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                       example: 50
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 5
  *       500:
  *         description: Erreur serveur
  */
@@ -681,5 +764,88 @@ router.get("/:id/documents", interventionsController.getInterventionDocuments);
  */
 router.delete("/:id/documents/:documentId", interventionsController.deleteDocument);
 
+/**
+ * @swagger
+ * /technique/interventions/partenaire/{partenaireId}:
+ *   get:
+ *     summary: Récupère toutes les interventions d'un partenaire
+ *     description: Retourne la liste complète des interventions associées à un partenaire spécifique, incluant les détails du partenaire, du contrat et des employés
+ *     tags: [Interventions]
+ *     parameters:
+ *       - in: path
+ *         name: partenaireId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du partenaire
+ *     responses:
+ *       200:
+ *         description: Liste des interventions récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Interventions du partenaire récupérées avec succès
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       intervention:
+ *                         $ref: '#/components/schemas/Intervention'
+ *                       partenaire:
+ *                         type: object
+ *                         properties:
+ *                           id_partenaire:
+ *                             type: integer
+ *                           nom_partenaire:
+ *                             type: string
+ *                           telephone_partenaire:
+ *                             type: string
+ *                           email_partenaire:
+ *                             type: string
+ *                           specialite:
+ *                             type: string
+ *                           localisation:
+ *                             type: string
+ *                           type_partenaire:
+ *                             type: string
+ *                           statut:
+ *                             type: string
+ *                       contrat:
+ *                         type: object
+ *                         properties:
+ *                           id_contrat:
+ *                             type: integer
+ *                           nom_contrat:
+ *                             type: string
+ *                           duree_contrat:
+ *                             type: string
+ *                           date_debut:
+ *                             type: string
+ *                           date_fin:
+ *                             type: string
+ *                           reference:
+ *                             type: string
+ *                           type_de_contrat:
+ *                             type: string
+ *                           statut:
+ *                             type: string
+ *                       employes:
+ *                         type: array
+ *                         items:
+ *                           $ref: '#/components/schemas/Employe'
+ *       404:
+ *         description: Partenaire non trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get("/partenaire/:partenaireId", interventionsController.getInterventionsByPartenaire);
 
 module.exports = router;

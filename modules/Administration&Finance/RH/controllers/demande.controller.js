@@ -63,6 +63,9 @@ const createDemande = async (req, res) => {
             heure_fin: data.heure_fin,
             id_employes: parseInt(data.id_employes) 
         };
+        // Correction : convertir les chaînes vides en null pour les champs time
+        if (demandeData.heure_debut === "") demandeData.heure_debut = null;
+        if (demandeData.heure_fin === "") demandeData.heure_fin = null;
         
         logger.debug("Appel au service pour créer la demande", { demandeData });
         const demande = await demandeService.createDemande(demandeData);
@@ -244,6 +247,34 @@ const getDemandeByType = async (req, res) => {
     }
 };
 
+const getDemandeById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await demandeService.getdemandeById(id);
+        res.status(200).json(result);
+    } catch (error) {
+        logger.error(`Erreur lors de la récupération de la demande ${req.params.id}`, {
+            error: {
+                message: error.message,
+                stack: error.stack
+            }
+        });
+};
+};
+const getDemandeByEmploye = async (req, res) => {
+    try {
+        const { id_employe } = req.params;
+        const result = await demandeService.getDemnandeByEmploye(id_employe);
+        res.status(200).json(result);
+    } catch (error) {
+        logger.error(`Erreur lors de la récupération des demandes de l'employé ${req.params.id_employe}`, {
+            error: {
+                message: error.message,
+                stack: error.stack
+            }
+        });
+    }
+};
 const updateDemande = async (req, res) => {
     try {
         const { id } = req.params;
@@ -353,10 +384,13 @@ const deleteDemande = async (req, res) => {
     }
 };
 
+
 module.exports = {
     createDemande,
     getAllDemandes,
     getDemandeByType,
+    getDemandeById,
     updateDemande,
-    deleteDemande
+    deleteDemande,
+    getDemandeByEmploye
 };

@@ -1,4 +1,4 @@
-const commandesService = require('../services/commandes.service');
+const { commandesService } = require('../services');
 
 const commandesController = {
   createCommande: async (req, res) => {
@@ -292,6 +292,66 @@ const commandesController = {
       res.status(500).json({ 
         success: false, 
         error: "Erreur lors de la mise à jour de la commande" 
+      });
+    }
+  },
+
+  // Annuler une commande (pour les clients)
+  cancelCommande: async (req, res) => {
+    try {
+      const commandeId = parseInt(req.params.id);
+      
+      if (isNaN(commandeId)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "ID de commande invalide" 
+        });
+      }
+
+      // Vérifier que la commande existe et appartient au client (si c'est un client)
+      let commande;
+      try {
+        commande = await commandesService.getCommandeById(commandeId);
+      } catch (error) {
+        if (error.message === "Commande non trouvée") {
+          return res.status(404).json({ 
+            success: false, 
+            error: "Commande non trouvée" 
+          });
+        }
+        throw error;
+      }
+
+      // Si l'utilisateur n'est pas admin, vérifier qu'il est le propriétaire de la commande
+      if (req.user && req.user.role !== 'admin' && commande.id_client !== req.user.id) {
+        return res.status(403).json({ 
+          success: false, 
+          error: "Vous n'êtes pas autorisé à annuler cette commande" 
+        });
+      }
+
+      // Vérifier que la commande est en attente
+      if (commande.etat_commande !== 'en_attente') {
+        return res.status(400).json({ 
+          success: false, 
+          error: `Impossible d'annuler une commande avec le statut "${commande.etat_commande}". Seules les commandes en attente peuvent être annulées.` 
+        });
+      }
+
+      // Annuler la commande via le service
+      const commandeAnnulee = await commandesService.updateCommandeStatus(commandeId, 'Annulé');
+      
+      res.json({ 
+        success: true, 
+        message: "Commande annulée avec succès",
+        commande: commandeAnnulee
+      });
+    } catch (error) {
+      console.error("Erreur lors de l'annulation de la commande:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Erreur lors de l'annulation de la commande",
+        details: error.message
       });
     }
   }

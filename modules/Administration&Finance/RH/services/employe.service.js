@@ -13,7 +13,7 @@ const getEmployeById = async (id) => {
     const [result] = await db
     .select()
     .from(employes)
-    .where(eq(employes.id_employe, id));
+    .where(eq(employes.id_employes, id));
     return result;
 }
 

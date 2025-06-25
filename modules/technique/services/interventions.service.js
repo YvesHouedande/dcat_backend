@@ -1,13 +1,104 @@
 const { db } = require('../../../core/database/config');
-const { interventions, intervention_employes, employes, intervention_taches, documents } = require("../../../core/database/models");
+const { interventions, intervention_employes, employes, intervention_taches, documents, partenaires, contrats } = require("../../../core/database/models");
 
-const { eq, and } = require("drizzle-orm");
+const { eq, and, desc, asc, sql } = require("drizzle-orm");
 const fs = require('fs').promises;  // Ajoutez cette importation
 const path = require('path');       // Ajoutez cette importation
 
 const interventionsService = {
-  getAllInterventions: async () => {
-    return await db.select().from(interventions);
+  getAllInterventions: async (options = {}) => {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "created_at",
+      sortOrder = "desc",
+      search = "",
+      type,
+      statut,
+      lieu,
+      dateDebut,
+      dateFin,
+      typeIntervention,
+      modeIntervention
+    } = options;
+
+    const offset = (page - 1) * limit;
+
+    // Base query avec limites de pagination
+    let query = db
+      .select()
+      .from(interventions)
+      .limit(limit)
+      .offset(offset);
+
+    // Construction des filtres dynamiques
+    const filters = [];
+
+    if (search) {
+      filters.push(
+        sql`LOWER(${interventions.rapport_intervention}) LIKE LOWER(${"%" + search + "%"}) OR 
+            LOWER(${interventions.probleme_signale}) LIKE LOWER(${"%" + search + "%"})`
+      );
+    }
+
+    if (type) {
+      filters.push(sql`LOWER(${interventions.type}) = LOWER(${type})`);
+    }
+
+    if (statut) {
+      filters.push(sql`LOWER(${interventions.statut_intervention}) = LOWER(${statut})`);
+    }
+
+    if (lieu) {
+      filters.push(sql`LOWER(${interventions.lieu}) = LOWER(${lieu})`);
+    }
+
+    if (typeIntervention) {
+      filters.push(sql`LOWER(${interventions.type_intervention}) = LOWER(${typeIntervention})`);
+    }
+
+    if (modeIntervention) {
+      filters.push(sql`LOWER(${interventions.mode_intervention}) = LOWER(${modeIntervention})`);
+    }
+
+    if (dateDebut) {
+      filters.push(sql`${interventions.date_intervention} >= ${new Date(dateDebut)}`);
+    }
+
+    if (dateFin) {
+      filters.push(sql`${interventions.date_intervention} <= ${new Date(dateFin)}`);
+    }
+
+    if (filters.length) {
+      query = query.where(and(...filters));
+    }
+
+    // Tri dynamique
+    const sortField = interventions[sortBy] || interventions.created_at;
+    query = query.orderBy(sortOrder === "asc" ? asc(sortField) : desc(sortField));
+
+    // Compte total (avec les mêmes filtres)
+    let countQuery = db
+      .select({ count: sql`count(*)` })
+      .from(interventions);
+
+    if (filters.length) {
+      countQuery = countQuery.where(and(...filters));
+    }
+
+    const [results, totalResult] = await Promise.all([query, countQuery]);
+
+    const total = Number(totalResult[0].count);
+
+    return {
+      data: results,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   },
 
   getInterventionById: async (id) => {
@@ -93,6 +184,67 @@ const interventionsService = {
         eq(intervention_employes.id_employes, employes.id_employes)
       )
       .where(eq(intervention_employes.id_intervention, interventionId));
+  },
+
+  getInterventionsByPartenaire: async (partenaireId) => {
+    try {
+      // Récupérer les interventions avec les informations du partenaire
+      const interventionsResult = await db
+        .select({
+          intervention: interventions,
+          partenaire: {
+            id_partenaire: partenaires.id_partenaire,
+            nom_partenaire: partenaires.nom_partenaire,
+            telephone_partenaire: partenaires.telephone_partenaire,
+            email_partenaire: partenaires.email_partenaire,
+            specialite: partenaires.specialite,
+            localisation: partenaires.localisation,
+            type_partenaire: partenaires.type_partenaire,
+            statut: partenaires.statut
+          },
+          contrat: {
+            id_contrat: contrats.id_contrat,
+            nom_contrat: contrats.nom_contrat,
+            duree_contrat: contrats.duree_contrat,
+            date_debut: contrats.date_debut,
+            date_fin: contrats.date_fin,
+            reference: contrats.reference,
+            type_de_contrat: contrats.type_de_contrat,
+            statut: contrats.statut
+          }
+        })
+        .from(interventions)
+        .leftJoin(partenaires, eq(interventions.id_partenaire, partenaires.id_partenaire))
+        .leftJoin(contrats, eq(interventions.id_contrat, contrats.id_contrat))
+        .where(eq(interventions.id_partenaire, partenaireId));
+
+      // Pour chaque intervention, récupérer les employés associés
+      const interventionsWithDetails = await Promise.all(
+        interventionsResult.map(async (intervention) => {
+          // Récupérer les employés
+          const employesResult = await db
+            .select({
+              id_employes: employes.id_employes,
+              nom_employes: employes.nom_employes,
+              prenom_employes: employes.prenom_employes,
+              email_employes: employes.email_employes,
+              contact_employes: employes.contact_employes
+            })
+            .from(intervention_employes)
+            .innerJoin(employes, eq(intervention_employes.id_employes, employes.id_employes))
+            .where(eq(intervention_employes.id_intervention, intervention.intervention.id_intervention));
+
+          return {
+            ...intervention,
+            employes: employesResult
+          };
+        })
+      );
+
+      return interventionsWithDetails;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des interventions par partenaire: ${error.message}`);
+    }
   },
 
  

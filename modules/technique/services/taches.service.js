@@ -1,10 +1,91 @@
 const { db } = require('../../../core/database/config');
 const { taches, intervention_taches, employes } = require("../../../core/database/models");
-const { eq, and } = require("drizzle-orm");
+const { eq, and, desc, asc, sql } = require("drizzle-orm");
 
 const tachesService = {
-  getAllTaches: async () => {
-    return await db.select().from(taches);
+  getAllTaches: async (options = {}) => {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "created_at",
+      sortOrder = "desc",
+      search = "",
+      statut,
+      priorite,
+      dateDebut,
+      dateFin,
+      projetId
+    } = options;
+
+    const offset = (page - 1) * limit;
+
+    // Base query avec limites de pagination
+    let query = db
+      .select()
+      .from(taches)
+      .limit(limit)
+      .offset(offset);
+
+    // Construction des filtres dynamiques
+    const filters = [];
+
+    if (search) {
+      filters.push(
+        sql`LOWER(${taches.nom_tache}) LIKE LOWER(${"%" + search + "%"}) OR 
+            LOWER(${taches.desc_tache}) LIKE LOWER(${"%" + search + "%"})`
+      );
+    }
+
+    if (statut) {
+      filters.push(sql`LOWER(${taches.statut}) = LOWER(${statut})`);
+    }
+
+    if (priorite) {
+      filters.push(sql`LOWER(${taches.priorite}) = LOWER(${priorite})`);
+    }
+
+    if (projetId) {
+      filters.push(sql`${taches.id_projet} = ${projetId}`);
+    }
+
+    if (dateDebut) {
+      filters.push(sql`${taches.date_debut} >= ${new Date(dateDebut)}`);
+    }
+
+    if (dateFin) {
+      filters.push(sql`${taches.date_fin} <= ${new Date(dateFin)}`);
+    }
+
+    if (filters.length) {
+      query = query.where(and(...filters));
+    }
+
+    // Tri dynamique
+    const sortField = taches[sortBy] || taches.created_at;
+    query = query.orderBy(sortOrder === "asc" ? asc(sortField) : desc(sortField));
+
+    // Compte total (avec les mêmes filtres)
+    let countQuery = db
+      .select({ count: sql`count(*)` })
+      .from(taches);
+
+    if (filters.length) {
+      countQuery = countQuery.where(and(...filters));
+    }
+
+    const [results, totalResult] = await Promise.all([query, countQuery]);
+
+    const total = Number(totalResult[0].count);
+
+    return {
+      data: results,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   },
 
   getTacheById: async (id) => {

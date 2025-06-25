@@ -34,7 +34,7 @@ router.use("/produits", produitsRoutes);
 /**
  * @swagger
  * /marketing_commercial/commandes:
- *   description: Routes liées aux commandes marketing
+ *   description: Routes liées aux commandes marketing+
  *   get:
  *     summary: Accède aux commandes clients marketing
  *     tags: [Commandes Marketing]

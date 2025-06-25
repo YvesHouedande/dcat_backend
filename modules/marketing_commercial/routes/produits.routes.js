@@ -145,6 +145,76 @@ router.get('/nouveautes', produitsController.getLatestProducts);
 
 /**
  * @swagger
+ * /marketing_commercial/produits/paginated:
+ *   get:
+ *     summary: Liste les équipements avec pagination
+ *     description: Retourne une liste paginée de produits de type équipement
+ *     tags: [Produits Marketing]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page à récupérer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Nombre d'éléments par page
+ *       - in: query
+ *         name: familleId
+ *         schema:
+ *           type: integer
+ *         description: Filtrer par ID de famille (optionnel)
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Terme de recherche pour filtrer les produits par désignation ou modèle (optionnel)
+ *     responses:
+ *       200:
+ *         description: Liste paginée des produits récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 produits:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Produit'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       description: Page actuelle
+ *                     limit:
+ *                       type: integer
+ *                       description: Nombre d'éléments par page
+ *                     total:
+ *                       type: integer
+ *                       description: Nombre total d'éléments
+ *                     totalPages:
+ *                       type: integer
+ *                       description: Nombre total de pages
+ *                     hasMore:
+ *                       type: boolean
+ *                       description: Indique s'il y a d'autres pages à charger
+ *       400:
+ *         description: Erreur de requête
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/paginated', produitsController.getPaginatedEquipements);
+
+/**
+ * @swagger
  * /marketing_commercial/produits/{productId}/details:
  *   get:
  *     summary: Récupère les détails d'un produit
@@ -296,70 +366,5 @@ router.get('/:productId/similaires', produitsController.getSimilarProductsByLibe
  *         description: Erreur serveur
  */
 router.get('/:productId/images', produitsController.getProductImages);
-
-/**
- * @swagger
- * /marketing_commercial/produits/paginated:
- *   get:
- *     summary: Liste les équipements avec pagination
- *     description: Retourne une liste paginée de produits de type équipement
- *     tags: [Produits Marketing]
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Numéro de page à récupérer
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
- *         description: Nombre d'éléments par page
- *       - in: query
- *         name: familleId
- *         schema:
- *           type: integer
- *         description: Filtrer par ID de famille (optionnel)
- *     responses:
- *       200:
- *         description: Liste paginée des produits récupérée avec succès
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 produits:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Produit'
- *                 pagination:
- *                   type: object
- *                   properties:
- *                     page:
- *                       type: integer
- *                       description: Page actuelle
- *                     limit:
- *                       type: integer
- *                       description: Nombre d'éléments par page
- *                     total:
- *                       type: integer
- *                       description: Nombre total d'éléments
- *                     totalPages:
- *                       type: integer
- *                       description: Nombre total de pages
- *                     hasMore:
- *                       type: boolean
- *                       description: Indique s'il y a d'autres pages à charger
- *       400:
- *         description: Erreur de requête
- *       500:
- *         description: Erreur serveur
- */
-router.get('/paginated', produitsController.getPaginatedEquipements);
 
 module.exports = router;

@@ -5,8 +5,34 @@ const projetsService = require("../services/projets.service");
 const projetsController = {
   getAllProjets: async (req, res) => {
     try {
-      const projets = await projetsService.getAllProjets();
-      res.status(200).json({ success: true, data: projets });
+      const {
+        page = 1,
+        limit = 10,
+        sortBy,
+        sortOrder,
+        search,
+        type,
+        etat,
+        site,
+        dateDebut,
+        dateFin
+      } = req.query;
+
+      const options = {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        sortBy,
+        sortOrder,
+        search,
+        type,
+        etat,
+        site,
+        dateDebut,
+        dateFin
+      };
+
+      const result = await projetsService.getAllProjets(options);
+      res.status(200).json({ success: true, data: result.data, pagination: result.pagination });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }

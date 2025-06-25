@@ -1,12 +1,93 @@
 const { db } = require('../../../core/database/config');
 const { projets, partenaire_projets, documents, livrables, partenaires } = require("../../../core/database/models");
-const { eq, and } = require("drizzle-orm");
+const { eq, and, desc, asc, sql } = require("drizzle-orm");
 const fs = require('fs').promises;  // Ajoutez cette importation
 const path = require('path');       // Ajoutez cette importation
 
 const projetsService = {
-  getAllProjets: async () => {
-    return await db.select().from(projets);
+  getAllProjets: async (options = {}) => {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "created_at",
+      sortOrder = "desc",
+      search = "",
+      type,
+      etat,
+      site,
+      dateDebut,
+      dateFin
+    } = options;
+
+    const offset = (page - 1) * limit;
+
+    // Base query avec limites de pagination
+    let query = db
+      .select()
+      .from(projets)
+      .limit(limit)
+      .offset(offset);
+
+    // Construction des filtres dynamiques
+    const filters = [];
+
+    if (search) {
+      filters.push(
+        sql`LOWER(${projets.nom_projet}) LIKE LOWER(${"%" + search + "%"}) OR 
+            LOWER(${projets.description_projet}) LIKE LOWER(${"%" + search + "%"})`
+      );
+    }
+
+    if (type) {
+      filters.push(sql`LOWER(${projets.type_projet}) = LOWER(${type})`);
+    }
+
+    if (etat) {
+      filters.push(sql`LOWER(${projets.etat}) = LOWER(${etat})`);
+    }
+
+    if (site) {
+      filters.push(sql`LOWER(${projets.site}) = LOWER(${site})`);
+    }
+
+    if (dateDebut) {
+      filters.push(sql`${projets.date_debut} >= ${new Date(dateDebut)}`);
+    }
+
+    if (dateFin) {
+      filters.push(sql`${projets.date_fin} <= ${new Date(dateFin)}`);
+    }
+
+    if (filters.length) {
+      query = query.where(and(...filters));
+    }
+
+    // Tri dynamique
+    const sortField = projets[sortBy] || projets.created_at;
+    query = query.orderBy(sortOrder === "asc" ? asc(sortField) : desc(sortField));
+
+    // Compte total (avec les mêmes filtres)
+    let countQuery = db
+      .select({ count: sql`count(*)` })
+      .from(projets);
+
+    if (filters.length) {
+      countQuery = countQuery.where(and(...filters));
+    }
+
+    const [results, totalResult] = await Promise.all([query, countQuery]);
+
+    const total = Number(totalResult[0].count);
+
+    return {
+      data: results,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   },
 
   getProjetById: async (id) => {

@@ -128,7 +128,7 @@ const deleteSortie = async (req, res) => {
 
     return res
       .status(200)
-      .json({ message: "Sortie supprimée et exemplaire réactivé" }, deleted);
+      .json({ element:deleted,message: "Sortie supprimée"});
   } catch (error) {
     if (error.message === "Sortie non trouvée") {
       return res.status(404).json({
