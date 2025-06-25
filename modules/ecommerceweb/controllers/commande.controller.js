@@ -22,7 +22,6 @@ exports.creerCommande = async (req, res) => {
     // Envoi de la notification par email
     emailService.sendOrderNotification(commande.id_commande)
     .catch(e => console.error('Erreur secondaire lors de l\'envoi du mail:', e));
-    console.log('Notification email envoyée pour la commande:', commande.id_commande);
 
     res.status(201).json({
       success: true,
