@@ -12,6 +12,7 @@ const {
   partenaires,
   commande_produits,
   sortie_exemplaires,
+  clients_en_ligne,
 } = require("../../../core/database/models");
 
 const { etatExemplaire } = require("./exemplaire.service");
@@ -157,7 +158,6 @@ async function createCommande({
   });
 }
 
-
 // /**
 //  *
 //  * Explication :
@@ -244,11 +244,22 @@ async function getCommandeById(id) {
       .select({
         commande: commandes,
         partenaire: partenaires,
+        client: {
+          id: clients_en_ligne.id_client,
+          nom: clients_en_ligne.nom,
+          role: clients_en_ligne.role,
+          email: clients_en_ligne.email,
+          contact: clients_en_ligne.contact,
+        },
       })
       .from(commandes)
       .leftJoin(
         partenaires,
         eq(commandes.id_partenaire, partenaires.id_partenaire)
+      )
+      .leftJoin(
+        clients_en_ligne,
+        eq(commandes.id_client, clients_en_ligne.id_client)
       )
       .where(eq(commandes.id_commande, id));
 
@@ -280,7 +291,10 @@ async function getCommandeById(id) {
       .from(commande_produits)
       .leftJoin(produits, eq(commande_produits.id_produit, produits.id_produit))
       .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
-      .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
+      .leftJoin(
+        type_produits,
+        eq(produits.id_type_produit, type_produits.id_type_produit)
+      )
       .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
       .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
       .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
@@ -314,6 +328,7 @@ async function getCommandeById(id) {
     return {
       ...row.commande,
       partenaire: row.partenaire || null,
+      client: row.client || null,
       produits: produitsCommandes,
       montant_total,
       exemplaires: exemplairesAssocies.map((e) => ({
@@ -327,14 +342,9 @@ async function getCommandeById(id) {
   }
 }
 
-
-
 // 📜 Liste des commandes
 async function getAllCommandes({ limit = 50, offset = 0, etat = null } = {}) {
-  let query = db
-    .select()
-    .from(commandes)
-
+  let query = db.select().from(commandes);
 
   if (etat) {
     query = query.where(eq(commandes.etat_commande, etat));
@@ -342,7 +352,6 @@ async function getAllCommandes({ limit = 50, offset = 0, etat = null } = {}) {
 
   return await query.limit(limit).offset(offset);
 }
-
 
 // 📝 Mise à jour d'une commande
 async function updateCommande(idCommande, updateData) {
@@ -374,13 +383,9 @@ async function updateCommande(idCommande, updateData) {
   return getCommandeById(idCommande);
 }
 
-
-
 // changer l'etat d'une commande
 async function updateEtatCommande(idCommande, updateData) {
-  const allowedFields = [
-    "etat_commande"
-  ];
+  const allowedFields = ["etat_commande"];
 
   const updatePayload = Object.fromEntries(
     Object.entries(updateData).filter(([key]) => allowedFields.includes(key))
@@ -403,7 +408,6 @@ async function updateEtatCommande(idCommande, updateData) {
   return getCommandeById(idCommande);
 }
 
-
 /**
  * forceDeleteCommande
  * -------------------
@@ -420,7 +424,7 @@ async function updateEtatCommande(idCommande, updateData) {
  *        Type de sortie concerné
  * @returns {Promise<{success: boolean, removed_exemplaires: number[]}>}
  */
- 
+
 const forceDeleteCommande = async (idCommande, type = "vente directe") => {
   return await db.transaction(async (tx) => {
     // 1. Récupérer tous les exemplaires liés via sortie_exemplaires
@@ -521,9 +525,7 @@ const forceDeleteCommande = async (idCommande, type = "vente directe") => {
       .delete(commande_produits)
       .where(eq(commande_produits.id_commande, idCommande));
 
-    await tx
-      .delete(commandes)
-      .where(eq(commandes.id_commande, idCommande));
+    await tx.delete(commandes).where(eq(commandes.id_commande, idCommande));
 
     return {
       success: true,
@@ -561,33 +563,45 @@ const safeDeleteCommande = async (idCommande, type = "vente directe") => {
 
     // 🔒 Refuser suppression si livrée ou facturée
     if (["livrée", "facturée"].includes(commande.etat_commande)) {
-      throw new Error("Impossible de supprimer une commande livrée ou facturée.");
+      throw new Error(
+        "Impossible de supprimer une commande livrée ou facturée."
+      );
     }
 
     if (type === "projet") {
       const exemplairesAssocies = await tx
         .select()
         .from(sortie_exemplaires)
-        .where(and(
-          eq(sortie_exemplaires.reference_id, idCommande),
-          eq(sortie_exemplaires.type_sortie, type)
-        ));
+        .where(
+          and(
+            eq(sortie_exemplaires.reference_id, idCommande),
+            eq(sortie_exemplaires.type_sortie, type)
+          )
+        );
 
       for (const ex of exemplairesAssocies) {
-        await tx.update(exemplaires)
+        await tx
+          .update(exemplaires)
           .set({ etat_exemplaire: etatExemplaire[1], updated_at: new Date() })
           .where(eq(exemplaires.id_exemplaire, ex.id_exemplaire));
 
-        await tx.update(produits)
-          .set({ qte_produit: sql`${produits.qte_produit} + 1`, updated_at: new Date() })
+        await tx
+          .update(produits)
+          .set({
+            qte_produit: sql`${produits.qte_produit} + 1`,
+            updated_at: new Date(),
+          })
           .where(eq(produits.id_produit, ex.id_produit));
       }
 
-      await tx.delete(sortie_exemplaires)
-        .where(and(
-          eq(sortie_exemplaires.reference_id, idCommande),
-          eq(sortie_exemplaires.type_sortie, type)
-        ));
+      await tx
+        .delete(sortie_exemplaires)
+        .where(
+          and(
+            eq(sortie_exemplaires.reference_id, idCommande),
+            eq(sortie_exemplaires.type_sortie, type)
+          )
+        );
 
       return { success: true, message: "Commande projet supprimée" };
     }
@@ -600,12 +614,14 @@ const safeDeleteCommande = async (idCommande, type = "vente directe") => {
     const sorties = await tx
       .select()
       .from(sortie_exemplaires)
-      .where(and(
-        eq(sortie_exemplaires.reference_id, idCommande),
-        eq(sortie_exemplaires.type_sortie, type)
-      ));
+      .where(
+        and(
+          eq(sortie_exemplaires.reference_id, idCommande),
+          eq(sortie_exemplaires.type_sortie, type)
+        )
+      );
 
-    const exemplairesIds = sorties.map(s => s.id_exemplaire);
+    const exemplairesIds = sorties.map((s) => s.id_exemplaire);
     const exemplairesSet = new Set(exemplairesIds);
 
     for (const item of produitsCommande) {
@@ -625,34 +641,44 @@ const safeDeleteCommande = async (idCommande, type = "vente directe") => {
 
     // 🔁 Réinitialisation des exemplaires
     for (const id of exemplairesIds) {
-      const [ex] = await tx.select().from(exemplaires).where(eq(exemplaires.id_exemplaire, id));
+      const [ex] = await tx
+        .select()
+        .from(exemplaires)
+        .where(eq(exemplaires.id_exemplaire, id));
       if (!ex) continue;
 
-      await tx.update(exemplaires)
+      await tx
+        .update(exemplaires)
         .set({ etat_exemplaire: etatExemplaire[1], updated_at: new Date() })
         .where(eq(exemplaires.id_exemplaire, id));
 
-      await tx.update(produits)
-        .set({ qte_produit: sql`${produits.qte_produit} + 1`, updated_at: new Date() })
+      await tx
+        .update(produits)
+        .set({
+          qte_produit: sql`${produits.qte_produit} + 1`,
+          updated_at: new Date(),
+        })
         .where(eq(produits.id_produit, ex.id_produit));
     }
 
     // Suppression finale
-    await tx.delete(sortie_exemplaires).where(
-      and(
-        eq(sortie_exemplaires.reference_id, idCommande),
-        eq(sortie_exemplaires.type_sortie, type)
-      )
-    );
+    await tx
+      .delete(sortie_exemplaires)
+      .where(
+        and(
+          eq(sortie_exemplaires.reference_id, idCommande),
+          eq(sortie_exemplaires.type_sortie, type)
+        )
+      );
 
-    await tx.delete(commande_produits).where(eq(commande_produits.id_commande, idCommande));
+    await tx
+      .delete(commande_produits)
+      .where(eq(commande_produits.id_commande, idCommande));
     await tx.delete(commandes).where(eq(commandes.id_commande, idCommande));
 
     return { success: true, removed_exemplaires: exemplairesIds };
   });
 };
-
-
 
 module.exports = {
   createCommande,
@@ -661,5 +687,5 @@ module.exports = {
   updateCommande,
   updateEtatCommande,
   forceDeleteCommande,
-  safeDeleteCommande
+  safeDeleteCommande,
 };
