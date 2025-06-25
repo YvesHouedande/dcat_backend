@@ -1,7 +1,6 @@
 const commandeService = require('../services/commande.service');
 const emailService = require('../services/email.service');
 
-
 exports.creerCommande = async (req, res) => {
   try {
     const { panier } = req.body;
