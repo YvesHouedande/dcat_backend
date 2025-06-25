@@ -11,6 +11,7 @@ const commande = await createCommande({
 });
  */
 
+
 const createCommande = async (req, res) => {
   try {
     const commande = await commandeService.createCommande(req.body);
@@ -90,10 +91,23 @@ const updateEtatCommande = async (req, res) => {
   }
 };
 
+//reserver les exemplaires de produits d'une commande. Utile pour le e-commerce
+const updateEtatExemplaireCommande = async (req, res) => {
+  try {
+    const result = await commandeService.updateEtatExemplaireCommande(
+      Number(req.params.id),
+      req.body
+    );
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
 const forceDeleteCommande = async (req, res) => {
   try {
     // const {id,type_sortie}=req.params;
-    const result = await commandeService.deleteCommande(
+    const result = await commandeService.forceDeleteCommande(
       Number(req.params.id),
       req.params.type_sortie
     );
@@ -106,7 +120,7 @@ const forceDeleteCommande = async (req, res) => {
 const safeDeleteCommande = async (req, res) => {
   try {
     // const {id,type_sortie}=req.params;
-    const result = await commandeService.deleteCommande(
+    const result = await commandeService.safeDeleteCommande(
       Number(req.params.id),
       req.params.type_sortie
     );
@@ -124,4 +138,5 @@ module.exports = {
   safeDeleteCommande,
   updateEtatCommande,
   createCommande,
+
 };

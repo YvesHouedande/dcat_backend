@@ -17,6 +17,9 @@ const {
 
 const { etatExemplaire } = require("./exemplaire.service");
 
+// const etatCommande= ['en_attente', 'Livré', 'Annulé', 'Retourné']
+const etatCommande= ['Livré', 'Annulé', 'Retourné']
+
 const { typeSortie } = require("./sortieExemplaire.service");
 
 /**
@@ -408,6 +411,32 @@ async function updateEtatCommande(idCommande, updateData) {
   return getCommandeById(idCommande);
 }
 
+//reserver les exemplaires de produits d'une commande. Utile pour le e-commerce
+async function updateEtatExemplaireCommande(idCommande, updateData) {
+  const allowedFields = ["etat_commande"];
+
+  const updatePayload = Object.fromEntries(
+    Object.entries(updateData).filter(([key]) => allowedFields.includes(key))
+  );
+
+  if (!Object.keys(updatePayload).length) {
+    throw new Error("Aucune donnée valide à mettre à jour");
+  }
+
+  updatePayload.updated_at = new Date();
+
+  const [result] = await db
+    .update(commandes)
+    .set(updatePayload)
+    .where(eq(commandes.id_commande, idCommande))
+    .returning();
+
+  if (!result) throw new Error("Commande non trouvée");
+
+  return getCommandeById(idCommande);
+}
+
+
 /**
  * forceDeleteCommande
  * -------------------
@@ -546,7 +575,7 @@ const forceDeleteCommande = async (idCommande, type = "vente directe") => {
  *   et supprime la commande elle-même.
  *
  * @param {number} idCommande  - ID de la commande à supprimer
- * @param {"vente directe"|"vente en ligne"|"projet"} [type="vente directe"]
+ * @param {"vente directe"|"vente en ligne"} [type="vente directe"]
  *        Type de sortie concerné
  * @throws {Error} Si la commande est *livrée* ou *facturée*
  * @returns {Promise<{success: boolean, removed_exemplaires: number[]}>}
@@ -561,50 +590,13 @@ const safeDeleteCommande = async (idCommande, type = "vente directe") => {
 
     if (!commande) throw new Error("Commande introuvable");
 
-    // 🔒 Refuser suppression si livrée ou facturée
-    if (["livrée", "facturée"].includes(commande.etat_commande)) {
+    // 🔒 Refuser suppression si l'etat fait partie de la liste
+    if (etatCommande.includes(commande.etat_commande)) {
       throw new Error(
         "Impossible de supprimer une commande livrée ou facturée."
       );
     }
 
-    if (type === "projet") {
-      const exemplairesAssocies = await tx
-        .select()
-        .from(sortie_exemplaires)
-        .where(
-          and(
-            eq(sortie_exemplaires.reference_id, idCommande),
-            eq(sortie_exemplaires.type_sortie, type)
-          )
-        );
-
-      for (const ex of exemplairesAssocies) {
-        await tx
-          .update(exemplaires)
-          .set({ etat_exemplaire: etatExemplaire[1], updated_at: new Date() })
-          .where(eq(exemplaires.id_exemplaire, ex.id_exemplaire));
-
-        await tx
-          .update(produits)
-          .set({
-            qte_produit: sql`${produits.qte_produit} + 1`,
-            updated_at: new Date(),
-          })
-          .where(eq(produits.id_produit, ex.id_produit));
-      }
-
-      await tx
-        .delete(sortie_exemplaires)
-        .where(
-          and(
-            eq(sortie_exemplaires.reference_id, idCommande),
-            eq(sortie_exemplaires.type_sortie, type)
-          )
-        );
-
-      return { success: true, message: "Commande projet supprimée" };
-    }
 
     const produitsCommande = await tx
       .select()
@@ -688,4 +680,6 @@ module.exports = {
   updateEtatCommande,
   forceDeleteCommande,
   safeDeleteCommande,
+
+  etatCommande
 };
