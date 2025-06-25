@@ -411,30 +411,30 @@ async function updateEtatCommande(idCommande, updateData) {
   return getCommandeById(idCommande);
 }
 
-//reserver les exemplaires de produits d'une commande. Utile pour le e-commerce
-async function updateEtatExemplaireCommande(idCommande, updateData) {
-  const allowedFields = ["etat_commande"];
+// //reserver les exemplaires de produits d'une commande. Utile pour le e-commerce
+// async function updateEtatExemplaireCommande(idCommande, updateData) {
+//   const allowedFields = ["etat_commande"];
 
-  const updatePayload = Object.fromEntries(
-    Object.entries(updateData).filter(([key]) => allowedFields.includes(key))
-  );
+//   const updatePayload = Object.fromEntries(
+//     Object.entries(updateData).filter(([key]) => allowedFields.includes(key))
+//   );
 
-  if (!Object.keys(updatePayload).length) {
-    throw new Error("Aucune donnée valide à mettre à jour");
-  }
+//   if (!Object.keys(updatePayload).length) {
+//     throw new Error("Aucune donnée valide à mettre à jour");
+//   }
 
-  updatePayload.updated_at = new Date();
+//   updatePayload.updated_at = new Date();
 
-  const [result] = await db
-    .update(commandes)
-    .set(updatePayload)
-    .where(eq(commandes.id_commande, idCommande))
-    .returning();
+//   const [result] = await db
+//     .update(commandes)
+//     .set(updatePayload)
+//     .where(eq(commandes.id_commande, idCommande))
+//     .returning();
 
-  if (!result) throw new Error("Commande non trouvée");
+//   if (!result) throw new Error("Commande non trouvée");
 
-  return getCommandeById(idCommande);
-}
+//   return getCommandeById(idCommande);
+// }
 
 
 /**

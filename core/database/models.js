@@ -363,7 +363,7 @@ const maintenances = pgTable("maintenances", {
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
-//test
+
 // Livraison
 const livraisons = pgTable("livraisons", {
   id_livraison: serial("id_livraison").primaryKey(),
