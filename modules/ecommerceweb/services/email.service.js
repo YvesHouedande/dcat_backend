@@ -71,14 +71,7 @@
 
 const nodemailer = require('nodemailer');
 const { db } = require('../../../core/database/config');
-const { 
-  commandes, 
-  clients_en_ligne,
-  commande_produits,
-  produits,
-  images 
-} = require('../../../core/database/models');
-
+const { commandes, clients_en_ligne, images, produits } = require('../../../core/database/models');
 const { eq } = require('drizzle-orm');
 
 class EmailService {
@@ -191,8 +184,6 @@ class EmailService {
     throw error;
   }
 }
-
-
   // generateClientEmail(order, client) {
   //   return `
   //     <!DOCTYPE html>
