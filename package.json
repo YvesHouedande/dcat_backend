@@ -4,6 +4,7 @@
   },
   "dependencies": {
     "@keycloak/keycloak-admin-client": "^26.1.4",
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dayjs": "^1.11.13",
