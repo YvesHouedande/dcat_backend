@@ -185,6 +185,7 @@ class EmailService {
   }
 }
 
+
   // generateClientEmail(order, client) {
   //   return `
   //     <!DOCTYPE html>
