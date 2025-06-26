@@ -11,6 +11,7 @@ const commande = await createCommande({
 });
  */
 
+
 const createCommande = async (req, res) => {
   try {
     const commande = await commandeService.createCommande(req.body);
@@ -90,10 +91,22 @@ const updateEtatCommande = async (req, res) => {
   }
 };
 
+//reserver les exemplaires de produits d'une commande. Utile pour le e-commerce
+const reserveExemplairesCommande = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const commande = await commandeService.reserveExemplairesCommande(id);
+    res.status(200).json(commande);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+
 const forceDeleteCommande = async (req, res) => {
   try {
     // const {id,type_sortie}=req.params;
-    const result = await commandeService.deleteCommande(
+    const result = await commandeService.forceDeleteCommande(
       Number(req.params.id),
       req.params.type_sortie
     );
@@ -106,7 +119,7 @@ const forceDeleteCommande = async (req, res) => {
 const safeDeleteCommande = async (req, res) => {
   try {
     // const {id,type_sortie}=req.params;
-    const result = await commandeService.deleteCommande(
+    const result = await commandeService.safeDeleteCommande(
       Number(req.params.id),
       req.params.type_sortie
     );
@@ -116,12 +129,50 @@ const safeDeleteCommande = async (req, res) => {
   }
 };
 
+
+
+/**
+ * Annule une commande :
+ *  - change l'état à "annulée"
+ *  - remet les exemplaires en stock
+ *  - nettoie les sorties de stock
+ */
+async function cancelCommande(req, res) {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ error: "Paramètre id invalide" });
+    }
+
+    const commande = await commandeService.cancelCommande(id);
+    res.status(200).json(commande);          // commande mise à jour
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+async function returnExemplaire(req, res) {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ error: "ID invalide" });
+
+    const result = await returnExemplaire(id);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
 module.exports = {
   getCommandeById,
   getAllCommandes,
   updateCommande,
+  reserveExemplairesCommande,
   forceDeleteCommande,
   safeDeleteCommande,
   updateEtatCommande,
   createCommande,
+  cancelCommande,
+  returnExemplaire,
+
 };

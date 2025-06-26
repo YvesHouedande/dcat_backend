@@ -6,7 +6,7 @@ const controller = require("../controllers/client.controller");
 
 /**
  * @swagger
- * /stocks/client:
+ * /stocks/clients:
  *   post:
  *     summary: Crée une nouvelle famille
  *     tags: [Client]
@@ -15,7 +15,7 @@ router.post("/", controller.createClient);
 
 /**
  * @swagger
- * /stocks/client:
+ * /stocks/clients:
  *   get:
  *     summary: Récupère toutes les client
  *     tags: [Client]
@@ -43,7 +43,7 @@ router.get("/", controller.getClients);
 
 /**
  * @swagger
- * /stocks/client/{id}:
+ * /stocks/clients/{id}:
  *   get:
  *     summary: Récupère une famille par ID
  *     tags: [Client]
@@ -52,7 +52,7 @@ router.get("/:id", controller.getClientById);
 
 /**
  * @swagger
- * /stocks/client/{id}:
+ * /stocks/clients/{id}:
  *   put:
  *     summary: Met à jour une famille par ID
  *     tags: [Client]
@@ -61,7 +61,7 @@ router.put("/:id", controller.updateClient);
 
 /**
  * @swagger
- * /stocks/client/{id}:
+ * /stocks/clients/{id}:
  *   delete:
  *     summary: Supprime une famille par ID
  *     tags: [Client]

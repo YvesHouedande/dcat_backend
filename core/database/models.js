@@ -123,12 +123,14 @@ const refresh_tokens = pgTable("refresh_tokens", {
 const commandes = pgTable("commandes", {
   id_commande: serial("id_commande").primaryKey(),
   date_de_commande: date("date_de_commande"),
-  etat_commande: varchar("etat_commande", { length: 50 }).default("en_attente"),
+  etat_commande: varchar("etat_commande", { length: 50 }).default("en_attente"), //['en_attente', 'Livré', 'Annulé', 'Retourné'];
   date_livraison: date("date_livraison"),
   lieu_de_livraison: varchar("lieu_de_livraison", { length: 50 }),
   mode_de_paiement: varchar("mode_de_paiement", { length: 50 }),
   id_client: integer("id_client").references(() => clients_en_ligne.id_client),
-  id_partenaire: integer("id_partenaire").references(() => partenaires.id_partenaire),
+  id_partenaire: integer("id_partenaire").references(
+    () => partenaires.id_partenaire
+  ),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -248,11 +250,12 @@ const affiches = pgTable("affiches", {
 
 // Produit
 const produits = pgTable("produits", {
-  id_produit: serial("id_produit").primaryKey(), // Clé primaire simple
+  id_produit: serial("id_produit").primaryKey(),
   code_produit: text("code_produit").unique(),
   desi_produit: varchar("desi_produit", { length: 50 }),
   desc_produit: text("desc_produit"),
   qte_produit: integer("qte_produit").default(0),
+  seuil_min_produit: integer("seuil_min_produit").default(0),
   emplacement_produit: text("emplacement"),
   caracteristiques_produit: text("caracteristiques"),
   prix_produit: decimal("prix_produit", {
@@ -452,9 +455,11 @@ const exemplaires = pgTable("exemplaires", {
 // Sortie_exemplaire
 const sortie_exemplaires = pgTable("sortie_exemplaires", {
   id_sortie_exemplaire: serial("id_sortie_exemplaire").primaryKey(),
-  type_sortie: varchar("type_sortie", { length: 50 }), // "vente_directe", "vente_en_ligne", "projet"
-  reference_id: integer("reference_id"),
+  type_sortie: varchar("type_sortie", { length: 50 }), // ["vente directe", "vente en ligne"]
   date_sortie: date("date_sortie"),
+  id_commande: integer("id_commande").references(
+    () => commandes.id_commande
+  ),
   id_exemplaire: integer("id_exemplaire").references(
     () => exemplaires.id_exemplaire
   ),
