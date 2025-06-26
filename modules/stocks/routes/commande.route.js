@@ -760,4 +760,33 @@ router.delete("force/:id/:type_sortie", controller.forceDeleteCommande);
 
 router.post("/annuler/:id", controller.cancelCommande);
 
+
+/**
+ * @swagger
+ * /stocks/commandes/exemplaires/retour/{id}:
+ *   post:
+ *     summary: Retourner un exemplaire
+ *     description: |
+ *       Remet un exemplaire sorti en état **disponible**.  
+ *       Met à jour la `date_retour_sortie`, ré-incrémente le stock.
+ *     tags:
+ *       - Exemplaires
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID de l’exemplaire à retourner
+ *         schema:
+ *           type: integer
+ *           example: 13
+ *     responses:
+ *       200:
+ *         description: Exemplaire retourné avec succès
+ *       400:
+ *         description: Erreur de validation ou logique
+ */
+
+router.post("/exemplaires/retour/:id", controller.returnExemplaire);
+
+
 module.exports = router;

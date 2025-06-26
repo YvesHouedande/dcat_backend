@@ -151,6 +151,17 @@ async function cancelCommande(req, res) {
   }
 }
 
+async function returnExemplaire(req, res) {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ error: "ID invalide" });
+
+    const result = await returnExemplaire(id);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
 
 module.exports = {
   getCommandeById,
@@ -162,5 +173,6 @@ module.exports = {
   updateEtatCommande,
   createCommande,
   cancelCommande,
+  returnExemplaire,
 
 };
