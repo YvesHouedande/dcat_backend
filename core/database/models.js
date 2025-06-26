@@ -455,7 +455,7 @@ const exemplaires = pgTable("exemplaires", {
 // Sortie_exemplaire
 const sortie_exemplaires = pgTable("sortie_exemplaires", {
   id_sortie_exemplaire: serial("id_sortie_exemplaire").primaryKey(),
-  type_sortie: varchar("type_sortie", { length: 50 }), // "vente_directe", "vente_en_ligne"
+  type_sortie: varchar("type_sortie", { length: 50 }), // ["vente directe", "vente en ligne"]
   date_sortie: date("date_sortie"),
   id_commande: integer("id_commande").references(
     () => commandes.id_commande

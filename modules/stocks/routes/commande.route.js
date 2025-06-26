@@ -490,6 +490,104 @@ router.put("/:id", controller.updateCommande);
 router.put("/etat/:id", controller.updateEtatCommande);
 
 
+/**
+ * @swagger
+ * /stocks/commandes/reserver/{id}:
+ *   post:
+ *     summary: Réserver les exemplaires d’une commande
+ *     description: |
+ *       • Sélectionne les produits de la commande et réserve automatiquement  
+ *         le nombre d’exemplaires **disponibles** correspondant à la quantité commandée.  
+ *       • Met à jour chaque exemplaire (état =`"réservé"`) et décrémente le stock produit.  
+ *       • Change l’état global de la commande à **“réservée”**.  
+ *       • Renvoie la commande mise à jour avec ses produits et exemplaires réservés.  
+ *     tags:
+ *       - Commandes
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Identifiant numérique de la commande à réserver
+ *         schema:
+ *           type: integer
+ *           example: 42
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               etatCommande:
+ *                 type: string
+ *                 description: Valeur personnalisée pour le champ `etat_commande`
+ *                 example: réservée
+ *               etatExemplaire:
+ *                 type: string
+ *                 description: Valeur personnalisée pour `etat_exemplaire`
+ *                 example: réservé
+ *     responses:
+ *       '200':
+ *         description: Réservation effectuée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id_commande:
+ *                   type: integer
+ *                 etat_commande:
+ *                   type: string
+ *                   example: réservée
+ *                 produits:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_produit:
+ *                         type: integer
+ *                       quantite:
+ *                         type: integer
+ *                       images:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id_image:
+ *                               type: integer
+ *                             url:
+ *                               type: string
+ *                 exemplaires:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_exemplaire:
+ *                         type: integer
+ *                       etat_exemplaire:
+ *                         type: string
+ *                         example: réservé
+ *       '400':
+ *         description: Stock insuffisant ou paramètre invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       '404':
+ *         description: Commande introuvable
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       '500':
+ *         description: Erreur serveur inattendue
+ */
 
 router.post("/reserver/:id/", controller.reserveExemplairesCommande); //:id de la commande
 
@@ -569,5 +667,97 @@ router.delete("/:id/:type_sortie", controller.safeDeleteCommande);
  *         description: Erreur serveur
  */
 router.delete("force/:id/:type_sortie", controller.forceDeleteCommande);
+
+
+/**
+ * @swagger
+ * /stocks/commandes/annuler/{id}:
+ *   post:
+ *     summary: Annuler une commande existante
+ *     description: |
+ *       - Change l’état de la commande à **“annulée”**.  
+ *       - Libère les exemplaires réservés/vendus et ré-incrémente le stock des produits.  
+ *       - Supprime les écritures de sortie de stock liées (`vente directe` ou `vente en ligne`).  
+ *       - Renvoie la commande mise à jour avec ses produits et exemplaires.
+ *     tags:
+ *       - Commandes
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Identifiant numérique de la commande à annuler
+ *         schema:
+ *           type: integer
+ *           example: 42
+ *     responses:
+ *       '200':
+ *         description: Commande annulée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id_commande:
+ *                   type: integer
+ *                   example: 42
+ *                 etat_commande:
+ *                   type: string
+ *                   example: annulée
+ *                 updated_at:
+ *                   type: string
+ *                   format: date-time
+ *                 produits:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_produit:
+ *                         type: integer
+ *                       designation_produit:
+ *                         type: string
+ *                       quantite:
+ *                         type: integer
+ *                       images:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id_image:
+ *                               type: integer
+ *                             url:
+ *                               type: string
+ *                 exemplaires:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_exemplaire:
+ *                         type: integer
+ *                       etat_exemplaire:
+ *                         type: string
+ *                         example: disponible
+ *       '400':
+ *         description: Paramètre invalide ou annulation impossible (stock déjà vendu, etc.)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       '404':
+ *         description: Commande introuvable
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       '500':
+ *         description: Erreur serveur inattendue
+ */
+
+router.post("/annuler/:id", controller.cancelCommande);
 
 module.exports = router;

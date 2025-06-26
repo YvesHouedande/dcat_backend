@@ -129,6 +129,29 @@ const safeDeleteCommande = async (req, res) => {
   }
 };
 
+
+
+/**
+ * Annule une commande :
+ *  - change l'état à "annulée"
+ *  - remet les exemplaires en stock
+ *  - nettoie les sorties de stock
+ */
+async function cancelCommande(req, res) {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ error: "Paramètre id invalide" });
+    }
+
+    const commande = await commandeService.cancelCommande(id);
+    res.status(200).json(commande);          // commande mise à jour
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+
 module.exports = {
   getCommandeById,
   getAllCommandes,
@@ -138,5 +161,6 @@ module.exports = {
   safeDeleteCommande,
   updateEtatCommande,
   createCommande,
+  cancelCommande,
 
 };

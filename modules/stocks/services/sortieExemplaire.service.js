@@ -7,7 +7,7 @@
 //   projets,
 // } = require("../../../core/database/models");
 
-// const typeSortie = ["vente_directe", "vente_en_ligne", "projet"];
+// const typeSortie = ["vente directe", "vente en ligne"];
 
 // const { etatExemplaire } = require("./exemplaire.service");
 
