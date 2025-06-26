@@ -19,7 +19,7 @@ const { etatExemplaire } = require("./exemplaire.service");
 
 // const etatCommande= ['en_attente', 'Livré', 'Annulé', 'Retourné']
 const etatCommande = ["Livré"];
-
+//test
 const { typeSortie } = require("./sortieExemplaire.service");
 
 /**
