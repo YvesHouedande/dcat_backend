@@ -411,30 +411,87 @@ async function updateEtatCommande(idCommande, updateData) {
   return getCommandeById(idCommande);
 }
 
-// //reserver les exemplaires de produits d'une commande. Utile pour le e-commerce
-// async function updateEtatExemplaireCommande(idCommande, updateData) {
-//   const allowedFields = ["etat_commande"];
 
-//   const updatePayload = Object.fromEntries(
-//     Object.entries(updateData).filter(([key]) => allowedFields.includes(key))
-//   );
+/**
+ * Réserve les exemplaires nécessaires pour une commande e-commerce déjà créée.
+ *
+ * @param {number} idCommande           - ID de la commande concernée
+ * @param {string} [etatExemplaire]     - (optionnel) État à appliquer aux exemplaires (défaut: "réservé")
+ * @returns {Promise<Object>}           - La commande mise à jour, avec produits + exemplaires réservés
+ *
+ * @throws {Error} - si stock insuffisant pour l’un des produits
+ */
+async function reserveExemplairesCommande(
+  idCommande
+) {
+  return db.transaction(async (tx) => {
+    /* 1. Récupère toutes les lignes produit/quantité de la commande */
+    const lignes = await tx
+      .select({
+        id_produit: commande_produits.id_produit,
+        quantite: commande_produits.quantite,
+      })
+      .from(commande_produits)
+      // .leftJoin(produits, eq(commande_produits.id_produit, produits.id_produit))
+      .where(eq(commande_produits.id_commande, idCommande));
 
-//   if (!Object.keys(updatePayload).length) {
-//     throw new Error("Aucune donnée valide à mettre à jour");
-//   }
+    /* 2. Pour chaque produit de la commande */
+    for (const ligne of lignes) {
+      const { id_produit,quantite } = ligne;
 
-//   updatePayload.updated_at = new Date();
+      /* 2-a) Cherche les exemplaires disponibles */
+      const dispo = await tx
+        .select({ id: exemplaires.id_exemplaire })
+        .from(exemplaires)
+        .where(
+          and(
+            eq(exemplaires.id_produit, id_produit),
+            eq(exemplaires.etat_exemplaire, etatExemplaire[1]) //"disponible"
+          )
+        )
+        .limit(quantite);
 
-//   const [result] = await db
-//     .update(commandes)
-//     .set(updatePayload)
-//     .where(eq(commandes.id_commande, idCommande))
-//     .returning();
+      if (dispo.length < quantite) {
+        throw new Error(
+          `Stock insuffisant : ${quantite} demandés pour le produit ${id_produit}, ${dispo.length} disponibles`
+        );
+      }
 
-//   if (!result) throw new Error("Commande non trouvée");
+      const ids = dispo.map((e) => e.id);
 
-//   return getCommandeById(idCommande);
-// }
+      /* 2-b) Réserve les exemplaires (mise à jour état) */
+      await tx
+        .update(exemplaires)
+        .set({
+          etat_exemplaire: etatExemplaire[5], //reserve
+        })
+        .where(inArray(exemplaires.id_exemplaire, ids));
+
+      /* 2-c) Décrémente le stock du produit */
+      await tx
+        .update(produits)
+        .set({
+          qte_produit: sql`${produits.qte_produit} - ${quantite}`,
+        })
+        .where(
+          eq(produits.id_produit, id_produit)
+        );
+    }
+
+    // /* 3. (Optionnel) Met à jour l’état global de la commande */
+    // await tx
+    //   .update(commandes)
+    //   .set({
+    //     etat_commande: etatCommande,
+    //     updated_at: new Date(),
+    //   })
+    //   .where(eq(commandes.id_commande, idCommande));
+
+    /* 4. Retourne l’objet complet via le service de lecture */
+    return getCommandeById(idCommande);
+  });
+}
+
 
 
 /**
@@ -678,6 +735,7 @@ module.exports = {
   getAllCommandes,
   updateCommande,
   updateEtatCommande,
+  reserveExemplairesCommande,
   forceDeleteCommande,
   safeDeleteCommande,
 

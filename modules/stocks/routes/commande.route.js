@@ -92,7 +92,6 @@ router.post("/", controller.createCommande);
  */
 router.get("/", controller.getAllCommandes);
 
-
 /**
  * @swagger
  * /stocks/commandes/{id}:
@@ -232,7 +231,7 @@ router.get("/", controller.getAllCommandes);
  *           type: string
  *           format: date-time
  *           example: "2025-05-22T16:52:15.555Z"
- * 
+ *
  *     Produit:
  *       type: object
  *       properties:
@@ -284,7 +283,7 @@ router.get("/", controller.getAllCommandes);
  *           type: string
  *           format: date-time
  *           example: "2025-05-22T16:53:56.614Z"
- * 
+ *
  *     Categorie:
  *       type: object
  *       properties:
@@ -302,7 +301,7 @@ router.get("/", controller.getAllCommandes);
  *           type: string
  *           format: date-time
  *           example: "2025-05-16T09:34:02.509Z"
- * 
+ *
  *     TypeProduit:
  *       type: object
  *       properties:
@@ -320,7 +319,7 @@ router.get("/", controller.getAllCommandes);
  *           type: string
  *           format: date-time
  *           example: "2025-05-16T09:39:33.549Z"
- * 
+ *
  *     Modele:
  *       type: object
  *       properties:
@@ -338,7 +337,7 @@ router.get("/", controller.getAllCommandes);
  *           type: string
  *           format: date-time
  *           example: "2025-05-16T09:37:17.349Z"
- * 
+ *
  *     Famille:
  *       type: object
  *       properties:
@@ -356,7 +355,7 @@ router.get("/", controller.getAllCommandes);
  *           type: string
  *           format: date-time
  *           example: "2025-05-16T09:36:24.497Z"
- * 
+ *
  *     Marque:
  *       type: object
  *       properties:
@@ -374,7 +373,7 @@ router.get("/", controller.getAllCommandes);
  *           type: string
  *           format: date-time
  *           example: "2025-05-16T09:48:16.624Z"
- * 
+ *
  *     Image:
  *       type: object
  *       properties:
@@ -407,9 +406,9 @@ router.get("/:id", controller.getCommandeById);
  *     summary: Met à jour une commande par ID
  *     description: |
  *       Modifie les informations d’une commande existante :
- *       • dates, lieu, mode de paiement  
- *       • état commande (ex. « Validé », « En cours », « Annulée » …)  
- *       • rattachement client ou partenaire  
+ *       • dates, lieu, mode de paiement
+ *       • état commande (ex. « Validé », « En cours », « Annulée » …)
+ *       • rattachement client ou partenaire
  *       • (optionnel) mise à jour des produits / quantités si le service le gère
  *     tags: [Commandes]
  *     parameters:
@@ -481,16 +480,18 @@ router.get("/:id", controller.getCommandeById);
  */
 router.put("/:id", controller.updateCommande);
 
-
 /**
  * @swagger
  * /stocks/commandes/etat/{id}:
  *   put:
- *     summary: Modifier l'etat d'une commande 
+ *     summary: Modifier l'etat d'une commande
  *     tags: [Commandes]
  */
 router.put("/etat/:id", controller.updateEtatCommande);
 
+
+
+router.post("/reserver/:id/", controller.reserveExemplairesCommande); //:id de la commande
 
 /**
  * @swagger
@@ -498,8 +499,8 @@ router.put("/etat/:id", controller.updateEtatCommande);
  *   delete:
  *     summary: Supprime une commande (mode sécurisé)
  *     description: |
- *       • Remet tous les exemplaires associés à **Disponible**  
- *       • Réincrémente le stock produit  
+ *       • Remet tous les exemplaires associés à **Disponible**
+ *       • Réincrémente le stock produit
  *       • Refuse la suppression si la commande est déjà **livrée** ou **facturée**
  *     tags: [Commandes]
  *     parameters:
@@ -537,9 +538,9 @@ router.delete("/:id/:type_sortie", controller.safeDeleteCommande);
  *   delete:
  *     summary: Supprime une commande (mode forcé, admin)
  *     description: |
- *       **Action irréversible !**  
- *       Ignore l’état de la commande (en cours, livrée, facturée…).  
- *       Réinitialise tous les exemplaires (Vendu, Réservé…) → **Disponible**  
+ *       **Action irréversible !**
+ *       Ignore l’état de la commande (en cours, livrée, facturée…).
+ *       Réinitialise tous les exemplaires (Vendu, Réservé…) → **Disponible**
  *       et incrémente le stock produit.
  *     tags: [Commandes]
  *     parameters:
