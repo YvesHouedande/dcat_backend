@@ -439,6 +439,7 @@ router.get("/:id", controller.getCommandeById);
  *               lieu_de_livraison: "RTI plateaux"
  *               mode_de_paiement: "espèce"
  *               id_partenaire: 1
+ *               id_client: 1
  *     responses:
  *       200:
  *         description: Commande mise à jour

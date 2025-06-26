@@ -11,7 +11,6 @@ const commande = await createCommande({
 });
  */
 
-
 const createCommande = async (req, res) => {
   try {
     const commande = await commandeService.createCommande(req.body);
@@ -23,18 +22,22 @@ const createCommande = async (req, res) => {
 
 const getCommandeById = async (req, res) => {
   try {
-    const commande = await commandeService.getCommandeById(
-      parseInt(req.params.id)
-    );
-    
-    
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const commande = await commandeService.getCommandeById(id);
+
     // 🔁 Ajouter les URLs aux images des produits
     commande.produits = commande.produits.map((item) => ({
       ...item,
       images: item.images
         ? item.images.map((img) => ({
             ...img,
-            url: `${req.protocol}://${req.get("host")}/${img.lien_image.replace(/\\/g, "/")}`,
+            url: `${req.protocol}://${req.get("host")}/${img.lien_image.replace(
+              /\\/g,
+              "/"
+            )}`,
           }))
         : [],
     }));
@@ -102,7 +105,6 @@ const reserveExemplairesCommande = async (req, res) => {
   }
 };
 
-
 const forceDeleteCommande = async (req, res) => {
   try {
     // const {id,type_sortie}=req.params;
@@ -129,8 +131,6 @@ const safeDeleteCommande = async (req, res) => {
   }
 };
 
-
-
 /**
  * Annule une commande :
  *  - change l'état à "annulée"
@@ -145,7 +145,7 @@ async function cancelCommande(req, res) {
     }
 
     const commande = await commandeService.cancelCommande(id);
-    res.status(200).json(commande);          // commande mise à jour
+    res.status(200).json(commande); // commande mise à jour
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -174,5 +174,4 @@ module.exports = {
   createCommande,
   cancelCommande,
   returnExemplaire,
-
 };

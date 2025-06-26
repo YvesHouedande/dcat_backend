@@ -19,7 +19,7 @@ const { etatExemplaire } = require("./exemplaire.service");
 
 // const etatCommande= ['en_attente', 'Livré', 'Annulé', 'Retourné']
 const etatCommande = ["Livré"];
-
+//test
 const { typeSortie } = require("./sortieExemplaire.service");
 
 /**
@@ -310,23 +310,23 @@ async function getCommandeById(id) {
       return total + prix * quantite;
     }, 0);
 
-    // 4. Récupération des exemplaires via sortie_exemplaires
-    const exemplairesAssocies = await db
-      .select({
-        exemplaire: exemplaires,
-        sortie: sortie_exemplaires,
-      })
-      .from(sortie_exemplaires)
-      .leftJoin(
-        exemplaires,
-        eq(sortie_exemplaires.id_exemplaire, exemplaires.id_exemplaire)
-      )
-      .where(
-        and(
-          eq(sortie_exemplaires.reference_id, id),
-          eq(sortie_exemplaires.type_sortie, "vente directe")
-        )
-      );
+    // // 4. Récupération des exemplaires via sortie_exemplaires
+    // const exemplairesAssocies = await db
+    //   .select({
+    //     exemplaire: exemplaires,
+    //     sortie: sortie_exemplaires,
+    //   })
+    //   .from(sortie_exemplaires)
+    //   .leftJoin(
+    //     exemplaires,
+    //     eq(sortie_exemplaires.id_exemplaire, exemplaires.id_exemplaire)
+    //   )
+    //   .where(
+    //     and(
+    //       eq(sortie_exemplaires.reference_id, id),
+    //       eq(sortie_exemplaires.type_sortie, "vente directe")
+    //     )
+    //   );
 
     return {
       ...row.commande,
@@ -334,10 +334,10 @@ async function getCommandeById(id) {
       client: row.client || null,
       produits: produitsCommandes,
       montant_total,
-      exemplaires: exemplairesAssocies.map((e) => ({
-        ...e.exemplaire,
-        sortie: e.sortie,
-      })),
+      // exemplaires: exemplairesAssocies.map((e) => ({
+      //   ...e.exemplaire,
+      //   sortie: e.sortie,
+      // })),
     };
   } catch (error) {
     console.error("Erreur dans getCommandeById:", error);
