@@ -8,7 +8,10 @@ const {
   loginSchema,
   syncUserSchema,
   updateProfileSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema
 } = require('../validations/auth.validation');
+
 
 /**
  * @swagger
@@ -161,6 +164,17 @@ router.put('/update-profile',
   verifyToken,
   validate(updateProfileSchema),
   authController.updateProfile
+);
+
+
+router.post('/forgot-password', 
+  validate(forgotPasswordSchema),
+  authController.forgotPassword
+);
+
+router.post('/reset-password', 
+  validate(resetPasswordSchema),
+  authController.resetPassword
 );
 
 module.exports = router;

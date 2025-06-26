@@ -2,6 +2,9 @@ const nodemailer = require('nodemailer');
 const { db } = require('../../../core/database/config');
 const { commandes, clients_en_ligne, commande_produits, produits } = require('../../../core/database/models');
 const { eq } = require("drizzle-orm");
+const e = require('express');
+const logger = require('../../../core/utils/logger');
+
 
 
 class EmailService {
@@ -303,6 +306,25 @@ class EmailService {
     };
     return labels[status] || status;
   }
+
+  async sendPasswordReset({ email, name, resetUrl }) {
+
+  const mailOptions = {
+    from: `"${process.env.APP_NAME}" <${process.env.EMAIL_FROM}>`,
+    to: email,
+    subject: 'Réinitialisation de votre mot de passe',
+    html: `
+      <p>Bonjour ${name},</p>
+      <p>Cliquez sur ce lien pour réinitialiser votre mot de passe :</p>
+      <p><a href="${resetUrl}">${resetUrl}</a></p>
+      <p>Ce lien expirera dans 1 heure.</p>
+      <p>Si vous n'avez pas fait cette demande, ignorez cet email.</p>
+    `,
+    text: `Bonjour ${name},\n\nCliquez sur ce lien pour réinitialiser votre mot de passe :\n${resetUrl}\n\nCe lien expirera dans 1 heure.`
+  };
+
+  await this.transporter.sendMail(mailOptions);
+}
 }
 
 module.exports = new EmailService();
