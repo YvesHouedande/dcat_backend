@@ -17,9 +17,9 @@ const {
 
 const { etatExemplaire } = require("./exemplaire.service");
 
-// const etatCommande= ['en_attente', 'Livré', 'Annulé', 'Retourné']
-const etatCommande = ["Livré"];
-//test
+// const etatCommande= ['en_attente', 'en_cours', 'Livrée', 'Annulée', 'Retournée'];
+const etatCommande = ["Livrée"];
+
 const { typeSortie } = require("./sortieExemplaire.service");
 
 /**
@@ -742,7 +742,7 @@ async function cancelCommande(idCommande) {
       .where(eq(commandes.id_commande, idCommande));
 
     if (!cmd) throw new Error("Commande introuvable");
-    if (cmd.etat_commande === "Annulé")
+    if (cmd.etat_commande === "Annulée")
       throw new Error("Commande déjà annulée");
 
     /* 2. Lignes produit + quantité de la commande */
@@ -834,7 +834,7 @@ async function cancelCommande(idCommande) {
     await tx
       .update(commandes)
       .set({
-        etat_commande: "Annulé",
+        etat_commande: "Annulée",
         updated_at: new Date(),
       })
       .where(eq(commandes.id_commande, idCommande));

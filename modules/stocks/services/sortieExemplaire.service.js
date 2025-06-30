@@ -1,222 +1,230 @@
-// const { and, eq, gte, lte, sql } = require("drizzle-orm");
-// const { db } = require("../../../core/database/config");
-// const {
-//   exemplaires,
-//   sortie_exemplaires,
-//   commandes,
-//   projets,
-// } = require("../../../core/database/models");
+/**
+ * ce fichier service permet de faire sortir les exemplaires qui ont été commandé.
+ * 
+ * NB : cela n'a rien a avoir avec la sortir d'outils de travail !!!!!
+ * 
+ */
 
-// const typeSortie = ["vente directe", "vente en ligne"];
+const { and, eq, gte, lte, sql } = require("drizzle-orm");
+const { db } = require("../../../core/database/config");
+const {
+  exemplaires,
+  sortie_exemplaires,
+  commandes,
+  projets,
+} = require("../../../core/database/models");
 
-// const { etatExemplaire } = require("./exemplaire.service");
+const typeSortie = ["vente directe", "vente en ligne"];
 
-// //Routes liées aux sorties d'exemplaires (les exemplaires qui ont été commander par exemplaire)
+const { etatExemplaire } = require("./exemplaire.service");
 
-// // Création d'une sortie (et marquage de l'exemplaire comme "Vendu")
-// async function createSortie({
-//   type_sortie,
-//   reference_id, //id de la commande ou du projet par exemple
-//   id_exemplaire,
-//   date_sortie = new Date(),
-// }) {
-//   return await db.transaction(async (tx) => {
-//     const [newSortie] = await tx
-//       .insert(sortie_exemplaires)
-//       .values({
-//         type_sortie,
-//         reference_id,
-//         id_exemplaire,
-//         date_sortie: new Date(date_sortie),
-//         created_at: new Date(),
-//         updated_at: new Date(),
-//       })
-//       .returning();
+//Routes liées aux sorties d'exemplaires (les exemplaires qui ont été commander par exemplaire)
 
-//     await tx
-//       .update(exemplaires)
-//       .set({
-//         etat_exemplaire: etatExemplaire[0], //"Vendu"
-//         updated_at: new Date(),
-//       })
-//       .where(eq(exemplaires.id_exemplaire, id_exemplaire));
+// Création d'une sortie (et marquage de l'exemplaire comme "Vendu")
+async function createSortie({
+  type_sortie,
+  id_commande,
+  id_exemplaire,
+  date_sortie = new Date(),
+}) {
+  return await db.transaction(async (tx) => {
+    const [newSortie] = await tx
+      .insert(sortie_exemplaires)
+      .values({
+        type_sortie,
+        id_commande,
+        id_exemplaire,
+        date_sortie: new Date(date_sortie),
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      .returning();
 
-//     return newSortie;
-//   });
-// }
+    await tx
+      .update(exemplaires)
+      .set({
+        etat_exemplaire: etatExemplaire[0], //"Vendu"
+        updated_at: new Date(),
+      })
+      .where(eq(exemplaires.id_exemplaire, id_exemplaire));
 
-// // Lecture des sorties avec filtres optionnels et pagination
-// async function getSorties(filters = {}, { limit, offset } = {}) {
-//   const baseQuery = db
-//     .select()
-//     .from(sortie_exemplaires)
-//     .where(
-//       and(
-//         filters.type_sortie
-//           ? eq(sortie_exemplaires.type_sortie, filters.type_sortie)
-//           : undefined,
-//         filters.reference_id
-//           ? eq(sortie_exemplaires.reference_id, filters.reference_id)
-//           : undefined,
-//         filters.id_exemplaire
-//           ? eq(sortie_exemplaires.id_exemplaire, filters.id_exemplaire)
-//           : undefined,
-//         filters.start_date && filters.end_date
-//           ? and(
-//               gte(sortie_exemplaires.date_sortie, new Date(filters.start_date)),
-//               lte(sortie_exemplaires.date_sortie, new Date(filters.end_date))
-//             )
-//           : undefined
-//       )
-//     );
+    return newSortie;
+  });
+}
 
-//   const totalResult = await db
-//     .select({ count: sql`count(*)` })
-//     .from(sortie_exemplaires)
-//     .where(
-//       and(
-//         filters.type_sortie
-//           ? eq(sortie_exemplaires.type_sortie, filters.type_sortie)
-//           : undefined,
-//         filters.reference_id
-//           ? eq(sortie_exemplaires.reference_id, filters.reference_id)
-//           : undefined,
-//         filters.id_exemplaire
-//           ? eq(sortie_exemplaires.id_exemplaire, filters.id_exemplaire)
-//           : undefined,
-//         filters.start_date && filters.end_date
-//           ? and(
-//               gte(sortie_exemplaires.date_sortie, new Date(filters.start_date)),
-//               lte(sortie_exemplaires.date_sortie, new Date(filters.end_date))
-//             )
-//           : undefined
-//       )
-//     );
+// Lecture des sorties avec filtres optionnels et pagination
+async function getSorties(filters = {}, { limit, offset } = {}) {
+  const baseQuery = db
+    .select()
+    .from(sortie_exemplaires)
+    .where(
+      and(
+        filters.type_sortie
+          ? eq(sortie_exemplaires.type_sortie, filters.type_sortie)
+          : undefined,
+        filters.id_commande
+          ? eq(sortie_exemplaires.id_commande, filters.id_commande)
+          : undefined,
+        filters.id_exemplaire
+          ? eq(sortie_exemplaires.id_exemplaire, filters.id_exemplaire)
+          : undefined,
+        filters.start_date && filters.end_date
+          ? and(
+              gte(sortie_exemplaires.date_sortie, new Date(filters.start_date)),
+              lte(sortie_exemplaires.date_sortie, new Date(filters.end_date))
+            )
+          : undefined
+      )
+    );
 
-//   const total = parseInt(totalResult[0].count);
+  const totalResult = await db
+    .select({ count: sql`count(*)` })
+    .from(sortie_exemplaires)
+    .where(
+      and(
+        filters.type_sortie
+          ? eq(sortie_exemplaires.type_sortie, filters.type_sortie)
+          : undefined,
+        filters.id_commande
+          ? eq(sortie_exemplaires.id_commande, filters.id_commande)
+          : undefined,
+        filters.id_exemplaire
+          ? eq(sortie_exemplaires.id_exemplaire, filters.id_exemplaire)
+          : undefined,
+        filters.start_date && filters.end_date
+          ? and(
+              gte(sortie_exemplaires.date_sortie, new Date(filters.start_date)),
+              lte(sortie_exemplaires.date_sortie, new Date(filters.end_date))
+            )
+          : undefined
+      )
+    );
 
-//   let query = baseQuery;
-//   if (limit !== undefined) {
-//     query = query.limit(limit);
-//   }
-//   if (offset !== undefined) {
-//     query = query.offset(offset);
-//   }
+  const total = parseInt(totalResult[0].count);
 
-//   const sorties = await query;
+  let query = baseQuery;
+  if (limit !== undefined) {
+    query = query.limit(limit);
+  }
+  if (offset !== undefined) {
+    query = query.offset(offset);
+  }
 
-//   return {
-//     sorties,
-//     total,
-//   };
-// }
+  const sorties = await query;
 
-// // Mise à jour partielle d'une sortie (et gestion de l'état d'exemplaire si changé)
-// async function updateSortie(id_sortie_exemplaire, updateData) {
-//   return await db.transaction(async (tx) => {
-//     const [oldSortie] = await tx
-//       .select()
-//       .from(sortie_exemplaires)
-//       .where(eq(sortie_exemplaires.id_sortie_exemplaire, id_sortie_exemplaire));
+  return {
+    sorties,
+    total,
+  };
+}
 
-//     if (!oldSortie) throw new Error("Sortie non trouvée");
+// Mise à jour partielle d'une sortie (et gestion de l'état d'exemplaire si changé)
+async function updateSortie(id_sortie_exemplaire, updateData) {
+  return await db.transaction(async (tx) => {
+    const [oldSortie] = await tx
+      .select()
+      .from(sortie_exemplaires)
+      .where(eq(sortie_exemplaires.id_sortie_exemplaire, id_sortie_exemplaire));
 
-//     const [updated] = await tx
-//       .update(sortie_exemplaires)
-//       .set({
-//         ...updateData,
-//         updated_at: new Date(),
-//       })
-//       .where(eq(sortie_exemplaires.id_sortie_exemplaire, id_sortie_exemplaire))
-//       .returning();
+    if (!oldSortie) throw new Error("Sortie non trouvée");
 
-//     if (
-//       updateData.id_exemplaire &&
-//       updateData.id_exemplaire !== oldSortie.id_exemplaire
-//     ) {
-//       await Promise.all([
-//         tx
-//           .update(exemplaires)
-//           .set({ etat_exemplaire: etatExemplaire[5], updated_at: new Date() }) //"Reserve"
-//           .where(eq(exemplaires.id_exemplaire, oldSortie.id_exemplaire)),
+    const [updated] = await tx
+      .update(sortie_exemplaires)
+      .set({
+        ...updateData,
+        updated_at: new Date(),
+      })
+      .where(eq(sortie_exemplaires.id_sortie_exemplaire, id_sortie_exemplaire))
+      .returning();
 
-//         tx
-//           .update(exemplaires)
-//           .set({ etat_exemplaire: etatExemplaire[0], updated_at: new Date() }) //"Vendu"
-//           .where(eq(exemplaires.id_exemplaire, updateData.id_exemplaire)),
-//       ]);
-//     }
+      //s'il y a changement d'exemplaire
+    if (
+      updateData.id_exemplaire &&
+      updateData.id_exemplaire !== oldSortie.id_exemplaire
+    ) {
+      await Promise.all([
+        tx
+          .update(exemplaires)
+          .set({ etat_exemplaire: etatExemplaire[5], updated_at: new Date() }) //"Reserve"
+          .where(eq(exemplaires.id_exemplaire, oldSortie.id_exemplaire)),
 
-//     return updated;
-//   });
-// }
+        tx
+          .update(exemplaires)
+          .set({ etat_exemplaire: etatExemplaire[0], updated_at: new Date() }) //"Vendu"
+          .where(eq(exemplaires.id_exemplaire, updateData.id_exemplaire)),
+      ]);
+    }
 
-// // Suppression d'une sortie (et rétablissement de l'exemplaire à "Disponible")
-// async function deleteSortie(id_sortie_exemplaire) {
-//   return await db.transaction(async (tx) => {
-//     const [sortie] = await tx
-//       .select()
-//       .from(sortie_exemplaires)
-//       .where(eq(sortie_exemplaires.id_sortie_exemplaire, id_sortie_exemplaire));
+    return updated;
+  });
+}
 
-//     if (!sortie) throw new Error("Sortie non trouvée");
+// Suppression d'une sortie (et rétablissement de l'exemplaire à "Disponible")
+async function deleteSortie(id_sortie_exemplaire) {
+  return await db.transaction(async (tx) => {
+    const [sortie] = await tx
+      .select()
+      .from(sortie_exemplaires)
+      .where(eq(sortie_exemplaires.id_sortie_exemplaire, id_sortie_exemplaire));
 
-//     const [deleted] = await tx
-//       .delete(sortie_exemplaires)
-//       .where(eq(sortie_exemplaires.id_sortie_exemplaire, id_sortie_exemplaire))
-//       .returning();
+    if (!sortie) throw new Error("Sortie non trouvée");
 
-//     await tx
-//       .update(exemplaires)
-//       .set({ etat_exemplaire: etatExemplaire[5], updated_at: new Date() }) //"Reservé"
-//       .where(eq(exemplaires.id_exemplaire, sortie.id_exemplaire));
+    const [deleted] = await tx
+      .delete(sortie_exemplaires)
+      .where(eq(sortie_exemplaires.id_sortie_exemplaire, id_sortie_exemplaire))
+      .returning();
 
-//     return deleted;
-//   });
-// }
+    await tx
+      .update(exemplaires)
+      .set({ etat_exemplaire: etatExemplaire[5], updated_at: new Date() }) //"Reservé"
+      .where(eq(exemplaires.id_exemplaire, sortie.id_exemplaire));
 
-// // Récupération détaillée avec jointure exemplaire
-// async function getSortieDetails(id_sortie_exemplaire) {
-//   const [sortie] = await db
-//     .select({ sortie: sortie_exemplaires, exemplaire: exemplaires })
-//     .from(sortie_exemplaires)
-//     .leftJoin(
-//       exemplaires,
-//       eq(sortie_exemplaires.id_exemplaire, exemplaires.id_exemplaire)
-//     )
-//     .where(eq(sortie_exemplaires.id_sortie_exemplaire, id_sortie_exemplaire));
+    return deleted;
+  });
+}
 
-//   if (!sortie) return null;
+// Récupération détaillée avec jointure exemplaire
+async function getSortieDetails(id_sortie_exemplaire) {
+  const [sortie] = await db
+    .select({ sortie: sortie_exemplaires, exemplaire: exemplaires })
+    .from(sortie_exemplaires)
+    .leftJoin(
+      exemplaires,
+      eq(sortie_exemplaires.id_exemplaire, exemplaires.id_exemplaire)
+    )
+    .where(eq(sortie_exemplaires.id_sortie_exemplaire, id_sortie_exemplaire));
 
-//   let details;
-//   switch (sortie.sortie.type_sortie) {
-//     case typeSortie[0]: //vente directe
-//     case typeSortie[1]: //vente en ligne
-//       details = await db.query.commandes.findFirst({
-//         where: eq(commandes.id_commande, sortie.sortie.reference_id),
-//       });
-//       break;
-//     case typeSortie[2]: //projet
-//       details = await db.query.projets.findFirst({
-//         where: eq(projets.id_projet, sortie.sortie.reference_id),
-//       });
-//       break;
-//     default:
-//       details = { message: "Type de sortie non géré" };
-//   }
+  if (!sortie) return null;
 
-//   return {
-//     ...sortie,
-//     details,
-//   };
-// }
+  let details;
+  switch (sortie.sortie.type_sortie) {
+    case typeSortie[0]: //vente directe
+    case typeSortie[1]: //vente en ligne
+      details = await db.query.commandes.findFirst({
+        where: eq(commandes.id_commande, sortie.sortie.id_commande),
+      });
+      break;
+    case typeSortie[2]: //projet
+      details = await db.query.projets.findFirst({
+        where: eq(projets.id_projet, sortie.sortie.id_commande),
+      });
+      break;
+    default:
+      details = { message: "Type de sortie non géré" };
+  }
 
-// module.exports = {
-//   createSortie,
-//   getSorties,
-//   updateSortie,
-//   deleteSortie,
-//   getSortieDetails,
+  return {
+    ...sortie,
+    details,
+  };
+}
 
-//   typeSortie,
-// };
+module.exports = {
+  createSortie,
+  getSorties,
+  updateSortie,
+  deleteSortie,
+  getSortieDetails,
+
+  typeSortie,
+};
