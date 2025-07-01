@@ -14,6 +14,7 @@ const commandeRoutes = require("./commande.route");
 const sortiesExemplairesRoutes = require("./sortiesExemplaire.route");
 const achatRoutes = require("./achat.route");
 const panierRoutes = require("./panier.route");
+const clientRoutes = require("./client.route");
 
 // Montage des routes
 // router.use("/familles", familleRoutes);
@@ -140,6 +141,8 @@ router.use("/achats", achatRoutes);
 
 
 router.use("/paniers", panierRoutes);
+
+router.use("/clients", clientRoutes);
 
 
 module.exports = router;

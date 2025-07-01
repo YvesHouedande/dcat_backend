@@ -12,9 +12,13 @@ const {
   partenaires,
   commande_produits,
   sortie_exemplaires,
+  clients_en_ligne,
 } = require("../../../core/database/models");
 
 const { etatExemplaire } = require("./exemplaire.service");
+
+// const etatCommande= ['en_attente', 'en_cours', 'Livrée', 'Annulée', 'Retournée'];
+const etatCommande = ["Livrée"];
 
 const { typeSortie } = require("./sortieExemplaire.service");
 
@@ -157,7 +161,6 @@ async function createCommande({
   });
 }
 
-
 // /**
 //  *
 //  * Explication :
@@ -244,11 +247,22 @@ async function getCommandeById(id) {
       .select({
         commande: commandes,
         partenaire: partenaires,
+        client: {
+          id: clients_en_ligne.id_client,
+          nom: clients_en_ligne.nom,
+          role: clients_en_ligne.role,
+          email: clients_en_ligne.email,
+          contact: clients_en_ligne.contact,
+        },
       })
       .from(commandes)
       .leftJoin(
         partenaires,
         eq(commandes.id_partenaire, partenaires.id_partenaire)
+      )
+      .leftJoin(
+        clients_en_ligne,
+        eq(commandes.id_client, clients_en_ligne.id_client)
       )
       .where(eq(commandes.id_commande, id));
 
@@ -280,7 +294,10 @@ async function getCommandeById(id) {
       .from(commande_produits)
       .leftJoin(produits, eq(commande_produits.id_produit, produits.id_produit))
       .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
-      .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
+      .leftJoin(
+        type_produits,
+        eq(produits.id_type_produit, type_produits.id_type_produit)
+      )
       .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
       .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
       .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
@@ -293,33 +310,34 @@ async function getCommandeById(id) {
       return total + prix * quantite;
     }, 0);
 
-    // 4. Récupération des exemplaires via sortie_exemplaires
-    const exemplairesAssocies = await db
-      .select({
-        exemplaire: exemplaires,
-        sortie: sortie_exemplaires,
-      })
-      .from(sortie_exemplaires)
-      .leftJoin(
-        exemplaires,
-        eq(sortie_exemplaires.id_exemplaire, exemplaires.id_exemplaire)
-      )
-      .where(
-        and(
-          eq(sortie_exemplaires.reference_id, id),
-          eq(sortie_exemplaires.type_sortie, "vente directe")
-        )
-      );
+    // // 4. Récupération des exemplaires via sortie_exemplaires
+    // const exemplairesAssocies = await db
+    //   .select({
+    //     exemplaire: exemplaires,
+    //     sortie: sortie_exemplaires,
+    //   })
+    //   .from(sortie_exemplaires)
+    //   .leftJoin(
+    //     exemplaires,
+    //     eq(sortie_exemplaires.id_exemplaire, exemplaires.id_exemplaire)
+    //   )
+    //   .where(
+    //     and(
+    //       eq(sortie_exemplaires.reference_id, id),
+    //       eq(sortie_exemplaires.type_sortie, "vente directe")
+    //     )
+    //   );
 
     return {
       ...row.commande,
       partenaire: row.partenaire || null,
+      client: row.client || null,
       produits: produitsCommandes,
       montant_total,
-      exemplaires: exemplairesAssocies.map((e) => ({
-        ...e.exemplaire,
-        sortie: e.sortie,
-      })),
+      // exemplaires: exemplairesAssocies.map((e) => ({
+      //   ...e.exemplaire,
+      //   sortie: e.sortie,
+      // })),
     };
   } catch (error) {
     console.error("Erreur dans getCommandeById:", error);
@@ -327,14 +345,9 @@ async function getCommandeById(id) {
   }
 }
 
-
-
-// 📜 Liste paginée ou filtrée des commandes
+// 📜 Liste des commandes
 async function getAllCommandes({ limit = 50, offset = 0, etat = null } = {}) {
-  let query = db
-    .select()
-    .from(commandes)
-
+  let query = db.select().from(commandes);
 
   if (etat) {
     query = query.where(eq(commandes.etat_commande, etat));
@@ -373,56 +386,127 @@ async function updateCommande(idCommande, updateData) {
   return getCommandeById(idCommande);
 }
 
-// ❌ Suppression d'une commande complète
-const deleteCommande = async (idCommande, type = "vente directe") => {
-  return await db.transaction(async (tx) => {
-    if (type === "projet") {
-      // 🔁 Projet : mise à jour des exemplaires + quantité produit
-      const exemplairesAssocies = await tx
-        .select()
-        .from(sortie_exemplaires)
-        .where(
-          and(
-            eq(sortie_exemplaires.reference_id, idCommande),
-            eq(sortie_exemplaires.type_sortie, type)
-          )
-        );
+// changer l'etat d'une commande
+async function updateEtatCommande(idCommande, updateData) {
+  const allowedFields = ["etat_commande"];
 
-      for (const ex of exemplairesAssocies) {
-        // 1. Remettre état disponible
-        await tx
-          .update(exemplaires)
-          .set({ etat_exemplaire: etatExemplaire[1], updated_at: new Date() })
-          .where(eq(exemplaires.id_exemplaire, ex.id_exemplaire));
+  const updatePayload = Object.fromEntries(
+    Object.entries(updateData).filter(([key]) => allowedFields.includes(key))
+  );
 
-        // 2. Incrémenter le stock du produit
-        await tx
-          .update(produits)
-          .set({
-            qte_produit: sql`${produits.qte_produit} + 1`,
-            updated_at: new Date(),
-          })
-          .where(eq(produits.id_produit, ex.id_produit));
-      }
+  if (!Object.keys(updatePayload).length) {
+    throw new Error("Aucune donnée valide à mettre à jour");
+  }
 
-      await tx
-        .delete(sortie_exemplaires)
-        .where(
-          and(
-            eq(sortie_exemplaires.reference_id, idCommande),
-            eq(sortie_exemplaires.type_sortie, type)
-          )
-        );
+  updatePayload.updated_at = new Date();
 
-      return { success: true, message: "Projet libéré" };
-    }
+  const [result] = await db
+    .update(commandes)
+    .set(updatePayload)
+    .where(eq(commandes.id_commande, idCommande))
+    .returning();
 
-    // 💼 Vente directe ou en ligne
-    const produitsCommande = await tx
-      .select()
+  if (!result) throw new Error("Commande non trouvée");
+
+  return getCommandeById(idCommande);
+}
+
+/**
+ * Réserve les exemplaires nécessaires pour une commande e-commerce déjà créée.
+ *
+ * @param {number} idCommande           - ID de la commande concernée
+ * @param {string} [etatExemplaire]     - (optionnel) État à appliquer aux exemplaires (défaut: "réservé")
+ * @returns {Promise<Object>}           - La commande mise à jour, avec produits + exemplaires réservés
+ *
+ * @throws {Error} - si stock insuffisant pour l’un des produits
+ */
+async function reserveExemplairesCommande(idCommande) {
+  return db.transaction(async (tx) => {
+    /* 1. Récupère toutes les lignes produit/quantité de la commande */
+    const lignes = await tx
+      .select({
+        id_produit: commande_produits.id_produit,
+        quantite: commande_produits.quantite,
+      })
       .from(commande_produits)
+      // .leftJoin(produits, eq(commande_produits.id_produit, produits.id_produit))
       .where(eq(commande_produits.id_commande, idCommande));
 
+    /* 2. Pour chaque produit de la commande */
+    for (const ligne of lignes) {
+      const { id_produit, quantite } = ligne;
+
+      /* 2-a) Cherche les exemplaires disponibles */
+      const dispo = await tx
+        .select({ id: exemplaires.id_exemplaire })
+        .from(exemplaires)
+        .where(
+          and(
+            eq(exemplaires.id_produit, id_produit),
+            eq(exemplaires.etat_exemplaire, etatExemplaire[1]) //"disponible"
+          )
+        )
+        .limit(quantite);
+
+      if (dispo.length < quantite) {
+        throw new Error(
+          `Stock insuffisant : ${quantite} demandés pour le produit ${id_produit}, ${dispo.length} disponibles`
+        );
+      }
+
+      const ids = dispo.map((e) => e.id);
+
+      /* 2-b) Réserve les exemplaires (mise à jour état) */
+      await tx
+        .update(exemplaires)
+        .set({
+          etat_exemplaire: etatExemplaire[5], //reserve
+        })
+        .where(inArray(exemplaires.id_exemplaire, ids));
+
+      /* 2-c) Décrémente le stock du produit */
+      await tx
+        .update(produits)
+        .set({
+          qte_produit: sql`${produits.qte_produit} - ${quantite}`,
+        })
+        .where(eq(produits.id_produit, id_produit));
+    }
+
+    // /* 3. (Optionnel) Met à jour l’état global de la commande */
+    // await tx
+    //   .update(commandes)
+    //   .set({
+    //     etat_commande: etatCommande,
+    //     updated_at: new Date(),
+    //   })
+    //   .where(eq(commandes.id_commande, idCommande));
+
+    /* 4. Retourne l’objet complet via le service de lecture */
+    return getCommandeById(idCommande);
+  });
+}
+
+/**
+ * forceDeleteCommande
+ * -------------------
+ * ⚠️  Suppression **irréversible** d'une commande, quel que soit son état.
+ * • Supprime d'abord les sorties d'exemplaires, les liaisons
+ *   (commande_produits, etc.), puis la commande elle-même.
+ * • Remet tous les exemplaires liés à "Disponible" et réincrémente
+ *   la quantité du produit associé.
+ * • À utiliser uniquement pour un « purge » administrateur
+ *   (ex. annulation tardive après facturation, correction de données).
+ *
+ * @param {number} idCommande  - ID de la commande à supprimer
+ * @param {"vente directe"|"vente en ligne"|"projet"} [type="vente directe"]
+ *        Type de sortie concerné
+ * @returns {Promise<{success: boolean, removed_exemplaires: number[]}>}
+ */
+
+const forceDeleteCommande = async (idCommande, type = "vente directe") => {
+  return await db.transaction(async (tx) => {
+    // 1. Récupérer tous les exemplaires liés via sortie_exemplaires
     const sorties = await tx
       .select()
       .from(sortie_exemplaires)
@@ -433,12 +517,56 @@ const deleteCommande = async (idCommande, type = "vente directe") => {
         )
       );
 
-    let exemplairesIds = sorties.map((s) => s.id_exemplaire);
+    // 2. Récupérer les produits de la commande
+    const produitsCommande = await tx
+      .select()
+      .from(commande_produits)
+      .where(eq(commande_produits.id_commande, idCommande));
 
-    if (exemplairesIds.length === 0) {
-      // Aucun exemplaire officiellement sorti → rechercher les exemplaires réservés
+    const exemplairesIds = new Set();
+
+    if (sorties.length > 0) {
+      for (const sortie of sorties) {
+        const [ex] = await tx
+          .select()
+          .from(exemplaires)
+          .where(eq(exemplaires.id_exemplaire, sortie.id_exemplaire));
+
+        if (ex) {
+          exemplairesIds.add(ex.id_exemplaire);
+
+          // Remettre état et stock
+          await tx
+            .update(exemplaires)
+            .set({
+              etat_exemplaire: etatExemplaire[1],
+              updated_at: new Date(),
+            })
+            .where(eq(exemplaires.id_exemplaire, ex.id_exemplaire));
+
+          await tx
+            .update(produits)
+            .set({
+              qte_produit: sql`${produits.qte_produit} + 1`,
+              updated_at: new Date(),
+            })
+            .where(eq(produits.id_produit, ex.id_produit));
+        }
+      }
+
+      // Supprimer les sorties
+      await tx
+        .delete(sortie_exemplaires)
+        .where(
+          and(
+            eq(sortie_exemplaires.reference_id, idCommande),
+            eq(sortie_exemplaires.type_sortie, type)
+          )
+        );
+    } else {
+      // Aucun enregistrement de sortie, trouver les exemplaires "Réservé"
       for (const item of produitsCommande) {
-        const dispo = await tx
+        const exemplairesTrouves = await tx
           .select()
           .from(exemplaires)
           .where(
@@ -449,8 +577,8 @@ const deleteCommande = async (idCommande, type = "vente directe") => {
           )
           .limit(item.quantite);
 
-        for (const ex of dispo) {
-          exemplairesIds.push(ex.id_exemplaire);
+        for (const ex of exemplairesTrouves) {
+          exemplairesIds.add(ex.id_exemplaire);
 
           await tx
             .update(exemplaires)
@@ -469,32 +597,112 @@ const deleteCommande = async (idCommande, type = "vente directe") => {
             .where(eq(produits.id_produit, ex.id_produit));
         }
       }
-    } else {
-      for (const id of exemplairesIds) {
-        const [ex] = await tx
-          .select()
-          .from(exemplaires)
-          .where(eq(exemplaires.id_exemplaire, id));
+    }
 
-        await tx
-          .update(exemplaires)
-          .set({
-            etat_exemplaire: etatExemplaire[1],
-            updated_at: new Date(),
-          })
-          .where(eq(exemplaires.id_exemplaire, id));
+    // 3. Supprimer les liaisons
+    await tx
+      .delete(commande_produits)
+      .where(eq(commande_produits.id_commande, idCommande));
 
-        await tx
-          .update(produits)
-          .set({
-            qte_produit: sql`${produits.qte_produit} + 1`,
-            updated_at: new Date(),
-          })
-          .where(eq(produits.id_produit, ex.id_produit));
+    await tx.delete(commandes).where(eq(commandes.id_commande, idCommande));
+
+    return {
+      success: true,
+      removed_exemplaires: Array.from(exemplairesIds),
+    };
+  });
+};
+
+/**
+ * safeDeleteCommande
+ * ------------------
+ * 🛡  Suppression **sécurisée** d'une commande :
+ * • Refuse la suppression si la commande est déjà *livrée* ou *facturée*.
+ * • Identifie tous les exemplaires liés ; qu’ils soient « Vend​u »,
+ *   « Réservé » ou non sortis, ils sont remis à l’état "Disponible".
+ * • Ré-incrémente la quantité de chaque produit concerné.
+ * • Nettoie toutes les liaisons (sortie_exemplaires, commande_produits)
+ *   et supprime la commande elle-même.
+ *
+ * @param {number} idCommande  - ID de la commande à supprimer
+ * @param {"vente directe"|"vente en ligne"} [type="vente directe"]
+ *        Type de sortie concerné
+ * @throws {Error} Si la commande est *livrée* ou *facturée*
+ * @returns {Promise<{success: boolean, removed_exemplaires: number[]}>}
+ */
+
+const safeDeleteCommande = async (idCommande, type = "vente directe") => {
+  return await db.transaction(async (tx) => {
+    const [commande] = await tx
+      .select()
+      .from(commandes)
+      .where(eq(commandes.id_commande, idCommande));
+
+    if (!commande) throw new Error("Commande introuvable");
+
+    // 🔒 Refuser suppression si l'etat fait partie de la liste
+    if (etatCommande.includes(commande.etat_commande)) {
+      throw new Error(
+        "Impossible de supprimer une commande livrée ou facturée."
+      );
+    }
+
+    const produitsCommande = await tx
+      .select()
+      .from(commande_produits)
+      .where(eq(commande_produits.id_commande, idCommande));
+
+    const sorties = await tx
+      .select()
+      .from(sortie_exemplaires)
+      .where(
+        and(
+          eq(sortie_exemplaires.reference_id, idCommande),
+          eq(sortie_exemplaires.type_sortie, type)
+        )
+      );
+
+    const exemplairesIds = sorties.map((s) => s.id_exemplaire);
+    const exemplairesSet = new Set(exemplairesIds);
+
+    for (const item of produitsCommande) {
+      const exemplairesPotentiels = await tx
+        .select()
+        .from(exemplaires)
+        .where(eq(exemplaires.id_produit, item.id_produit))
+        .limit(item.quantite);
+
+      for (const ex of exemplairesPotentiels) {
+        if (!exemplairesSet.has(ex.id_exemplaire)) {
+          exemplairesIds.push(ex.id_exemplaire);
+          exemplairesSet.add(ex.id_exemplaire);
+        }
       }
     }
 
-    // Suppression des données liées à la commande
+    // 🔁 Réinitialisation des exemplaires
+    for (const id of exemplairesIds) {
+      const [ex] = await tx
+        .select()
+        .from(exemplaires)
+        .where(eq(exemplaires.id_exemplaire, id));
+      if (!ex) continue;
+
+      await tx
+        .update(exemplaires)
+        .set({ etat_exemplaire: etatExemplaire[1], updated_at: new Date() })
+        .where(eq(exemplaires.id_exemplaire, id));
+
+      await tx
+        .update(produits)
+        .set({
+          qte_produit: sql`${produits.qte_produit} + 1`,
+          updated_at: new Date(),
+        })
+        .where(eq(produits.id_produit, ex.id_produit));
+    }
+
+    // Suppression finale
     await tx
       .delete(sortie_exemplaires)
       .where(
@@ -507,12 +715,191 @@ const deleteCommande = async (idCommande, type = "vente directe") => {
     await tx
       .delete(commande_produits)
       .where(eq(commande_produits.id_commande, idCommande));
-
     await tx.delete(commandes).where(eq(commandes.id_commande, idCommande));
 
     return { success: true, removed_exemplaires: exemplairesIds };
   });
 };
+
+/**
+ * Annule une commande :
+ * 1. Vérifie que la commande existe et n’est pas déjà annulée.
+ * 2. Libère les exemplaires (etat_exemplaire = "disponible").
+ * 3. Ré-incrémente le stock des produits.
+ * 4. Supprime les sorties de stock liées (type "vente directe").
+ * 5. Passe l’état de la commande à "annulée".
+ *
+ * @param {number} idCommande
+ * @returns {Promise<Object>}  La commande mise à jour (via getCommandeById)
+ */
+
+async function cancelCommande(idCommande) {
+  return db.transaction(async (tx) => {
+    /* 1. Commande existe ? */
+    const [cmd] = await tx
+      .select()
+      .from(commandes)
+      .where(eq(commandes.id_commande, idCommande));
+
+    if (!cmd) throw new Error("Commande introuvable");
+    if (cmd.etat_commande === "Annulée")
+      throw new Error("Commande déjà annulée");
+
+    /* 2. Lignes produit + quantité de la commande */
+    const lignes = await tx
+      .select({
+        id_produit: commande_produits.id_produit,
+        quantite: commande_produits.quantite,
+      })
+      .from(commande_produits)
+      .where(eq(commande_produits.id_commande, idCommande));
+
+    const exLibérés = [];      // pour ré-incrémenter le stock
+    const idsLibérés = [];     // ids d’exemplaires à remettre dispo
+
+    for (const ligne of lignes) {
+      const { id_produit, quantite } = ligne;
+
+      /* 3-a) Trouver les exemplaires du produit encore réservés/vendus
+             (on suppose ici etat_exemplaire ∈ { 'réservé', 'vendu' }) */
+      const exRows = await tx
+        .select({
+          id: exemplaires.id_exemplaire,
+          etat: exemplaires.etat_exemplaire,
+        })
+        .from(exemplaires)
+        .where(
+          and(
+            eq(exemplaires.id_produit, id_produit),
+            inArray(exemplaires.etat_exemplaire, ["Reserve", "Vendu"])
+          )
+        )
+        .limit(quantite);
+
+      if (exRows.length < quantite) {
+        throw new Error(
+          `Annulation impossible : seulement ${exRows.length}/${quantite} exemplaires trouvés pour le produit ${id_produit}`
+        );
+      }
+
+      // 3-b) Interdire si l’un est déjà “vendu”
+      if (exRows.some((e) => e.etat === "Vendu")) {
+        throw new Error(
+          `Impossible d'annuler : des exemplaires du produit ${id_produit} sont déjà vendus`
+        );
+      }
+
+      exRows.forEach((e) => {
+        exLibérés.push(id_produit);     // sert à incrémenter le stock
+        idsLibérés.push(e.id);          // sert à updater l'exemplaire
+      });
+    }
+
+    /* 4. Libérer les exemplaires sélectionnés */
+    if (idsLibérés.length) {
+      await tx
+        .update(exemplaires)
+        .set({ etat_exemplaire: etatExemplaire[1] }) //disponible
+        .where(inArray(exemplaires.id_exemplaire, idsLibérés));
+    }
+
+    /* 5. Ré-incrémenter le stock de chaque produit */
+    const incr = {};
+    exLibérés.forEach((idProd) => {
+      incr[idProd] = (incr[idProd] || 0) + 1;
+    });
+
+    for (const idProd in incr) {
+      const qty = incr[idProd];
+      await tx
+        .update(produits)
+        .set({ qte_produit: sql`${produits.qte_produit} + ${qty}` })
+        .where(eq(produits.id_produit, parseInt(idProd)));
+    }
+
+    /* 6. Supprimer sorties de stock (vente directe / en ligne) */
+    await tx
+      .delete(sortie_exemplaires)
+      .where(
+        and(
+          eq(sortie_exemplaires.reference_id, idCommande),
+          inArray(sortie_exemplaires.type_sortie, [
+            "vente directe",
+            "vente en ligne",
+          ])
+        )
+      );
+
+    /* 7. Marquer la commande comme annulée */
+    await tx
+      .update(commandes)
+      .set({
+        etat_commande: "Annulée",
+        updated_at: new Date(),
+      })
+      .where(eq(commandes.id_commande, idCommande));
+
+    /* 8. Retourner la commande mise à jour */
+    return getCommandeById(idCommande);
+  });
+}
+
+
+
+/**
+ * Retourne un exemplaire (remis en stock)
+ * 
+ * @param {number} idExemplaire - ID de l'exemplaire à retourner
+ * @returns {object} - L'exemplaire mis à jour
+ */
+async function returnExemplaire(idExemplaire) {
+  return db.transaction(async (tx) => {
+    // 1. Vérifie que l’exemplaire existe et est sorti
+    const [ex] = await tx
+      .select({
+        id: exemplaires.id_exemplaire,
+        etat: exemplaires.etat_exemplaire,
+        id_produit: exemplaires.id_produit,
+      })
+      .from(exemplaires)
+      .where(eq(exemplaires.id_exemplaire, idExemplaire));
+
+    if (!ex) throw new Error("Exemplaire introuvable");
+    if (ex.etat === etatExemplaire[1]) throw new Error("Exemplaire déjà retourné");
+
+    // 2. Mettre à jour l’état de l’exemplaire
+    await tx
+      .update(exemplaires)
+      .set({
+        etat_exemplaire: etatExemplaire[1],//"Disponible"
+        updated_at: new Date(),
+      })
+      .where(eq(exemplaires.id_exemplaire, idExemplaire));
+
+    // 3. Mettre à jour la ligne de sortie (date_retour)
+    await tx
+      .update(sortie_exemplaires)
+      .set({
+        date_retour_sortie: new Date(), // ********Ajouter ce champs dans la table sortie exemplaire oubien on creera une autre table pour gerer les retours d'exemplaire
+      })
+      .where(eq(sortie_exemplaires.id_exemplaire, idExemplaire));
+
+    // 4. Réincrémenter la quantité de produit
+    await tx
+      .update(produits)
+      .set({
+        qte_produit: sql`${produits.qte_produit} + 1`,
+      })
+      .where(eq(produits.id_produit, ex.id_produit));
+
+    return {
+      id_exemplaire: idExemplaire,
+      etat: etatExemplaire[1], //"Disponible"
+      message: "Exemplaire retourné avec succès",
+    };
+  });
+}
+
 
 
 module.exports = {
@@ -520,5 +907,12 @@ module.exports = {
   getCommandeById,
   getAllCommandes,
   updateCommande,
-  deleteCommande,
+  updateEtatCommande,
+  reserveExemplairesCommande,
+  forceDeleteCommande,
+  safeDeleteCommande,
+  cancelCommande,
+  returnExemplaire,
+
+  etatCommande,
 };

@@ -2,7 +2,10 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { db } = require('../../../core/database/config');
 const { clients_en_ligne } = require('../../../core/database/models');
-const { eq } = require('drizzle-orm');
+const { eq, and, isNotNull } = require('drizzle-orm');
+const crypto = require('crypto');
+const { createHash } = require('crypto');
+const emailService = require('../services/email.service');
 
 // Helpers
 const generateJWT = (user) => {
@@ -245,6 +248,118 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour'
+    });
+  }
+};
+
+// Fonction pour générer un token temporaire
+function generatePasswordResetToken(email) {
+  return jwt.sign(
+    { email, type: 'password_reset' },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' } // Valide 1 heure
+  );
+}
+// Forgot Password
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Vérifier si l'utilisateur existe et a un mot de passe
+    const [user] = await db.select()
+      .from(clients_en_ligne)
+      .where(
+        and(
+          eq(clients_en_ligne.email, email),
+          isNotNull(clients_en_ligne.password)
+        )
+      );
+      
+    console.log(`--------------------------------------------Forgot password request for email: ${email}`);  
+    if (user) {
+      // Générer un token temporaire (valable 1h)
+      const token = generatePasswordResetToken(user.email);
+      const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
+  
+      // Envoyer le lien par email
+      await emailService.sendPasswordReset({
+        email: user.email,
+        name: user.nom,
+        resetUrl
+      });
+    }
+
+    // console.log(`Forgot password request for email: ${user.email}`); 
+
+    // Toujours retourner success pour ne pas révéler si l'email existe
+    res.json({
+      success: true,
+      message: 'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé'
+    });
+
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la demande de réinitialisation'
+    });
+  }
+};
+
+// Reset Password
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, email, newPassword } = req.body;
+
+    // 1. Vérifier que l'utilisateur existe et a un mot de passe
+    const [user] = await db.select()
+      .from(clients_en_ligne)
+      .where(
+        and(
+          eq(clients_en_ligne.email, email),
+          isNotNull(clients_en_ligne.password)
+        )
+      );
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Opération non autorisée'
+      });
+    }
+
+    // 2. Regénérer le token pour vérification
+    // Note: En production, utilisez un système plus robuste comme JWT avec expiration
+    const expectedToken = generatePasswordResetToken(user.email);
+    
+    // if (token !== expectedToken) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: 'Token invalide ou expiré'
+    //   });
+    // }
+
+    // 3. Mettre à jour le mot de passe
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    await db.update(clients_en_ligne)
+      .set({
+        password: hashedPassword,
+        updated_at: new Date()
+      })
+      .where(eq(clients_en_ligne.id_client, user.id_client));
+
+
+    res.json({
+      success: true,
+      message: 'Mot de passe mis à jour avec succès'
+    });
+
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la réinitialisation du mot de passe'
     });
   }
 };

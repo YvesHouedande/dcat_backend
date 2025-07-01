@@ -6,20 +6,20 @@ const sortieService = require("../services/sortieExemplaire.service");
 // Créer une sortie
 const createSortie = async (req, res) => {
   try {
-    const { type_sortie, reference_id, id_exemplaire, date_sortie } = req.body;
+    const { type_sortie, id_commande, id_exemplaire, date_sortie } = req.body;
 
     // Validation minimale
-    if (!type_sortie || !reference_id || !id_exemplaire) {
+    if (!type_sortie || !id_commande || !id_exemplaire) {
       return errorResponse(
         res,
         400,
-        "Type, référence et exemplaire sont obligatoires"
+        "Type, commande et exemplaire sont obligatoires"
       );
     }
 
     const sortie = await sortieService.createSortie({
       type_sortie,
-      reference_id,
+      id_commande,
       id_exemplaire,
       date_sortie,
     });
@@ -43,8 +43,8 @@ const getSorties = async (req, res) => {
 
     const filters = {
       type_sortie: req.query.type_sortie,
-      reference_id: req.query.reference_id
-        ? parseInt(req.query.reference_id)
+      id_commande: req.query.id_commande
+        ? parseInt(req.query.id_commande)
         : undefined,
       id_exemplaire: req.query.id_exemplaire
         ? parseInt(req.query.id_exemplaire)
@@ -91,7 +91,7 @@ const getSortieDetails = async (req, res) => {
       return res.status(404).json({ error: "Sortie non trouvée" });
     }
 
-    return res.status(200).json({ details: "Détails de la sortie" });
+    return res.status(200).json({ details: details });
   } catch (error) {
     res.status(500).json({
       error: "Une erreur est survenue",
@@ -99,7 +99,7 @@ const getSortieDetails = async (req, res) => {
     });
   }
 };
-
+//test
 // Mettre à jour une sortie
 const updateSortie = async (req, res) => {
   try {
@@ -111,7 +111,7 @@ const updateSortie = async (req, res) => {
     }
 
     const updated = await sortieService.updateSortie(parseInt(id), updateData);
-    return res.status(200).json({ updated: "Sortie mise à jour" });
+    return res.status(200).json({ message: "Sortie mise à jour",updated:updated });
   } catch (error) {
     res.status(500).json({
       error: "Une erreur est survenue",
@@ -128,7 +128,7 @@ const deleteSortie = async (req, res) => {
 
     return res
       .status(200)
-      .json({ message: "Sortie supprimée et exemplaire réactivé" }, deleted);
+      .json({ element:deleted,message: "Sortie supprimée"});
   } catch (error) {
     if (error.message === "Sortie non trouvée") {
       return res.status(404).json({

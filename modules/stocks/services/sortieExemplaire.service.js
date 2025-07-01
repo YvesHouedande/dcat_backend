@@ -1,3 +1,10 @@
+/**
+ * ce fichier service permet de faire sortir les exemplaires qui ont été commandé.
+ * 
+ * NB : cela n'a rien a avoir avec la sortir d'outils de travail !!!!!
+ * 
+ */
+
 const { and, eq, gte, lte, sql } = require("drizzle-orm");
 const { db } = require("../../../core/database/config");
 const {
@@ -7,16 +14,16 @@ const {
   projets,
 } = require("../../../core/database/models");
 
-const typeSortie = ["vente_directe", "vente_en_ligne", "projet"];
+const typeSortie = ["vente directe", "vente en ligne"];
 
-const etatExemplaire = require("./exemplaire.service");
+const { etatExemplaire } = require("./exemplaire.service");
 
 //Routes liées aux sorties d'exemplaires (les exemplaires qui ont été commander par exemplaire)
 
 // Création d'une sortie (et marquage de l'exemplaire comme "Vendu")
 async function createSortie({
   type_sortie,
-  reference_id,
+  id_commande,
   id_exemplaire,
   date_sortie = new Date(),
 }) {
@@ -25,7 +32,7 @@ async function createSortie({
       .insert(sortie_exemplaires)
       .values({
         type_sortie,
-        reference_id,
+        id_commande,
         id_exemplaire,
         date_sortie: new Date(date_sortie),
         created_at: new Date(),
@@ -55,8 +62,8 @@ async function getSorties(filters = {}, { limit, offset } = {}) {
         filters.type_sortie
           ? eq(sortie_exemplaires.type_sortie, filters.type_sortie)
           : undefined,
-        filters.reference_id
-          ? eq(sortie_exemplaires.reference_id, filters.reference_id)
+        filters.id_commande
+          ? eq(sortie_exemplaires.id_commande, filters.id_commande)
           : undefined,
         filters.id_exemplaire
           ? eq(sortie_exemplaires.id_exemplaire, filters.id_exemplaire)
@@ -78,8 +85,8 @@ async function getSorties(filters = {}, { limit, offset } = {}) {
         filters.type_sortie
           ? eq(sortie_exemplaires.type_sortie, filters.type_sortie)
           : undefined,
-        filters.reference_id
-          ? eq(sortie_exemplaires.reference_id, filters.reference_id)
+        filters.id_commande
+          ? eq(sortie_exemplaires.id_commande, filters.id_commande)
           : undefined,
         filters.id_exemplaire
           ? eq(sortie_exemplaires.id_exemplaire, filters.id_exemplaire)
@@ -130,6 +137,7 @@ async function updateSortie(id_sortie_exemplaire, updateData) {
       .where(eq(sortie_exemplaires.id_sortie_exemplaire, id_sortie_exemplaire))
       .returning();
 
+      //s'il y a changement d'exemplaire
     if (
       updateData.id_exemplaire &&
       updateData.id_exemplaire !== oldSortie.id_exemplaire
@@ -168,7 +176,7 @@ async function deleteSortie(id_sortie_exemplaire) {
 
     await tx
       .update(exemplaires)
-      .set({ etat_exemplaire: etatExemplaire[1], updated_at: new Date() }) //"Disponible"
+      .set({ etat_exemplaire: etatExemplaire[5], updated_at: new Date() }) //"Reservé"
       .where(eq(exemplaires.id_exemplaire, sortie.id_exemplaire));
 
     return deleted;
@@ -193,12 +201,12 @@ async function getSortieDetails(id_sortie_exemplaire) {
     case typeSortie[0]: //vente directe
     case typeSortie[1]: //vente en ligne
       details = await db.query.commandes.findFirst({
-        where: eq(commandes.id_commande, sortie.sortie.reference_id),
+        where: eq(commandes.id_commande, sortie.sortie.id_commande),
       });
       break;
     case typeSortie[2]: //projet
       details = await db.query.projets.findFirst({
-        where: eq(projets.id_projet, sortie.sortie.reference_id),
+        where: eq(projets.id_projet, sortie.sortie.id_commande),
       });
       break;
     default:
