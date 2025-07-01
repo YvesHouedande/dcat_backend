@@ -48,23 +48,28 @@ const clientsController = {
         res.status(201).json({ success: true, ...result });
       }
     } catch (error) {
+      console.error("Erreur lors de l'inscription:", error.message);
+      
       // Gestion d'erreurs spécifiques avec codes d'erreur
       const errorMessage = error.message;
       let statusCode = 400;
       let errorCode = "REGISTRATION_ERROR";
 
-      if (errorMessage.includes("email est déjà associée")) {
+      if (errorMessage.includes("email est déjà associée") || errorMessage.includes("email déjà utilisé")) {
         errorCode = "EMAIL_EXISTS";
-      } else if (errorMessage.includes("numéro de téléphone est déjà associé")) {
+      } else if (errorMessage.includes("numéro de téléphone est déjà associé") || errorMessage.includes("contact")) {
         errorCode = "PHONE_EXISTS";
-      } else if (errorMessage.includes("Format d'email invalide")) {
+      } else if (errorMessage.includes("Format d'email invalide") || errorMessage.includes("email")) {
         errorCode = "INVALID_EMAIL_FORMAT";
-      } else if (errorMessage.includes("format international")) {
+      } else if (errorMessage.includes("format international") || errorMessage.includes("CodePaysNuméro")) {
         errorCode = "INVALID_PHONE_FORMAT";
-      } else if (errorMessage.includes("champs sont requis")) {
+      } else if (errorMessage.includes("champs sont requis") || errorMessage.includes("requis")) {
         errorCode = "MISSING_FIELDS";
-      } else if (errorMessage.includes("mot de passe doit contenir")) {
+      } else if (errorMessage.includes("mot de passe doit contenir") || errorMessage.includes("caractères")) {
         errorCode = "WEAK_PASSWORD";
+      } else if (errorMessage.includes("Erreur lors de la création")) {
+        statusCode = 500;
+        errorCode = "DATABASE_ERROR";
       }
 
       res.status(statusCode).json({ 
