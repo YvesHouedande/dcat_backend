@@ -1,6 +1,7 @@
 const affichesService = require('../services/affiches.service');
 const path = require('path');
 
+//pour la carousselle
 const affichesController = {
   getAllAffiches: async (req, res) => {
     try {
