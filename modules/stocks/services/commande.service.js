@@ -344,7 +344,7 @@ async function getCommandeById(id) {
     throw error;
   }
 }
-
+//test
 // 📜 Liste des commandes
 async function getAllCommandes({ page = 1, limit = 50, etat = null } = {}) {
   const offset = (page - 1) * limit;
