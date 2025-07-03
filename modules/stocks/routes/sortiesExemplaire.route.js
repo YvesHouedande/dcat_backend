@@ -315,4 +315,6 @@ router.put("/:id", controller.updateSortie);
  */
 router.delete("/:id", controller.deleteSortie);
 
+router.get("/Commandes/:id", controller.getExemplairesCommande);
+
 module.exports = router;

@@ -1,8 +1,8 @@
 /**
  * ce fichier service permet de faire sortir les exemplaires qui ont été commandé.
- * 
+ *
  * NB : cela n'a rien a avoir avec la sortir d'outils de travail !!!!!
- * 
+ *
  */
 
 const { and, eq, gte, lte, sql } = require("drizzle-orm");
@@ -12,6 +12,12 @@ const {
   sortie_exemplaires,
   commandes,
   projets,
+  produits,
+  categories,
+  type_produits,
+  modeles,
+  familles,
+  marques,
 } = require("../../../core/database/models");
 
 const typeSortie = ["vente directe", "vente en ligne"];
@@ -137,7 +143,7 @@ async function updateSortie(id_sortie_exemplaire, updateData) {
       .where(eq(sortie_exemplaires.id_sortie_exemplaire, id_sortie_exemplaire))
       .returning();
 
-      //s'il y a changement d'exemplaire
+    //s'il y a changement d'exemplaire
     if (
       updateData.id_exemplaire &&
       updateData.id_exemplaire !== oldSortie.id_exemplaire
@@ -219,12 +225,52 @@ async function getSortieDetails(id_sortie_exemplaire) {
   };
 }
 
+//recuperer les exemplaires liées à une commande
+async function getExemplairesCommande(idCommande) {
+  return await db
+    .select({
+      exemplaire: exemplaires, // champs de la table exemplaires
+      produit: produits, // infos produit de base
+      categorie: categories,
+      type: type_produits,
+      modele: modeles,
+      famille: familles,
+      marque: marques,
+      images: sql`(
+        SELECT json_agg(json_build_object(
+          'id_image', images.id_image,
+          'libelle_image', images.libelle_image,
+          'lien_image', images.lien_image,
+          'numero_image', images.numero_image
+        ))
+        FROM images
+        WHERE images.id_produit = produits.id_produit
+      )`.as("images"),
+    })
+    .from(sortie_exemplaires)
+    .leftJoin(
+      exemplaires,
+      eq(sortie_exemplaires.id_exemplaire, exemplaires.id_exemplaire)
+    )
+    .leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
+    .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
+    .leftJoin(
+      type_produits,
+      eq(produits.id_type_produit, type_produits.id_type_produit)
+    )
+    .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
+    .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+    .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
+    .where(eq(sortie_exemplaires.id_commande, idCommande));
+}
+
 module.exports = {
   createSortie,
   getSorties,
   updateSortie,
   deleteSortie,
   getSortieDetails,
+  getExemplairesCommande,
 
   typeSortie,
 };

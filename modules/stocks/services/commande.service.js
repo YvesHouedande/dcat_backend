@@ -344,13 +344,29 @@ async function getCommandeById(id) {
     throw error;
   }
 }
-//test
+
 // 📜 Liste des commandes
+// 📜 Liste paginée des commandes + nb d’articles et montant total
 async function getAllCommandes({ page = 1, limit = 50, etat = null } = {}) {
   const offset = (page - 1) * limit;
 
-  // --- requête de sélection (avec éventuel filtre d'état) ---
-  let query = db.select().from(commandes);
+  // --- SELECT principal ---------------------------------------------------
+  let query = db
+    .select({
+      commande: commandes,                     // toutes les colonnes de la table
+      nb_articles: sql`(
+        SELECT COALESCE(SUM(cp.quantite), 0)
+        FROM commande_produits cp
+        WHERE cp.id_commande = commandes.id_commande
+      )`.as("nb_articles"),
+      montant_total: sql`(
+        SELECT COALESCE(SUM(cp.quantite * cp.prix_unitaire), 0)
+        FROM commande_produits cp
+        WHERE cp.id_commande = commandes.id_commande
+      )`.as("montant_total")
+    })
+    .from(commandes);
+
   if (etat) {
     query = query.where(eq(commandes.etat_commande, etat));
   }
@@ -358,7 +374,7 @@ async function getAllCommandes({ page = 1, limit = 50, etat = null } = {}) {
   // --- données paginées ---
   const data = await query.limit(limit).offset(offset);
 
-  // --- comptage total pour pagination ---
+  // --- total pour la pagination ---
   let countQuery = db.select({ count: sql`count(*)` }).from(commandes);
   if (etat) {
     countQuery = countQuery.where(eq(commandes.etat_commande, etat));
@@ -366,7 +382,7 @@ async function getAllCommandes({ page = 1, limit = 50, etat = null } = {}) {
   const [{ count }] = await countQuery;
 
   return {
-    data,
+    data,                                         // [{ commande: {...}, nb_articles, montant_total }, ...]
     pagination: {
       total: Number(count),
       page,
@@ -375,6 +391,7 @@ async function getAllCommandes({ page = 1, limit = 50, etat = null } = {}) {
     },
   };
 }
+
 
 
 // 📝 Mise à jour d'une commande

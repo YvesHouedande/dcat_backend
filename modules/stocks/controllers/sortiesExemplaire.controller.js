@@ -143,10 +143,28 @@ const deleteSortie = async (req, res) => {
   }
 };
 
+//recuperer les exemplaires liées à une commande
+const getExemplairesCommande = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const results = await sortieService.getExemplairesCommande(parseInt(id));
+
+    return res
+      .status(200)
+      .json(results);
+  } catch (error) {
+    res.status(500).json({
+      error: "Une erreur est survenue",
+      details: error.message,
+    });
+  }
+};
+
 module.exports = {
   createSortie,
   getSorties,
   getSortieDetails,
   updateSortie,
   deleteSortie,
+  getExemplairesCommande,
 };
