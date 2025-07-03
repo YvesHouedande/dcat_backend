@@ -346,15 +346,36 @@ async function getCommandeById(id) {
 }
 
 // 📜 Liste des commandes
-async function getAllCommandes({ limit = 50, offset = 0, etat = null } = {}) {
-  let query = db.select().from(commandes);
+async function getAllCommandes({ page = 1, limit = 50, etat = null } = {}) {
+  const offset = (page - 1) * limit;
 
+  // --- requête de sélection (avec éventuel filtre d'état) ---
+  let query = db.select().from(commandes);
   if (etat) {
     query = query.where(eq(commandes.etat_commande, etat));
   }
 
-  return await query.limit(limit).offset(offset);
+  // --- données paginées ---
+  const data = await query.limit(limit).offset(offset);
+
+  // --- comptage total pour pagination ---
+  let countQuery = db.select({ count: sql`count(*)` }).from(commandes);
+  if (etat) {
+    countQuery = countQuery.where(eq(commandes.etat_commande, etat));
+  }
+  const [{ count }] = await countQuery;
+
+  return {
+    data,
+    pagination: {
+      total: Number(count),
+      page,
+      limit,
+      totalPages: Math.ceil(Number(count) / limit),
+    },
+  };
 }
+
 
 // 📝 Mise à jour d'une commande
 async function updateCommande(idCommande, updateData) {

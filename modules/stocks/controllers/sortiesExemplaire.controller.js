@@ -99,7 +99,7 @@ const getSortieDetails = async (req, res) => {
     });
   }
 };
-//test
+
 // Mettre à jour une sortie
 const updateSortie = async (req, res) => {
   try {
