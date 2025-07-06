@@ -323,7 +323,7 @@ async function getCommandeById(id) {
     //   )
     //   .where(
     //     and(
-    //       eq(sortie_exemplaires.reference_id, id),
+    //       eq(sortie_exemplaires.id_commande, id),
     //       eq(sortie_exemplaires.type_sortie, "vente directe")
     //     )
     //   );
@@ -550,7 +550,7 @@ const forceDeleteCommande = async (idCommande, type = "vente directe") => {
       .from(sortie_exemplaires)
       .where(
         and(
-          eq(sortie_exemplaires.reference_id, idCommande),
+          eq(sortie_exemplaires.id_commande, idCommande),
           eq(sortie_exemplaires.type_sortie, type)
         )
       );
@@ -597,7 +597,7 @@ const forceDeleteCommande = async (idCommande, type = "vente directe") => {
         .delete(sortie_exemplaires)
         .where(
           and(
-            eq(sortie_exemplaires.reference_id, idCommande),
+            eq(sortie_exemplaires.id_commande, idCommande),
             eq(sortie_exemplaires.type_sortie, type)
           )
         );
@@ -695,7 +695,7 @@ const safeDeleteCommande = async (idCommande, type = "vente directe") => {
       .from(sortie_exemplaires)
       .where(
         and(
-          eq(sortie_exemplaires.reference_id, idCommande),
+          eq(sortie_exemplaires.id_commande, idCommande),
           eq(sortie_exemplaires.type_sortie, type)
         )
       );
@@ -745,7 +745,7 @@ const safeDeleteCommande = async (idCommande, type = "vente directe") => {
       .delete(sortie_exemplaires)
       .where(
         and(
-          eq(sortie_exemplaires.reference_id, idCommande),
+          eq(sortie_exemplaires.id_commande, idCommande),
           eq(sortie_exemplaires.type_sortie, type)
         )
       );
@@ -860,7 +860,7 @@ async function cancelCommande(idCommande) {
       .delete(sortie_exemplaires)
       .where(
         and(
-          eq(sortie_exemplaires.reference_id, idCommande),
+          eq(sortie_exemplaires.id_commande, idCommande),
           inArray(sortie_exemplaires.type_sortie, [
             "vente directe",
             "vente en ligne",
