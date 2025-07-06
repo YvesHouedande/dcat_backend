@@ -40,10 +40,12 @@ const getModeleById = async (req, res) => {
 const updateModele = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    const data = req.body;
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    const result = await modeleService.updateModele(id);
+    console.log(req.body);
+    const result = await modeleService.updateModele(id, data);
     return res.json(result);
   } catch (error) {
     res
@@ -61,9 +63,10 @@ const deleteModele = async (req, res) => {
     const result = await modeleService.deleteModele(id);
     return res.json(result);
   } catch (error) {
-    re
-      .status(500)
-      .json({ error: "une erreur est survenue", details: error.message });
+    re.status(500).json({
+      error: "une erreur est survenue",
+      details: error.message,
+    });
   }
 };
 
@@ -74,10 +77,6 @@ module.exports = {
   updateModele,
   deleteModele,
 };
-
-
-
-
 
 // [
 //   {"libelle_modele": "Bravia X90J", "id_marque": 1 },
@@ -90,8 +89,6 @@ module.exports = {
 //   {"libelle_modele": "ProDesk 600", "id_marque": 2 }
 // ]
 
-
-
 // [
 //   {"libelle_modele": "Bravia X90J"},
 //   {"libelle_modele": "EliteBook 840"},
@@ -102,4 +99,3 @@ module.exports = {
 //   {"libelle_modele": "SmartHub 3"},
 //   {"libelle_modele": "ProDesk 600"}
 // ]
-

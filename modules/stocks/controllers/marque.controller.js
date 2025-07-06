@@ -40,10 +40,11 @@ const getMarqueById = async (req, res) => {
 const updateMarque = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    const data = req.body;
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    const result = await marqueService.updateMarque(id);
+    const result = await marqueService.updateMarque(id,data);
     return res.json(result);
   } catch (error) {
     res
