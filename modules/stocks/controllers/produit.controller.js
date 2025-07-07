@@ -138,8 +138,10 @@ const createProduit = async (req, res) => {
 };
 
 // Récupérer les produits avec pagination et filtres
+
 const getProduits = async (req, res) => {
   try {
+    // ---------------------- Query params ----------------------
     const {
       page = 1,
       limit = 10,
@@ -150,40 +152,53 @@ const getProduits = async (req, res) => {
       typeId,
       familleLibelle,
       marqueLibelle,
+      modeleLibelle,
       prixMin,
       prixMax,
       qteMin,
       qteMax,
+
+      // ---- Filtres seuil stock ----
+      seuilMode,          // "equal" | "below" | "near"
+      nearMargin,         // entier (marge « near »)
     } = req.query;
 
+    // ---------------------- Options pour le service ----------------------
     const options = {
-      page: parseInt(page),
-      limit: parseInt(limit),
+      page:      parseInt(page, 10),
+      limit:     parseInt(limit, 10),
       sortBy,
       sortOrder,
       search,
-      categoryId: categoryId ? parseInt(categoryId) : undefined,
-      typeId: typeId ? parseInt(typeId) : undefined,
-      familleLibelle: familleLibelle ? familleLibelle : undefined,
-      marqueLibelle: marqueLibelle ? marqueLibelle : undefined,
+
+      categoryId:     categoryId     ? parseInt(categoryId, 10)     : undefined,
+      typeId:         typeId         ? parseInt(typeId, 10)         : undefined,
+      familleLibelle: familleLibelle || undefined,
+      marqueLibelle:  marqueLibelle  || undefined,
+      modeleLibelle:  modeleLibelle  || undefined,
+
       prixMin: prixMin ? parseFloat(prixMin) : undefined,
       prixMax: prixMax ? parseFloat(prixMax) : undefined,
-      qteMin: qteMin ? parseInt(qteMin) : undefined,
-      qteMax: qteMax ? parseInt(qteMax) : undefined,
+      qteMin:  qteMin  ? parseInt(qteMin, 10) : undefined,
+      qteMax:  qteMax  ? parseInt(qteMax, 10) : undefined,
+
+      // --- seuil stock ---
+      seuilMode: ["equal", "below", "near"].includes(seuilMode) ? seuilMode : undefined,
+      nearMargin: nearMargin ? parseInt(nearMargin, 10) : undefined,
     };
 
+    // ---------------------- Appel service ----------------------
     const result = await produitService.getProduits(options);
 
-    // Transformer les chemins d'images en URLs complètes
+    // ---------------------- URL complètes pour les images ----------------------
+    const hostPrefix = `${req.protocol}://${req.get("host")}/`;
+
     result.data = result.data.map((item) => ({
       ...item,
       images: item.images
         ? item.images.map((img) => ({
             ...img,
-            url: `${req.protocol}://${req.get("host")}/${img.lien_image.replace(
-              /\\/g,
-              "/"
-            )}`,
+            url: hostPrefix + img.lien_image.replace(/\\/g, "/"),
           }))
         : [],
     }));
@@ -196,6 +211,7 @@ const getProduits = async (req, res) => {
     });
   }
 };
+
 
 // Récupérer un produit par son ID
 const getProduitById = async (req, res) => {

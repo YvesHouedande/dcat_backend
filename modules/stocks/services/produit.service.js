@@ -39,7 +39,8 @@ const addProduitImages = async (produitId, imagesData = []) => {
   return await db.insert(images).values(imagesToInsert).returning();
 };
 
-const getProduits = async (options = {}) => {
+// 📜 Liste paginée des produits avec filtres complets + gestion du seuil stock
+async function getProduits(options = {}) {
   const {
     page = 1,
     limit = 10,
@@ -53,13 +54,17 @@ const getProduits = async (options = {}) => {
     modeleLibelle,
     prixMin,
     prixMax,
-    qteMin, // Quantité du produit "minimale" (>=)
-    qteMax, // Quantité du produit "maximale" (<=)
+    qteMin,           // quantité minimale (>=)
+    qteMax,           // quantité maximale (<=)
+
+    // ---- Filtres SEUIL ----
+    seuilMode,        // "equal" | "below" | "near" | undefined
+    nearMargin = 5,   // marge utilisée si seuilMode === "near"
   } = options;
 
   const offset = (page - 1) * limit;
 
-  // Base SELECT avec jointures
+  // ---------------- SELECT principal ----------------
   let query = db
     .select({
       produit: produits,
@@ -75,24 +80,21 @@ const getProduits = async (options = {}) => {
           'lien_image', images.lien_image,
           'numero_image', images.numero_image,
           'created_at', images.created_at
-        )) 
-        FROM images 
+        ))
+        FROM images
         WHERE images.id_produit = produits.id_produit
       )`.as("images"),
     })
     .from(produits)
     .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
-    .leftJoin(
-      type_produits,
-      eq(produits.id_type_produit, type_produits.id_type_produit)
-    )
+    .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
     .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
     .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
     .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
     .limit(limit)
     .offset(offset);
 
-  // Construction des filtres dynamiques
+  // -------------- Construction des filtres --------------
   const filters = [];
 
   if (search) {
@@ -104,76 +106,62 @@ const getProduits = async (options = {}) => {
     );
   }
 
-  if (categoryId) {
-    filters.push(eq(produits.id_categorie, categoryId));
-  }
-
-  if (typeId) {
-    filters.push(eq(produits.id_type_produit, typeId));
-  }
+  if (categoryId) filters.push(eq(produits.id_categorie, categoryId));
+  if (typeId)      filters.push(eq(produits.id_type_produit, typeId));
 
   if (familleLibelle) {
-    filters.push(
-      sql`LOWER(${familles.libelle_famille}) = LOWER(${familleLibelle})`
-    );
+    filters.push(sql`LOWER(${familles.libelle_famille}) = LOWER(${familleLibelle})`);
   }
-
   if (marqueLibelle) {
-    filters.push(
-      sql`LOWER(${marques.libelle_marque}) = LOWER(${marqueLibelle})`
-    );
+    filters.push(sql`LOWER(${marques.libelle_marque}) = LOWER(${marqueLibelle})`);
   }
-
   if (modeleLibelle) {
+    filters.push(sql`LOWER(${modeles.libelle_modele}) = LOWER(${modeleLibelle})`);
+  }
+
+  if (prixMin !== undefined) filters.push(sql`${produits.prix_produit} >= ${prixMin}`);
+  if (prixMax !== undefined) filters.push(sql`${produits.prix_produit} <= ${prixMax}`);
+
+  if (qteMin !== undefined) filters.push(gte(produits.qte_produit, qteMin));
+  if (qteMax !== undefined) filters.push(lte(produits.qte_produit, qteMax));
+
+  // -------- Filtres liés au seuil_min_produit --------
+  if (seuilMode === "equal") {
+    // Stock exactement au seuil
+    filters.push(eq(produits.qte_produit, produits.seuil_min_produit));
+  } else if (seuilMode === "below") {
+    // Stock en dessous ou égal au seuil
+    filters.push(sql`${produits.qte_produit} <= ${produits.seuil_min_produit}`);
+  } else if (seuilMode === "near") {
+    // Stock entre seuil et seuil + nearMargin
     filters.push(
-      sql`LOWER(${modeles.libelle_modele}) = LOWER(${modeleLibelle})`
+      and(
+        sql`${produits.qte_produit} >= ${produits.seuil_min_produit}`,
+        sql`${produits.qte_produit} <= (${produits.seuil_min_produit} + ${nearMargin})`
+      )
     );
   }
 
-  if (prixMin !== undefined) {
-    filters.push(sql`${produits.prix_produit} >= ${prixMin}`);
-  }
+  // Application des filtres
+  if (filters.length) query = query.where(and(...filters));
 
-  if (prixMax !== undefined) {
-    filters.push(sql`${produits.prix_produit} <= ${prixMax}`);
-  }
-
-  // Filtres sur la quantité
-  if (qteMin !== undefined) {
-    filters.push(gte(produits.qte_produit, qteMin)); // Supérieur ou égal
-  }
-
-  if (qteMax !== undefined) {
-    filters.push(lte(produits.qte_produit, qteMax)); // Inférieur ou égal
-  }
-
-  if (filters.length) {
-    query = query.where(and(...filters));
-  }
-
-  // Tri dynamique
+  // ------------------ Tri dynamique ------------------
   const sortField = produits[sortBy] || produits.created_at;
   query = query.orderBy(sortOrder === "asc" ? asc(sortField) : desc(sortField));
 
-  // Compte total (avec les mêmes filtres)
+  // ------------------ Comptage total -----------------
   let countQuery = db
     .select({ count: sql`count(*)` })
     .from(produits)
     .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
-    .leftJoin(
-      type_produits,
-      eq(produits.id_type_produit, type_produits.id_type_produit)
-    )
+    .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
     .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
     .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
     .leftJoin(marques, eq(produits.id_marque, marques.id_marque));
 
-  if (filters.length) {
-    countQuery = countQuery.where(and(...filters));
-  }
+  if (filters.length) countQuery = countQuery.where(and(...filters));
 
   const [results, totalResult] = await Promise.all([query, countQuery]);
-
   const total = Number(totalResult[0].count);
 
   return {
@@ -185,7 +173,8 @@ const getProduits = async (options = {}) => {
       totalPages: Math.ceil(total / limit),
     },
   };
-};
+}
+
 
 const getProduitById = async (id) => {
   const [result] = await db

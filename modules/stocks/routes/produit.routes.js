@@ -127,7 +127,7 @@ router.post("/", controller.createProduit);
  * @swagger
  * /stocks/produits:
  *   get:
- *     summary: Récupère tous les produits avec leurs informations et images
+ *     summary: Récupère tous les produits avec leurs informations détaillées et images
  *     tags: [Produits]
  *     parameters:
  *       - in: query
@@ -171,10 +171,31 @@ router.post("/", controller.createProduit);
  *           type: number
  *         description: Prix maximum
  *       - in: query
+ *         name: qteMin
+ *         schema:
+ *           type: integer
+ *         description: Quantité minimale du produit
+ *       - in: query
+ *         name: qteMax
+ *         schema:
+ *           type: integer
+ *         description: Quantité maximale du produit
+ *       - in: query
+ *         name: seuilMode
+ *         schema:
+ *           type: string
+ *           enum: [equal, below, near]
+ *         description: Filtre basé sur le seuil minimum. "equal" = seuil atteint, "below" = en dessous du seuil, "near" = proche du seuil
+ *       - in: query
+ *         name: nearMargin
+ *         schema:
+ *           type: integer
+ *         description: Marge de proximité pour le filtre "near"
+ *       - in: query
  *         name: sortBy
  *         schema:
  *           type: string
- *         description: Champ à trier
+ *         description: Champ utilisé pour le tri, par exemple  created_at, prix_produit
  *       - in: query
  *         name: sortOrder
  *         schema:
@@ -185,7 +206,7 @@ router.post("/", controller.createProduit);
  *         name: page
  *         schema:
  *           type: integer
- *         description: Numéro de page
+ *         description: Numéro de page (pagination)
  *       - in: query
  *         name: limit
  *         schema:
@@ -204,6 +225,7 @@ router.post("/", controller.createProduit);
  *                     desi_produit: "Caméra intérieure Somfy"
  *                     desc_produit: "Caméra de surveillance 1080p avec détection de mouvement"
  *                     qte_produit: 10
+ *                     seuil_min_produit: 5
  *                     emplacement_produit: "Salle de stock 1"
  *                     caracteristiques_produit: "Connectée, vision nocturne, micro intégré"
  *                     prix_produit: 65000
@@ -217,7 +239,7 @@ router.post("/", controller.createProduit);
  *                   images:
  *                     - id_image: 5
  *                       libelle_image: "Vue Avant"
- *                       lien_image: "media/images/stock_moyensgeneraux/produits/CameradesurveillanceinterieureSomfy_1747413815391.jpeg"
+ *                       lien_image: "media/images/stock_moyensgeneraux/produits/image.jpeg"
  *                       numero_image: 1
  *                       created_at: "2025-05-16T16:43:35.588Z"
  *                       url: "http://localhost:2000/media/images/..."
