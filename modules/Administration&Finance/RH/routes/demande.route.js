@@ -153,7 +153,7 @@
  * @swagger
  * /administration/demandes/{id}:
  *   get:
- *     summary: Obtenir une demande RH par ID
+ *     summary: Obtenir une demande RH par ID (avec document associé)
  *     tags: [Demandes]
  *     parameters:
  *       - in: path
@@ -163,11 +163,84 @@
  *           type: integer
  *     responses:
  *       200:
- *         description: Détail de la demande RH
+ *         description: Détail de la demande RH (incluant le document associé)
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Demande'
+ *               type: object
+ *               properties:
+ *                 id_demandes:
+ *                   type: integer
+ *                 date_absence:
+ *                   type: string
+ *                   format: date
+ *                 status:
+ *                   type: string
+ *                 date_retour:
+ *                   type: string
+ *                   format: date
+ *                 motif:
+ *                   type: string
+ *                 type_demande:
+ *                   type: string
+ *                 duree:
+ *                   type: integer
+ *                   nullable: true
+ *                 heure_debut:
+ *                   type: string
+ *                   nullable: true
+ *                 heure_fin:
+ *                   type: string
+ *                   nullable: true
+ *                 id_employes:
+ *                   type: integer
+ *                 created_at:
+ *                   type: string
+ *                   format: date-time
+ *                 updated_at:
+ *                   type: string
+ *                   format: date-time
+ *                 document:
+ *                   type: object
+ *                   properties:
+ *                     id_documents:
+ *                       type: integer
+ *                     libelle_document:
+ *                       type: string
+ *                     classification_document:
+ *                       type: string
+ *                     date_document:
+ *                       type: string
+ *                       format: date
+ *                     lien_document:
+ *                       type: string
+ *                     etat_document:
+ *                       type: string
+ *                     id_livrable:
+ *                       type: integer
+ *                       nullable: true
+ *                     id_projet:
+ *                       type: integer
+ *                       nullable: true
+ *                     id_demandes:
+ *                       type: integer
+ *                     id_contrat:
+ *                       type: integer
+ *                       nullable: true
+ *                     id_employes:
+ *                       type: integer
+ *                     id_intervention:
+ *                       type: integer
+ *                       nullable: true
+ *                     id_nature_document:
+ *                       type: integer
+ *                       nullable: true
+ *                     created_at:
+ *                       type: string
+ *                       format: date-time
+ *                     updated_at:
+ *                       type: string
+ *                       format: date-time
  *       404:
  *         description: Demande RH non trouvée
  *
@@ -210,6 +283,25 @@
  *         description: Suppression réussie
  *       404:
  *         description: Demande non trouvée
+ */
+
+/**
+ * @swagger
+ * /administration/demandes/docdemande/{id_document}:
+ *   delete:
+ *     summary: Supprimer un document associé à une demande RH
+ *     tags: [Demandes]
+ *     parameters:
+ *       - in: path
+ *         name: id_document
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Document supprimé avec succès
+ *       404:
+ *         description: Document non trouvé
  */
 
 const express = require('express');
@@ -259,5 +351,7 @@ router.put('/:id', demandeController.updateDemande);
 
 // Supprimer une demande
 router.delete('/:id', demandeController.deleteDemande);
+
+router.delete('/docdemande/:id_document', demandeController.deleteDocumentById);
 
 module.exports = router;

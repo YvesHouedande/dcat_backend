@@ -251,7 +251,17 @@ const getDemandeById = async (req, res) => {
     try {
         const { id } = req.params;
         const result = await demandeService.getdemandeById(id);
-        res.status(200).json(result);
+        const documents = await demandeService.getDocumentByDemande(id);
+
+        const demande = Array.isArray(result) ? result[0] : result;
+        if (!demande) {
+            return res.status(200).json([]); // Tableau vide si non trouvé
+        }
+
+        // Ajoute un seul document (le premier ou null)
+        demande.document = documents?.[0] || null;
+
+        res.status(200).json(demande);
     } catch (error) {
         logger.error(`Erreur lors de la récupération de la demande ${req.params.id}`, {
             error: {
@@ -259,8 +269,11 @@ const getDemandeById = async (req, res) => {
                 stack: error.stack
             }
         });
+        res.status(500).json([]);
+    }
 };
-};
+
+
 const getDemandeByEmploye = async (req, res) => {
     try {
         const { id_employe } = req.params;
@@ -324,66 +337,107 @@ const updateDemande = async (req, res) => {
 };
 
 const deleteDemande = async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: "ID requis." });
+
     try {
-        const { id } = req.params;
-        logger.info(`Suppression de la demande ${id}`);
+        // Vérifier si la demande existe
+        const demande = await demandeService.getdemandeById(id);
+        if (!demande) return res.status(404).json({ message: "Demande introuvable." });
+
+        // Vérifier s'il y a des documents liés à la demande
+        const documents = await demandeService.getDocumentByDemande(id);
         
-        if (!id) {
-            logger.warn("Tentative de suppression sans ID");
-            return res.status(400).json({ message: "L'ID de la demande est requis." });
-        }
-        
-        // Optionnel: vérifier si la demande existe avant de tenter de la supprimer
-        const demandeExists = await demandeService.getdemandeById(id);
-        if (!demandeExists) {
-            logger.warn(`La demande ${id} n'existe pas ou a déjà été supprimée`);
-            return res.status(404).json({ 
-                message: "Demande à supprimer non trouvée.",
-                details: `ID recherché: ${id}` 
-            });
-        }
-        
-        const result = await demandeService.deleteDemande(id);
-        logger.debug(`Résultat de la suppression`, { result });
-        
-        if (!result) {
-            logger.error(`Échec de la suppression de la demande ${id}`);
-            return res.status(500).json({ 
-                message: "Échec de la suppression de la demande.",
-                details: "La demande existe mais n'a pas pu être supprimée." 
-            });
-        }
-        
-        logger.info(`Demande ${id} supprimée avec succès`);
-        res.status(200).json({
-            success: true,
-            message: "Demande supprimée avec succès",
-            data: result
-        });
-    } catch (error) {
-        logger.error(`Erreur lors de la suppression de la demande ${req.params.id}`, {
-            error: {
-                message: error.message,
-                stack: error.stack
+        if (documents && documents.length > 0) {
+            // Il y a des documents liés : les supprimer d'abord
+            logger.info(`${documents.length} document(s) trouvé(s) pour la demande ${id}`);
+            
+            try {
+                // Supprimer les fichiers du disque d'abord
+                for (const doc of documents) {
+                    if (doc.lien_document) {
+                        try {
+                            await safeUnlink(doc.lien_document);
+                            logger.info(`Fichier ${doc.lien_document} supprimé du disque`);
+                        } catch (fileError) {
+                            if (fileError.code === 'ENOENT') {
+                                logger.warn(`Fichier ${doc.lien_document} déjà supprimé ou inexistant`);
+                            } else {
+                                logger.error(`Erreur lors de la suppression du fichier ${doc.lien_document}`, { error: fileError });
+                                // Continuer même si le fichier ne peut pas être supprimé
+                            }
+                        }
+                    }
+                }
+                
+                // Supprimer tous les documents de la base en une fois
+                // Utiliser l'ID de la demande, pas l'ID du document individuel
+                const deletedDocs = await demandeService.deleteDocumentByDemande(id);
+                if (!deletedDocs || deletedDocs.length === 0) {
+                    throw new Error("Aucun document supprimé de la base");
+                }
+                logger.info(`${deletedDocs.length} document(s) supprimé(s) de la base de données`);
+                
+            } catch (docError) {
+                logger.error(`Erreur lors de la suppression des documents`, { error: docError });
+                return res.status(500).json({ 
+                    message: "Erreur lors de la suppression des documents liés." 
+                });
             }
+        } else {
+            logger.info(`Aucun document lié à la demande ${id}`);
+        }
+
+        // Supprimer la demande après avoir supprimé tous les documents
+        const deleted = await demandeService.deleteDemande(id);
+        if (!deleted) {
+            return res.status(500).json({ message: "Échec suppression de la demande." });
+        }
+
+        logger.info(`Demande ${id} supprimée avec succès`);
+        res.status(200).json({ 
+            message: "Suppression réussie.",
+            documentsSupprimes: documents ? documents.length : 0
         });
+
+    } catch (e) {
+        logger.error(`Erreur lors de la suppression de la demande ${id}`, { error: e });
         
-        // Personnalisation selon le type d'erreur
-        let errorMessage = "Erreur interne lors de la suppression de la demande.";
-        let statusCode = 500;
-        
-        if (error.code === '23503') {
-            errorMessage = "Impossible de supprimer cette demande car elle est référencée ailleurs.";
-            statusCode = 400;
+        // Gestion spécifique des erreurs de clé étrangère
+        let msg = "Erreur serveur.";
+        if (e.code === '23503') {
+            msg = "Impossible de supprimer : demande liée à d'autres données.";
+        } else if (e.code === '23502') {
+            msg = "Erreur de contrainte de données.";
         }
         
-        res.status(statusCode).json({ 
-            message: errorMessage,
-            details: error.message 
-        });
+        res.status(500).json({ message: msg });
     }
 };
 
+const deleteDocumentById = async (req, res) => {
+    const { id_document } = req.params;
+    if (!id_document) return res.status(400).json({ message: "ID du document requis." });
+
+    try {
+        const document = await demandeService.getDocumentById(id_document);
+        if (!document) return res.status(404).json({ message: "Document introuvable." });
+
+        // Supprimer le fichier du disque si le lien existe
+        if (document.lien_document) {
+            await safeUnlink(document.li);
+        }
+
+        // Supprimer le document en base
+        const deleted = await demandeService.deleteDocumentById(id_document);
+        if (!deleted) return res.status(500).json({ message: "Échec de la suppression du document." });
+
+        res.status(200).json({ message: "Document supprimé avec succès." });
+    } catch (error) {
+        logger.error(`Erreur lors de la suppression du document ${id_document}`, { error });
+        res.status(500).json({ message: "Erreur interne lors de la suppression du document.", details: error.message });
+    }
+};
 
 module.exports = {
     createDemande,
@@ -392,5 +446,6 @@ module.exports = {
     getDemandeById,
     updateDemande,
     deleteDemande,
-    getDemandeByEmploye
+    getDemandeByEmploye,
+    deleteDocumentById
 };
