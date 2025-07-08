@@ -315,6 +315,222 @@ router.put("/:id", controller.updateSortie);
  */
 router.delete("/:id", controller.deleteSortie);
 
+
+/**
+ * @swagger
+ * /stocks/sorties-exemplaires/Commandes/{id}:
+ *   get:
+ *     summary: Récupère la liste des exemplaires associés à une commande
+ *     description: Retourne les exemplaires d'une commande avec les informations détaillées sur l'exemplaire, le produit, la catégorie, le type, le modèle, la famille, la marque et les images associées.
+ *     tags: [Sorties Exemplaire]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la commande
+ *     responses:
+ *       200:
+ *         description: Liste des exemplaires de la commande avec détails complets
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   exemplaire:
+ *                     type: object
+ *                     properties:
+ *                       id_exemplaire:
+ *                         type: integer
+ *                         example: 11
+ *                       num_serie:
+ *                         type: string
+ *                         example: "0009"
+ *                       date_entree:
+ *                         type: string
+ *                         format: date
+ *                         example: "2025-06-24"
+ *                       etat_exemplaire:
+ *                         type: string
+ *                         example: "Reserve"
+ *                       id_livraison:
+ *                         type: integer
+ *                         example: 1
+ *                       id_produit:
+ *                         type: integer
+ *                         example: 1
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-06-24T12:28:28.633Z"
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-07-03T12:37:58.109Z"
+ *                   produit:
+ *                     type: object
+ *                     properties:
+ *                       id_produit:
+ *                         type: integer
+ *                         example: 1
+ *                       code_produit:
+ *                         type: string
+ *                         example: "AV0001"
+ *                       desi_produit:
+ *                         type: string
+ *                         example: "Moniteur FM DEVA DB44"
+ *                       desc_produit:
+ *                         type: string
+ *                         example: "Récepteur de surveillance FM professionnel pour contrôle qualité des signaux radio avec décodage RDS, analyse RF et interface Web."
+ *                       qte_produit:
+ *                         type: integer
+ *                         example: 4
+ *                       seuil_min_produit:
+ *                         type: integer
+ *                         example: 5
+ *                       emplacement_produit:
+ *                         type: string
+ *                         example: "RAYON-A1"
+ *                       caracteristiques_produit:
+ *                         type: string
+ *                         example: "Analyse RF en temps réel, décodage RDS complet, streaming audio, notifications d’alerte, contrôle SNMP/HTTP."
+ *                       prix_produit:
+ *                         type: string
+ *                         example: "75000.00"
+ *                       id_categorie:
+ *                         type: integer
+ *                         example: 2
+ *                       id_type_produit:
+ *                         type: integer
+ *                         example: 1
+ *                       id_modele:
+ *                         type: integer
+ *                         example: 1
+ *                       id_famille:
+ *                         type: integer
+ *                         example: 1
+ *                       id_marque:
+ *                         type: integer
+ *                         example: 1
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-06-24T12:15:34.841Z"
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-07-03T11:57:24.079Z"
+ *                   categorie:
+ *                     type: object
+ *                     properties:
+ *                       id_categorie:
+ *                         type: integer
+ *                         example: 2
+ *                       libelle:
+ *                         type: string
+ *                         example: "haut de gamme"
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-06-24T12:07:16.547Z"
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-06-24T12:07:16.547Z"
+ *                   type:
+ *                     type: object
+ *                     properties:
+ *                       id_type_produit:
+ *                         type: integer
+ *                         example: 1
+ *                       libelle:
+ *                         type: string
+ *                         example: "equipement"
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-06-24T12:08:23.807Z"
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-06-24T12:08:23.807Z"
+ *                   modele:
+ *                     type: object
+ *                     properties:
+ *                       id_modele:
+ *                         type: integer
+ *                         example: 1
+ *                       libelle_modele:
+ *                         type: string
+ *                         example: "Bravia X90J"
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-06-24T12:06:16.351Z"
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-07-06T11:02:38.572Z"
+ *                   famille:
+ *                     type: object
+ *                     properties:
+ *                       id_famille:
+ *                         type: integer
+ *                         example: 1
+ *                       libelle_famille:
+ *                         type: string
+ *                         example: "Informatique"
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-06-24T12:05:35.653Z"
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-07-06T11:08:26.739Z"
+ *                   marque:
+ *                     type: object
+ *                     properties:
+ *                       id_marque:
+ *                         type: integer
+ *                         example: 1
+ *                       libelle_marque:
+ *                         type: string
+ *                         example: "sony-test"
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-06-24T12:07:46.734Z"
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-07-06T11:06:21.778Z"
+ *                   images:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         id_image:
+ *                           type: integer
+ *                           example: 1
+ *                         libelle_image:
+ *                           type: string
+ *                           example: "Vue Avant"
+ *                         lien_image:
+ *                           type: string
+ *                           example: "media\\images\\stock_moyensgeneraux\\produits\\DEVA_FM_radio_monitor_Model_DB_44_receiver_1750767334816.jpg"
+ *                         numero_image:
+ *                           type: integer
+ *                           example: 1
+ *       404:
+ *         description: Commande non trouvée ou aucun exemplaire associé
+ *       500:
+ *         description: Erreur serveur inattendue
+ */
+
 router.get("/Commandes/:id", controller.getExemplairesCommande);
 
 module.exports = router;

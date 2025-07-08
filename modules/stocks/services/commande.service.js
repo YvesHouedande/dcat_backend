@@ -17,7 +17,7 @@ const {
 
 const { etatExemplaire } = require("./exemplaire.service");
 
-// const etatCommande= ['en_attente', 'en_cours', 'Livrée', 'Annulée', 'Retournée'];
+// const etatCommande= ['en_cours', 'Livrée', 'Annulée', 'Retournée'];
 const etatCommande = ["Livrée"];
 
 const { typeSortie } = require("./sortieExemplaire.service");
@@ -557,14 +557,15 @@ async function reserveExemplairesCommande(idCommande) {
         .where(eq(produits.id_produit, id_produit));
     }
 
-    // /* 3. (Optionnel) Met à jour l’état global de la commande */
-    // await tx
-    //   .update(commandes)
-    //   .set({
-    //     etat_commande: etatCommande,
-    //     updated_at: new Date(),
-    //   })
-    //   .where(eq(commandes.id_commande, idCommande));
+    /* 3. (Optionnel) Met à jour l’état global de la commande */
+    await tx
+      .update(commandes)
+      .set({
+        // etat_commande: etatCommande,
+        commande_produits_reserves: true,  //tout les produits de la commande sont réservés
+        updated_at: new Date(),
+      })
+      .where(eq(commandes.id_commande, idCommande));
 
     /* 4. Retourne l’objet complet via le service de lecture */
     return getCommandeById(idCommande);
