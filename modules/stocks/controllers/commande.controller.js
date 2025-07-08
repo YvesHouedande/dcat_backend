@@ -55,19 +55,36 @@ const getCommandeById = async (req, res) => {
  *
  */
 
+// const getAllCommandes = async (req, res) => {
+//   try {
+//     const { limit, offset, etat } = req.query;
+//     const commandes = await commandeService.getAllCommandes({
+//       limit: Number(limit) || 50,
+//       offset: Number(offset) || 0,
+//       etat,
+//     });
+//     res.status(200).json(commandes);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// };
+
 const getAllCommandes = async (req, res) => {
   try {
-    const { limit, offset, etat } = req.query;
-    const commandes = await commandeService.getAllCommandes({
-      limit: Number(limit) || 50,
-      offset: Number(offset) || 0,
+    const { page = 1, limit = 50, etat } = req.query;
+
+    const result = await commandeService.getAllCommandes({
+      page: Number(page),
+      limit: Number(limit),
       etat,
     });
-    res.status(200).json(commandes);
+
+    res.status(200).json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 const updateCommande = async (req, res) => {
   try {
