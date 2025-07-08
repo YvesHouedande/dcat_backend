@@ -21,4 +21,6 @@ router.use("/documents", docRoutes);
 router.use("/employes", employeRoutes);
 router.use("/fonctions", fonctionRoutes);
 
+
+
 module.exports = router;
