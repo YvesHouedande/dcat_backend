@@ -76,9 +76,6 @@ module.exports = router;
  *                       nom_contrat:
  *                         type: string
  *                         nullable: true
- *                       type_contrat:
- *                         type: string
- *                         nullable: true
  *                       date_debut:
  *                         type: string
  *                         format: date
@@ -129,8 +126,6 @@ module.exports = router;
  *                 id_contrat:
  *                   type: integer
  *                 nom_contrat:
- *                   type: string
- *                 type_contrat:
  *                   type: string
  *                 date_debut:
  *                   type: string
@@ -194,9 +189,6 @@ module.exports = router;
  *                       nom_contrat:
  *                         type: string
  *                         nullable: true
- *                       type_contrat:
- *                         type: string
- *                         nullable: true
  *                       date_debut:
  *                         type: string
  *                         format: date
@@ -258,9 +250,6 @@ module.exports = router;
  *                       nom_contrat:
  *                         type: string
  *                         nullable: true
- *                       type_contrat:
- *                         type: string
- *                         nullable: true
  *                       date_debut:
  *                         type: string
  *                         format: date
@@ -302,8 +291,6 @@ module.exports = router;
  *             type: object
  *             properties:
  *               nom_contrat:
- *                 type: string
- *               type_contrat:
  *                 type: string
  *               date_debut:
  *                 type: string
@@ -377,8 +364,6 @@ module.exports = router;
  *             type: object
  *             properties:
  *               nom_contrat:
- *                 type: string
- *               type_contrat:
  *                 type: string
  *               date_debut:
  *                 type: string
@@ -464,9 +449,6 @@ module.exports = router;
  *         id_contrat:
  *           type: integer
  *         nom_contrat:
- *           type: string
- *           nullable: true
- *         type_contrat:
  *           type: string
  *           nullable: true
  *         date_debut:

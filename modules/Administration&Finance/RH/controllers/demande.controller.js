@@ -14,179 +14,61 @@ async function safeUnlink(filePath) {
 
 const createDemande = async (req, res) => {
     try {
-        logger.info("Début de création de demande");
-        
-        // Log des données reçues (sans données sensibles)
-        logger.debug("Body reçu:", {
-            body: { ...req.body },
-            // Masquer les données sensibles si nécessaire
-        });
-        
-        logger.debug("Fichier reçu:", {
-            file: req.file ? {
-                filename: req.file.filename,
-                path: req.file.path,
-                size: req.file.size
-            } : "Aucun fichier"
-        });
-
-        const data = req.body;
-        if (!data || Object.keys(data).length === 0) {
-            logger.warn("Aucune donnée reçue dans le corps de la requête");
-            if (req.file) await safeUnlink(req.file.path);
-            return res.status(400).json({ message: "Les données de la demande sont requises." });
+        const DemandeData = {
+            date_absence: req.body.date_absence,
+            status: req.body.status,
+            date_retour: req.body.date_retour,
+            motif: req.body.motif,
+            type_demande: req.body.type_demande,
+            duree: req.body.duree,
+            heure_debut: req.body.heure_debut,
+            heure_fin: req.body.heure_fin,
+            id_employe: req.body.id_employe,
         }
-
-        // Validation des champs requis
-        const requiredFields = ['date_absence', 'date_retour', 'motif', 'type_demande', 'id_employes'];
-        const missingFields = requiredFields.filter(field => !data[field]);
-        
-        if (missingFields.length > 0) {
-            logger.warn(`Champs requis manquants: ${missingFields.join(', ')}`, { fields: missingFields });
-            if (req.file) await safeUnlink(req.file.path);
-            return res.status(400).json({ 
-                message: "Données incomplètes", 
-                details: `Champs requis manquants: ${missingFields.join(', ')}` 
-            });
-        }
-
-        // Création de la demande
-        logger.debug("Préparation de la création de la demande avec les données validées");
-        const demandeData = {
-            date_absence: data.date_absence,
-            status: data.status || "en attente",
-            date_retour: data.date_retour,
-            motif: data.motif,
-            type_demande: data.type_demande,
-            durée: data.durée,
-            heure_debut: data.heure_debut,
-            heure_fin: data.heure_fin,
-            id_employes: parseInt(data.id_employes) 
-        };
-        // Correction : convertir les chaînes vides en null pour les champs time
-        if (demandeData.heure_debut === "") demandeData.heure_debut = null;
-        if (demandeData.heure_fin === "") demandeData.heure_fin = null;
-        
-        logger.debug("Appel au service pour créer la demande", { demandeData });
-        const demande = await demandeService.createDemande(demandeData);
-        logger.debug("Résultat de la création de demande", { demande });
-        
-        if (!demande) {
-            logger.error("Le service a retourné un résultat vide ou null");
-            if (req.file) await safeUnlink(req.file.path);
-            return res.status(500).json({ message: "Erreur lors de la création de la demande: le service n'a pas retourné de résultat." });
-        }
-        
-        logger.debug("Clés de la demande retournée:", Object.keys(demande));
-
-        // Gère le cas où le service retourne un tableau ou un objet
-        let demandeObj = Array.isArray(demande) ? demande[0] : demande;
-        const demandeId = demandeObj?.id_demandes || demandeObj?.id_demande || demandeObj?.id || demandeObj?.demandeId;
-
-        if (!demandeId) {
-            logger.error("ID de demande non retourné dans le résultat", { demande });
-            if (req.file) await safeUnlink(req.file.path);
-            return res.status(500).json({ 
-                message: "Erreur lors de la création de la demande: ID manquant.",
-                details: "La demande a peut-être été créée mais l'ID n'a pas été retourné."
-            });
-        }
-
-        // Traitement du document si présent
-        let documentResult = null;
-        if (req.file) {
-            logger.info("Traitement du document joint", { fileInfo: req.file.filename });
-            const { libelle_document, classification_document } = req.body;
-            
-            if (!libelle_document) {
-                logger.warn("Libellé du document manquant");
-                await safeUnlink(req.file.path);
-                return res.status(400).json({ 
-                    message: "Le libellé du document est obligatoire.",
-                    details: "Le document a été reçu mais pas enregistré car le libellé manque." 
-                });
-            }
-
-            // Création du chemin relatif
-            const relativePath = req.file.path
-                .replace(process.cwd(), '') 
-                .replace(/\\/g, '/')
-                .replace(/^\//, '');
-
-            const document = {
-                libelle_document,
-                classification_document: classification_document || "Demande",
-                lien_document: relativePath,
-                etat_document: req.body.etat_document || "actif",
-                date_document: new Date().toISOString().split('T')[0],
-                id_demandes: parseInt(demandeId), 
-                id_employes: parseInt(data.id_employes),
-                id_nature_document: parseInt(data.id_nature_document) || null
-            };
-
-            logger.debug("Appel au service pour ajouter le document", { document });
-            documentResult = await demandeService.addDocumentToDemande(document);
-            logger.debug("Résultat de l'ajout du document", { documentResult });
-
-            if (!documentResult) {
-                logger.error("Échec de l'ajout du document");
-                await safeUnlink(req.file.path);
-                return res.status(500).json({ 
-                    message: "Demande créée mais document non ajouté.",
-                    details: "Une erreur s'est produite lors de l'enregistrement du document."
-                });
-            }
-        }
-
-        logger.info("Création de demande terminée avec succès", { 
-            demandeId, 
-            documentAdded: !!documentResult 
-        });
-        
+        const Demande = await demandeService.createDemande(DemandeData);
+        logger.info("Demande créée avec succès", { demandeId: Demande.id_demande });
         res.status(201).json({
             success: true,
-            message: documentResult
-                ? "Demande et document ajoutés avec succès"
-                : "Demande ajoutée avec succès",
-            data: {
-                demande,
-                document: documentResult
-            }
+            message: "Demande créée avec succès",
+            data: Demande
         });
     } catch (error) {
-        logger.error("Erreur lors de la création de la demande", { 
+        res.status(500).json({
+            success: false,
+            message: "Erreur interne lors de la création de la demande.",
+            details: error.message
+        });
+    }
+};
+
+const addDocumentToDemande = async (req, res) => {
+    try {
+        const docData =  {
+        libelle_document: req.body.libelle_document,
+        classification_document: req.body.classification_document,
+        lien_document: req.file.path.replace(/\\/g, '/'), // Normalise le chemin pour la BD
+        etat_document: req.body.etat_document || 'actif',
+        id_nature_document: parseInt(req.body.id_nature_document),
+        id_contrat : parseInt(req.body.id_contrat)
+        }
+        Document = await demandeService.addDocumentToDemande(docData);
+        logger.info("Document ajouté à la demande", { documentId: Document.id_document });
+        res.status(201).json({
+            success: true,
+            message: "Document ajouté à la demande avec succès",
+            data: Document
+        });
+    } catch (error) {
+        logger.error("Erreur lors de l'ajout du document à la demande", {
             error: {
                 message: error.message,
-                stack: error.stack,
-                code: error.code,
-                name: error.name
+                stack: error.stack
             }
         });
-        
-        if (req.file && req.file.path) {
-            await safeUnlink(req.file.path);
-        }
-        
-        // Déterminer le type d'erreur
-        let errorMessage = "Erreur interne lors de la création de la demande.";
-        let statusCode = 500;
-        
-        // Personnaliser selon le type d'erreur
-        if (error.code === '23505') {
-            errorMessage = "Une demande identique existe déjà.";
-            statusCode = 409; // Conflict
-        } else if (error.code === '23503') {
-            errorMessage = "Référence invalide (clé étrangère).";
-            statusCode = 400; // Bad Request
-        } else if (error.message && error.message.includes("invalid input")) {
-            errorMessage = "Données d'entrée invalides.";
-            statusCode = 400; // Bad Request
-        }
-        
-        res.status(statusCode).json({
-            message: errorMessage,
-            details: error.message,
-            type: error.name || "UnknownError"
+        res.status(500).json({
+            success: false,
+            message: "Erreur interne lors de l'ajout du document à la demande.",
+            details: error.message
         });
     }
 };
@@ -416,27 +298,38 @@ const deleteDemande = async (req, res) => {
 };
 
 const deleteDocumentById = async (req, res) => {
-    const { id_document } = req.params;
-    if (!id_document) return res.status(400).json({ message: "ID du document requis." });
-
-    try {
-        const document = await demandeService.getDocumentById(id_document);
-        if (!document) return res.status(404).json({ message: "Document introuvable." });
-
-        // Supprimer le fichier du disque si le lien existe
-        if (document.lien_document) {
-            await safeUnlink(document.li);
+    try{
+        const { id ,docId } = req.params;
+        const document = await demandeService.getDocumentById(parseInt(docId));
+        if(!document || document.id_contrat !== parseInt(id)){
+            return res.status(404).json({
+                success:false,
+                message:"Document non trouvé ou n'appartenant pas à cette intervention" 
+            });
         }
-
-        // Supprimer le document en base
-        const deleted = await demandeService.deleteDocumentById(id_document);
-        if (!deleted) return res.status(500).json({ message: "Échec de la suppression du document." });
-
-        res.status(200).json({ message: "Document supprimé avec succès." });
-    } catch (error) {
-        logger.error(`Erreur lors de la suppression du document ${id_document}`, { error });
-        res.status(500).json({ message: "Erreur interne lors de la suppression du document.", details: error.message });
-    }
+        const deletedoc = await contratService.deleteDocumentById(parseInt(docId));
+        res.status(200).json({
+            succes : true,
+            message: "Document supprimé avec succès",
+            data: {
+                intervention_id: parseInt(id),
+                document_id: parseInt(docId)
+        }
+        });
+        // Supprimer le fichier du disque 
+        if (document.lien_document) {
+            try {
+                await safeUnlink(document.lien_document);
+            } catch (fileError) {
+                logger.error(`Erreur lors de la suppression du fichier ${document.lien_document}`, { error: fileError });
+            }
+        }
+    } catch (error){
+        res.status(500).json({
+            succes: false,
+            message: error.message
+    });
+}
 };
 
 module.exports = {
@@ -447,5 +340,6 @@ module.exports = {
     updateDemande,
     deleteDemande,
     getDemandeByEmploye,
-    deleteDocumentById
+    deleteDocumentById,
+    addDocumentToDemande
 };
