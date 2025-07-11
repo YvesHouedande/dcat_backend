@@ -10,7 +10,7 @@ const createContrat=async(data)=>{
     return result
 };
 
-const addDocument=async(data)=>{
+const addDocumentTocontrat=async(data)=>{
     const [result]=await db
     .insert(documents)
     .values(data)
@@ -103,7 +103,7 @@ module.exports={
     getContratsbyPartenaire,
     updateContrat,
     deleteContrat,
-    addDocument,
+    addDocumentTocontrat,
     getContratById,
     getDocumentByContrat,
     getContratByType,
