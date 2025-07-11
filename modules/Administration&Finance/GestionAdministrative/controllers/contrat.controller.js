@@ -14,35 +14,6 @@ async function safeUnlink(filePath) {
     }
 }
 
-/**
- * Ajoute un document lié à un contrat
- */
-async function handleDocumentUpload(req, contratId) {
-    if (!req.file) return null;
-
-    const { libelle_document, classification_document } = req.body;
-    if (!libelle_document) {
-        await safeUnlink(req.file.path);
-        throw new Error("Le libellé du document est obligatoire.");
-    }
-
-    const relativePath = req.file.path
-        .replace(process.cwd(), '')
-        .replace(/\\/g, '/')
-        .replace(/^\//, '');
-
-    const documentData = {
-        libelle_document,
-        classification_document: classification_document || "Contrat",
-        lien_document: relativePath,
-        etat_document: req.body.etat_document || "actif",
-        date_document: new Date().toISOString().split('T')[0],
-        id_contrat: contratId,
-        id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null
-    };
-
-    return await contratService.addDocument(documentData);
-}
 
 const createContrat = async (req, res) => {
     try {
@@ -75,44 +46,58 @@ const createContrat = async (req, res) => {
 const addDocumentToContrat = async (req, res) => {
     try {
         if (!req.file) {
-            return res.status(400).json({ 
-                success: false,
-                message: "Aucun fichier fourni." 
-            });
-        }
-        const {id} = req.params;
-        const documentData =  {
+        return res.status(400).json({
+        success: false,
+        message: "Aucun fichier n'a été téléchargé"
+    });
+    }
+
+    const { id } = req.params;
+    const relativePath = req.file.path
+        .replace(process.cwd(), '')
+        .replace(/\\/g, '/')
+        .replace(/^\//, '');
+
+    const documentData = {
         libelle_document: req.body.libelle_document,
         classification_document: req.body.classification_document,
-        lien_document: req.file.path.replace(/\\/g, '/'), // Normalise le chemin pour la BD
+        lien_document: relativePath,
         etat_document: req.body.etat_document || 'actif',
-        id_nature_document: parseInt(req.body.id_nature_document),
-        id_contrat : parseInt(req.body.id_contrat)
-        }
-        const document = await contratService.addDocumentTocontrat(documentData);
-        res.status(201).json({
-            success: true,
-            message: `Document ajouté avec succès au contrat ${document.id_contrat}`,
-            data: {
-                document: document,
-                details: {
-                    dateCreation: new Date().toISOString(),
-                    chemin: documentData.lien_document
-                    }
-            }
+        id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null,
+        id_contrat: parseInt(id)
+    };
 
-        });
-    } catch (error) {
-        console.error("Erreur lors de l'ajout du document :", error);
-        res.status(500).json({
+    let document;
+        try {
+        document = await contratService.addDocumentTocontrat(documentData);
+    } catch (dbError) {
+        await fs.promises.unlink(req.file.path).catch(() => {});
+        return res.status(500).json({
+            success: false,
+            message: "Erreur lors de l'enregistrement du document en base",
+            error: dbError.message
+    });
+    }
+
+    res.status(201).json({
+        success: true,
+        message: `Document ajouté avec succès au contrat ${document.id_contrat}`,
+        data: {
+            document: document,
+            details: {
+                dateCreation: new Date().toISOString(),
+                chemin: relativePath
+        }
+    }
+    });
+} catch (error) {
+    res.status(500).json({
         success: false,
         message: "Erreur lors de l'ajout du document",
         error: error.message
-        });
+    });
     }
-}
-
-
+};
 
 const getAllContrats = async (req, res) => {
     try {
@@ -244,7 +229,6 @@ const getContratByType = async (req, res) => {
         });
     }
 };
-
 
 const updateContrat = async (req, res) => {
     try {

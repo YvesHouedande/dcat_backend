@@ -135,6 +135,8 @@ module.exports = router;
  *                   format: date
  *                 reference:
  *                   type: string
+ *                 duree_contrat:
+ *                   type: string
  *                 type_de_contrat:
  *                   type: string
  *                 statut:
@@ -189,6 +191,8 @@ module.exports = router;
  *                       nom_contrat:
  *                         type: string
  *                         nullable: true
+ *                       duree_contrat:
+ *                        type: string
  *                       date_debut:
  *                         type: string
  *                         format: date
@@ -250,6 +254,8 @@ module.exports = router;
  *                       nom_contrat:
  *                         type: string
  *                         nullable: true
+ *                       duree_contrat:
+ *                        type: string
  *                       date_debut:
  *                         type: string
  *                         format: date
@@ -292,6 +298,8 @@ module.exports = router;
  *             properties:
  *               nom_contrat:
  *                 type: string
+ *               duree_contrat:
+ *                type: string
  *               date_debut:
  *                 type: string
  *                 format: date
@@ -365,6 +373,8 @@ module.exports = router;
  *             properties:
  *               nom_contrat:
  *                 type: string
+ *               duree_contrat:
+ *                type: string
  *               date_debut:
  *                 type: string
  *                 format: date
@@ -451,6 +461,8 @@ module.exports = router;
  *         nom_contrat:
  *           type: string
  *           nullable: true
+ *         duree_contrat:
+ *          type: string
  *         date_debut:
  *           type: string
  *           format: date

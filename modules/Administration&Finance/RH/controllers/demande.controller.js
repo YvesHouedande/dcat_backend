@@ -43,34 +43,72 @@ const createDemande = async (req, res) => {
 
 const addDocumentToDemande = async (req, res) => {
     try {
-        const docData =  {
+        if (!req.file) {
+        return res.status(400).json({
+        success: false,
+        message: "Aucun fichier n'a été téléchargé"
+    });
+    }
+
+    const { id } = req.params;
+
+    const relativePath = req.file.path
+        .replace(process.cwd(), '')
+        .replace(/\\/g, '/')
+        .replace(/^\//, '');
+
+    const docData = {
         libelle_document: req.body.libelle_document,
         classification_document: req.body.classification_document,
-        lien_document: req.file.path.replace(/\\/g, '/'), // Normalise le chemin pour la BD
+        lien_document: relativePath,
         etat_document: req.body.etat_document || 'actif',
-        id_nature_document: parseInt(req.body.id_nature_document),
-        id_contrat : parseInt(req.body.id_contrat)
+        id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null,
+        id_demande: parseInt(id)
+    };
+
+    let document;
+    try {
+        document = await demandeService.addDocumentToDemande(docData);
+        logger.info("Document ajouté à la demande", { documentId: document.id_document });
+    } catch (dbError) {
+        await fs.promises.unlink(req.file.path).catch(() => {});
+        logger.error("Erreur base de données lors de l'ajout du document à la demande", {
+        error: {
+            message: dbError.message,
+            stack: dbError.stack
         }
-        Document = await demandeService.addDocumentToDemande(docData);
-        logger.info("Document ajouté à la demande", { documentId: Document.id_document });
-        res.status(201).json({
-            success: true,
-            message: "Document ajouté à la demande avec succès",
-            data: Document
-        });
-    } catch (error) {
-        logger.error("Erreur lors de l'ajout du document à la demande", {
-            error: {
-                message: error.message,
-                stack: error.stack
-            }
-        });
-        res.status(500).json({
-            success: false,
-            message: "Erreur interne lors de l'ajout du document à la demande.",
-            details: error.message
-        });
+    });
+    return res.status(500).json({
+        success: false,
+        message: "Erreur lors de l'enregistrement du document en base",
+        error: dbError.message
+    });
     }
+
+    res.status(201).json({
+        success: true,
+        message: "Document ajouté à la demande avec succès",
+        data: {
+            document,
+            details: {
+                dateCreation: new Date().toISOString(),
+                chemin: relativePath
+        }
+    }
+    });
+} catch (error) {
+    logger.error("Erreur lors de l'ajout du document à la demande", {
+      error: {
+        message: error.message,
+        stack: error.stack
+      }
+    });
+    res.status(500).json({
+      success: false,
+      message: "Erreur interne lors de l'ajout du document à la demande.",
+      error: error.message
+    });
+  }
 };
 
 const getAllDemandes = async (req, res) => {
