@@ -50,7 +50,7 @@ const getContratByType = async (type) => {
 
 
 const getDocumentByContrat=async(id_contrat)=>{
-    const [result]=await db
+    const result =await db
     .select()
     .from(documents)
     .where(eq(documents.id_contrat,id_contrat))
