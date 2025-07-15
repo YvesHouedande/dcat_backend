@@ -23,7 +23,7 @@ const createDemande = async (req, res) => {
             duree: req.body.duree,
             heure_debut: req.body.heure_debut,
             heure_fin: req.body.heure_fin,
-            id_employe: req.body.id_employe,
+            id_employes: req.body.id_employes ? parseInt(req.body.id_employes) : null,
         }
         const Demande = await demandeService.createDemande(DemandeData);
         logger.info("Demande créée avec succès", { demandeId: Demande.id_demande });
@@ -345,28 +345,29 @@ const deleteDemande = async (req, res) => {
 const deleteDocumentById = async (req, res) => {
     try{
         const { id ,docId } = req.params;
-        const document = await demandeService.getDocumentById(parseInt(docId));
-        if(!document || document.id_contrat !== parseInt(id)){
+        const documents = await demandeService.getDocumentById(parseInt(docId));
+        const document = Array.isArray(documents) ? documents[0] : documents;
+        if(!document || document.id_demandes !== parseInt(id)){
             return res.status(404).json({
                 success:false,
-                message:"Document non trouvé ou n'appartenant pas à cette intervention" 
+                message:"Document non trouvé ou n'appartenant pas à cette demande" 
             });
         }
-        const deletedoc = await contratService.deleteDocumentById(parseInt(docId));
+        const deletedoc = await demandeService.deleteDocumentById(parseInt(docId));
         res.status(200).json({
             succes : true,
             message: "Document supprimé avec succès",
             data: {
-                intervention_id: parseInt(id),
+                demande_id: parseInt(id),
                 document_id: parseInt(docId)
         }
         });
         // Supprimer le fichier du disque 
-        if (document.lien_document) {
+        if (documents.lien_document) {
             try {
-                await safeUnlink(document.lien_document);
+                await safeUnlink(documents.lien_document);
             } catch (fileError) {
-                logger.error(`Erreur lors de la suppression du fichier ${document.lien_document}`, { error: fileError });
+                logger.error(`Erreur lors de la suppression du fichier ${documents.lien_document}`, { error: fileError });
             }
         }
     } catch (error){

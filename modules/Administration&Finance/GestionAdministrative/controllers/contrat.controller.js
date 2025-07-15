@@ -351,32 +351,55 @@ const deleteContrat = async (req, res) => {
 };
 
 const deleteDocumentById = async (req, res) => {
-    try{
-        const { id ,docId } = req.params;
-        const document = await contratService.getDocumentById(parseInt(docId));
-        if(!document || document.id_contrat !== parseInt(id)){
-            return res.status(404).json({
-                success:false,
-                message:"Document non trouvé ou n'appartenant pas à cette intervention" 
-            });
-        }
-        const deletedoc = await contratService.deleteDocumentById(parseInt(docId));
-        res.status(200).json({
-            succes : true,
-            message: "Document supprimé avec succès",
-            data: {
-                intervention_id: parseInt(id),
-                document_id: parseInt(docId)
-        }
-        })
-} catch (error){
-    res.status(500).json({
-        succes: false,
-        message: error.message
-    });
-}
+  try {
+    const { id, docId } = req.params;
 
-}
+    const contratId = parseInt(id);
+    const documentId = parseInt(docId);
+
+    if (isNaN(contratId) || isNaN(documentId)) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de contrat ou de document invalide",
+      });
+    }
+
+    const documents = await contratService.getDocumentById(documentId);
+    const document = Array.isArray(documents) ? documents[0] : documents;
+
+    if (!document || document.id_contrat !== contratId) {
+      return res.status(404).json({
+        success: false,
+        message: "Document non trouvé ou n'appartenant pas à ce contrat",
+      });
+    }
+
+    await contratService.deleteDocumentById(documentId);
+
+    // Supprimer le fichier physique (si lien_document est défini)
+    if (document.lien_document) {
+      await safeUnlink(document.lien_document);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Document supprimé avec succès",
+      data: {
+        contrat_id: contratId,
+        document_id: documentId,
+      },
+    });
+
+  } catch (error) {
+    logger?.error("Erreur suppression document", { error });
+    return res.status(500).json({
+      success: false,
+      message: "Erreur interne du serveur",
+      details: error.message,
+    });
+  }
+};
+
 
 module.exports = {
     createContrat,

@@ -89,12 +89,11 @@ const deleteDocumentsByContrat=async(id_contrat)=>{
     return result
 };
 
-const deleteDocumentById=async(id)=>{
-    const [result]=await db
+const deleteDocumentById = async (id) => {
+  return await db
     .delete(documents)
-    .where(eq(documents.id_document,id))
-    .returning()
-    return result
+    .where(eq(documents.id_documents, id))
+    .returning();
 };
 
 module.exports={
