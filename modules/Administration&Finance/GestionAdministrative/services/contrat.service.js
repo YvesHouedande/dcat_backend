@@ -96,6 +96,7 @@ const deleteDocumentById = async (id) => {
     .returning();
 };
 
+
 module.exports={
     createContrat,
     getContrats,
