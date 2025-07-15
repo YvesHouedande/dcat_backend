@@ -1,4 +1,4 @@
-const { and, eq, inArray, sql } = require("drizzle-orm");
+const { and, eq, inArray, sql, desc } = require("drizzle-orm");
 const { db } = require("../../../core/database/config");
 const {
   exemplaires,
@@ -411,13 +411,13 @@ async function getAllCommandes({ page = 1, limit = 50, etat = null } = {}) {
       )`.as("montant_total")
     })
     .from(commandes)
-    .orderBy(commandes.created_at.desc ? commandes.created_at.desc() : commandes.id_commande.desc());
+    .orderBy(desc(commandes.created_at));
 
   // Filtrage par état si fourni
   if (etat) {
     query = query.where(eq(commandes.etat_commande, etat));
   }
-
+//test
   // --- Récupération des données paginées ---
   const data = await query.limit(limit).offset(offset);
 
