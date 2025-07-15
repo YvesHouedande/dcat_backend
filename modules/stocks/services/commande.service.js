@@ -417,7 +417,7 @@ async function getAllCommandes({ page = 1, limit = 50, etat = null } = {}) {
   if (etat) {
     query = query.where(eq(commandes.etat_commande, etat));
   }
-
+//test
   // --- Récupération des données paginées ---
   const data = await query.limit(limit).offset(offset);
 
