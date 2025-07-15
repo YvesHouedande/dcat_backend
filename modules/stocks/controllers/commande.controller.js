@@ -173,12 +173,32 @@ async function returnExemplaire(req, res) {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ error: "ID invalide" });
 
-    const result = await returnExemplaire(id);
+    const result = await commandeService.returnExemplaire(id);
     res.status(200).json(result);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 }
+
+
+
+/**
+ * Annule la réservation d'un exemplaire (remet à l'état disponible, retire la commande, ré-incrémente le stock)
+ * @route POST /stocks/exemplaires/:id/annuler-reservation
+ */
+const annulerReservationExemplaireController = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    const result = await commandeService.annulerReservationExemplaire(id);
+    return res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ error: "Une erreur est survenue", details: error.message });
+  }
+};
+
 
 module.exports = {
   getCommandeById,
@@ -191,4 +211,6 @@ module.exports = {
   createCommande,
   cancelCommande,
   returnExemplaire,
+  annulerReservationExemplaireController,
+
 };

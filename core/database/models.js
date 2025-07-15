@@ -459,6 +459,9 @@ const exemplaires = pgTable("exemplaires", {
   id_livraison: integer("id_livraison").references(
     () => livraisons.id_livraison
   ),
+  id_commande: integer("id_commande").references(
+    () => commandes.id_commande
+  ),
   id_produit: integer("id_produit").references(() => produits.id_produit),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),

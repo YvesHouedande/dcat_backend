@@ -410,7 +410,8 @@ async function getAllCommandes({ page = 1, limit = 50, etat = null } = {}) {
         WHERE cp.id_commande = commandes.id_commande
       )`.as("montant_total")
     })
-    .from(commandes);
+    .from(commandes)
+    .orderBy(commandes.created_at.desc ? commandes.created_at.desc() : commandes.id_commande.desc());
 
   // Filtrage par état si fourni
   if (etat) {
@@ -506,69 +507,104 @@ async function updateEtatCommande(idCommande, updateData) {
  */
 async function reserveExemplairesCommande(idCommande) {
   return db.transaction(async (tx) => {
-    /* 1. Récupère toutes les lignes produit/quantité de la commande */
+    // 1. Récupère toutes les lignes produit/quantité de la commande
     const lignes = await tx
       .select({
         id_produit: commande_produits.id_produit,
         quantite: commande_produits.quantite,
       })
       .from(commande_produits)
-      // .leftJoin(produits, eq(commande_produits.id_produit, produits.id_produit))
       .where(eq(commande_produits.id_commande, idCommande));
 
-    /* 2. Pour chaque produit de la commande */
+    const reservationDetails = [];
+
+    // 2. Pour chaque produit de la commande
     for (const ligne of lignes) {
       const { id_produit, quantite } = ligne;
 
-      /* 2-a) Cherche les exemplaires disponibles */
-      const dispo = await tx
+      // 2-a) Compter combien d'exemplaires sont déjà réservés pour cette commande et ce produit
+      const dejaReserves = await tx
         .select({ id: exemplaires.id_exemplaire })
         .from(exemplaires)
         .where(
           and(
             eq(exemplaires.id_produit, id_produit),
-            eq(exemplaires.etat_exemplaire, etatExemplaire[1]) //"disponible"
+            eq(exemplaires.id_commande, idCommande),
+            eq(exemplaires.etat_exemplaire, etatExemplaire[5]) // "Réservé"
           )
-        )
-        .limit(quantite);
-
-      if (dispo.length < quantite) {
-        throw new Error(
-          `Stock insuffisant : ${quantite} demandés pour le produit ${id_produit}, ${dispo.length} disponibles`
         );
+      const nbDejaReserves = dejaReserves.length;
+      const resteAReserver = quantite - nbDejaReserves;
+
+      let nbReserves = 0;
+      let ids = [];
+
+      if (resteAReserver > 0) {
+        // 2-b) Cherche les exemplaires disponibles (jusqu'à la quantité manquante)
+        const dispo = await tx
+          .select({ id: exemplaires.id_exemplaire })
+          .from(exemplaires)
+          .where(
+            and(
+              eq(exemplaires.id_produit, id_produit),
+              eq(exemplaires.etat_exemplaire, etatExemplaire[1]) // "disponible"
+            )
+          )
+          .limit(resteAReserver);
+
+        nbReserves = dispo.length;
+        ids = dispo.map((e) => e.id);
+
+        // 2-c) Réserve les exemplaires trouvés (s'il y en a)
+        if (ids.length > 0) {
+          await tx
+            .update(exemplaires)
+            .set({  
+              etat_exemplaire: etatExemplaire[5], //reserve
+              id_commande: idCommande,
+              updated_at: new Date(),
+            })
+            .where(inArray(exemplaires.id_exemplaire, ids));
+
+          // 2-d) Décrémente le stock du produit du nombre effectivement réservé
+          await tx
+            .update(produits)
+            .set({
+              qte_produit: sql`${produits.qte_produit} - ${nbReserves}`,
+              updated_at: new Date(),
+            })
+            .where(eq(produits.id_produit, id_produit));
+        }
       }
 
-      const ids = dispo.map((e) => e.id);
-
-      /* 2-b) Réserve les exemplaires (mise à jour état) */
-      await tx
-        .update(exemplaires)
-        .set({
-          etat_exemplaire: etatExemplaire[5], //reserve
-        })
-        .where(inArray(exemplaires.id_exemplaire, ids));
-
-      /* 2-c) Décrémente le stock du produit */
-      await tx
-        .update(produits)
-        .set({
-          qte_produit: sql`${produits.qte_produit} - ${quantite}`,
-        })
-        .where(eq(produits.id_produit, id_produit));
+      reservationDetails.push({
+        id_produit,
+        demandes: quantite,
+        deja_reserves: nbDejaReserves,
+        reserves_ajoutes: nbReserves,
+        total_reserves: nbDejaReserves + nbReserves,
+        ids_exemplaires_reserves: [
+          ...dejaReserves.map((e) => e.id),
+          ...ids,
+        ],
+      });
     }
 
-    /* 3. (Optionnel) Met à jour l’état global de la commande */
-    await tx
-      .update(commandes)
-      .set({
-        // etat_commande: etatCommande,
-        commande_produits_reserves: true,  //tout les produits de la commande sont réservés
-        updated_at: new Date(),
-      })
-      .where(eq(commandes.id_commande, idCommande));
+    // // 3. (Optionnel) Met à jour l’état global de la commande
+    // await tx
+    //   .update(commandes)
+    //   .set({
+    //     commande_produits_reserves: true,  //tout les produits de la commande sont réservés (partiellement ou totalement)
+    //     updated_at: new Date(),
+    //   })
+    //   .where(eq(commandes.id_commande, idCommande));
 
-    /* 4. Retourne l’objet complet via le service de lecture */
-    return getCommandeById(idCommande);
+    // 4. Retourne l’objet complet via le service de lecture + détails de réservation
+    const commande = await getCommandeById(idCommande);
+    return {
+      ...commande,
+      reservationDetails,
+    };
   });
 }
 
@@ -929,8 +965,6 @@ async function cancelCommande(idCommande) {
   });
 }
 
-
-
 /**
  * Retourne un exemplaire (remis en stock)
  * 
@@ -985,6 +1019,57 @@ async function returnExemplaire(idExemplaire) {
   });
 }
 
+/**
+ * Annule la réservation d'un exemplaire :
+ * - Remet l'exemplaire à l'état 'disponible'
+ * - Retire l'association à la commande
+ * - Ré-incrémente le stock du produit
+ *
+ * @param {number} idExemplaire - ID de l'exemplaire à annuler
+ * @returns {object} - L'exemplaire mis à jour
+ */
+async function annulerReservationExemplaire(idExemplaire) {
+  return db.transaction(async (tx) => {
+    // 1. Vérifie que l’exemplaire existe et est bien réservé
+    const [ex] = await tx
+      .select({
+        id: exemplaires.id_exemplaire,
+        etat: exemplaires.etat_exemplaire,
+        id_produit: exemplaires.id_produit,
+        id_commande: exemplaires.id_commande,
+      })
+      .from(exemplaires)
+      .where(eq(exemplaires.id_exemplaire, idExemplaire));
+
+    if (!ex) throw new Error("Exemplaire introuvable");
+    if (ex.etat !== etatExemplaire[5]) throw new Error("L'exemplaire n'est pas réservé");
+
+    // 2. Mettre à jour l’état de l’exemplaire et retirer l'association à la commande
+    await tx
+      .update(exemplaires)
+      .set({
+        etat_exemplaire: etatExemplaire[1], // 'Disponible'
+        id_commande: null,
+        updated_at: new Date(),
+      })
+      .where(eq(exemplaires.id_exemplaire, idExemplaire));
+
+    // 3. Réincrémenter la quantité de produit
+    await tx
+      .update(produits)
+      .set({
+        qte_produit: sql`${produits.qte_produit} + 1`,
+        updated_at: new Date(),
+      })
+      .where(eq(produits.id_produit, ex.id_produit));
+
+    return {
+      id_exemplaire: idExemplaire,
+      etat: etatExemplaire[1],
+      message: "Réservation annulée avec succès",
+    };
+  });
+}
 
 
 module.exports = {
@@ -998,6 +1083,7 @@ module.exports = {
   safeDeleteCommande,
   cancelCommande,
   returnExemplaire,
+  annulerReservationExemplaire,
 
   etatCommande,
 };
