@@ -1,165 +1,123 @@
+const fs = require('fs');
 const contratService = require('../services/contrat.service');
 const logger = require('../../../../core/utils/logger');
-const fs = require('fs');
 
 /**
- * Suppression sécurisée d'un fichier
+ * Suppression sécurisée d’un fichier
  */
 async function safeUnlink(filePath) {
     try {
         await fs.promises.unlink(filePath);
-        logger.info(`Fichier supprimé: ${filePath}`);
+        logger.info(`Fichier supprimé avec succès : ${filePath}`);
     } catch (err) {
-        logger.error(`Erreur suppression fichier ${filePath}:`, { error: err });
+        logger.error(`Erreur suppression fichier ${filePath} :`, { error: err });
     }
 }
 
 
-const createContrats = async (req, res) => {
+const createContrat = async (req, res) => {
     try {
-        logger.info("Début création contrat");
-        logger.debug("Body reçu:", { body: { ...req.body } });
-        logger.debug("Fichier reçu:", {
-            file: req.file ? {
-                filename: req.file.filename,
-                path: req.file.path,
-                size: req.file.size
-            } : "Aucun fichier"
-        });
-
-        const data = req.body;
-        if (!data || Object.keys(data).length === 0) {
-            if (req.file) await safeUnlink(req.file.path);
-            return res.status(400).json({ message: "Données contrat requises" });
-        }
-
-        const requiredFields = ['date_debut', 'date_fin', 'id_partenaire'];
-        const missingFields = requiredFields.filter(field => !data[field]);
-        
-        if (missingFields.length > 0) {
-            if (req.file) await safeUnlink(req.file.path);
-            return res.status(400).json({ 
-                message: "Données incomplètes", 
-                details: `Champs manquants: ${missingFields.join(', ')}` 
-            });
-        }
-
         const contratData = {
-            nom_contrat: data.nom_contrat,
-            reference: data.reference,
-            date_debut: data.date_debut,
-            duree_contrat: data.duree_contrat,
-            date_fin: data.date_fin,
-            statut_contrat: data.statut,
-            id_partenaire: data.id_partenaire ? parseInt(data.id_partenaire) : null,
-            type_contrat: data.type_contrat,
-        };
-        
-        const contrat = await contratService.createContrat (contratData);
-
-        
-        if (!contrat) {
-            if (req.file) await safeUnlink(req.file.path);
-            return res.status(500).json({ message: "Erreur création contrat" });
+            nom_contrat: req.body.nom_contrat,
+            type_contrat: req.body.type_contrat,
+            date_debut: req.body.date_debut,
+            date_fin: req.body.date_fin,
+            reference : req.body.reference,
+            type_de_contrat: req.body.type_de_contrat,
+            statut: req.body.statut || "actif",
+            id_partenaire: req.body.id_partenaire ? parseInt(req.body.id_partenaire) : null,
         }
-
-        const contratObj = Array.isArray(contrat) ? contrat[0] : contrat;
-        const contratId = contratObj?.id_contrat;
-
-        if (!contratId) {
-            if (req.file) await safeUnlink(req.file.path);
-            return res.status(500).json({ message: "Erreur: ID contrat manquant" });
-        }
-
-        let documentResult = null;
-        if (req.file) {
-            const { libelle_document, classification_document } = req.body;
-            
-            if (!libelle_document) {
-                await safeUnlink(req.file.path);
-                return res.status(400).json({ message: "Libellé document obligatoire" });
-            }
-
-            const relativePath = req.file.path
-                .replace(process.cwd(), '')
-                .replace(/\\/g, '/')
-                .replace(/^\//, '');
-
-            const documentData = {
-                libelle_document,
-                classification_document: classification_document || "Contrat",
-                lien_document: relativePath,
-                etat_document: req.body.etat_document || "Actif",
-                date_document: new Date().toISOString().split('T')[0],
-                id_contrat: contratId,
-                id_nature_document: data.id_nature_document ? parseInt(data.id_nature_document) : null,
-            };
-
-            documentResult = await contratService.addDocument(documentData);
-            if (!documentResult) {
-                await safeUnlink(req.file.path);
-                return res.status(500).json({ message: "Contrat créé mais document non ajouté" });
-            }
-        }
-        
+        const createdContrat = await contratService.createContrat(contratData);
         res.status(201).json({
             success: true,
-            message: documentResult ? "Contrat et document ajoutés" : "Contrat ajouté",
-            data: { contrat, document: documentResult }
+            message: "Contrat créé avec succès",
+            data: createdContrat
         });
-    } catch (error) {
-        logger.error("Erreur création contrat", { 
-            error: {
-                message: error.message,
-                stack: error.stack,
-                code: error.code
-            }
-        });
-        
-        if (req.file && req.file.path) {
-            await safeUnlink(req.file.path);
-        }
-        
-        let errorMessage = "Erreur interne";
-        let statusCode = 500;
-        
-        if (error.code === '23505') {
-            errorMessage = "Contrat déjà existant";
-            statusCode = 409;
-        } else if (error.code === '23503') {
-            errorMessage = "Référence invalide";
-            statusCode = 400;
-        } else if (error.message && error.message.includes("invalid input")) {
-            errorMessage = "Données invalides";
-            statusCode = 400;
-        }
-        
-        res.status(statusCode).json({
+    }
+    catch (error) {
+        res.status(500).json({
             success: false,
-            message: errorMessage,
-            details: error.message,
-            type: error.name || "UnknownError"
+            message: "Erreur création contrat",
+            details: error.message
         });
+    }
+};
+
+const addDocumentToContrat = async (req, res) => {
+    try {
+        if (!req.file) {
+        return res.status(400).json({
+        success: false,
+        message: "Aucun fichier n'a été téléchargé"
+    });
+    }
+
+    const { id } = req.params;
+    const relativePath = req.file.path
+        .replace(process.cwd(), '')
+        .replace(/\\/g, '/')
+        .replace(/^\//, '');
+
+    const documentData = {
+        libelle_document: req.body.libelle_document,
+        classification_document: req.body.classification_document,
+        lien_document: relativePath,
+        etat_document: req.body.etat_document || 'actif',
+        id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null,
+        id_contrat: parseInt(id)
+    };
+
+    let document;
+        try {
+        document = await contratService.addDocumentTocontrat(documentData);
+    } catch (dbError) {
+        await fs.promises.unlink(req.file.path).catch(() => {});
+        return res.status(500).json({
+            success: false,
+            message: "Erreur lors de l'enregistrement du document en base",
+            error: dbError.message
+    });
+    }
+
+    res.status(201).json({
+        success: true,
+        message: `Document ajouté avec succès au contrat ${document.id_contrat}`,
+        data: {
+            document: document,
+            details: {
+                dateCreation: new Date().toISOString(),
+                chemin: relativePath
+        }
+    }
+    });
+} catch (error) {
+    res.status(500).json({
+        success: false,
+        message: "Erreur lors de l'ajout du document",
+        error: error.message
+    });
     }
 };
 
 const getAllContrats = async (req, res) => {
     try {
         const contrats = await contratService.getContrats();
-        
-        return res.status(200).json({
+        res.status(200).json({
             success: true,
             count: contrats.length,
             data: contrats
         });
     } catch (error) {
-        logger.error("Erreur récupération contrats", { 
-            error: { message: error.message, stack: error.stack }
+        logger.error("Erreur récupération contrats", {
+            error: {
+                message: error.message,
+                stack: error.stack
+            }
         });
-        
-        return res.status(500).json({
+
+        res.status(500).json({
             success: false,
-            message: 'Erreur récupération contrats',
+            message: "Erreur récupération contrats",
             details: error.message
         });
     }
@@ -168,33 +126,29 @@ const getAllContrats = async (req, res) => {
 const getContratsByPartenaire = async (req, res) => {
     try {
         const { id } = req.params;
-        
         if (!id) {
-            return res.status(400).json({ success: false, message: "ID partenaire requis" });
+            return res.status(400).json({ message: "ID partenaire requis" });
         }
 
         const contrats = await contratService.getContratsbyPartenaire(id);
-        
-        if (!contrats || (Array.isArray(contrats) && contrats.length === 0)) {
-            return res.status(404).json({
-                success: false,
-                message: `Aucun contrat trouvé pour partenaire ID: ${id}`
-            });
+        if (!contrats || contrats.length === 0) {
+            return res.status(404).json({ message: "Aucun contrat trouvé pour ce partenaire." });
         }
 
-        return res.status(200).json({
+        res.status(200).json({
             success: true,
-            count: Array.isArray(contrats) ? contrats.length : 1,
+            count: contrats.length,
             data: contrats
         });
     } catch (error) {
-        logger.error(`Erreur récupération contrats partenaire ID: ${req.params.id}`, { 
-            error: { message: error.message, stack: error.stack }
+        logger.error(`Erreur récupération contrats partenaire ID: ${req.params.id}`, {
+            error: {
+                message: error.message,
+                stack: error.stack
+            }
         });
-        
-        return res.status(500).json({
-            success: false,
-            message: 'Erreur récupération contrats partenaire',
+        res.status(500).json({
+            message: "Erreur récupération contrats partenaire",
             details: error.message
         });
     }
@@ -203,32 +157,75 @@ const getContratsByPartenaire = async (req, res) => {
 const getContratById = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!id) {
-            return res.status(400).json({ success: false, message: "ID contrat requis" });
-        }
-        const contrat = await contratService.getContratById(id); 
-
+        const contrat = await contratService.getContratById(id);
         if (!contrat) {
-            return res.status(404).json({
-                success: false,
-                message: `Contrat ID: ${id} non trouvé`
+            return res.status(404).json({ message: "Contrat non trouvé" });
+        }
+
+        const documents = await contratService.getDocumentByContrat(id);
+        contrat.documents = documents || [];
+
+        res.status(200).json({
+            success: true,
+            count: 1,
+            data: [contrat]
+        });
+    } catch (error) {
+        logger.error(`Erreur récupération contrat ID: ${req.params.id}`, {
+            error: {
+                message: error.message,
+                stack: error.stack
+            }
+        });
+        res.status(500).json({ message: "Erreur récupération contrat", details: error.message });
+    }
+};
+
+const getContratByType = async (req, res) => {
+    try {
+        const { type } = req.params;
+        logger.info(`Recherche des contrats par type: ${type}`);
+
+        if (!type) {
+            logger.warn("Type de contrat non spécifié");
+            return res.status(400).json({ message: "Le type de contrat est requis." });
+        }
+
+        const result = await contratService.getContratByType(type);
+
+        if (!Array.isArray(result)) {
+            logger.error("Le service getContratByType n'a pas retourné un tableau");
+            return res.status(500).json({
+                message: "Données invalides retournées par le service de contrat.",
+                details: "Le résultat n'est pas un tableau"
             });
         }
 
-        return res.status(200).json({
-            success: true,
-            message: 'Contrat trouvé',
-            data: contrat
-        });
-    } catch (error) {   
+        if (result.length === 0) {
+            logger.info(`Aucun contrat trouvé pour le type: ${type}`);
+            return res.status(404).json({ 
+                message: "Aucun contrat trouvé pour ce type.",
+                details: `Type recherché: ${type}` 
+            });
+        }
 
-        logger.error(`Erreur récupération contrat ID: ${req.params.id}`, {
-            error: { message: error.message, stack: error.stack }
+        // Ne pas ajouter le champ documents ici
+
+        res.status(200).json({
+            success: true,
+            count: result.length,
+            data: result
         });
-        return res.status(500).json({
-            success: false,
-            message: 'Erreur récupération contrat',
-            details: error.message
+    } catch (error) {
+        logger.error(`Erreur lors de la récupération des contrats de type ${req.params.type}`, {
+            error: {
+                message: error.message,
+                stack: error.stack
+            }
+        });
+        res.status(500).json({ 
+            message: "Erreur interne lors de la récupération par type de contrat.",
+            details: error.message 
         });
     }
 };
@@ -236,107 +233,158 @@ const getContratById = async (req, res) => {
 const updateContrat = async (req, res) => {
     try {
         const { id } = req.params;
-        
-        if (!id) {
-            return res.status(400).json({ success: false, message: "ID contrat requis" });
-        }
-        
-        if (!req.body || Object.keys(req.body).length === 0) {
-            return res.status(400).json({ success: false, message: "Aucune donnée fournie" });
+        const updateData = req.body;
+
+        if (!id) return res.status(400).json({ message: "ID contrat requis" });
+        if (!updateData || Object.keys(updateData).length === 0) {
+            return res.status(400).json({ message: "Aucune donnée fournie" });
         }
 
-        const updateData = { ...req.body };
-        
-        if (updateData.id_partenaire) updateData.id_partenaire = parseInt(updateData.id_partenaire);
-        if (updateData.montant) updateData.montant = parseFloat(updateData.montant);
         updateData.updated_at = new Date();
+        if (updateData.id_partenaire) updateData.id_partenaire = parseInt(updateData.id_partenaire);
 
         const result = await contratService.updateContrat(id, updateData);
-        
         if (!result) {
-            return res.status(404).json({
-                success: false,
-                message: `Contrat ID: ${id} non trouvé`
-            });
+            return res.status(404).json({ message: "Contrat non trouvé" });
         }
 
-        return res.status(200).json({
-            success: true,
-            message: 'Contrat mis à jour',
-            data: result
-        });
+        res.status(200).json({ success: true, message: "Contrat mis à jour", data: result });
     } catch (error) {
-        logger.error(`Erreur mise à jour contrat ID: ${req.params.id}`, { 
-            error: { message: error.message, stack: error.stack, code: error.code }
+        logger.error(`Erreur mise à jour contrat ${req.params.id}`, {
+            error: { message: error.message, stack: error.stack }
         });
-        
+
         let errorMessage = "Erreur mise à jour contrat";
         let statusCode = 500;
-        
+
         if (error.code === '23505') {
-            errorMessage = "Contrat avec ces informations déjà existant";
+            errorMessage = "Ce contrat existe déjà.";
             statusCode = 409;
         } else if (error.code === '23503') {
-            errorMessage = "Référence invalide";
+            errorMessage = "Clé étrangère invalide.";
             statusCode = 400;
         }
-        
-        return res.status(statusCode).json({
-            success: false,
-            message: errorMessage,
-            details: error.message
-        });
+
+        res.status(statusCode).json({ message: errorMessage, details: error.message });
     }
 };
 
 const deleteContrat = async (req, res) => {
-    try {
-        const { id } = req.params;
-        
-        if (!id) {
-            return res.status(400).json({ success: false, message: "ID contrat requis" });
-        }
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: "ID requis." });
 
-        const result = await contratService.deleteContrat(id);
+    try {
+        // Vérifier si le contrat existe
+        const contrat = await contratService.getContratById(id);
+        if (!contrat) return res.status(404).json({ message: "Contrat introuvable." });
+
+        // Vérifier s'il y a des documents liés au contrat
+        const documents = await contratService.getDocumentByContrat(id);
         
-        if (!result) {
-            return res.status(404).json({
-                success: false,
-                message: `Contrat ID: ${id} non trouvé`
+        // Toujours essayer de supprimer les documents d'abord (même si la liste semble vide)
+        // car il peut y avoir des références orphelines dans la base
+        try {
+            if (documents && documents.length > 0) {
+                // Il y a des documents liés : les supprimer d'abord
+                logger.info(`${documents.length} document(s) trouvé(s) pour le contrat ${id}`);
+                
+                // Supprimer les fichiers du disque d'abord
+                for (const doc of documents) {
+                    if (doc.lien_document) {
+                        try {
+                            await safeUnlink(doc.lien_document);
+                            logger.info(`Fichier ${doc.lien_document} supprimé du disque`);
+                        } catch (fileError) {
+                            if (fileError.code === 'ENOENT') {
+                                logger.warn(`Fichier ${doc.lien_document} déjà supprimé ou inexistant`);
+                            } else {
+                                logger.error(`Erreur lors de la suppression du fichier ${doc.lien_document}`, { error: fileError });
+                                // Continuer même si le fichier ne peut pas être supprimé
+                            }
+                        }
+                    }
+                }
+            } else {
+                logger.info(`Aucun document lié au contrat ${id}`);
+            }
+            
+            // Supprimer tous les documents de la base en une fois (même si la liste est vide)
+            // Cela permet de nettoyer d'éventuelles références orphelines
+            const deletedDocs = await contratService.deleteDocumentsByContrat(id);
+            if (deletedDocs && deletedDocs.length > 0) {
+                logger.info(`${deletedDocs.length} document(s) supprimé(s) de la base de données`);
+            }
+            
+        } catch (docError) {
+            logger.error(`Erreur lors de la suppression des documents`, { error: docError });
+            return res.status(500).json({ 
+                message: "Erreur lors de la suppression des documents liés." 
             });
         }
 
-        return res.status(200).json({
-            success: true,
-            message: 'Contrat supprimé',
-            data: result
+        // Supprimer le contrat après avoir supprimé tous les documents
+        const deleted = await contratService.deleteContrat(id);
+        if (!deleted) {
+            return res.status(500).json({ message: "Échec suppression du contrat." });
+        }
+
+        logger.info(`Contrat ${id} supprimé avec succès`);
+        res.status(200).json({ 
+            message: "Suppression réussie.",
+            documentsSupprimes: documents ? documents.length : 0
         });
-    } catch (error) {
-        logger.error(`Erreur suppression contrat ID: ${req.params.id}`, { 
-            error: { message: error.message, stack: error.stack, code: error.code }
-        });
+
+    } catch (e) {
+        logger.error(`Erreur lors de la suppression du contrat ${id}`, { error: e });
         
-        let errorMessage = "Erreur suppression contrat";
-        let statusCode = 500;
-        
-        if (error.code === '23503') {
-            errorMessage = "Impossible de supprimer ce contrat (références existantes)";
-            statusCode = 400;
+        // Gestion spécifique des erreurs de clé étrangère
+        let msg = "Erreur serveur.";
+        if (e.code === '23503') {
+            msg = "Impossible de supprimer : contrat lié à d'autres données.";
+        } else if (e.code === '23502') {
+            msg = "Erreur de contrainte de données.";
         }
         
-        return res.status(statusCode).json({
-            success: false,
-            message: errorMessage,
-            details: error.message
-        });
+        res.status(500).json({ message: msg });
     }
 };
 
+const deleteDocumentById = async (req, res) => {
+    try{
+        const { id ,docId } = req.params;
+        const document = await contratService.getDocumentById(parseInt(docId));
+        if(!document || document.id_contrat !== parseInt(id)){
+            return res.status(404).json({
+                success:false,
+                message:"Document non trouvé ou n'appartenant pas à cette intervention" 
+            });
+        }
+        const deletedoc = await contratService.deleteDocumentById(parseInt(docId));
+        res.status(200).json({
+            succes : true,
+            message: "Document supprimé avec succès",
+            data: {
+                intervention_id: parseInt(id),
+                document_id: parseInt(docId)
+        }
+        })
+} catch (error){
+    res.status(500).json({
+        succes: false,
+        message: error.message
+    });
+}
+
+}
+
 module.exports = {
-    createContrats, // <-- corriger ici
+    createContrat,
     getAllContrats,
     getContratsByPartenaire,
+    getContratById,
+    getContratByType,
     updateContrat,
     deleteContrat,
-    getContratById
+    deleteDocumentById,
+    addDocumentToContrat
 };

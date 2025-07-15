@@ -1,217 +1,3 @@
-/**
- * @swagger
- * tags:
- *   - name: Demandes
- *     description: Gestion des demandes RH (congés, absences, etc.)
- */
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     Demande:
- *       type: object
- *       properties:
- *         id:
- *           type: integer
- *         id_employes:
- *           type: integer
- *         type_demande:
- *           type: string
- *         motif:
- *           type: string
- *         date_absence:
- *           type: string
- *           format: date
- *         date_retour:
- *           type: string
- *           format: date
- *         duree:
- *           type: string
- *         status:
- *           type: string
- *         libelle_document:
- *           type: string
- *         classification_document:
- *           type: string
- *         document:
- *           type: string
- *           format: binary
- *         heure_debut:
- *           type: string
- *         heure_fin:
- *           type: string
- *       required:
- *         - id_employes
- *         - type_demande
- *         - motif
- *         - date_absence
- *         - date_retour
- *         - duree
- *         - status
- *         - libelle_document
- *         - classification_document
- *
- *   requestBodies:
- *     DemandeCreation:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             $ref: '#/components/schemas/Demande'
- *     DemandeUpdate:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Demande'
- */
-
-/**
- * @swagger
- * /administration/demandes:
- *   post:
- *     summary: Créer une nouvelle demande RH (avec ou sans document)
- *     tags: [Demandes]
- *     requestBody:
- *       $ref: '#/components/requestBodies/DemandeCreation'
- *     responses:
- *       201:
- *         description: Demande créée avec succès
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Demande'
- *       400:
- *         description: Erreur de validation ou données manquantes
- *   get:
- *     summary: Lister toutes les demandes RH
- *     tags: [Demandes]
- *     responses:
- *       200:
- *         description: Liste de toutes les demandes RH
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Demande'
- */
-
-/**
- * @swagger
- * /administration/demandes/type/{type}:
- *   get:
- *     summary: Lister les demandes RH par type
- *     tags: [Demandes]
- *     parameters:
- *       - in: path
- *         name: type
- *         required: true
- *         schema:
- *           type: string
- *           example: maladie
- *     responses:
- *       200:
- *         description: Liste des demandes RH filtrées par type
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Demande'
- *       404:
- *         description: Aucun résultat pour ce type
- */
-
-/**
- * @swagger
- * /administration/demandes/employe/{id_employe}:
- *   get:
- *     summary: Lister les demandes RH d'un employé
- *     tags: [Demandes]
- *     parameters:
- *       - in: path
- *         name: id_employe
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Liste des demandes RH de l'employé
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Demande'
- *       404:
- *         description: Aucun résultat pour cet employé
- */
-
-/**
- * @swagger
- * /administration/demandes/{id}:
- *   get:
- *     summary: Obtenir une demande RH par ID
- *     tags: [Demandes]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Détail de la demande RH
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Demande'
- *       404:
- *         description: Demande RH non trouvée
- *
- *   put:
- *     summary: Modifier une demande RH existante
- *     tags: [Demandes]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       $ref: '#/components/requestBodies/DemandeUpdate'
- *     responses:
- *       200:
- *         description: Demande mise à jour avec succès
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Demande'
- *       400:
- *         description: Requête invalide
- *       404:
- *         description: Demande non trouvée
- *       500:
- *         description: Erreur serveur
- *
- *   delete:
- *     summary: Supprimer une demande RH
- *     tags: [Demandes]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Suppression réussie
- *       404:
- *         description: Demande non trouvée
- */
-
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
@@ -223,9 +9,8 @@ const UPLOAD_PATHS = {
   DEMANDES: 'media/documents/administration/RH/demandes'
 };
 
-// Créer une nouvelle demande RH avec fichier
-router.post(
-  '/',
+router.post('/', demandeController.createDemande);
+router.post('/:id/documents',
   (req, res, next) => {
     try {
       const uploadPath = path.join(process.cwd(), UPLOAD_PATHS.DEMANDES);
@@ -239,25 +24,349 @@ router.post(
     }
   },
   upload.single('document'),
-  demandeController.createDemande
+  demandeController.addDocumentToDemande
 );
-
-// Récupérer toutes les demandes RH
 router.get('/', demandeController.getAllDemandes);
-
-// Filtrer par type
 router.get('/type/:type', demandeController.getDemandeByType);
-
-// Filtrer par employé
 router.get('/employe/:id_employe', demandeController.getDemandeByEmploye);
-
-// Récupérer une demande par ID
 router.get('/:id', demandeController.getDemandeById);
-
-// Modifier une demande
 router.put('/:id', demandeController.updateDemande);
-
-// Supprimer une demande
 router.delete('/:id', demandeController.deleteDemande);
+router.delete('/:id/docdemande/:docId', demandeController.deleteDocumentById);
 
 module.exports = router;
+
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Demandes RH
+ *     description: Gestion des demandes RH (congés, absences, etc.)
+ */
+
+/**
+ * @swagger
+ * /administration/demandes:
+ *   post:
+ *     summary: Créer une nouvelle demande RH
+ *     tags:
+ *       - Demandes RH
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - motif
+ *               - date_absence
+ *               - type_demande
+ *               - id_employe
+ *             properties:
+ *               motif:
+ *                 type: string
+ *               date_absence:
+ *                 type: string
+ *                 format: date
+ *               heure_debut:
+ *                 type: string
+ *               heure_fin:
+ *                 type: string
+ *               date_retour:
+ *                 type: string
+ *                 format: date
+ *               duree:
+ *                 type: string
+ *               type_demande:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *               id_employe:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Demande créée avec succès
+ *       400:
+ *         description: Requête invalide
+ *       500:
+ *         description: Erreur serveur
+ */
+
+/**
+ * @swagger
+ * /administration/demandes/{id}:
+ *   put:
+ *     summary: Mettre à jour une demande RH
+ *     tags:
+ *       - Demandes RH
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               motif:
+ *                 type: string
+ *               date_absence:
+ *                 type: string
+ *                 format: date
+ *               heure_debut:
+ *                 type: string
+ *               heure_fin:
+ *                 type: string
+ *               date_retour:
+ *                 type: string
+ *                 format: date
+ *               duree:
+ *                 type: string
+ *               type_demande:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *               id_employe:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Demande mise à jour avec succès
+ *       400:
+ *         description: Requête invalide
+ *       404:
+ *         description: Demande non trouvée
+ *       500:
+ *         description: Erreur serveur
+ */
+
+/**
+ * @swagger
+ * /administration/demandes/{id}/documents:
+ *   post:
+ *     summary: Ajouter un document à une demande RH
+ *     tags:
+ *       - Demandes RH
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               document:
+ *                 type: string
+ *                 format: binary
+ *               libelle_document:
+ *                 type: string
+ *               classification_document:
+ *                 type: string
+ *               etat_document:
+ *                 type: string
+ *               id_nature_document:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Document ajouté avec succès
+ *       400:
+ *         description: Requête invalide
+ *       500:
+ *         description: Erreur serveur
+ */
+
+/**
+ * @swagger
+ * /administration/demandes:
+ *   get:
+ *     summary: Récupérer toutes les demandes RH
+ *     tags:
+ *       - Demandes RH
+ *     responses:
+ *       200:
+ *         description: Liste des demandes RH
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/DemandeRH'
+ *       500:
+ *         description: Erreur serveur
+ */
+
+/**
+ * @swagger
+ * /administration/demandes/{id}:
+ *   get:
+ *     summary: Récupérer une demande RH par son identifiant
+ *     tags:
+ *       - Demandes RH
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Détails de la demande RH
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/DemandeRH'
+ *       404:
+ *         description: Demande non trouvée
+ *       500:
+ *         description: Erreur serveur
+ */
+
+/**
+ * @swagger
+ * /administration/demandes/type/{type}:
+ *   get:
+ *     summary: Récupérer les demandes RH par type
+ *     tags:
+ *       - Demandes RH
+ *     parameters:
+ *       - name: type
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Liste des demandes RH par type
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/DemandeRH'
+ *       500:
+ *         description: Erreur serveur
+ */
+
+/**
+ * @swagger
+ * /administration/demandes/employe/{id_employe}:
+ *   get:
+ *     summary: Récupérer les demandes RH par employé
+ *     tags:
+ *       - Demandes RH
+ *     parameters:
+ *       - name: id_employe
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Liste des demandes RH de l'employé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/DemandeRH'
+ *       500:
+ *         description: Erreur serveur
+ */
+
+/**
+ * @swagger
+ * /administration/demandes/{id}:
+ *   delete:
+ *     summary: Supprimer une demande RH
+ *     tags:
+ *       - Demandes RH
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Demande supprimée avec succès
+ *       404:
+ *         description: Demande non trouvée
+ *       500:
+ *         description: Erreur serveur
+ */
+
+/**
+ * @swagger
+ * /administration/demandes/{id}/docdemande/{docId}:
+ *   delete:
+ *     summary: Supprimer un document d'une demande RH
+ *     tags:
+ *       - Demandes RH
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - name: docId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Document supprimé avec succès
+ *       404:
+ *         description: Document ou demande non trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     DemandeRH:
+ *       type: object
+ *       properties:
+ *         id_demandes:
+ *           type: integer
+ *         motif:
+ *           type: string
+ *         date_absence:
+ *           type: string
+ *           format: date
+ *         heure_debut:
+ *           type: string
+ *           nullable: true
+ *         heure_fin:
+ *           type: string
+ *           nullable: true
+ *         date_retour:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         duree:
+ *           type: string
+ *           nullable: true
+ *         type_demande:
+ *           type: string
+ *         status:
+ *           type: string
+ *         id_employes:
+ *           type: integer
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ */

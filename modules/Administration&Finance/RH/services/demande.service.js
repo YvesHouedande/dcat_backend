@@ -53,6 +53,14 @@ const updateDemande = async (id, data) => {
         throw error;
     }
 };
+const updateDocumentByDemande = async (id_demande, data) => {
+    const result = await db
+    .update(documents)
+    .set({...data, updated_at: new Date()})
+    .where(eq(documents.id_demandes, id_demande))
+    .returning();
+    return result;
+};
 
 const deleteDemande = async (id) => {
     try {
@@ -76,6 +84,14 @@ const addDocumentToDemande = async (documentData) => {
     return result;
 };
 
+const getDocumentByDemande = async (id_demande) => {
+    const result = await db
+    .select()
+    .from(documents)
+    .where(eq(documents.id_demandes, id_demande))
+    return result;
+};
+
 const getdemandeById = async (id) =>{
     const result = await db
     .select()
@@ -84,11 +100,35 @@ const getdemandeById = async (id) =>{
     return result;
 };
 
+const deleteDocumentByDemande = async (id_demande) => {
+    const result = await db
+    .delete(documents)
+    .where(eq(documents.id_demandes, id_demande))
+    .returning();
+    return result;
+};
+
 const getDemnandeByEmploye = async (id_employe) => {
     const result = await db
     .select()
     .from(demandes)
     .where(eq(demandes.id_employes, id_employe))
+    return result;
+};
+
+const deleteDocumentById = async (id_document) => {
+    const result = await db
+    .delete(documents)
+    .where(eq(documents.id_documents, id_document))
+    .returning();
+    return result;
+};
+
+const getDocumentById = async (id_document) => {
+    const result = await db
+    .select()
+    .from(documents)
+    .where(eq(documents.id_documents, id_document))
     return result;
 };
 
@@ -101,5 +141,10 @@ module.exports = {
     deleteDemande,
     addDocumentToDemande,
     getdemandeById,
-    getDemnandeByEmploye
+    getDemnandeByEmploye,
+    getDocumentByDemande,
+    updateDocumentByDemande,
+    deleteDocumentByDemande,
+    deleteDocumentById,
+    getDocumentById
 }
