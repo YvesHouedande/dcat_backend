@@ -61,7 +61,7 @@ module.exports = router;
  *               - motif
  *               - date_absence
  *               - type_demande
- *               - id_employe
+ *               - id_employes
  *             properties:
  *               motif:
  *                 type: string
@@ -81,7 +81,7 @@ module.exports = router;
  *                 type: string
  *               status:
  *                 type: string
- *               id_employe:
+ *               id_employes:
  *                 type: integer
  *     responses:
  *       201:
@@ -130,7 +130,7 @@ module.exports = router;
  *                 type: string
  *               status:
  *                 type: string
- *               id_employe:
+ *               id_employes:
  *                 type: integer
  *     responses:
  *       200:

@@ -23,7 +23,7 @@ const createDemande = async (req, res) => {
             duree: req.body.duree,
             heure_debut: req.body.heure_debut,
             heure_fin: req.body.heure_fin,
-            id_employes: req.body.id_employe ? parseInt(req.body.id_employe) : null,
+            id_employes: req.body.id_employes ? parseInt(req.body.id_employes) : null,
         }
         const Demande = await demandeService.createDemande(DemandeData);
         logger.info("Demande créée avec succès", { demandeId: Demande.id_demande });
