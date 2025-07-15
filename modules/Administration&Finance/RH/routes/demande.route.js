@@ -168,6 +168,8 @@ module.exports = router;
  *                 format: binary
  *               libelle_document:
  *                 type: string
+ *               date_document:
+ *                type: string
  *               classification_document:
  *                 type: string
  *               etat_document:

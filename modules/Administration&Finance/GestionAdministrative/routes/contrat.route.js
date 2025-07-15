@@ -343,6 +343,8 @@ module.exports = router;
  *                 type: string
  *               classification_document:
  *                 type: string
+ *               date_document:
+ *                type: string
  *               etat_document:
  *                 type: string
  *                 default: actif
