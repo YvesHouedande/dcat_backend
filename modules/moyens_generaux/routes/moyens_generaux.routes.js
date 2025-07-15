@@ -6,6 +6,7 @@ const outilsRoutes = require("./mouvementOutil.route");
 const moyenstravailRoutes = require("./moyensdeTravail.route"); //moyens de travail
 const maintenanceRoutes = require("./maintenance.route"); 
 const maintenanceMoyenTravailRoutes = require("./maintenance.route"); 
+const sectionRoutes = require("./section.route"); 
 
 // Montage des routes
 
@@ -49,5 +50,17 @@ router.use("/maintenances", maintenanceRoutes);
 //  *     tags: [moyen-travails]
 //  */
 router.use("/moyen-travails", maintenanceMoyenTravailRoutes);
+
+
+/**
+ * @swagger
+ * /moyens-generaux/sections:
+ *   description: Routes liées aux sections
+ *   get:
+ *     summary: Accède aux sections
+ *     tags: [sections]
+ */
+router.use("/sections", sectionRoutes);
+
 
 module.exports = router;

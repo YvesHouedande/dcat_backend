@@ -497,11 +497,11 @@ router.put("/etat/:id", controller.updateEtatCommande);
  *   post:
  *     summary: Réserver les exemplaires d’une commande
  *     description: |
- *       • Sélectionne les produits de la commande et réserve automatiquement  
- *         le nombre d’exemplaires **disponibles** correspondant à la quantité commandée.  
- *       • Met à jour chaque exemplaire (état =`"réservé"`) et décrémente le stock produit.  
- *       • Change l’état global de la commande à **“réservée”**.  
- *       • Renvoie la commande mise à jour avec ses produits et exemplaires réservés.  
+ *       • Réserve les exemplaires **disponibles** pour chaque produit de la commande selon la quantité demandée.  
+ *       • Met à jour l’état de chaque exemplaire réservé (`"Réservé"`) et décrémente le stock du produit.  
+ *       • L’état global de la commande passe à **"Réservée"**.  
+ *       • Si un produit n’a pas assez d’exemplaires disponibles, la réservation échoue pour toute la commande.  
+ *       • Retourne la commande mise à jour, avec la liste des exemplaires réservés et les produits concernés.
  *     tags:
  *       - Commandes
  *     parameters:
@@ -512,24 +512,9 @@ router.put("/etat/:id", controller.updateEtatCommande);
  *         schema:
  *           type: integer
  *           example: 42
- *     requestBody:
- *       required: false
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               etatCommande:
- *                 type: string
- *                 description: Valeur personnalisée pour le champ `etat_commande`
- *                 example: réservée
- *               etatExemplaire:
- *                 type: string
- *                 description: Valeur personnalisée pour `etat_exemplaire`
- *                 example: réservé
  *     responses:
  *       '200':
- *         description: Réservation effectuée avec succès
+ *         description: Réservation effectuée avec succès. Retourne la commande mise à jour, les produits et les exemplaires réservés.
  *         content:
  *           application/json:
  *             schema:
@@ -539,7 +524,7 @@ router.put("/etat/:id", controller.updateEtatCommande);
  *                   type: integer
  *                 etat_commande:
  *                   type: string
- *                   example: réservée
+ *                   example: Réservée
  *                 produits:
  *                   type: array
  *                   items:
@@ -567,9 +552,9 @@ router.put("/etat/:id", controller.updateEtatCommande);
  *                         type: integer
  *                       etat_exemplaire:
  *                         type: string
- *                         example: réservé
+ *                         example: Réservé
  *       '400':
- *         description: Stock insuffisant ou paramètre invalide
+ *         description: Stock insuffisant pour un ou plusieurs produits, ou paramètre invalide.
  *         content:
  *           application/json:
  *             schema:
@@ -789,5 +774,35 @@ router.post("/annuler/:id", controller.cancelCommande);
 
 router.post("/exemplaires/retour/:id", controller.returnExemplaire);
 
+
+
+/**
+ * @swagger
+ * /stocks/commandes/exemplaires/annuler-reservation/{id}:
+ *   post:
+ *     summary: Annule la réservation d'un exemplaire (remet à l'état disponible, retire la commande, ré-incrémente le stock)
+ *     tags: [Exemplaires]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'exemplaire à annuler
+ *     responses:
+ *       200:
+ *         description: Réservation annulée avec succès
+ *         content:
+ *           application/json:
+ *             example:
+ *               id_exemplaire: 12
+ *               etat: "Disponible"
+ *               message: "Réservation annulée avec succès"
+ *       400:
+ *         description: ID invalide ou exemplaire non réservé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.post("/exemplaires/annuler-reservation/:id", controller.annulerReservationExemplaireController);
 
 module.exports = router;

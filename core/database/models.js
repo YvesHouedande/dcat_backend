@@ -218,12 +218,23 @@ const livrables = pgTable("livrables", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// sections
+const sections = pgTable("sections", {
+  id_section: serial("id_section").primaryKey(),
+  libelle: varchar("libelle", { length: 100 }),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
+
 // Moyens_de_travail
 const moyens_de_travail = pgTable("moyens_de_travail", {
   id_moyens_de_travail: serial("id_moyens_de_travail").primaryKey(),
-  denomination: varchar("denomination", { length: 50 }),
+  denomination: varchar("denomination", { length: 100 }),
   date_acquisition: date("date_acquisition"),
-  section: varchar("section", { length: 50 }),
+  id_section: integer("id_section").references(
+    () => sections.id_section
+  ),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -242,7 +253,7 @@ const services = pgTable("services", {
 // Affiche
 const affiches = pgTable("affiches", {
   id_affiche: serial("id_affiche").primaryKey(),
-  image: varchar("image", { length: 255 }),
+  image: text("image"),
   titre_promotion: varchar("titre_promotion", { length: 100 }),
   sous_titre_promotion: varchar("sous_titre_promotion", { length: 150 }),
   created_at: timestamp("created_at").defaultNow().notNull(),
@@ -253,7 +264,7 @@ const affiches = pgTable("affiches", {
 const produits = pgTable("produits", {
   id_produit: serial("id_produit").primaryKey(),
   code_produit: text("code_produit").unique(),
-  desi_produit: varchar("desi_produit", { length: 50 }),
+  desi_produit: varchar("desi_produit", { length: 100 }),
   desc_produit: text("desc_produit"),
   qte_produit: integer("qte_produit").default(0),
   seuil_min_produit: integer("seuil_min_produit").default(0),
@@ -447,6 +458,9 @@ const exemplaires = pgTable("exemplaires", {
   ), //"Vendu", "Disponible", "Utilisation", "En maintenance", "Endommage", "Reserve"
   id_livraison: integer("id_livraison").references(
     () => livraisons.id_livraison
+  ),
+  id_commande: integer("id_commande").references(
+    () => commandes.id_commande
   ),
   id_produit: integer("id_produit").references(() => produits.id_produit),
   created_at: timestamp("created_at").defaultNow().notNull(),
@@ -689,6 +703,7 @@ module.exports = {
   taches,
   prestations,
   livrables,
+  sections,
   moyens_de_travail,
   services,
   affiches,

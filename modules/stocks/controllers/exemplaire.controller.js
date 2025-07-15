@@ -1,4 +1,5 @@
 const exemplaireService = require("../services/exemplaire.service");
+const { annulerReservationExemplaire } = require("../services/commande.service");
 
 const createExemplaire = async (req, res) => {
   try {
@@ -197,8 +198,7 @@ module.exports = {
   updateExemplaire,
   deleteExemplaire,
   getExemplairesByProduit,
+  filterExemplairesByEtat,
   // isExemplaireInUse,
   // isExemplairesInUse,
-
-  filterExemplairesByEtat,
 };
