@@ -367,6 +367,7 @@ const deleteDocumentById = async (req, res) => {
             succes: false,
             message: error.message
     });
+    
 }
 };
 
