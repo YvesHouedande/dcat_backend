@@ -279,81 +279,42 @@ const deleteContrat = async (req, res) => {
         const contrat = await contratService.getContratById(id);
         if (!contrat) return res.status(404).json({ message: "Contrat introuvable." });
 
-        // Vérifier s'il y a des documents liés au contrat
+        // Récupérer et supprimer les documents liés
         const documents = await contratService.getDocumentByContrat(id);
-        
-        // Toujours essayer de supprimer les documents d'abord (même si la liste semble vide)
-        // car il peut y avoir des références orphelines dans la base
-        try {
-            if (documents && documents.length > 0) {
-                // Il y a des documents liés : les supprimer d'abord
-                logger.info(`${documents.length} document(s) trouvé(s) pour le contrat ${id}`);
-                
-                // Supprimer les fichiers du disque d'abord
-                for (const doc of documents) {
-                    if (doc.lien_document) {
-                        try {
-                            await safeUnlink(doc.lien_document);
-                            logger.info(`Fichier ${doc.lien_document} supprimé du disque`);
-                        } catch (fileError) {
-                            if (fileError.code === 'ENOENT') {
-                                logger.warn(`Fichier ${doc.lien_document} déjà supprimé ou inexistant`);
-                            } else {
-                                logger.error(`Erreur lors de la suppression du fichier ${doc.lien_document}`, { error: fileError });
-                                // Continuer même si le fichier ne peut pas être supprimé
-                            }
-                        }
-                    }
+        if (documents && documents.length > 0) {
+            for (const doc of documents) {
+                if (doc.lien_document) {
+                    await safeUnlink(doc.lien_document).catch(() => {});
                 }
-            } else {
-                logger.info(`Aucun document lié au contrat ${id}`);
             }
-            
-            // Supprimer tous les documents de la base en une fois (même si la liste est vide)
-            // Cela permet de nettoyer d'éventuelles références orphelines
-            const deletedDocs = await contratService.deleteDocumentsByContrat(id);
-            if (deletedDocs && deletedDocs.length > 0) {
-                logger.info(`${deletedDocs.length} document(s) supprimé(s) de la base de données`);
-            }
-            
-        } catch (docError) {
-            logger.error(`Erreur lors de la suppression des documents`, { error: docError });
-            return res.status(500).json({ 
-                message: "Erreur lors de la suppression des documents liés." 
-            });
         }
+        await contratService.deleteDocumentsByContrat(id);
 
-        // Supprimer le contrat après avoir supprimé tous les documents
+        // Supprimer le contrat
         const deleted = await contratService.deleteContrat(id);
         if (!deleted) {
             return res.status(500).json({ message: "Échec suppression du contrat." });
         }
 
-        logger.info(`Contrat ${id} supprimé avec succès`);
         res.status(200).json({ 
             message: "Suppression réussie.",
             documentsSupprimes: documents ? documents.length : 0
         });
 
     } catch (e) {
-        logger.error(`Erreur lors de la suppression du contrat ${id}`, { error: e });
-        
-        // Gestion spécifique des erreurs de clé étrangère
-        let msg = "Erreur serveur.";
-        if (e.code === '23503') {
-            msg = "Impossible de supprimer : contrat lié à d'autres données.";
-        } else if (e.code === '23502') {
-            msg = "Erreur de contrainte de données.";
-        }
-        
-        res.status(500).json({ message: msg });
+        res.status(500).json({ message: "Erreur lors de la suppression du contrat." });
     }
 };
 
 const deleteDocumentById = async (req, res) => {
   try {
-    const { id, docId } = req.params;
+    logger.info("Paramètres reçus pour suppression document", {
+      params: req.params,
+      body: req.body,
+      query: req.query
+    });
 
+    const { id, docId } = req.params;
     const contratId = parseInt(id);
     const documentId = parseInt(docId);
 
@@ -366,6 +327,7 @@ const deleteDocumentById = async (req, res) => {
 
     const documents = await contratService.getDocumentById(documentId);
     const document = Array.isArray(documents) ? documents[0] : documents;
+    logger.info("Document récupéré pour suppression", { document });
 
     if (!document || document.id_contrat !== contratId) {
       return res.status(404).json({

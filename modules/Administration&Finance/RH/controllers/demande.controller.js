@@ -272,44 +272,36 @@ const deleteDemande = async (req, res) => {
         const demande = await demandeService.getdemandeById(id);
         if (!demande) return res.status(404).json({ message: "Demande introuvable." });
 
-        // Vérifier s'il y a des documents liés à la demande
+        // Récupérer tous les documents liés à la demande
         const documents = await demandeService.getDocumentByDemande(id);
-        
+
         if (documents && documents.length > 0) {
-            // Il y a des documents liés : les supprimer d'abord
             logger.info(`${documents.length} document(s) trouvé(s) pour la demande ${id}`);
-            
-            try {
-                // Supprimer les fichiers du disque d'abord
-                for (const doc of documents) {
-                    if (doc.lien_document) {
-                        try {
-                            await safeUnlink(doc.lien_document);
-                            logger.info(`Fichier ${doc.lien_document} supprimé du disque`);
-                        } catch (fileError) {
-                            if (fileError.code === 'ENOENT') {
-                                logger.warn(`Fichier ${doc.lien_document} déjà supprimé ou inexistant`);
-                            } else {
-                                logger.error(`Erreur lors de la suppression du fichier ${doc.lien_document}`, { error: fileError });
-                                // Continuer même si le fichier ne peut pas être supprimé
-                            }
+
+            // Supprimer les fichiers du disque pour chaque document
+            for (const doc of documents) {
+                if (doc.lien_document) {
+                    try {
+                        await safeUnlink(doc.lien_document);
+                        logger.info(`Fichier ${doc.lien_document} supprimé du disque`);
+                    } catch (fileError) {
+                        if (fileError.code === 'ENOENT') {
+                            logger.warn(`Fichier ${doc.lien_document} déjà supprimé ou inexistant`);
+                        } else {
+                            logger.error(`Erreur lors de la suppression du fichier ${doc.lien_document}`, { error: fileError });
                         }
+                        // On continue même si un fichier ne peut pas être supprimé
                     }
                 }
-                
-                // Supprimer tous les documents de la base en une fois
-                // Utiliser l'ID de la demande, pas l'ID du document individuel
-                const deletedDocs = await demandeService.deleteDocumentByDemande(id);
-                if (!deletedDocs || deletedDocs.length === 0) {
-                    throw new Error("Aucun document supprimé de la base");
-                }
-                logger.info(`${deletedDocs.length} document(s) supprimé(s) de la base de données`);
-                
-            } catch (docError) {
-                logger.error(`Erreur lors de la suppression des documents`, { error: docError });
-                return res.status(500).json({ 
-                    message: "Erreur lors de la suppression des documents liés." 
-                });
+            }
+
+            // Supprimer tous les documents de la base liés à la demande
+            try {
+                await demandeService.deleteDocumentByDemande(id);
+                logger.info(`Documents liés à la demande ${id} supprimés de la base de données`);
+            } catch (docDbError) {
+                logger.error(`Erreur lors de la suppression des documents en base`, { error: docDbError });
+                return res.status(500).json({ message: "Erreur lors de la suppression des documents liés." });
             }
         } else {
             logger.info(`Aucun document lié à la demande ${id}`);
@@ -322,14 +314,14 @@ const deleteDemande = async (req, res) => {
         }
 
         logger.info(`Demande ${id} supprimée avec succès`);
-        res.status(200).json({ 
+        res.status(200).json({
             message: "Suppression réussie.",
             documentsSupprimes: documents ? documents.length : 0
         });
 
     } catch (e) {
         logger.error(`Erreur lors de la suppression de la demande ${id}`, { error: e });
-        
+
         // Gestion spécifique des erreurs de clé étrangère
         let msg = "Erreur serveur.";
         if (e.code === '23503') {
@@ -337,7 +329,7 @@ const deleteDemande = async (req, res) => {
         } else if (e.code === '23502') {
             msg = "Erreur de contrainte de données.";
         }
-        
+
         res.status(500).json({ message: msg });
     }
 };
