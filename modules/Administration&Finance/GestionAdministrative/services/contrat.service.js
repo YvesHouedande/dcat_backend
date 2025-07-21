@@ -58,11 +58,11 @@ const getDocumentByContrat=async(id_contrat)=>{
 };
 
 const getDocumentById=async(id)=>{
-    const [result]=await db
-    .select()
-    .from(documents)
-    .where(eq(documents.id_document,id))
-    return result
+    const [result] = await db
+        .select()
+        .from(documents)
+        .where(eq(documents.id_documents, id)); // <-- clé primaire correcte
+    return result;
 };
 
 const updateContrat=async(id,data)=>{
@@ -81,23 +81,23 @@ const deleteContrat=async(id)=>{
     return result
 };
 
-const deleteDocumentsByContrat=async(id_contrat)=>{
-    const [result]=await db
-    .delete(documents)
-    .where(eq(documents.id_contrat,id_contrat))
-    .returning()
-    return result
+const deleteDocumentsByContrat = async (id_contrat) => {
+    const result = await db
+        .delete(documents)
+        .where(eq(documents.id_contrat, id_contrat))
+        .returning();
+    return result;
 };
 
-const deleteDocumentById=async(id)=>{
-    const [result]=await db
-    .delete(documents)
-    .where(eq(documents.id_document,id))
-    .returning()
-    return result
+const deleteDocumentById = async (id) => {
+    const result = await db
+        .delete(documents)
+        .where(eq(documents.id_documents, id)) // <-- clé primaire correcte
+        .returning();
+    return result;
 };
 
-module.exports={
+module.exports = {
     createContrat,
     getContrats,
     getContratsbyPartenaire,
@@ -108,6 +108,6 @@ module.exports={
     getDocumentByContrat,
     getContratByType,
     deleteDocumentsByContrat,
-    deleteDocumentById,
-    getDocumentById
+    getDocumentById,
+    deleteDocumentById
 }
