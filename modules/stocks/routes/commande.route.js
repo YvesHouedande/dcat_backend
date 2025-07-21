@@ -499,8 +499,7 @@ router.put("/etat/:id", controller.updateEtatCommande);
  *     description: |
  *       • Réserve les exemplaires **disponibles** pour chaque produit de la commande selon la quantité demandée.  
  *       • Met à jour l’état de chaque exemplaire réservé (`"Réservé"`) et décrémente le stock du produit.  
- *       • L’état global de la commande passe à **"Réservée"**.  
- *       • Si un produit n’a pas assez d’exemplaires disponibles, la réservation échoue pour toute la commande.  
+ *       • Si un produit n’a pas assez d’exemplaires disponibles, on le reserve ceux qui sont disponibles.  
  *       • Retourne la commande mise à jour, avec la liste des exemplaires réservés et les produits concernés.
  *     tags:
  *       - Commandes
@@ -804,5 +803,63 @@ router.post("/exemplaires/retour/:id", controller.returnExemplaire);
  *         description: Erreur serveur
  */
 router.post("/exemplaires/annuler-reservation/:id", controller.annulerReservationExemplaireController);
+
+/**
+ * @swagger
+ * /stocks/commandes/{id}/exemplaires-reserves:
+ *   get:
+ *     summary: Récupère les exemplaires réservés par produit pour une commande donnée, avec pagination.
+ *     tags: [Commandes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la commande
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de la page pour la pagination
+ *       - in: query
+ *         name: pageSize
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Nombre d'exemplaires par page
+ *     responses:
+ *       200:
+ *         description: Liste des exemplaires réservés regroupés par produit
+ *         content:
+ *           application/json:
+ *             example:
+ *               total: 5
+ *               page: 1
+ *               pageSize: 20
+ *               data:
+ *                 "1":
+ *                   - id_exemplaire: 12
+ *                     id_produit: 1
+ *                     etat_exemplaire: "Réservé"
+ *                     id_commande: 3
+ *                 "2":
+ *                   - id_exemplaire: 13
+ *                     id_produit: 2
+ *                     etat_exemplaire: "Réservé"
+ *                     id_commande: 3
+ *       400:
+ *         description: ID de commande invalide
+ *       500:
+ *         description: Erreur serveur lors de la récupération des exemplaires réservés
+ */
+router.get(
+  "/commandes/:id/exemplaires-reserves",
+  controller.getExemplairesReservesParProduitPourCommandeController
+);
+
 
 module.exports = router;
