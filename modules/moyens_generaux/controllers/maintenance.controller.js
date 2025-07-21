@@ -210,6 +210,24 @@ const updateMaintenanceEmployes = async (req, res) => {
   }
 };
 
+const getMaintenancesByMoyenTravail = async (req, res) => {
+  try {
+    const id_moyens_de_travail = parseInt(req.params.id_moyens_de_travail);
+    if (isNaN(id_moyens_de_travail)) {
+      return res.status(400).json({ error: "ID du moyen de travail invalide" });
+    }
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const pageSize = req.query.pageSize ? parseInt(req.query.pageSize) : 20;
+    const result = await maintenanceService.getMaintenancesByMoyenTravail(id_moyens_de_travail, { page, pageSize });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la récupération des maintenances du moyen de travail",
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   createMaintenance,
   getMaintenances,
@@ -222,4 +240,5 @@ module.exports = {
   realizeMaintenance,
   unassignEmployeFromMaintenance,
   updateMaintenanceEmployes,
+  getMaintenancesByMoyenTravail,
 };

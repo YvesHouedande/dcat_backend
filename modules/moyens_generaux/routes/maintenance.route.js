@@ -48,36 +48,53 @@ router.post("/", controller.createMaintenance);
  *         name: page
  *         schema:
  *           type: integer
- *         description: Numéro de page
+ *         description: Numéro de page (par défaut 1)
  *       - in: query
  *         name: pageSize
  *         schema:
  *           type: integer
- *         description: Nombre d'éléments par page
+ *         description: Nombre d'éléments par page (par défaut 20)
  *       - in: query
  *         name: type_maintenance
  *         schema:
  *           type: string
- *         description: Filtrer par type de maintenance
+ *         description: Filtrer par type de maintenance (ex: "corrective", "préventive")
  *       - in: query
  *         name: statut
  *         schema:
  *           type: string
- *         description: Filtrer par statut
+ *         description: Filtrer par statut (ex: "en_attente", "effectuee")
  *       - in: query
  *         name: recurrence
  *         schema:
  *           type: string
- *         description: Filtrer par récurrence
+ *         description: Filtrer par récurrence (ex: "unique", "mensuelle", "annuelle")
  *       - in: query
  *         name: date_planifiee
  *         schema:
  *           type: string
  *           format: date
- *         description: Filtrer par date planifiée
+ *         description: Filtrer par date planifiée exacte (format AAAA-MM-JJ)
+ *       - in: query
+ *         name: date_min
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer les maintenances planifiées à partir de cette date (inclus)
+ *       - in: query
+ *         name: date_max
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer les maintenances planifiées jusqu'à cette date (inclus)
+ *       - in: query
+ *         name: id_partenaire
+ *         schema:
+ *           type: integer
+ *         description: Filtrer par ID du partenaire
  *     responses:
  *       200:
- *         description: Liste des maintenances
+ *         description: Liste paginée des maintenances correspondant aux filtres
  *         content:
  *           application/json:
  *             example:
@@ -92,6 +109,8 @@ router.post("/", controller.createMaintenance);
  *                   type_maintenance: "test-1"
  *                   autre_intervenant: null
  *                   id_partenaire: null
+ *                   statut: "en_attente"
+ *                   date_planifiee: "2025-04-30"
  *                   created_at: "2025-04-30T16:39:23.040Z"
  *                   updated_at: "2025-04-30T16:39:23.040Z"
  *                 - id_maintenance: 2
@@ -101,6 +120,8 @@ router.post("/", controller.createMaintenance);
  *                   type_maintenance: "test-2"
  *                   autre_intervenant: null
  *                   id_partenaire: null
+ *                   statut: "effectuee"
+ *                   date_planifiee: "2025-05-10"
  *                   created_at: "2025-04-30T16:39:41.009Z"
  *                   updated_at: "2025-04-30T16:39:41.009Z"
  */
@@ -151,6 +172,52 @@ router.get("/ponctuelles", controller.getPonctualMaintenances);
  *         description: Liste des maintenances récurrentes
  */
 router.get("/recurrentes", controller.getRecurrentMaintenances);
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenances/moyen/{id_moyens_de_travail}:
+ *   get:
+ *     summary: Récupère les maintenances d'un moyen de travail (avec pagination)
+ *     tags: [Maintenances]
+ *     parameters:
+ *       - in: path
+ *         name: id_moyens_de_travail
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du moyen de travail
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           minimum: 1
+ *         description: Numéro de la page à récupérer (par défaut 1)
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *           minimum: 1
+ *         description: Nombre d'éléments par page (par défaut 20)
+ *     responses:
+ *       200:
+ *         description: Liste paginée des maintenances du moyen de travail
+ *         content:
+ *           application/json:
+ *             example:
+ *               total: 3
+ *               page: 1
+ *               pageSize: 2
+ *               data:
+ *                 - id_maintenance: 1
+ *                   operations: "Nettoyage"
+ *                   statut: "effectuee"
+ *                 - id_maintenance: 2
+ *                   operations: "Révision"
+ *                   statut: "en_attente"
+ */
+router.get("/moyen/:id_moyens_de_travail", controller.getMaintenancesByMoyenTravail);
 
 /**
  * @swagger
