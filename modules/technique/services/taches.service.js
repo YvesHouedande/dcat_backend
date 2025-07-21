@@ -3,6 +3,7 @@ const { taches, intervention_taches, employes } = require("../../../core/databas
 const { eq, and, desc, asc, sql } = require("drizzle-orm");
 
 const tachesService = {
+  //recuperer les taches 
   getAllTaches: async (options = {}) => {
     const {
       page = 1,
