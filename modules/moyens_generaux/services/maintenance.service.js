@@ -46,9 +46,23 @@ const getMaintenances = async (filters = {}, options = {}) => {
   if (filters.id_partenaire) {
     whereClauses.push(eq(maintenances.id_partenaire, filters.id_partenaire));
   }
+  // Ajout des filtres date_min et date_max
+  if (filters.date_min) {
+    whereClauses.push({ type: 'gte', column: maintenances.date_planifiee, value: filters.date_min });
+  }
+  if (filters.date_max) {
+    whereClauses.push({ type: 'lte', column: maintenances.date_planifiee, value: filters.date_max });
+  }
 
+  // Construction finale des conditions
+  let finalWhere = null;
   if (whereClauses.length > 0) {
-    query = query.where(and(...whereClauses));
+    // On convertit les objets spéciaux pour >= et <=
+    const normalClauses = whereClauses.filter(c => !c.type);
+    const gteClauses = whereClauses.filter(c => c.type === 'gte').map(c => c.column.gte(c.value));
+    const lteClauses = whereClauses.filter(c => c.type === 'lte').map(c => c.column.lte(c.value));
+    finalWhere = and(...normalClauses, ...gteClauses, ...lteClauses);
+    query = query.where(finalWhere);
   }
 
   // Pagination
@@ -60,7 +74,7 @@ const getMaintenances = async (filters = {}, options = {}) => {
   const [{ total }] = await db
     .select({ total: db.fn.count().mapWith(Number) })
     .from(maintenances)
-    .where(whereClauses.length > 0 ? and(...whereClauses) : undefined);
+    .where(finalWhere);
 
   // Data paginée
   const data = await query.limit(pageSize).offset(offset);
@@ -204,6 +218,38 @@ const updateMaintenanceEmployes = async (id_maintenance, employesIds = []) => {
   return { message: "Assignation des employés mise à jour" };
 };
 
+// Lister les maintenances d’un moyen de travail (avec pagination)
+const getMaintenancesByMoyenTravail = async (id_moyens_de_travail, options = {}) => {
+  const { maintenance_moyens_travail } = require("../../../core/database/models");
+  const page = Number(options.page) > 0 ? Number(options.page) : 1;
+  const pageSize = Number(options.pageSize) > 0 ? Number(options.pageSize) : 20;
+  const offset = (page - 1) * pageSize;
+
+  // On récupère les IDs de maintenance liés à ce moyen de travail
+  const maintenancesIdsRows = await db
+    .select({ id_maintenance: maintenance_moyens_travail.id_maintenance })
+    .from(maintenance_moyens_travail)
+    .where(eq(maintenance_moyens_travail.id_moyens_de_travail, id_moyens_de_travail));
+  const ids = maintenancesIdsRows.map(row => row.id_maintenance);
+
+  // Total
+  const total = ids.length;
+
+  // Data paginée
+  const data = total > 0
+    ? await db.select().from(maintenances)
+        .where(maintenances.id_maintenance.in(ids))
+        .limit(pageSize).offset(offset)
+    : [];
+
+  return {
+    total,
+    page,
+    pageSize,
+    data,
+  };
+};
+
 module.exports = {
   createMaintenance,
   getMaintenances,
@@ -216,4 +262,5 @@ module.exports = {
   realizeMaintenance,
   unassignEmployeFromMaintenance,
   updateMaintenanceEmployes,
+  getMaintenancesByMoyenTravail,
 };
