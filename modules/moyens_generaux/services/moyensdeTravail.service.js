@@ -59,7 +59,7 @@ const updateMoyensTravail = async (id, data) => {
     .returning();
   return result;
 };
-
+//test
 const deleteMoyensTravail = async (id) => {
   const [result] = await db
     .delete(moyens_de_travail)
