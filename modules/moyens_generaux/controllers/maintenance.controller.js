@@ -145,6 +145,71 @@ const updateMaintenanceStatus = async (req, res) => {
   }
 };
 
+const realizeMaintenance = async (req, res) => {
+  try {
+    const id_maintenance = parseInt(req.params.id_maintenance);
+    const id_moyens_de_travail = parseInt(req.params.id_moyens_de_travail);
+    if (isNaN(id_maintenance) || isNaN(id_moyens_de_travail)) {
+      return res.status(400).json({ error: "ID maintenance ou moyen de travail invalide" });
+    }
+    const { operations, recommandations, date_maintenance, statut } = req.body;
+    if (!operations && !recommandations && !date_maintenance && !statut) {
+      return res.status(400).json({ error: "Aucune donnée à mettre à jour" });
+    }
+    const result = await maintenanceService.realizeMaintenance({
+      id_maintenance,
+      id_moyens_de_travail,
+      operations,
+      recommandations,
+      date_maintenance,
+      statut
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la réalisation de la maintenance",
+      details: error.message
+    });
+  }
+};
+
+const unassignEmployeFromMaintenance = async (req, res) => {
+  try {
+    const id_maintenance = parseInt(req.params.id_maintenance);
+    const id_employes = parseInt(req.params.id_employes);
+    if (isNaN(id_maintenance) || isNaN(id_employes)) {
+      return res.status(400).json({ error: "ID maintenance ou employé invalide" });
+    }
+    const result = await maintenanceService.unassignEmployeFromMaintenance(id_maintenance, id_employes);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la désassignation de l'employé",
+      details: error.message
+    });
+  }
+};
+
+const updateMaintenanceEmployes = async (req, res) => {
+  try {
+    const id_maintenance = parseInt(req.params.id_maintenance);
+    if (isNaN(id_maintenance)) {
+      return res.status(400).json({ error: "ID maintenance invalide" });
+    }
+    const { employesIds } = req.body;
+    if (!Array.isArray(employesIds)) {
+      return res.status(400).json({ error: "Le champ employesIds doit être un tableau" });
+    }
+    const result = await maintenanceService.updateMaintenanceEmployes(id_maintenance, employesIds);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la mise à jour des employés assignés",
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   createMaintenance,
   getMaintenances,
@@ -153,5 +218,8 @@ module.exports = {
   deleteMaintenance,
   getPonctualMaintenances,
   getRecurrentMaintenances,
-  updateMaintenanceStatus
+  updateMaintenanceStatus,
+  realizeMaintenance,
+  unassignEmployeFromMaintenance,
+  updateMaintenanceEmployes,
 };

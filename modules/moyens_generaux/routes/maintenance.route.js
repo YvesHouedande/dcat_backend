@@ -201,11 +201,112 @@ router.patch("/:id/statut", controller.updateMaintenanceStatus);
 
 /**
  * @swagger
+ * /moyens-generaux/maintenances/{id_maintenance}/{id_moyens_de_travail}/realiser:
+ *   patch:
+ *     summary: Effectue une maintenance (mise à jour des champs lors de la réalisation)
+ *     tags: [Maintenances]
+ *     parameters:
+ *       - in: path
+ *         name: id_maintenance
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la maintenance
+ *       - in: path
+ *         name: id_moyens_de_travail
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du moyen de travail
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               operations:
+ *                 type: string
+ *                 example: "Nettoyage du filtre"
+ *               recommandations:
+ *                 type: string
+ *                 example: "Vérifier tous les 3 mois"
+ *               date_maintenance:
+ *                 type: string
+ *                 format: date
+ *                 example: "2024-06-10"
+ *               statut:
+ *                 type: string
+ *                 example: "effectuee"
+ *     responses:
+ *       200:
+ *         description: Maintenance réalisée (champs mis à jour)
+ */
+router.patch("/:id_maintenance/:id_moyens_de_travail/realiser", controller.realizeMaintenance);
+
+/**
+ * @swagger
  * /moyens-generaux/maintenances/{id}:
  *   delete:
  *     summary: Supprime une maintenance par ID
  *     tags: [Maintenances]
  */
 router.delete("/:id", controller.deleteMaintenance);
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenances/{id_maintenance}/employes/{id_employes}:
+ *   delete:
+ *     summary: Désassigne un employé d'une maintenance
+ *     tags: [Maintenances]
+ *     parameters:
+ *       - in: path
+ *         name: id_maintenance
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la maintenance
+ *       - in: path
+ *         name: id_employes
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'employé
+ *     responses:
+ *       200:
+ *         description: Employé désassigné de la maintenance
+ */
+router.delete("/:id_maintenance/employes/:id_employes", controller.unassignEmployeFromMaintenance);
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenances/{id_maintenance}/employes:
+ *   put:
+ *     summary: Remplace la liste des employés assignés à une maintenance
+ *     tags: [Maintenances]
+ *     parameters:
+ *       - in: path
+ *         name: id_maintenance
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la maintenance
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               employesIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
+ *     responses:
+ *       200:
+ *         description: Assignation des employés mise à jour
+ */
+router.put("/:id_maintenance/employes", controller.updateMaintenanceEmployes);
 
 module.exports = router;

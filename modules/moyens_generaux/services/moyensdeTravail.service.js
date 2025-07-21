@@ -1,4 +1,4 @@
-const { eq } = require("drizzle-orm");
+const { eq, and } = require("drizzle-orm");
 const {db} = require("../../../core/database/config");
 const { moyens_de_travail } = require("../../../core/database/models");
 
@@ -13,17 +13,27 @@ const getMoyensTravails = async (options = {}) => {
   const pageSize = Number(options.pageSize) > 0 ? Number(options.pageSize) : 20;
   const offset = (page - 1) * pageSize;
 
-  // On récupère le total
+  // Construction des filtres dynamiques
+  const whereClauses = [];
+  if (options.id_section) {
+    whereClauses.push(eq(moyens_de_travail.id_section, options.id_section));
+  }
+  if (options.date_acquisition) {
+    whereClauses.push(eq(moyens_de_travail.date_acquisition, options.date_acquisition));
+  }
+
+  // On récupère le total filtré
   const [{ total }] = await db
     .select({ total: db.fn.count().mapWith(Number) })
-    .from(moyens_de_travail);
-
-  // On récupère les moyens de travail paginés
-  const data = await db
-    .select()
     .from(moyens_de_travail)
-    .limit(pageSize)
-    .offset(offset);
+    .where(whereClauses.length > 0 ? and(...whereClauses) : undefined);
+
+  // On récupère les moyens de travail paginés et filtrés
+  let query = db.select().from(moyens_de_travail);
+  if (whereClauses.length > 0) {
+    query = query.where(and(...whereClauses));
+  }
+  const data = await query.limit(pageSize).offset(offset);
 
   return {
     total,

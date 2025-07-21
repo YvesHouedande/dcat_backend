@@ -16,12 +16,14 @@ const createMoyensTravail = async (req, res) => {
   }
 };
 
-// READ ALL
+// LECTURE DE TOUS LES MOYENS DE TRAVAIL (adapté au service)
 const getMoyensTravails = async (req, res) => {
   try {
-    // Récupération des paramètres de pagination depuis la requête
+    // Récupération des paramètres de pagination et de filtrage depuis la requête
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const pageSize = req.query.pageSize ? parseInt(req.query.pageSize) : 20;
+    const id_section = req.query.id_section ? parseInt(req.query.id_section) : undefined;
+    const date_acquisition = req.query.date_acquisition ? req.query.date_acquisition : undefined;
 
     // Vérification des valeurs de pagination
     if (isNaN(page) || page < 1) {
@@ -30,8 +32,16 @@ const getMoyensTravails = async (req, res) => {
     if (isNaN(pageSize) || pageSize < 1) {
       return res.status(400).json({ error: "Le paramètre 'pageSize' doit être un entier positif." });
     }
+    if (req.query.id_section && isNaN(id_section)) {
+      return res.status(400).json({ error: "Le paramètre 'id_section' doit être un entier." });
+    }
 
-    const result = await moyenstravailService.getMoyensTravails({ page, pageSize });
+    // Passage des options de pagination et de filtrage au service
+    const options = { page, pageSize };
+    if (id_section !== undefined) options.id_section = id_section;
+    if (date_acquisition !== undefined) options.date_acquisition = date_acquisition;
+
+    const result = await moyenstravailService.getMoyensTravails(options);
     res.json(result);
   } catch (error) {
     res.status(500).json({ 

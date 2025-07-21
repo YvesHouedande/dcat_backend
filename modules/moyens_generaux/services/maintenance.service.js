@@ -134,6 +134,76 @@ const getPonctualMaintenances = async (options = {}) => {
   return await query.limit(pageSize).offset(offset);
 };
 
+const realizeMaintenance = async ({ id_maintenance, id_moyens_de_travail, operations, recommandations, date_maintenance, statut }) => {
+  // Mise à jour de la table maintenances
+  let maintenanceUpdateResult = null;
+  if (operations || recommandations || statut) {
+    const updateData = {};
+    if (operations) updateData.operations = operations;
+    if (recommandations) updateData.recommandations = recommandations;
+    if (statut) updateData.statut = statut;
+    updateData.updated_at = new Date();
+    [maintenanceUpdateResult] = await db
+      .update(maintenances)
+      .set(updateData)
+      .where(eq(maintenances.id_maintenance, id_maintenance))
+      .returning();
+  }
+
+  // Mise à jour de la table maintenance_moyens_travail
+  let mmtUpdateResult = null;
+  if (date_maintenance) {
+    const { maintenance_moyens_travail } = require("../../../core/database/models");
+    [mmtUpdateResult] = await db
+      .update(maintenance_moyens_travail)
+      .set({
+        date_maintenance,
+        updated_at: new Date(),
+      })
+      .where(and(
+        eq(maintenance_moyens_travail.id_maintenance, id_maintenance),
+        eq(maintenance_moyens_travail.id_moyens_de_travail, id_moyens_de_travail)
+      ))
+      .returning();
+  }
+
+  return {
+    maintenance: maintenanceUpdateResult,
+    maintenance_moyens_travail: mmtUpdateResult,
+  };
+};
+
+// Désassigner un employé d'une maintenance
+const unassignEmployeFromMaintenance = async (id_maintenance, id_employes) => {
+
+  await db
+    .delete(maintenance_employes)
+    .where(and(
+      eq(maintenance_employes.id_maintenance, id_maintenance),
+      eq(maintenance_employes.id_employes, id_employes)
+    ));
+  return { message: "Employé désassigné de la maintenance" };
+};
+
+// Modifier la liste des employés assignés à une maintenance
+const updateMaintenanceEmployes = async (id_maintenance, employesIds = []) => {
+  // Supprimer toutes les assignations existantes
+  await db
+    .delete(maintenance_employes)
+    .where(eq(maintenance_employes.id_maintenance, id_maintenance));
+  // Ajouter la nouvelle liste si non vide
+  if (Array.isArray(employesIds) && employesIds.length > 0) {
+    const liaisonData = employesIds.map(id_employes => ({
+      id_employes,
+      id_maintenance,
+      created_at: new Date(),
+      updated_at: new Date(),
+    }));
+    await db.insert(maintenance_employes).values(liaisonData);
+  }
+  return { message: "Assignation des employés mise à jour" };
+};
+
 module.exports = {
   createMaintenance,
   getMaintenances,
@@ -143,4 +213,7 @@ module.exports = {
   deleteMaintenance,
   getRecurrentMaintenances,
   getPonctualMaintenances,
+  realizeMaintenance,
+  unassignEmployeFromMaintenance,
+  updateMaintenanceEmployes,
 };

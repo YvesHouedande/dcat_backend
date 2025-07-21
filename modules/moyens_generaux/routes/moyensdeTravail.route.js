@@ -16,7 +16,7 @@ router.post("/", controller.createMoyensTravail);
  * @swagger
  * /moyens-generaux/moyens-travails:
  *   get:
- *     summary: Récupère tous les moyens de travail
+ *     summary: Récupère tous les moyens de travail (avec pagination et filtres)
  *     tags: [Moyens de Travail]
  *     parameters:
  *       - in: query
@@ -33,9 +33,20 @@ router.post("/", controller.createMoyensTravail);
  *           default: 20
  *           minimum: 1
  *         description: Nombre d'éléments par page (par défaut 20)
+ *       - in: query
+ *         name: id_section
+ *         schema:
+ *           type: integer
+ *         description: Filtrer par identifiant de section
+ *       - in: query
+ *         name: date_acquisition
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer par date d'acquisition (format AAAA-MM-JJ)
  *     responses:
  *       200:
- *         description: Liste paginée des moyens de travail
+ *         description: Liste paginée et filtrée des moyens de travail
  *         content:
  *           application/json:
  *             example:
@@ -46,11 +57,15 @@ router.post("/", controller.createMoyensTravail);
  *                 - id_moyens_de_travail: 1
  *                   denomination: "Ordinateur portable"
  *                   description: "Dell Latitude 5420"
+ *                   id_section: 3
+ *                   date_acquisition: "2024-05-15"
  *                   created_at: "2024-06-01T12:00:00.000Z"
  *                   updated_at: "2024-06-01T12:00:00.000Z"
  *                 - id_moyens_de_travail: 2
  *                   denomination: "Imprimante"
  *                   description: "HP LaserJet Pro"
+ *                   id_section: 2
+ *                   date_acquisition: "2024-04-10"
  *                   created_at: "2024-06-01T12:00:00.000Z"
  *                   updated_at: "2024-06-01T12:00:00.000Z"
  */
