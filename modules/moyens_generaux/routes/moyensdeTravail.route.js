@@ -98,4 +98,33 @@ router.put("/:id", controller.updateMoyensTravail);
  */
 router.delete("/:id", controller.deleteMoyensTravail);
 
+/**
+ * @swagger
+ * /moyens-generaux/moyens-travails/{id}/etat:
+ *   patch:
+ *     summary: Change l'état d'un moyen de travail
+ *     tags: [Moyens de Travail]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du moyen de travail
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               etat:
+ *                 type: string
+ *                 example: "En maintenance"
+ *     responses:
+ *       200:
+ *         description: État du moyen de travail mis à jour
+ */
+router.patch('/:id/etat', controller.updateEtatMoyensTravail);
+
 module.exports = router;

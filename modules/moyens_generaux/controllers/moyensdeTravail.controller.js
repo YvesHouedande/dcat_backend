@@ -105,11 +105,31 @@ const deleteMoyensTravail = async (req, res) => {
   }
 };
 
+const updateEtatMoyensTravail = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { etat } = req.body;
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+    if (!etat || typeof etat !== 'string') {
+      return res.status(400).json({ error: "Le champ 'etat' est requis et doit être une chaîne de caractères." });
+    }
+    const result = await moyenstravailService.updateEtatMoyensTravail(id, etat);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors du changement d'état du moyen de travail",
+      details: error.message
+    });
+  }
+};
 
 module.exports = {
   createMoyensTravail,
   getMoyensTravails,
   getMoyensTravailById,
   updateMoyensTravail,
-  deleteMoyensTravail
+  deleteMoyensTravail,
+  updateEtatMoyensTravail,
 };

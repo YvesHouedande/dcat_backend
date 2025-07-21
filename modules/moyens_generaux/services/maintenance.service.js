@@ -1,6 +1,6 @@
 const { eq, and, neq } = require("drizzle-orm");
 const { db } = require("../../../core/database/config");
-const { maintenances, maintenance_employes } = require("../../../core/database/models");
+const { maintenances, maintenance_employes, maintenance_moyens_travail } = require("../../../core/database/models");
 
 // Création d'une maintenance avec assignation d'employés
 const createMaintenance = async (data) => {
@@ -167,7 +167,7 @@ const realizeMaintenance = async ({ id_maintenance, id_moyens_de_travail, operat
   // Mise à jour de la table maintenance_moyens_travail
   let mmtUpdateResult = null;
   if (date_maintenance) {
-    const { maintenance_moyens_travail } = require("../../../core/database/models");
+    
     [mmtUpdateResult] = await db
       .update(maintenance_moyens_travail)
       .set({
@@ -220,7 +220,7 @@ const updateMaintenanceEmployes = async (id_maintenance, employesIds = []) => {
 
 // Lister les maintenances d’un moyen de travail (avec pagination)
 const getMaintenancesByMoyenTravail = async (id_moyens_de_travail, options = {}) => {
-  const { maintenance_moyens_travail } = require("../../../core/database/models");
+  
   const page = Number(options.page) > 0 ? Number(options.page) : 1;
   const pageSize = Number(options.pageSize) > 0 ? Number(options.pageSize) : 20;
   const offset = (page - 1) * pageSize;

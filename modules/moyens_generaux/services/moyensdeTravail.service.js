@@ -68,10 +68,23 @@ const deleteMoyensTravail = async (id) => {
   return result;
 };
 
+const updateEtatMoyensTravail = async (id, etat) => {
+  const [result] = await db
+    .update(moyens_de_travail)
+    .set({
+      etat:etat,
+      updated_at: new Date(),
+    })
+    .where(eq(moyens_de_travail.id_moyens_de_travail, id))
+    .returning();
+  return result;
+};
+
 module.exports = {
   createMoyensTravail,
   getMoyensTravails,
   getMoyensTravailById,
   updateMoyensTravail,
   deleteMoyensTravail,
+  updateEtatMoyensTravail,
 };

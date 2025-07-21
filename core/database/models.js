@@ -245,6 +245,7 @@ const moyens_de_travail = pgTable("moyens_de_travail", {
   id_moyens_de_travail: serial("id_moyens_de_travail").primaryKey(),
   denomination: varchar("denomination", { length: 100 }),
   date_acquisition: date("date_acquisition"),
+  etat: varchar("etat", {length : 25}).default("Disponible"), //Disponible/En maintenance/Endommagé
   id_section: integer("id_section").references(
     () => sections.id_section
   ),
