@@ -15,7 +15,7 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             properties:
- *               Nom_fonction:
+ *               nom_fonction:
  *                 type: string
  *     responses:
  *       201:
@@ -74,7 +74,7 @@ router.get('/:id', fonctionController.getFonctionById);
  *           schema:
  *             type: object
  *             properties:
- *               Nom_fonction:
+ *               nom_fonction:
  *                 type: string
  *     responses:
  *       200:
@@ -91,11 +91,11 @@ router.put('/:id', fonctionController.updateFonction);
  *     summary: Supprimer une fonction par ID
  *     tags: [Fonction]
  *     parameters:
- *       - in: path
- *         Nom_fonction: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
- *           type: string
+ *           type: integer
  *     responses:
  *       200:
  *         description: Fonction supprimée
