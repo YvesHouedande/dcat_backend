@@ -415,6 +415,9 @@ module.exports = router;
  *     tags: [Contrats]
  *     parameters:
  *       - in: path
+ *         name: id
+ *         required: true
+ *       - in: path
  *         name: docId
  *         required: true
  *         schema:
