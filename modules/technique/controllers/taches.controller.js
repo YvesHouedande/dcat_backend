@@ -9,11 +9,7 @@ const tachesController = {
         sortBy,
         sortOrder,
         search,
-        statut,
-        priorite,
-        dateDebut,
-        dateFin,
-        projetId
+        operationId
       } = req.query;
 
       const options = {
@@ -22,11 +18,7 @@ const tachesController = {
         sortBy,
         sortOrder,
         search,
-        statut,
-        priorite,
-        dateDebut,
-        dateFin,
-        projetId: projetId ? parseInt(projetId) : undefined
+        operationId: operationId ? parseInt(operationId) : undefined
       };
 
       const result = await tachesService.getAllTaches(options);
@@ -130,10 +122,10 @@ const tachesController = {
     }
   },
 
-  getTachesByProjet: async (req, res) => {
+  getTachesByOperation: async (req, res) => {
     try {
-      const { projetId } = req.params;
-      const taches = await tachesService.getTachesByProjet(parseInt(projetId));
+      const { operationId } = req.params;
+      const taches = await tachesService.getTachesByOperation(parseInt(operationId));
       res.status(200).json({ success: true, data: taches });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
