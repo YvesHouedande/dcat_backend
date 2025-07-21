@@ -199,6 +199,31 @@ const annulerReservationExemplaireController = async (req, res) => {
   }
 };
 
+/**
+ * Récupère les exemplaires réservés par produit pour une commande donnée, avec pagination.
+ * @route GET /stocks/commandes/:id/exemplaires-reserves
+ */
+const getExemplairesReservesParProduitPourCommandeController = async (req, res) => {
+  try {
+    const idCommande = parseInt(req.params.id, 10);
+    if (isNaN(idCommande)) {
+      return res.status(400).json({ error: "ID de commande invalide" });
+    }
+
+    // Récupération des options de pagination depuis la query string
+    const page = req.query.page ? parseInt(req.query.page, 10) : 1;
+    const pageSize = req.query.pageSize ? parseInt(req.query.pageSize, 10) : 20;
+
+    const result = await commandeService.getExemplairesReservesParProduitPourCommande(idCommande, { page, pageSize });
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({
+      error: "Une erreur est survenue lors de la récupération des exemplaires réservés",
+      details: error.message,
+    });
+  }
+};
+
 
 module.exports = {
   getCommandeById,
@@ -212,5 +237,6 @@ module.exports = {
   cancelCommande,
   returnExemplaire,
   annulerReservationExemplaireController,
+  getExemplairesReservesParProduitPourCommandeController,
 
 };

@@ -417,7 +417,7 @@ async function getAllCommandes({ page = 1, limit = 50, etat = null } = {}) {
   if (etat) {
     query = query.where(eq(commandes.etat_commande, etat));
   }
-//test
+
   // --- Récupération des données paginées ---
   const data = await query.limit(limit).offset(offset);
 
@@ -1072,6 +1072,62 @@ async function annulerReservationExemplaire(idExemplaire) {
 }
 
 
+/**
+ * Récupère les exemplaires réservés par produit pour une commande donnée, avec pagination.
+ *
+ * @param {number} idCommande - L'identifiant de la commande
+ * @param {object} [options] - Options de pagination { page, pageSize }
+ * @returns {Promise<Object>} - Un objet dont les clés sont les id_produit et les valeurs sont les tableaux d'exemplaires réservés paginés
+ */
+async function getExemplairesReservesParProduitPourCommande(idCommande, options = {}) {
+  const page = Number(options.page) > 0 ? Number(options.page) : 1;
+  const pageSize = Number(options.pageSize) > 0 ? Number(options.pageSize) : 20;
+  const offset = (page - 1) * pageSize;
+
+  // On récupère le total d'exemplaires réservés pour cette commande
+  const [{ total }] = await db
+    .select({ total: sql`COUNT(*)`.mapWith(Number) })
+    .from(exemplaires)
+    .where(
+      and(
+        eq(exemplaires.id_commande, idCommande),
+        eq(exemplaires.etat_exemplaire, etatExemplaire[5]) // "Réservé"
+      )
+    );
+
+  // On récupère les exemplaires réservés paginés
+  const exemplairesReserves = await db
+    .select()
+    .from(exemplaires)
+    .where(
+      and(
+        eq(exemplaires.id_commande, idCommande),
+        eq(exemplaires.etat_exemplaire, etatExemplaire[5]) // "Réservé"
+      )
+    )
+    .orderBy(exemplaires.id_produit)
+    .limit(pageSize)
+    .offset(offset);
+
+  // On regroupe les exemplaires par produit
+  const result = {};
+  for (const ex of exemplairesReserves) {
+    if (!result[ex.id_produit]) {
+      result[ex.id_produit] = [];
+    }
+    result[ex.id_produit].push(ex);
+  }
+
+  return {
+    total,
+    page,
+    pageSize,
+    data: result,
+  };
+}
+
+
+
 module.exports = {
   createCommande,
   getCommandeById,
@@ -1084,6 +1140,7 @@ module.exports = {
   cancelCommande,
   returnExemplaire,
   annulerReservationExemplaire,
+  getExemplairesReservesParProduitPourCommande,
 
   etatCommande,
 };
