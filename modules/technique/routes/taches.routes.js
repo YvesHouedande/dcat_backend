@@ -15,12 +15,6 @@ const tachesController = require("../controllers/taches.controller");
  *         nom_tache:
  *           type: string
  *           description: Nom de la tâche
- *         desc_tache:
- *           type: string
- *           description: Description détaillée de la tâche
- *         statut:
- *           type: string
- *           description: Statut actuel de la tâche (À faire, En cours, Terminée, etc.)
  *         date_debut:
  *           type: string
  *           format: date
@@ -29,12 +23,9 @@ const tachesController = require("../controllers/taches.controller");
  *           type: string
  *           format: date
  *           description: Date de fin prévue/réelle de la tâche
- *         priorite:
- *           type: string
- *           description: Niveau de priorité de la tâche (Basse, Moyenne, Haute, etc.)
- *         id_projet:
+ *         id_operation:
  *           type: integer
- *           description: ID du projet auquel la tâche est rattachée
+ *           description: ID de l'opération à laquelle la tâche est rattachée
  *         created_at:
  *           type: string
  *           format: date-time
@@ -93,34 +84,12 @@ const tachesController = require("../controllers/taches.controller");
  *         name: search
  *         schema:
  *           type: string
- *         description: Recherche par nom ou description de la tâche
+ *         description: Recherche par nom de la tâche
  *       - in: query
- *         name: statut
- *         schema:
- *           type: string
- *         description: Filtrer par statut de la tâche (À faire, En cours, Terminée, etc.)
- *       - in: query
- *         name: priorite
- *         schema:
- *           type: string
- *         description: Filtrer par priorité de la tâche (Basse, Moyenne, Haute, Urgente)
- *       - in: query
- *         name: projetId
+ *         name: operationId
  *         schema:
  *           type: integer
- *         description: ID du projet associé à la tâche
- *       - in: query
- *         name: dateDebut
- *         schema:
- *           type: string
- *           format: date
- *         description: Date de début minimum (YYYY-MM-DD)
- *       - in: query
- *         name: dateFin
- *         schema:
- *           type: string
- *           format: date
- *         description: Date de fin maximum (YYYY-MM-DD)
+ *         description: ID de l'opération associée à la tâche
  *       - in: query
  *         name: sortBy
  *         schema:
@@ -194,7 +163,7 @@ router.get("/", tachesController.getAllTaches);
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 tache:
+ *                 data:
  *                   $ref: '#/components/schemas/Tache'
  *       404:
  *         description: Tâche non trouvée
@@ -218,18 +187,11 @@ router.get("/:id", tachesController.getTacheById);
  *             type: object
  *             required:
  *               - nom_tache
- *               - id_projet
+ *               - id_operation
  *             properties:
  *               nom_tache:
  *                 type: string
  *                 description: Nom de la tâche
- *               desc_tache:
- *                 type: string
- *                 description: Description détaillée de la tâche
- *               statut:
- *                 type: string
- *                 description: Statut de la tâche
- *                 enum: [À faire, En cours, Terminée, En attente, Annulée]
  *               date_debut:
  *                 type: string
  *                 format: date
@@ -238,13 +200,9 @@ router.get("/:id", tachesController.getTacheById);
  *                 type: string
  *                 format: date
  *                 description: Date de fin prévue de la tâche (YYYY-MM-DD)
- *               priorite:
- *                 type: string
- *                 description: Niveau de priorité de la tâche
- *                 enum: [Basse, Moyenne, Haute, Urgente]
- *               id_projet:
+ *               id_operation:
  *                 type: integer
- *                 description: ID du projet auquel la tâche est rattachée
+ *                 description: ID de l'opération à laquelle la tâche est rattachée
  *     responses:
  *       201:
  *         description: Tâche créée avec succès
@@ -256,12 +214,12 @@ router.get("/:id", tachesController.getTacheById);
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 tache:
+ *                 data:
  *                   $ref: '#/components/schemas/Tache'
  *       400:
  *         description: Données invalides
  *       404:
- *         description: Projet non trouvé
+ *         description: Opération non trouvée
  *       500:
  *         description: Erreur serveur
  */
@@ -291,13 +249,6 @@ router.post("/", tachesController.createTache);
  *               nom_tache:
  *                 type: string
  *                 description: Nom de la tâche
- *               desc_tache:
- *                 type: string
- *                 description: Description détaillée de la tâche
- *               statut:
- *                 type: string
- *                 description: Statut de la tâche
- *                 enum: [À faire, En cours, Terminée, En attente, Annulée]
  *               date_debut:
  *                 type: string
  *                 format: date
@@ -306,13 +257,9 @@ router.post("/", tachesController.createTache);
  *                 type: string
  *                 format: date
  *                 description: Date de fin prévue de la tâche (YYYY-MM-DD)
- *               priorite:
- *                 type: string
- *                 description: Niveau de priorité de la tâche
- *                 enum: [Basse, Moyenne, Haute, Urgente]
- *               id_projet:
+ *               id_operation:
  *                 type: integer
- *                 description: ID du projet auquel la tâche est rattachée
+ *                 description: ID de l'opération à laquelle la tâche est rattachée
  *     responses:
  *       200:
  *         description: Tâche mise à jour avec succès
@@ -324,7 +271,7 @@ router.post("/", tachesController.createTache);
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 tache:
+ *                 data:
  *                   $ref: '#/components/schemas/Tache'
  *       400:
  *         description: Données invalides
@@ -407,9 +354,9 @@ router.delete("/:id", tachesController.deleteTache);
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 message:
- *                   type: string
- *                   example: Employé assigné à la tâche avec succès
+ *                 data:
+ *                   type: object
+ *                   description: Données de l'association créée
  *       400:
  *         description: Données invalides ou association déjà existante
  *       404:
@@ -485,7 +432,7 @@ router.delete("/:id/employes/:employeId", tachesController.removeEmployeFromTach
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 employes:
+ *                 data:
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Employe'
@@ -498,21 +445,21 @@ router.get("/:id/employes", tachesController.getTacheEmployes);
 
 /**
  * @swagger
- * /technique/taches/projet/{projetId}:
+ * /technique/taches/operation/{operationId}:
  *   get:
- *     summary: Récupère les tâches associées à un projet
- *     description: Retourne la liste des tâches appartenant à un projet spécifique
+ *     summary: Récupère les tâches associées à une opération
+ *     description: Retourne la liste des tâches appartenant à une opération spécifique
  *     tags: [Tâches]
  *     parameters:
  *       - in: path
- *         name: projetId
+ *         name: operationId
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID du projet
+ *         description: ID de l'opération
  *     responses:
  *       200:
- *         description: Liste des tâches du projet récupérée avec succès
+ *         description: Liste des tâches de l'opération récupérée avec succès
  *         content:
  *           application/json:
  *             schema:
@@ -521,15 +468,15 @@ router.get("/:id/employes", tachesController.getTacheEmployes);
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 taches:
+ *                 data:
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Tache'
  *       404:
- *         description: Projet non trouvé ou aucune tâche associée
+ *         description: Opération non trouvée ou aucune tâche associée
  *       500:
  *         description: Erreur serveur
  */
-router.get("/projet/:projetId", tachesController.getTachesByProjet);
+router.get("/operation/:operationId", tachesController.getTachesByOperation);
 
 module.exports = router;

@@ -3,6 +3,7 @@ const { taches, intervention_taches, employes } = require("../../../core/databas
 const { eq, and, desc, asc, sql } = require("drizzle-orm");
 
 const tachesService = {
+  //recuperer les taches 
   getAllTaches: async (options = {}) => {
     const {
       page = 1,
@@ -10,11 +11,7 @@ const tachesService = {
       sortBy = "created_at",
       sortOrder = "desc",
       search = "",
-      statut,
-      priorite,
-      dateDebut,
-      dateFin,
-      projetId
+      operationId
     } = options;
 
     const offset = (page - 1) * limit;
@@ -31,29 +28,12 @@ const tachesService = {
 
     if (search) {
       filters.push(
-        sql`LOWER(${taches.nom_tache}) LIKE LOWER(${"%" + search + "%"}) OR 
-            LOWER(${taches.desc_tache}) LIKE LOWER(${"%" + search + "%"})`
+        sql`LOWER(${taches.nom_tache}) LIKE LOWER(${"%" + search + "%"})`
       );
     }
 
-    if (statut) {
-      filters.push(sql`LOWER(${taches.statut}) = LOWER(${statut})`);
-    }
-
-    if (priorite) {
-      filters.push(sql`LOWER(${taches.priorite}) = LOWER(${priorite})`);
-    }
-
-    if (projetId) {
-      filters.push(sql`${taches.id_projet} = ${projetId}`);
-    }
-
-    if (dateDebut) {
-      filters.push(sql`${taches.date_debut} >= ${new Date(dateDebut)}`);
-    }
-
-    if (dateFin) {
-      filters.push(sql`${taches.date_fin} <= ${new Date(dateFin)}`);
+    if (operationId) {
+      filters.push(sql`${taches.id_operation} = ${operationId}`);
     }
 
     if (filters.length) {
@@ -171,11 +151,11 @@ const tachesService = {
       .where(eq(intervention_taches.id_tache, tacheId));
   },
 
-  getTachesByProjet: async (projetId) => {
+  getTachesByOperation: async (operationId) => {
     return await db
       .select()
       .from(taches)
-      .where(eq(taches.id_projet, projetId));
+      .where(eq(taches.id_operation, operationId));
   },
 };
 
