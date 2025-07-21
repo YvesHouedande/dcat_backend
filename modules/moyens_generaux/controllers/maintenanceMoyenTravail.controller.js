@@ -18,8 +18,12 @@ const createMaintenanceMoyenTravail = async (req, res) => {
 // READ ALL
 const getMaintenanceMoyenTravails = async (req, res) => {
   try {
-    const result = await maintenanceMoyenTravailService.getMaintenanceMoyenTravails();
-    res.json(result || []);
+    // Récupération des paramètres de pagination depuis la requête
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const pageSize = req.query.pageSize ? parseInt(req.query.pageSize) : 20;
+
+    const result = await maintenanceMoyenTravailService.getMaintenanceMoyenTravails(page, pageSize);
+    res.json(result);
   } catch (error) {
     res.status(500).json({
       error: "Erreur lors de la récupération",

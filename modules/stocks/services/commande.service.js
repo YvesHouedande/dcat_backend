@@ -1094,7 +1094,7 @@ async function getExemplairesReservesParProduitPourCommande(idCommande, options 
         eq(exemplaires.etat_exemplaire, etatExemplaire[5]) // "Réservé"
       )
     );
-//test
+
   // On récupère les exemplaires réservés paginés
   const exemplairesReserves = await db
     .select()

@@ -19,8 +19,20 @@ const createMoyensTravail = async (req, res) => {
 // READ ALL
 const getMoyensTravails = async (req, res) => {
   try {
-    const result = await moyenstravailService.getMoyensTravails();
-    res.json(result || []);
+    // Récupération des paramètres de pagination depuis la requête
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const pageSize = req.query.pageSize ? parseInt(req.query.pageSize) : 20;
+
+    // Vérification des valeurs de pagination
+    if (isNaN(page) || page < 1) {
+      return res.status(400).json({ error: "Le paramètre 'page' doit être un entier positif." });
+    }
+    if (isNaN(pageSize) || pageSize < 1) {
+      return res.status(400).json({ error: "Le paramètre 'pageSize' doit être un entier positif." });
+    }
+
+    const result = await moyenstravailService.getMoyensTravails({ page, pageSize });
+    res.json(result);
   } catch (error) {
     res.status(500).json({ 
       error: "Erreur lors de la récupération",

@@ -18,6 +18,41 @@ router.post("/", controller.createMoyensTravail);
  *   get:
  *     summary: Récupère tous les moyens de travail
  *     tags: [Moyens de Travail]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           minimum: 1
+ *         description: Numéro de la page à récupérer (par défaut 1)
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *           minimum: 1
+ *         description: Nombre d'éléments par page (par défaut 20)
+ *     responses:
+ *       200:
+ *         description: Liste paginée des moyens de travail
+ *         content:
+ *           application/json:
+ *             example:
+ *               total: 42
+ *               page: 1
+ *               pageSize: 20
+ *               data:
+ *                 - id_moyens_de_travail: 1
+ *                   denomination: "Ordinateur portable"
+ *                   description: "Dell Latitude 5420"
+ *                   created_at: "2024-06-01T12:00:00.000Z"
+ *                   updated_at: "2024-06-01T12:00:00.000Z"
+ *                 - id_moyens_de_travail: 2
+ *                   denomination: "Imprimante"
+ *                   description: "HP LaserJet Pro"
+ *                   created_at: "2024-06-01T12:00:00.000Z"
+ *                   updated_at: "2024-06-01T12:00:00.000Z"
  */
 router.get("/", controller.getMoyensTravails);
 

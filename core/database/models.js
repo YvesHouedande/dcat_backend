@@ -364,10 +364,12 @@ const interlocuteurs = pgTable("interlocuteurs", {
 // Maintenance
 const maintenances = pgTable("maintenances", {
   id_maintenance: serial("id_maintenance").primaryKey(),
-  recurrence: varchar("recurrence", { length: 50 }),
+  recurrence: varchar("recurrence", { length: 50 }), // unique : pour une seule fois ; hebdomadaire, mensuelle, trimestrielle, annuelle : pour plusieurs fois / avoir si la maintenance doit se répéter et à quelle fréquence.
+  date_planifiee: date("date_planifiee"), // prochaine date prévue
   operations: text("operations"),
+  statut: varchar("statut", { length: 50 }).default("en_attente"), //en_attente(La maintenance est planifiée mais n’a pas encore commencé.), en_cours(La maintenance a débuté, elle est en train d’être réalisée), effectuee(La maintenance a été réalisée avec succès.), suspendue(La maintenance a été commencée mais est temporairement arrêtée (attente de pièces, indisponibilité, etc.).),  annulee(La maintenance a été annulée (plus nécessaire, erreur de planification, etc.).), 
   recommandations: text("recommandations"),
-  type_maintenance: varchar("type_maintenance", { length: 50 }),
+  type_maintenance: varchar("type_maintenance", { length: 50 }).default("preventive"), // preventive, corrective ; Distinguer les maintenances planifiées (préventives) des interventions suite à un incident (correctives).
   autre_intervenant: varchar("autre_intervenant", { length: 50 }),
   id_partenaire: integer("id_partenaire").references(
     () => partenaires.id_partenaire
