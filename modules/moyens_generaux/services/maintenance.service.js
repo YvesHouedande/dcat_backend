@@ -78,7 +78,7 @@ const getMaintenanceById = async (id) => {
   const [result] = await db.select().from(maintenances).where(eq(maintenances.id_maintenance, id));
   return result;
 };
-
+//test
 // Mise à jour d'une maintenance (tous champs)
 const updateMaintenance = async (id, data) => {
   const [result] = await db
