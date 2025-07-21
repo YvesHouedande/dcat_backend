@@ -174,11 +174,12 @@ const projets = pgTable("projets", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Tache
-const taches = pgTable("taches", {
-  id_tache: serial("id_tache").primaryKey(),
-  nom_tache: varchar("nom_tache", { length: 50 }),
-  desc_tache: text("desc_tache"),
+
+// Operation
+const operations = pgTable("operations", {
+  id_operation: serial("id_operation").primaryKey(),
+  nom_operation: varchar("nom_operation", { length: 50 }),
+  desc_operation: text("desc_operation"),
   statut: varchar("statut", { length: 50 }),
   date_debut: date("date_debut"),
   date_fin: date("date_fin"),
@@ -187,6 +188,18 @@ const taches = pgTable("taches", {
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// Tache
+const taches = pgTable("taches", {
+  id_tache: serial("id_tache").primaryKey(),
+  nom_tache: varchar("nom_tache", { length: 50 }),
+  date_debut: date("date_debut"),
+  date_fin: date("date_fin"),
+  id_operation: integer("id_operation").references(() => operations.id_operation),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
 
 // Prestation
 const prestations = pgTable("prestations", {
@@ -703,6 +716,7 @@ module.exports = {
   categories,
   projets,
   taches,
+  operations,
   prestations,
   livrables,
   sections,
