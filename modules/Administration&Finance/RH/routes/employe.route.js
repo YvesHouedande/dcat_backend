@@ -1,6 +1,7 @@
 const employeController = require('../controllers/employes.controller');
 const express = require('express');
 const router = express.Router();
+const { protect } = require("../../../../core/auth/middleware");
 
 /**
  * @swagger
@@ -19,7 +20,7 @@ const router = express.Router();
  *       200:
  *         description: Liste des employés
  */
-router.get('/', employeController.getEmployes);
+router.get('/',protect("Gestion_administration","Gestion_rh") , employeController.getEmployes);
 
 /**
  * @swagger
@@ -40,7 +41,7 @@ router.get('/', employeController.getEmployes);
  *       404:
  *         description: Employé non trouvé
  */
-router.get('/:id', employeController.getEmployeById);
+router.get('/:id' ,protect("Gestion_administration","Gestion_rh"), employeController.getEmployeById);
 
 /**
  * @swagger
@@ -59,7 +60,7 @@ router.get('/:id', employeController.getEmployeById);
  *       200:
  *         description: Liste des employés ayant cette fonction
  */
-router.get('/fonction/:id', employeController.getEmployeByFonction);
+router.get('/fonction/:id',protect("Gestion_administration","Gestion_rh"), employeController.getEmployeByFonction);
 
 /**
  * @swagger
@@ -78,7 +79,7 @@ router.get('/fonction/:id', employeController.getEmployeByFonction);
  *       200:
  *         description: Liste des employés avec ce statut
  */
-router.get('/statut/:statut', employeController.getEmployeByStatut);
+router.get('/statut/:statut',protect("Gestion_administration","Gestion_rh"), employeController.getEmployeByStatut);
 
 /**
  * @swagger
@@ -148,7 +149,7 @@ router.get('/statut/:statut', employeController.getEmployeByStatut);
  *       404:
  *         description: Employé non trouvé
  */
-router.put('/:id', employeController.updateEmploye);
+router.put('/:id',protect("Gestion_administration","Gestion_rh"), employeController.updateEmploye);
 
 /**
  * @swagger
@@ -169,6 +170,6 @@ router.put('/:id', employeController.updateEmploye);
  *       404:
  *         description: Employé non trouvé
  */
-router.delete('/:id', employeController.deleteEmploye);
+router.delete('/:id',protect("Gestion_administration","Gestion_rh"), employeController.deleteEmploye);
 
 module.exports = router;

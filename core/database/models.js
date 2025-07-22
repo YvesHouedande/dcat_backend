@@ -460,10 +460,15 @@ const documents = pgTable("documents", {
   id_nature_document: integer("id_nature_document").references(
     () => nature_documents.id_nature_document
   ),
+  id_dossier: integer("id_dossier").references(() => dossiers.id_dossier),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
+const dossiers = pgTable("dossiers", {
+  id_dossier: serial("id_dossier").primaryKey(),
+  libelle_dossier: varchar("libelle_dossier", { length: 100 }),
+});
 // Exemplaire_produit
 const exemplaires = pgTable("exemplaires", {
   id_exemplaire: serial("id_exemplaire").primaryKey(),
@@ -732,6 +737,7 @@ module.exports = {
   maintenances,
   livraisons,
   documents,
+  dossiers,
   interventions,
   exemplaires,
   sortie_exemplaires,
