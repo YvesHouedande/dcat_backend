@@ -323,7 +323,7 @@ const getMaintenancesByMoyenTravail = async (id_moyens_de_travail, options = {})
     data,
   };
 };
-
+//test
 module.exports = {
   planifierMaintenance,
   getMaintenancesPlanifieesParEquipement,
