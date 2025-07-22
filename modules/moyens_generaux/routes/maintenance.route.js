@@ -5,9 +5,9 @@ const controller = require("../controllers/maintenance.controller");
 // CRUD Routes
 /**
  * @swagger
- * /moyens-generaux/maintenances:
+ * /moyens-generaux/maintenances/planifier:
  *   post:
- *     summary: Crée une nouvelle maintenance
+ *     summary: Planifie une maintenance pour un ou plusieurs équipements
  *     tags: [Maintenances]
  *     requestBody:
  *       required: true
@@ -18,24 +18,66 @@ const controller = require("../controllers/maintenance.controller");
  *             properties:
  *               type_maintenance:
  *                 type: string
- *                 example: "corrective"
+ *                 example: "préventive"
  *               recurrence:
  *                 type: string
- *                 example: "unique"
+ *                 example: "mensuelle"
  *               date_planifiee:
  *                 type: string
  *                 format: date
- *                 example: "2024-06-10"
+ *                 example: "2025-08-01"
  *               operations:
  *                 type: string
- *                 example: "Remplacement du filtre"
+ *                 example: "Inspection des filtres"
  *               employesIds:
  *                 type: array
  *                 items:
  *                   type: integer
- *                 example: [2, 5, 7]
+ *                 example: [1, 2]
+ *               moyensIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [3, 5, 7]
+ *     responses:
+ *       201:
+ *         description: Maintenance planifiée avec succès
+ *       500:
+ *         description: Erreur lors de la planification
  */
-router.post("/", controller.createMaintenance);
+
+router.post("/", controller.planifierMaintenance);
+
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenances/planifiees/equipements:
+ *   get:
+ *     summary: Liste toutes les maintenances planifiées avec les équipements concernés
+ *     tags: [Maintenances]
+ *     responses:
+ *       200:
+ *         description: Liste des maintenances planifiées par équipement
+ *         content:
+ *           application/json:
+ *             example:
+ *               - maintenance:
+ *                   id_maintenance: 5
+ *                   type_maintenance: "préventive"
+ *                   date_planifiee: "2025-08-01"
+ *                   operations: "Inspection du système"
+ *                   statut: "en_attente"
+ *                   created_at: "2025-07-22T12:00:00.000Z"
+ *                 moyen:
+ *                   id_moyens_de_travail: 3
+ *                   nom_moyen: "Climatiseur central 1"
+ *                   reference: "AC-REF-22"
+ *                   etat: "fonctionnel"
+ *       500:
+ *         description: Erreur lors de la récupération
+ */
+router.get("/planifiees/equipements", controller.getMaintenancesPlanifieesParEquipement);
+
 
 /**
  * @swagger
@@ -58,17 +100,17 @@ router.post("/", controller.createMaintenance);
  *         name: type_maintenance
  *         schema:
  *           type: string
- *         description: Filtrer par type de maintenance (ex: "corrective", "préventive")
+ *         description: 'Filtrer par type de maintenance (ex: "corrective", "préventive")'
  *       - in: query
  *         name: statut
  *         schema:
  *           type: string
- *         description: Filtrer par statut (ex: "en_attente", "effectuee")
+ *         description: 'Filtrer par statut (ex: "en_attente", "effectuee")'
  *       - in: query
  *         name: recurrence
  *         schema:
  *           type: string
- *         description: Filtrer par récurrence (ex: "unique", "mensuelle", "annuelle")
+ *         description: 'Filtrer par récurrence (ex: "unique", "mensuelle", "annuelle")'
  *       - in: query
  *         name: date_planifiee
  *         schema:
@@ -320,6 +362,37 @@ router.patch("/:id_maintenance/:id_moyens_de_travail/realiser", controller.reali
  */
 router.delete("/:id", controller.deleteMaintenance);
 
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenances/employes/{id_maintenance}:
+ *   post:
+ *     summary: Ajoute un employé à une maintenance (sans remplacer les autres)
+ *     tags: [Maintenances]
+ *     parameters:
+ *       - in: path
+ *         name: id_maintenance
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la maintenance
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id_employes:
+ *                 type: integer
+ *                 example: 4
+ *     responses:
+ *       201:
+ *         description: Employé ajouté avec succès
+ */
+router.post("/employes/:id_maintenance", controller.addMaintenanceEmploye);
+
+
 /**
  * @swagger
  * /moyens-generaux/maintenances/{id_maintenance}/employes/{id_employes}:
@@ -375,5 +448,33 @@ router.delete("/:id_maintenance/employes/:id_employes", controller.unassignEmplo
  *         description: Assignation des employés mise à jour
  */
 router.put("/:id_maintenance/employes", controller.updateMaintenanceEmployes);
+
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenances/employes/{id_maintenance}/{id_employes}:
+ *   delete:
+ *     summary: Supprime un employé affecté à une maintenance
+ *     tags: [Maintenances]
+ *     parameters:
+ *       - in: path
+ *         name: id_maintenance
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: id_employes
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Liaison supprimée avec succès
+ */
+
+router.delete(
+    "/employes/:id_maintenance/:id_employes", 
+    controller.deleteMaintenanceEmployes
+  );
 
 module.exports = router;

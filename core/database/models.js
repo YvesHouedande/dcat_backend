@@ -21,18 +21,21 @@ const familles = pgTable("familles", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Modele
-const modeles = pgTable("modeles", {
-  id_modele: serial("id_modele").primaryKey(),
-  libelle_modele: varchar("libelle_modele", { length: 50 }),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-  updated_at: timestamp("updated_at").defaultNow().notNull(),
-});
+
 
 // Marque
 const marques = pgTable("marques", {
   id_marque: serial("id_marque").primaryKey(),
   libelle_marque: varchar("libelle_marque", { length: 50 }),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Modele
+const modeles = pgTable("modeles", {
+  id_modele: serial("id_modele").primaryKey(),
+  libelle_modele: varchar("libelle_modele", { length: 50 }),
+  id_marque: integer("id_marque").references(() => marques.id_marque),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -707,8 +710,8 @@ const notifications = pgTable("notifications", {
 
 module.exports = {
   familles,
-  modeles,
   marques,
+  modeles,
   fonctions,
   employes,
   demandes,

@@ -3,9 +3,9 @@ const router = express.Router();
 
 // Import des sous-routes
 const outilsRoutes = require("./mouvementOutil.route");
-const moyenstravailRoutes = require("./moyensdeTravail.route"); //moyens de travail
+const moyenstravailRoutes = require("./moyensdeTravail.route"); 
 const maintenanceRoutes = require("./maintenance.route"); 
-const maintenanceMoyenTravailRoutes = require("./maintenance.route"); 
+// const maintenanceMoyenTravailRoutes = require("./maintenanceMoyenTravail.route"); 
 const sectionRoutes = require("./section.route"); 
 
 // Montage des routes
@@ -41,15 +41,15 @@ router.use("/moyens-travail", moyenstravailRoutes);
 router.use("/maintenances", maintenanceRoutes);
 
 
-// /**
-//  * @swagger
-//  * /moyens-generaux/moyen-travails:
-//  *   description: Routes liées aux moyens de travail
-//  *   get:
-//  *     summary: Accède aux maintenances
-//  *     tags: [moyen-travails]
-//  */
-router.use("/moyen-travails", maintenanceMoyenTravailRoutes);
+// // /**
+// //  * @swagger
+// //  * /moyens-generaux/moyen-travails:
+// //  *   description: Routes liées aux moyens de travail
+// //  *   get:
+// //  *     summary: Accède aux maintenances
+// //  *     tags: [moyen-travails]
+// //  */
+// router.use("/moyen-travails", maintenanceMoyenTravailRoutes);
 
 
 /**

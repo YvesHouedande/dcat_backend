@@ -42,6 +42,38 @@ router.post("/", controller.createMarque);
 
 router.get("/", controller.getMarques);
 
+
+/**
+ * @swagger
+ * /stocks/modeles/{id}:
+ *   get:
+ *     summary: Récupère les modèles d'une marque spécifique
+ *     tags: [Modèles]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la marque
+ *     responses:
+ *       200:
+ *         description: Liste des modèles appartenant à la marque
+ *         content:
+ *           application/json:
+ *             example:
+ *               - id_modele: 2
+ *                 libelle_modele: "EliteBook 840"
+ *               - id_modele: 3
+ *                 libelle_modele: "Galaxy Tab S9"
+ *               - id_modele: 4
+ *                 libelle_modele: "OLED CX"
+ *       404:
+ *         description: Aucune marque trouvée avec l'ID fourni
+ */
+
+router.get("/modeles/:id", controller.getMarqueModeles);
+
 /**
  * @swagger
  * /stocks/marques/{id}:
