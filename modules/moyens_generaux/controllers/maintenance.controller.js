@@ -275,6 +275,63 @@ const getMaintenancesByMoyenTravail = async (req, res) => {
   }
 };
 
+const addMaintenanceEquipement = async (req, res) => {
+  try {
+    const { id_maintenance } = req.params;
+    const { id_moyens_de_travail } = req.body;
+
+    if (!id_moyens_de_travail) {
+      return res.status(400).json({ error: "id_moyens_de_travail est requis" });
+    }
+
+    const result = await maintenanceService.addMaintenanceEquipement(
+      parseInt(id_maintenance),
+      parseInt(id_moyens_de_travail)
+    );
+
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de l'ajout de l’équipement à la maintenance",
+      details: error.message,
+    });
+  }
+};
+
+const removeMaintenanceEquipement = async (req, res) => {
+  try {
+    const { id_maintenance, id_moyens_de_travail } = req.params;
+
+    const result = await maintenanceService.removeMaintenanceEquipement(
+      parseInt(id_maintenance),
+      parseInt(id_moyens_de_travail)
+    );
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la suppression de l’équipement de la maintenance",
+      details: error.message,
+    });
+  }
+};
+
+const getEquipementsByMaintenance = async (req, res) => {
+  try {
+    const { id_maintenance } = req.params;
+    const result = await maintenanceService.getEquipementsByMaintenance(
+      parseInt(id_maintenance)
+    );
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la récupération des équipements liés",
+      details: error.message,
+    });
+  }
+};
+
+
 module.exports = {
   planifierMaintenance,
   getMaintenancesPlanifieesParEquipement,
@@ -291,4 +348,7 @@ module.exports = {
   updateMaintenanceEmployes,
   deleteMaintenanceEmployes,
   getMaintenancesByMoyenTravail,
+  addMaintenanceEquipement,
+  removeMaintenanceEquipement,
+  getEquipementsByMaintenance,
 };

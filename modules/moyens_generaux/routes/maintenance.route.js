@@ -477,4 +477,88 @@ router.delete(
     controller.deleteMaintenanceEmployes
   );
 
+
+
+  /**
+ * @swagger
+ * /moyens-generaux/maintenances/equipements/{id_maintenance}:
+ *   post:
+ *     summary: Ajoute un équipement à une maintenance (sans supprimer les autres)
+ *     tags: [Maintenances]
+ *     parameters:
+ *       - in: path
+ *         name: id_maintenance
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la maintenance
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id_moyens_de_travail:
+ *                 type: integer
+ *                 example: 2
+ *     responses:
+ *       201:
+ *         description: Équipement ajouté avec succès
+ */
+
+router.post("/equipements/:id_maintenance", controller.addMaintenanceEquipement);
+
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenances/equipements/{id_maintenance}/{id_moyens_de_travail}:
+ *   delete:
+ *     summary: Retire un équipement d'une maintenance
+ *     tags: [Maintenances]
+ *     parameters:
+ *       - in: path
+ *         name: id_maintenance
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la maintenance
+ *       - in: path
+ *         name: id_moyens_de_travail
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du moyen de travail
+ *     responses:
+ *       200:
+ *         description: Équipement retiré avec succès
+ */
+
+router.delete(
+    "/equipements/:id_maintenance/:id_moyens_de_travail",
+    controller.removeMaintenanceEquipement
+  );
+  
+
+/**
+ * @swagger
+ * /moyens-generaux/maintenances/equipements/{id_maintenance}:
+ *   get:
+ *     summary: Récupère tous les équipements liés à une maintenance
+ *     tags: [Maintenances]
+ *     parameters:
+ *       - in: path
+ *         name: id_maintenance
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la maintenance
+ *     responses:
+ *       200:
+ *         description: Liste des équipements liés à cette maintenance
+ */
+
+router.get("/equipements/:id_maintenance", controller.getEquipementsByMaintenance);
+
+
 module.exports = router;

@@ -1,6 +1,6 @@
-const { eq, and, ne} = require("drizzle-orm");
+const { eq, and, ne, gte, lte } = require("drizzle-orm");
 const { db } = require("../../../core/database/config");
-const { maintenances, maintenance_employes, maintenance_moyens_travail, moyens_de_travail } = require("../../../core/database/models");
+const { maintenances, maintenance_employes, maintenance_moyens_travail, moyens_de_travail, fonctions, employes, sections } = require("../../../core/database/models");
 
 // Création d'une maintenance avec assignation d'employés
 const planifierMaintenance = async (data) => {
@@ -39,7 +39,6 @@ const planifierMaintenance = async (data) => {
 };
 
 
-
 const getMaintenancesPlanifieesParEquipement = async () => {
   return await db
     .select({
@@ -74,23 +73,33 @@ const getMaintenances = async (filters = {}, options = {}) => {
     whereClauses.push(eq(maintenances.id_partenaire, filters.id_partenaire));
   }
   // Ajout des filtres date_min et date_max
+
+
   if (filters.date_min) {
-    whereClauses.push({ type: 'gte', column: maintenances.date_planifiee, value: filters.date_min });
+    whereClauses.push(gte(maintenances.date_planifiee, new Date(filters.date_min)));
   }
+  
   if (filters.date_max) {
-    whereClauses.push({ type: 'lte', column: maintenances.date_planifiee, value: filters.date_max });
+    whereClauses.push(lte(maintenances.date_planifiee, new Date(filters.date_max)));
   }
 
   // Construction finale des conditions
   let finalWhere = null;
   if (whereClauses.length > 0) {
-    // On convertit les objets spéciaux pour >= et <=
+    // Séparer les types
     const normalClauses = whereClauses.filter(c => !c.type);
-    const gteClauses = whereClauses.filter(c => c.type === 'gte').map(c => c.column.gte(c.value));
-    const lteClauses = whereClauses.filter(c => c.type === 'lte').map(c => c.column.lte(c.value));
+    const gteClauses = whereClauses
+      .filter(c => c.type === 'gte')
+      .map(c => gte(c.column, c.value)); 
+    const lteClauses = whereClauses
+      .filter(c => c.type === 'lte')
+      .map(c => lte(c.column, c.value)); 
+  
+    // Combinaison des conditions
     finalWhere = and(...normalClauses, ...gteClauses, ...lteClauses);
     query = query.where(finalWhere);
   }
+  
 
   // Pagination
   const page = Number(options.page) > 0 ? Number(options.page) : 1;
@@ -118,8 +127,53 @@ const getMaintenances = async (filters = {}, options = {}) => {
 
 // Récupérer une maintenance par ID
 const getMaintenanceById = async (id) => {
-  const [result] = await db.select().from(maintenances).where(eq(maintenances.id_maintenance, id));
-  return result;
+  const [maintenance] = await db
+    .select()
+    .from(maintenances)
+    .where(eq(maintenances.id_maintenance, id));
+
+  if (!maintenance) return null;
+
+  // Récupérer les employés liés
+  const Employes = await db
+    .select({
+      id_employes: employes.id_employes,
+      nom: employes.nom_employes,
+      prenom: employes.prenom_employes,
+      id_fonction: fonctions.id_fonction,
+      fonction: fonctions.nom_fonction,
+    })
+    .from(maintenance_employes)
+    .leftJoin(employes, eq(maintenance_employes.id_employes, employes.id_employes))
+    .leftJoin(
+      fonctions,
+      eq(employes.id_fonction, fonctions.id_fonction)
+    )
+    .where(eq(maintenance_employes.id_maintenance, id));
+
+  // Récupérer les équipements liés
+  const Equipements = await db
+    .select({
+      id_moyens_de_travail: moyens_de_travail.id_moyens_de_travail,
+      denomination: moyens_de_travail.denomination,
+      date_acquisition: moyens_de_travail.date_acquisition,
+      etat: moyens_de_travail.etat,
+      section_id: sections.id_section,
+      section_libelle: sections.libelle,
+    })
+    .from(maintenance_moyens_travail)
+    .leftJoin(moyens_de_travail, eq(maintenance_moyens_travail.id_moyens_de_travail, moyens_de_travail.id_moyens_de_travail))
+    .leftJoin(
+      sections,
+      eq(moyens_de_travail.id_section, sections.id_section)
+    )
+    .where(eq(maintenance_moyens_travail.id_maintenance, id));
+
+  return {
+    ...maintenance,
+    Employes,
+    Equipements,
+  };
 };
 
 // Mise à jour d'une maintenance (tous champs)
@@ -323,7 +377,64 @@ const getMaintenancesByMoyenTravail = async (id_moyens_de_travail, options = {})
     data,
   };
 };
-//test
+
+
+const addMaintenanceEquipement = async (id_maintenance, id_moyens_de_travail) => {
+  // Vérifier si l’équipement est déjà lié
+  const existing = await db
+    .select()
+    .from(maintenance_moyens_travail)
+    .where(
+      and(
+        eq(maintenance_moyens_travail.id_maintenance, id_maintenance),
+        eq(maintenance_moyens_travail.id_moyens_de_travail, id_moyens_de_travail)
+      )
+    );
+
+  if (existing.length > 0) {
+    throw new Error("L’équipement est déjà affecté à cette maintenance");
+  }
+
+  // Insertion
+  await db.insert(maintenance_moyens_travail).values({
+    id_maintenance,
+    id_moyens_de_travail,
+    created_at: new Date(),
+    updated_at: new Date(),
+  });
+
+  return { message: "Équipement ajouté avec succès à la maintenance" };
+};
+
+const removeMaintenanceEquipement = async (id_maintenance, id_moyens_de_travail) => {
+  const deleted = await db
+    .delete(maintenance_moyens_travail)
+    .where(
+      and(
+        eq(maintenance_moyens_travail.id_maintenance, id_maintenance),
+        eq(maintenance_moyens_travail.id_moyens_de_travail, id_moyens_de_travail)
+      )
+    );
+
+  return { message: "Équipement retiré de la maintenance" };
+};
+
+
+const getEquipementsByMaintenance = async (id_maintenance) => {
+  return await db
+    .select({
+      liaison: maintenance_moyens_travail,
+      moyen: moyens_de_travail,
+    })
+    .from(maintenance_moyens_travail)
+    .innerJoin(
+      moyens_de_travail,
+      eq(maintenance_moyens_travail.id_moyens_de_travail, moyens_de_travail.id_moyens_de_travail)
+    )
+    .where(eq(maintenance_moyens_travail.id_maintenance, id_maintenance));
+};
+
+
 module.exports = {
   planifierMaintenance,
   getMaintenancesPlanifieesParEquipement,
@@ -340,4 +451,7 @@ module.exports = {
   updateMaintenanceEmployes,
   deleteMaintenanceEmployes,
   getMaintenancesByMoyenTravail,
+  addMaintenanceEquipement,
+  removeMaintenanceEquipement,
+  getEquipementsByMaintenance,
 };
