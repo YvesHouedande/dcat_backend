@@ -1,10 +1,11 @@
-const { eq, and, neq } = require("drizzle-orm");
+const { eq, and, ne} = require("drizzle-orm");
 const { db } = require("../../../core/database/config");
-const { maintenances, maintenance_employes, maintenance_moyens_travail } = require("../../../core/database/models");
+const { maintenances, maintenance_employes, maintenance_moyens_travail, moyens_de_travail } = require("../../../core/database/models");
 
 // Création d'une maintenance avec assignation d'employés
-const createMaintenance = async (data) => {
-  const { employesIds, ...maintenanceData } = data;
+const planifierMaintenance = async (data) => {
+  const { employesIds = [], moyensIds = [], ...maintenanceData } = data;
+
   const [result] = await db.insert(maintenances).values({
     ...maintenanceData,
     statut: maintenanceData.statut || "en_attente",
@@ -12,19 +13,45 @@ const createMaintenance = async (data) => {
     updated_at: new Date(),
   }).returning();
 
-  // Si des employés sont à assigner
-  if (employesIds && Array.isArray(employesIds) && employesIds.length > 0) {
-    const liaisonData = employesIds.map(id_employes => ({
+  // Lier aux employés
+  if (employesIds.length > 0) {
+    const liaisonEmployes = employesIds.map(id_employes => ({
       id_employes,
       id_maintenance: result.id_maintenance,
       created_at: new Date(),
       updated_at: new Date(),
     }));
-    await db.insert(maintenance_employes).values(liaisonData);
+    await db.insert(maintenance_employes).values(liaisonEmployes);
+  }
+
+  // Lier aux équipements
+  if (moyensIds.length > 0) {
+    const liaisonMoyens = moyensIds.map(id_moyens_de_travail => ({
+      id_moyens_de_travail,
+      id_maintenance: result.id_maintenance,
+      created_at: new Date(),
+      updated_at: new Date(),
+    }));
+    await db.insert(maintenance_moyens_travail).values(liaisonMoyens);
   }
 
   return result;
 };
+
+
+
+const getMaintenancesPlanifieesParEquipement = async () => {
+  return await db
+    .select({
+      maintenance: maintenances,
+      moyen: moyens_de_travail,
+    })
+    .from(maintenance_moyens_travail)
+    .innerJoin(maintenances, eq(maintenance_moyens_travail.id_maintenance, maintenances.id_maintenance))
+    .innerJoin(moyens_de_travail, eq(maintenance_moyens_travail.id_moyens_de_travail, moyens_de_travail.id_moyens_de_travail))
+    .orderBy(maintenances.date_planifiee);
+};
+
 
 // Récupération des maintenances avec filtres dynamiques et pagination
 const getMaintenances = async (filters = {}, options = {}) => {
@@ -71,10 +98,12 @@ const getMaintenances = async (filters = {}, options = {}) => {
   const offset = (page - 1) * pageSize;
 
   // Total
-  const [{ total }] = await db
-    .select({ total: db.fn.count().mapWith(Number) })
+  const totalResult = await db
+    .select()
     .from(maintenances)
     .where(finalWhere);
+
+  const total = totalResult.length;
 
   // Data paginée
   const data = await query.limit(pageSize).offset(offset);
@@ -130,7 +159,10 @@ const deleteMaintenance = async (id) => {
 
 // Récupérer les maintenances récurrentes
 const getRecurrentMaintenances = async (options = {}) => {
-  let query = db.select().from(maintenances).where(neq(maintenances.recurrence, "unique"));
+  let query = db
+  .select()
+  .from(maintenances)
+  .where(ne(maintenances.recurrence, "unique"));
   // Pagination
   const page = Number(options.page) > 0 ? Number(options.page) : 1;
   const pageSize = Number(options.pageSize) > 0 ? Number(options.pageSize) : 20;
@@ -187,6 +219,35 @@ const realizeMaintenance = async ({ id_maintenance, id_moyens_de_travail, operat
   };
 };
 
+
+const addMaintenanceEmploye = async (id_maintenance, id_employes) => {
+  // Vérifier s’il existe déjà
+  const existing = await db
+    .select()
+    .from(maintenance_employes)
+    .where(
+      and(
+        eq(maintenance_employes.id_maintenance, id_maintenance),
+        eq(maintenance_employes.id_employes, id_employes)
+      )
+    );
+
+  if (existing.length > 0) {
+    throw new Error("L'employé est déjà affecté à cette maintenance");
+  }
+
+  // Insertion
+  await db.insert(maintenance_employes).values({
+    id_maintenance,
+    id_employes,
+    created_at: new Date(),
+    updated_at: new Date(),
+  });
+
+  return { message: "Employé ajouté avec succès à la maintenance" };
+};
+
+
 // Désassigner un employé d'une maintenance
 const unassignEmployeFromMaintenance = async (id_maintenance, id_employes) => {
 
@@ -216,6 +277,19 @@ const updateMaintenanceEmployes = async (id_maintenance, employesIds = []) => {
     await db.insert(maintenance_employes).values(liaisonData);
   }
   return { message: "Assignation des employés mise à jour" };
+};
+
+// Supprimer une liaison employé-maintenance spécifique
+const deleteMaintenanceEmployes = async (id_maintenance, id_employes) => {
+  const result = await db
+    .delete(maintenance_employes)
+    .where(
+      and(
+        eq(maintenance_employes.id_maintenance, id_maintenance),
+        eq(maintenance_employes.id_employes, id_employes)
+      )
+    );
+  return { message: "Liaison supprimée", rowsAffected: result.rowCount };
 };
 
 // Lister les maintenances d’un moyen de travail (avec pagination)
@@ -251,7 +325,8 @@ const getMaintenancesByMoyenTravail = async (id_moyens_de_travail, options = {})
 };
 
 module.exports = {
-  createMaintenance,
+  planifierMaintenance,
+  getMaintenancesPlanifieesParEquipement,
   getMaintenances,
   getMaintenanceById,
   updateMaintenance,
@@ -260,7 +335,9 @@ module.exports = {
   getRecurrentMaintenances,
   getPonctualMaintenances,
   realizeMaintenance,
+  addMaintenanceEmploye,
   unassignEmployeFromMaintenance,
   updateMaintenanceEmployes,
+  deleteMaintenanceEmployes,
   getMaintenancesByMoyenTravail,
 };

@@ -1,4 +1,4 @@
-const { eq, and } = require("drizzle-orm");
+const { sql, eq, and } = require("drizzle-orm");
 const {db} = require("../../../core/database/config");
 const { moyens_de_travail } = require("../../../core/database/models");
 
@@ -23,10 +23,13 @@ const getMoyensTravails = async (options = {}) => {
   }
 
   // On récupère le total filtré
-  const [{ total }] = await db
-    .select({ total: db.fn.count().mapWith(Number) })
-    .from(moyens_de_travail)
-    .where(whereClauses.length > 0 ? and(...whereClauses) : undefined);
+  const [{ count: total }] = await db
+  .select({ count: sql`COUNT(*)` }) // ou COUNT(id_moyens_de_travail)
+  .from(moyens_de_travail)
+  .where(whereClauses.length > 0 ? and(...whereClauses) : undefined);
+
+
+  const totalNumber = Number(total);
 
   // On récupère les moyens de travail paginés et filtrés
   let query = db.select().from(moyens_de_travail);
@@ -36,7 +39,7 @@ const getMoyensTravails = async (options = {}) => {
   const data = await query.limit(pageSize).offset(offset);
 
   return {
-    total,
+    total: totalNumber,
     page,
     pageSize,
     data,
@@ -59,7 +62,7 @@ const updateMoyensTravail = async (id, data) => {
     .returning();
   return result;
 };
-//test
+
 const deleteMoyensTravail = async (id) => {
   const [result] = await db
     .delete(moyens_de_travail)

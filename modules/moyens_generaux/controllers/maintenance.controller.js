@@ -2,21 +2,30 @@ const maintenanceService = require("../services/maintenance.service");
 
 // CREATE
 // Pour assigner des employés, passer un champ 'employesIds' (array d'ID) dans le body
-const createMaintenance = async (req, res) => {
+const planifierMaintenance = async (req, res) => {
   try {
-    // if (!req.body.denomination) {
-    //   return res.status(400).json({ error: "La denomination est requise" });
-    // }
-    // On attend un champ 'employesIds' dans le body (ex: [1,2,3])
-    const result = await maintenanceService.createMaintenance(req.body);
+    const result = await maintenanceService.planifierMaintenance(req.body);
     res.status(201).json(result);
   } catch (error) {
     res.status(500).json({ 
-      error: "Erreur lors de la création",
+      error: "Erreur lors de la planification de la maintenance",
       details: error.message 
     });
   }
 };
+
+const getMaintenancesPlanifieesParEquipement = async (req, res) => {
+  try {
+    const result = await maintenanceService.getMaintenancesPlanifieesParEquipement();
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de la récupération des maintenances",
+      details: error.message,
+    });
+  }
+};
+
 
 // READ ALL
 const getMaintenances = async (req, res) => {
@@ -173,6 +182,30 @@ const realizeMaintenance = async (req, res) => {
   }
 };
 
+const addMaintenanceEmploye = async (req, res) => {
+  try {
+    const { id_maintenance } = req.params;
+    const { id_employes } = req.body;
+
+    if (!id_employes) {
+      return res.status(400).json({ error: "id_employes est requis" });
+    }
+
+    const result = await maintenanceService.addMaintenanceEmploye(
+      parseInt(id_maintenance),
+      parseInt(id_employes)
+    );
+
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: "Erreur lors de l'ajout de l'employé à la maintenance",
+      details: error.message,
+    });
+  }
+};
+
+
 const unassignEmployeFromMaintenance = async (req, res) => {
   try {
     const id_maintenance = parseInt(req.params.id_maintenance);
@@ -210,6 +243,20 @@ const updateMaintenanceEmployes = async (req, res) => {
   }
 };
 
+// Supprimer une seule liaison employé-maintenance
+const deleteMaintenanceEmployes = async (req, res) => {
+  try {
+    const { id_maintenance, id_employes } = req.params;
+    const result = await maintenanceService.deleteMaintenanceEmployes(
+      parseInt(id_maintenance),
+      parseInt(id_employes)
+    );
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ error: "Erreur lors de la suppression", details: error.message });
+  }
+};
+
 const getMaintenancesByMoyenTravail = async (req, res) => {
   try {
     const id_moyens_de_travail = parseInt(req.params.id_moyens_de_travail);
@@ -229,7 +276,8 @@ const getMaintenancesByMoyenTravail = async (req, res) => {
 };
 
 module.exports = {
-  createMaintenance,
+  planifierMaintenance,
+  getMaintenancesPlanifieesParEquipement,
   getMaintenances,
   getMaintenanceById,
   updateMaintenance,
@@ -238,7 +286,9 @@ module.exports = {
   getRecurrentMaintenances,
   updateMaintenanceStatus,
   realizeMaintenance,
+  addMaintenanceEmploye,
   unassignEmployeFromMaintenance,
   updateMaintenanceEmployes,
+  deleteMaintenanceEmployes,
   getMaintenancesByMoyenTravail,
 };
