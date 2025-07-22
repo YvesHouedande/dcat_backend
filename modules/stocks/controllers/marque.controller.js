@@ -22,6 +22,17 @@ const getMarques = async (req, res) => {
   }
 };
 
+const getMarqueModeles = async (req, res) => {
+  try {
+    const result = await marqueService.getMarqueModeles(parseInt(req.params.id));
+    return res.status(200).json(result || []);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "une erreur est survenue", details: error.message });
+  }
+};
+
 const getMarqueById = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -71,6 +82,7 @@ const deleteMarque = async (req, res) => {
 module.exports = {
   createMarque,
   getMarques,
+  getMarqueModeles,
   getMarqueById,
   updateMarque,
   deleteMarque,
