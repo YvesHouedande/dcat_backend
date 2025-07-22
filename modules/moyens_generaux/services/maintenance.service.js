@@ -50,7 +50,7 @@ const getMaintenancesPlanifieesParEquipement = async () => {
     .innerJoin(moyens_de_travail, eq(maintenance_moyens_travail.id_moyens_de_travail, moyens_de_travail.id_moyens_de_travail))
     .orderBy(maintenances.date_planifiee);
 };
-
+//test
 
 // Récupération des maintenances avec filtres dynamiques et pagination
 const getMaintenances = async (filters = {}, options = {}) => {
