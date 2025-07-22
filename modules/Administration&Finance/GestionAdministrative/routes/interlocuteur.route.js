@@ -41,7 +41,7 @@
 const interlocuteurController = require('../controllers/interlocuteur.controller');
 const express = require('express');
 const router = express.Router();
-const { protect } = require("../../../../core/auth/middleware");
+
 /**
  * @swagger
  * /administration/interlocuteurs/:
@@ -58,7 +58,7 @@ const { protect } = require("../../../../core/auth/middleware");
  *       201:
  *         description: Interlocuteur créé
  */
-router.post("/",protect("Gestion_administration"), interlocuteurController.createInterlocuteur);
+router.post("/", interlocuteurController.createInterlocuteur);
 
 /**
  * @swagger
@@ -70,7 +70,7 @@ router.post("/",protect("Gestion_administration"), interlocuteurController.creat
  *       200:
  *         description: Liste des interlocuteurs
  */
-router.get("/",protect("Gestion_administration"), interlocuteurController.getInterlocuteurs);
+router.get("/", interlocuteurController.getInterlocuteurs);
 
 /**
  * @swagger
@@ -89,7 +89,7 @@ router.get("/",protect("Gestion_administration"), interlocuteurController.getInt
  *       200:
  *         description: Liste des interlocuteurs du partenaire
  */
-router.get("/partenaire/:id",protect("Gestion_administration"), interlocuteurController.getInterlocuteurbyPartenaire);
+router.get("/partenaire/:id", interlocuteurController.getInterlocuteurbyPartenaire);
 
 /**
  * @swagger
@@ -108,7 +108,7 @@ router.get("/partenaire/:id",protect("Gestion_administration"), interlocuteurCon
  *       200:
  *         description: Interlocuteur trouvé
  */
-router.get("/:id",protect("Gestion_administration"), interlocuteurController.getInterlocuteurById);
+router.get("/:id", interlocuteurController.getInterlocuteurById);
 
 /**
  * @swagger
@@ -133,7 +133,7 @@ router.get("/:id",protect("Gestion_administration"), interlocuteurController.get
  *       200:
  *         description: Interlocuteur mis à jour
  */
-router.put("/:id",protect("Gestion_administration"), interlocuteurController.updateInterlocuteur);
+router.put("/:id", interlocuteurController.updateInterlocuteur);
 
 /**
  * @swagger
@@ -152,7 +152,7 @@ router.put("/:id",protect("Gestion_administration"), interlocuteurController.upd
  *       200:
  *         description: Interlocuteur supprimé
  */
-router.delete("/:id",protect("Gestion_administration"), interlocuteurController.deleteInterlocuteur);
+router.delete("/:id", interlocuteurController.deleteInterlocuteur);
 
 module.exports = router;
 
