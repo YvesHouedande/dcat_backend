@@ -6,7 +6,6 @@
   "clientAuthenticatorType": "client-secret",
   "redirectUris": [
     "http://localhost:2000/*",
-    "undefined/*",
     "http://localhost:5173/*"
   ],
   "webOrigins": [
