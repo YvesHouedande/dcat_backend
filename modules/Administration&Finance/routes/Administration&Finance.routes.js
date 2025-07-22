@@ -23,5 +23,6 @@ router.use("/employes", employeRoutes);
 router.use("/fonctions",fonctionRoutes);
 
 
+// Protect all routes under Administration & Finance
 
 module.exports = router;

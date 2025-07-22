@@ -1,7 +1,7 @@
 const fonctionController = require('../controllers/fonction.controller');
 const express = require('express');
 const router = express.Router();
-const { protect } = require("../../../../core/auth/middleware");
+
 /**
  * @swagger
  * /administration/fonctions:
@@ -21,7 +21,7 @@ const { protect } = require("../../../../core/auth/middleware");
  *       201:
  *         description: Fonction créée avec succès
  */
-router.post('/',protect("Gestion_administration","Gestion_rh"), fonctionController.createFonction);
+router.post('/', fonctionController.createFonction);
 
 /**
  * @swagger
@@ -33,7 +33,7 @@ router.post('/',protect("Gestion_administration","Gestion_rh"), fonctionControll
  *       200:
  *         description: Liste des fonctions
  */
-router.get('/',protect("Gestion_administration","Gestion_rh") ,fonctionController.getFonctions);
+router.get('/', fonctionController.getFonctions);
 
 /**
  * @swagger
@@ -53,7 +53,7 @@ router.get('/',protect("Gestion_administration","Gestion_rh") ,fonctionControlle
  *       404:
  *         description: Fonction non trouvée
  */
-router.get('/:id',protect("Gestion_administration","Gestion_rh"), fonctionController.getFonctionById);
+router.get('/:id', fonctionController.getFonctionById);
 
 /**
  * @swagger
@@ -82,7 +82,7 @@ router.get('/:id',protect("Gestion_administration","Gestion_rh"), fonctionContro
  *       404:
  *         description: Fonction non trouvée
  */
-router.put('/:id',protect("Gestion_administration","Gestion_rh") , fonctionController.updateFonction);
+router.put('/:id', fonctionController.updateFonction);
 
 /**
  * @swagger
@@ -102,6 +102,6 @@ router.put('/:id',protect("Gestion_administration","Gestion_rh") , fonctionContr
  *       404:
  *         description: Fonction non trouvée
  */
-router.delete('/:id',protect("Gestion_administration","Gestion_rh"), fonctionController.deleteFonction);
+router.delete('/:id', fonctionController.deleteFonction);
 
 module.exports = router;

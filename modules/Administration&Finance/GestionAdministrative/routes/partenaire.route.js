@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/partenaire.controller');
-const { protect } = require("../../../../core/auth/middleware");
 
 /**
  * @swagger
@@ -229,11 +228,11 @@ const { protect } = require("../../../../core/auth/middleware");
  *         description: Erreur serveur
  */
 
-router.post("/",protect("Gestion_administration"), controller.createPartenaire);
-router.get("/",protect("Gestion_administration"), controller.getPartenaires);
-router.get("/:id",protect("Gestion_administration"), controller.getPartenaireById);
-router.get("/type/:type",protect("Gestion_administration"), controller.getPartenairebyType);
-router.put("/:id",protect("Gestion_administration"), controller.updatePartenaire);
-router.delete("/:id",protect("Gestion_administration"), controller.deletePartenaire);
+router.post("/", controller.createPartenaire);
+router.get("/", controller.getPartenaires);
+router.get("/:id", controller.getPartenaireById);
+router.get("/type/:type", controller.getPartenairebyType);
+router.put("/:id", controller.updatePartenaire);
+router.delete("/:id", controller.deletePartenaire);
 
 module.exports = router;

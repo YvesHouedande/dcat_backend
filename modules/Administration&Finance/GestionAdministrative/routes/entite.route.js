@@ -1,7 +1,6 @@
 const entiteController = require('../controllers/entite.controller');
 const express = require('express');
 const router = express.Router();
-const { protect } = require("../../../../core/auth/middleware");
 
 /**
  * @swagger
@@ -53,7 +52,7 @@ const { protect } = require("../../../../core/auth/middleware");
  *       500:
  *         description: Erreur serveur
  */
-router.post('/',protect("Gestion_administration"), entiteController.createEntite);
+router.post('/', entiteController.createEntite);
 
 /**
  * @swagger
@@ -73,7 +72,7 @@ router.post('/',protect("Gestion_administration"), entiteController.createEntite
  *       500:
  *         description: Erreur serveur
  */
-router.get('/',protect("Gestion_administration"), entiteController.getEntites);
+router.get('/', entiteController.getEntites);
 
 /**
  * @swagger
@@ -100,7 +99,7 @@ router.get('/',protect("Gestion_administration"), entiteController.getEntites);
  *       500:
  *         description: Erreur serveur
  */
-router.get('/:id',protect("Gestion_administration"), entiteController.getEntiteById);
+router.get('/:id', entiteController.getEntiteById);
 
 /**
  * @swagger
@@ -133,7 +132,7 @@ router.get('/:id',protect("Gestion_administration"), entiteController.getEntiteB
  *       500:
  *         description: Erreur serveur
  */
-router.put('/:id',protect("Gestion_administration"), entiteController.updateEntite);
+router.put('/:id', entiteController.updateEntite);
 
 /**
  * @swagger
@@ -160,6 +159,6 @@ router.put('/:id',protect("Gestion_administration"), entiteController.updateEnti
  *       500:
  *         description: Erreur serveur
  */
-router.delete('/:id',protect("Gestion_administration"), entiteController.deleteEntite);
+router.delete('/:id', entiteController.deleteEntite);
 
 module.exports = router;

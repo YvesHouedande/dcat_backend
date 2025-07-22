@@ -4,14 +4,13 @@ const fs = require('fs');
 const path = require('path');
 const upload = require('../../../utils/middleware/uploadMiddleware');
 const demandeController = require('../controllers/demande.controller');
-const { protect } = require("../../../../core/auth/middleware");
 
 const UPLOAD_PATHS = {
   DEMANDES: 'media/documents/administration/RH/demandes'
 };
 
-router.post('/',protect("Gestion_administration","Gestion_rh"),demandeController.createDemande);
-router.post('/:id/documents',protect("Gestion_administration","Gestion_rh"),
+router.post('/', demandeController.createDemande);
+router.post('/:id/documents',
   (req, res, next) => {
     try {
       const uploadPath = path.join(process.cwd(), UPLOAD_PATHS.DEMANDES);
@@ -27,13 +26,13 @@ router.post('/:id/documents',protect("Gestion_administration","Gestion_rh"),
   upload.single('document'),
   demandeController.addDocumentToDemande
 );
-router.get('/',protect("Gestion_administration","Gestion_rh"), demandeController.getAllDemandes);
-router.get('/type/:type',protect("Gestion_administration","Gestion_rh"), demandeController.getDemandeByType);
-router.get('/employe/:id_employe',protect("Gestion_administration","Gestion_rh"), demandeController.getDemandeByEmploye);
-router.get('/:id',protect("Gestion_administration","Gestion_rh"), demandeController.getDemandeById);
-router.put('/:id',protect("Gestion_administration","Gestion_rh"), demandeController.updateDemande);
-router.delete('/:id',protect("Gestion_administration","Gestion_rh"), demandeController.deleteDemande);
-router.delete('/:id/docdemande/:docId',protect("Gestion_administration","Gestion_rh"), demandeController.deleteDocumentById);
+router.get('/', demandeController.getAllDemandes);
+router.get('/type/:type', demandeController.getDemandeByType);
+router.get('/employe/:id_employe', demandeController.getDemandeByEmploye);
+router.get('/:id', demandeController.getDemandeById);
+router.put('/:id', demandeController.updateDemande);
+router.delete('/:id', demandeController.deleteDemande);
+router.delete('/:id/docdemande/:docId', demandeController.deleteDocumentById);
 
 module.exports = router;
 

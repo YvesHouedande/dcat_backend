@@ -1,7 +1,6 @@
 const natureController = require('../controllers/nature.controller');
 const express = require('express');
 const router = express.Router();
-const { protect } = require("../../../../core/auth/middleware");
 
 /**
  * @swagger
@@ -43,7 +42,7 @@ const { protect } = require("../../../../core/auth/middleware");
  *       400:
  *         description: Requête invalide
  */
-router.post('/',protect("Gestion_administration"), natureController.createNature);
+router.post('/', natureController.createNature);
 
 /**
  * @swagger
@@ -61,7 +60,7 @@ router.post('/',protect("Gestion_administration"), natureController.createNature
  *               items:
  *                 $ref: '#/components/schemas/Nature'
  */
-router.get('/',protect("Gestion_administration"), natureController.getAllNatures);
+router.get('/', natureController.getAllNatures);
 
 /**
  * @swagger
@@ -86,7 +85,7 @@ router.get('/',protect("Gestion_administration"), natureController.getAllNatures
  *       404:
  *         description: Nature non trouvée
  */
-router.get('/:id',protect("Gestion_administration"), natureController.getNaturebyId);
+router.get('/:id', natureController.getNaturebyId);
 
 /**
  * @swagger
@@ -117,7 +116,7 @@ router.get('/:id',protect("Gestion_administration"), natureController.getNatureb
  *       404:
  *         description: Nature non trouvée
  */
-router.put('/:id',protect("Gestion_administration"), natureController.updateNature);
+router.put('/:id', natureController.updateNature);
 
 /**
  * @swagger
@@ -138,6 +137,6 @@ router.put('/:id',protect("Gestion_administration"), natureController.updateNatu
  *       404:
  *         description: Nature non trouvée
  */
-router.delete('/:id',protect("Gestion_administration"), natureController.deleteNature);
+router.delete('/:id', natureController.deleteNature);
 
 module.exports = router;

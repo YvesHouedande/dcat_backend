@@ -4,7 +4,6 @@ const contratcontroller = require('../controllers/contrat.controller');
 const express = require('express');
 const router = express.Router();
 const upload = require('../../../utils/middleware/uploadMiddleware');
-const { protect } = require("../../../../core/auth/middleware");
 
 const UPLOAD_PATHS = {
   CONTRATS: 'media/documents/administration/contrat'
@@ -23,19 +22,23 @@ const prepareUploadPath = (req, res, next) => {
   }
 };
 
-router.post("/",protect("Gestion_administration"), contratcontroller.createContrat);
-router.post("/:id/doc",protect("Gestion_administration"),
+router.post("/", contratcontroller.createContrat);
+router.post("/:id/doc",
   prepareUploadPath,
   upload.single("document"),
   contratcontroller.addDocumentToContrat
 );
-router.get("/" ,protect("Gestion_administration"), contratcontroller.getAllContrats);
-router.get("/:id",protect("Gestion_administration"), contratcontroller.getContratById);
-router.get("/type/:type",protect("Gestion_administration"), contratcontroller.getContratByType);
-router.get("/partenaire/:id",protect("Gestion_administration"), contratcontroller.getContratsByPartenaire);
-router.put("/:id",protect("Gestion_administration"), contratcontroller.updateContrat);
-router.delete("/:id",protect("Gestion_administration"), contratcontroller.deleteContrat);
-router.delete("/:id/docContrat/:docId",protect("Gestion_administration"), contratcontroller.deleteDocumentById);
+
+router.get("/", contratcontroller.getAllContrats);
+router.get("/:id", contratcontroller.getContratById);
+router.get("/type/:type", contratcontroller.getContratByType);
+router.get("/partenaire/:id", contratcontroller.getContratsByPartenaire);
+
+router.put("/:id", contratcontroller.updateContrat);
+
+router.delete("/:id", contratcontroller.deleteContrat);
+router.delete("/:id/docContrat/:docId", contratcontroller.deleteDocumentById);
+
 module.exports = router;
 
 /**
