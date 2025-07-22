@@ -195,6 +195,113 @@ async function getHistoriqueGlobal(page = 1, limit = 10) {
   return paginé;
 }
 
+/**
+ * Liste des exemplaires d'outils actuellement sortis (non retournés)
+ */
+async function getOutilsSortis() {
+  // Un exemplaire est considéré comme sorti si la dernière opération est une sortie non suivie d'une entrée
+  const sorties = await db.select().from(employe_sortir_exemplaires);
+  const entrees = await db.select().from(employe_entrer_exemplaires);
+
+  // On crée une map pour retrouver la dernière opération par (id_exemplaire, id_employes)
+  const lastOps = {};
+  sorties.forEach(s => {
+    const key = `${s.id_exemplaire}_${s.id_employes}`;
+    if (!lastOps[key] || new Date(s.created_at) > new Date(lastOps[key].created_at)) {
+      lastOps[key] = { ...s, type: 'sortie' };
+    }
+  });
+  entrees.forEach(e => {
+    const key = `${e.id_exemplaire}_${e.id_employes}`;
+    if (!lastOps[key] || new Date(e.created_at) > new Date(lastOps[key].created_at)) {
+      lastOps[key] = { ...e, type: 'entree' };
+    }
+  });
+  // On ne garde que les sorties non suivies d'une entrée
+  const result = Object.values(lastOps).filter(op => op.type === 'sortie');
+  return result;
+}
+
+/**
+ * Liste des exemplaires d'outils actuellement sortis par un employé
+ */
+async function getOutilsSortisParEmploye(id_employe) {
+  const allSortis = await getOutilsSortis();
+  return allSortis.filter(op => op.id_employes === id_employe);
+}
+
+/**
+ * Détail d'un mouvement précis (sortie ou entrée)
+ */
+async function getMouvementDetail(type, id_exemplaire, id_employes) {
+  if (type === 'sortie') {
+    return await db
+      .select()
+      .from(employe_sortir_exemplaires)
+      .where(and(eq(employe_sortir_exemplaires.id_exemplaire, id_exemplaire), eq(employe_sortir_exemplaires.id_employes, id_employes)))
+      .orderBy(desc(employe_sortir_exemplaires.created_at))
+      .limit(1);
+  } else if (type === 'entree') {
+    return await db
+      .select()
+      .from(employe_entrer_exemplaires)
+      .where(and(eq(employe_entrer_exemplaires.id_exemplaire, id_exemplaire), eq(employe_entrer_exemplaires.id_employes, id_employes)))
+      .orderBy(desc(employe_entrer_exemplaires.created_at))
+      .limit(1);
+  } else {
+    throw new Error('Type de mouvement inconnu');
+  }
+}
+
+/**
+ * Suppression d'un mouvement précis (sortie ou entrée)
+ */
+async function deleteMouvement(type, id_exemplaire, id_employes) {
+  if (type === 'sortie') {
+    return await db.delete(employe_sortir_exemplaires)
+      .where(and(eq(employe_sortir_exemplaires.id_exemplaire, id_exemplaire), eq(employe_sortir_exemplaires.id_employes, id_employes)));
+  } else if (type === 'entree') {
+    return await db.delete(employe_entrer_exemplaires)
+      .where(and(eq(employe_entrer_exemplaires.id_exemplaire, id_exemplaire), eq(employe_entrer_exemplaires.id_employes, id_employes)));
+  } else {
+    throw new Error('Type de mouvement inconnu');
+  }
+}
+
+/**
+ * Modification d'un mouvement précis (sortie ou entrée)
+ */
+async function updateMouvement(type, id_exemplaire, id_employes, data) {
+  if (type === 'sortie') {
+    return await db.update(employe_sortir_exemplaires)
+      .set(data)
+      .where(and(eq(employe_sortir_exemplaires.id_exemplaire, id_exemplaire), eq(employe_sortir_exemplaires.id_employes, id_employes)));
+  } else if (type === 'entree') {
+    return await db.update(employe_entrer_exemplaires)
+      .set(data)
+      .where(and(eq(employe_entrer_exemplaires.id_exemplaire, id_exemplaire), eq(employe_entrer_exemplaires.id_employes, id_employes)));
+  } else {
+    throw new Error('Type de mouvement inconnu');
+  }
+}
+
+/**
+ * Statistiques globales sur les mouvements d'outils
+ */
+async function getOutilsStatistiques() {
+  // Nombre total de sorties
+  const totalSorties = await db.select().from(employe_sortir_exemplaires);
+  // Nombre total d'entrées
+  const totalEntrees = await db.select().from(employe_entrer_exemplaires);
+  // Nombre d'outils actuellement sortis
+  const outilsSortis = await getOutilsSortis();
+  return {
+    totalSorties: totalSorties.length,
+    totalEntrees: totalEntrees.length,
+    outilsActuellementSortis: outilsSortis.length
+  };
+}
+
 module.exports = {
   getAllOutils,
   getExemplairesOutils,
@@ -203,4 +310,10 @@ module.exports = {
   estOutilRetourne,
   getHistoriqueOutils,
   getHistoriqueGlobal,
+  getOutilsSortis,
+  getOutilsSortisParEmploye,
+  getMouvementDetail,
+  deleteMouvement,
+  updateMouvement,
+  getOutilsStatistiques,
 };

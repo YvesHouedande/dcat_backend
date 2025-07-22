@@ -50,7 +50,7 @@ const getMaintenancesPlanifieesParEquipement = async () => {
     .innerJoin(moyens_de_travail, eq(maintenance_moyens_travail.id_moyens_de_travail, moyens_de_travail.id_moyens_de_travail))
     .orderBy(maintenances.date_planifiee);
 };
-//test
+
 
 // Récupération des maintenances avec filtres dynamiques et pagination
 const getMaintenances = async (filters = {}, options = {}) => {
@@ -204,11 +204,16 @@ const updateMaintenanceStatus = async (id, statut) => {
 
 // Suppression d'une maintenance
 const deleteMaintenance = async (id) => {
+  // Supprimer les liaisons employés
+  await db.delete(maintenance_employes).where(eq(maintenance_employes.id_maintenance, id));
+  // Supprimer les liaisons équipements
+  await db.delete(maintenance_moyens_travail).where(eq(maintenance_moyens_travail.id_maintenance, id));
+  // Supprimer la maintenance elle-même
   const [result] = await db
     .delete(maintenances)
     .where(eq(maintenances.id_maintenance, id))
     .returning();
-  return result;
+  return { message: "Maintenance et liaisons supprimées", maintenance: result };
 };
 
 // Récupérer les maintenances récurrentes
@@ -407,7 +412,7 @@ const addMaintenanceEquipement = async (id_maintenance, id_moyens_de_travail) =>
 };
 
 const removeMaintenanceEquipement = async (id_maintenance, id_moyens_de_travail) => {
-  const deleted = await db
+  await db
     .delete(maintenance_moyens_travail)
     .where(
       and(
@@ -423,7 +428,7 @@ const removeMaintenanceEquipement = async (id_maintenance, id_moyens_de_travail)
 const getEquipementsByMaintenance = async (id_maintenance) => {
   return await db
     .select({
-      liaison: maintenance_moyens_travail,
+      // liaison: maintenance_moyens_travail,
       moyen: moyens_de_travail,
     })
     .from(maintenance_moyens_travail)
