@@ -14,8 +14,37 @@ const createExemplaire = async (req, res) => {
 
 const getExemplaires = async (req, res) => {
   try {
-    const result = await exemplaireService.getExemplaires();
-    return res.status(200).json(result || []);
+    // Récupérer page, pageSize et les filtres depuis la query string
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const num_serie = req.query.num_serie;
+    const date_entree = req.query.date_entree;
+    const etat_exemplaire = req.query.etat_exemplaire;
+    const id_produit = req.query.id_produit ? parseInt(req.query.id_produit) : undefined;
+    const id_livraison = req.query.id_livraison ? parseInt(req.query.id_livraison) : undefined;
+    const id_commande = req.query.id_commande ? parseInt(req.query.id_commande) : undefined;
+
+    const result = await exemplaireService.getExemplaires({
+      page,
+      pageSize,
+      num_serie,
+      date_entree,
+      etat_exemplaire,
+      id_produit,
+      id_livraison,
+      id_commande,
+    });
+
+    // Transformer image_produit en URL complète
+    const hostPrefix = `${req.protocol}://${req.get("host")}/`;
+    result.data = result.data.map((item) => ({
+      ...item,
+      image_produit: item.image_produit
+        ? hostPrefix + item.image_produit.replace(/\\/g, "/")
+        : null,
+    }));
+
+    return res.status(200).json(result);
   } catch (error) {
     res
       .status(500)

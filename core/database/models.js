@@ -94,7 +94,11 @@ const nature_documents = pgTable("nature_documents", {
 // Entité
 const entites = pgTable("entites", {
   id_entite: serial("id_entite").primaryKey(),
-  denomination: varchar("denomination", { length: 50 }),
+  denomination: varchar("denomination", { length: 150 }),
+  abreviation_nom: varchar("abreviation_nom", { length: 50 }),
+  contact: varchar("contact", { length: 25 }),
+  adresse_postal: varchar("adresse_postal", { length: 50 }),
+  localisation: text("localisation"),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -348,11 +352,16 @@ const contrats = pgTable("contrats", {
   id_contrat: serial("id_contrat").primaryKey(),
   nom_contrat: varchar("nom_contrat", { length: 50 }),
   duree_contrat: varchar("duree_contrat", { length: 50 }),
-  date_debut: date("date_debut"),
-  date_fin: date("date_fin"),
   reference: varchar("reference", { length: 50 }),
   type_de_contrat: varchar("type_de_contrat", { length: 50 }),
   statut: varchar("statut", { length: 50 }),
+  nom_interlocuteur: varchar("nom_interlocuteur", { length: 100 }),
+  contact_interlocuteur: varchar("contact_interlocuteur", { length: 30 }),
+  contenu_contrat: text("contenu_contrat"),
+  cout: varchar("cout", { length: 25 }),
+  modalite_paiement: varchar("modalite_paiement", { length: 50 }),
+  date_debut: date("date_debut"),
+  date_fin: date("date_fin"),
   id_partenaire: integer("id_partenaire").references(
     () => partenaires.id_partenaire
   ),
@@ -448,9 +457,6 @@ const interventions = pgTable("interventions", {
 const documents = pgTable("documents", {
   id_documents: serial("id_documents").primaryKey(),
   libelle_document: varchar("libelle_document", { length: 100 }),
-  classification_document: varchar("classification_document", {
-    length: 50,
-  }),
   date_document: varchar("date_document", { length: 50 }),
   lien_document: varchar("lien_document", { length: 255 }),
   //etat_document : actif, archive
