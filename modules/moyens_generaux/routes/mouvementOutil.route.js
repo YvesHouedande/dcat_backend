@@ -189,4 +189,139 @@ router.get("/historique/:id", controller.getHistoriqueOutils);
 
 router.get("/historiques", controller.getHistoriqueGlobal);
 
+/**
+ * @swagger
+ * /moyens-generaux/outils/sortis:
+ *   get:
+ *     summary: Liste des exemplaires d'outils actuellement sortis (non retournés)
+ *     tags: [Outils]
+ *     responses:
+ *       200:
+ *         description: Liste des exemplaires sortis
+ */
+router.get('/sortis', controller.getOutilsSortis);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/sortis/employe/{id_employe}:
+ *   get:
+ *     summary: Liste des exemplaires d'outils actuellement sortis par un employé
+ *     tags: [Outils]
+ *     parameters:
+ *       - name: id_employe
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Liste des exemplaires sortis par l'employé
+ */
+router.get('/sortis/employe/:id_employe', controller.getOutilsSortisParEmploye);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/mouvement/{type}/{id_exemplaire}/{id_employes}:
+ *   get:
+ *     summary: Détail d'un mouvement précis (sortie ou entrée)
+ *     tags: [Outils]
+ *     parameters:
+ *       - name: type
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [sortie, entree]
+ *       - name: id_exemplaire
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - name: id_employes
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Détail du mouvement
+ */
+router.get('/mouvement/:type/:id_exemplaire/:id_employes', controller.getMouvementDetail);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/mouvement/{type}/{id_exemplaire}/{id_employes}:
+ *   delete:
+ *     summary: Suppression d'un mouvement précis (sortie ou entrée)
+ *     tags: [Outils]
+ *     parameters:
+ *       - name: type
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [sortie, entree]
+ *       - name: id_exemplaire
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - name: id_employes
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Mouvement supprimé
+ */
+router.delete('/mouvement/:type/:id_exemplaire/:id_employes', controller.deleteMouvement);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/mouvement/{type}/{id_exemplaire}/{id_employes}:
+ *   put:
+ *     summary: Modification d'un mouvement précis (sortie ou entrée)
+ *     tags: [Outils]
+ *     parameters:
+ *       - name: type
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [sortie, entree]
+ *       - name: id_exemplaire
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - name: id_employes
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Mouvement modifié
+ */
+router.put('/mouvement/:type/:id_exemplaire/:id_employes', controller.updateMouvement);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/statistiques:
+ *   get:
+ *     summary: Statistiques globales sur les mouvements d'outils
+ *     tags: [Outils]
+ *     responses:
+ *       200:
+ *         description: Statistiques globales
+ */
+router.get('/statistiques', controller.getOutilsStatistiques);
+
 module.exports = router;

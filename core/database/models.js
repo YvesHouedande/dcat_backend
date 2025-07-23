@@ -196,6 +196,9 @@ const operations = pgTable("operations", {
 const taches = pgTable("taches", {
   id_tache: serial("id_tache").primaryKey(),
   nom_tache: varchar("nom_tache", { length: 50 }),
+  desc_tache: text("desc_tache"),
+  priorite: varchar("priorite", { length: 50 }),
+  statut: varchar("statut", { length: 50 }),
   date_debut: date("date_debut"),
   date_fin: date("date_fin"),
   id_operation: integer("id_operation").references(() => operations.id_operation),

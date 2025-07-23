@@ -94,6 +94,82 @@ const getHistoriqueGlobal = async (req, res) => {
   }
 };
 
+// Liste des exemplaires d'outils actuellement sortis (non retournés)
+const getOutilsSortis = async (req, res) => {
+  try {
+    const result = await toolsService.getOutilsSortis();
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Liste des exemplaires d'outils actuellement sortis par un employé
+const getOutilsSortisParEmploye = async (req, res) => {
+  try {
+    const { id_employe } = req.params;
+    if (!id_employe || isNaN(parseInt(id_employe))) {
+      return res.status(400).json({ error: 'Paramètre id_employe invalide' });
+    }
+    const result = await toolsService.getOutilsSortisParEmploye(parseInt(id_employe));
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Détail d'un mouvement précis (sortie ou entrée)
+const getMouvementDetail = async (req, res) => {
+  try {
+    const { type, id_exemplaire, id_employes } = req.params;
+    if (!type || !id_exemplaire || !id_employes || isNaN(parseInt(id_exemplaire)) || isNaN(parseInt(id_employes))) {
+      return res.status(400).json({ error: 'Paramètres invalides' });
+    }
+    const result = await toolsService.getMouvementDetail(type, parseInt(id_exemplaire), parseInt(id_employes));
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Suppression d'un mouvement précis (sortie ou entrée)
+const deleteMouvement = async (req, res) => {
+  try {
+    const { type, id_exemplaire, id_employes } = req.params;
+    if (!type || !id_exemplaire || !id_employes || isNaN(parseInt(id_exemplaire)) || isNaN(parseInt(id_employes))) {
+      return res.status(400).json({ error: 'Paramètres invalides' });
+    }
+    await toolsService.deleteMouvement(type, parseInt(id_exemplaire), parseInt(id_employes));
+    res.status(200).json({ message: 'Mouvement supprimé avec succès.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Modification d'un mouvement précis (sortie ou entrée)
+const updateMouvement = async (req, res) => {
+  try {
+    const { type, id_exemplaire, id_employes } = req.params;
+    if (!type || !id_exemplaire || !id_employes || isNaN(parseInt(id_exemplaire)) || isNaN(parseInt(id_employes))) {
+      return res.status(400).json({ error: 'Paramètres invalides' });
+    }
+    await toolsService.updateMouvement(type, parseInt(id_exemplaire), parseInt(id_employes), req.body);
+    res.status(200).json({ message: 'Mouvement modifié avec succès.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Statistiques globales sur les mouvements d'outils
+const getOutilsStatistiques = async (req, res) => {
+  try {
+    const stats = await toolsService.getOutilsStatistiques();
+    res.status(200).json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 
 module.exports = {
   getAllOutils,
@@ -102,5 +178,11 @@ module.exports = {
   enregistrerEntreeOutil,
   estOutilRetourne,
   getHistoriqueOutils,
-  getHistoriqueGlobal
+  getHistoriqueGlobal,
+  getOutilsSortis,
+  getOutilsSortisParEmploye,
+  getMouvementDetail,
+  deleteMouvement,
+  updateMouvement,
+  getOutilsStatistiques,
 };
