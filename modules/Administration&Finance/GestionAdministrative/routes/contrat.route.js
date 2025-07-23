@@ -102,6 +102,21 @@ module.exports = router;
  *                       updated_at:
  *                         type: string
  *                         format: date-time
+ *                       nom_interlocuteur:
+ *                         type: string
+ *                         nullable: true
+ *                       contact_interlocuteur:
+ *                         type: string
+ *                         nullable: true
+ *                       contenu_contrat:
+ *                         type: string
+ *                         nullable: true
+ *                       cout:
+ *                         type: string
+ *                         nullable: true
+ *                       modalite_paiement:
+ *                         type: string
+ *                         nullable: true
  *       404:
  *         description: Aucun contrat trouvé
  */
@@ -156,6 +171,21 @@ module.exports = router;
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Document'
+ *                 nom_interlocuteur:
+ *                   type: string
+ *                   nullable: true
+ *                 contact_interlocuteur:
+ *                   type: string
+ *                   nullable: true
+ *                 contenu_contrat:
+ *                   type: string
+ *                   nullable: true
+ *                 cout:
+ *                   type: string
+ *                   nullable: true
+ *                 modalite_paiement:
+ *                   type: string
+ *                   nullable: true
  *       404:
  *         description: Contrat non trouvé
  */
@@ -219,6 +249,21 @@ module.exports = router;
  *                       updated_at:
  *                         type: string
  *                         format: date-time
+ *                       nom_interlocuteur:
+ *                         type: string
+ *                         nullable: true
+ *                       contact_interlocuteur:
+ *                         type: string
+ *                         nullable: true
+ *                       contenu_contrat:
+ *                         type: string
+ *                         nullable: true
+ *                       cout:
+ *                         type: string
+ *                         nullable: true
+ *                       modalite_paiement:
+ *                         type: string
+ *                         nullable: true
  *       404:
  *         description: Aucun contrat trouvé
  */
@@ -282,6 +327,21 @@ module.exports = router;
  *                       updated_at:
  *                         type: string
  *                         format: date-time
+ *                       nom_interlocuteur:
+ *                         type: string
+ *                         nullable: true
+ *                       contact_interlocuteur:
+ *                         type: string
+ *                         nullable: true
+ *                       contenu_contrat:
+ *                         type: string
+ *                         nullable: true
+ *                       cout:
+ *                         type: string
+ *                         nullable: true
+ *                       modalite_paiement:
+ *                         type: string
+ *                         nullable: true
  *       404:
  *         description: Aucun contrat trouvé
  */
@@ -318,6 +378,16 @@ module.exports = router;
  *                 default: actif
  *               id_partenaire:
  *                 type: integer
+ *               nom_interlocuteur:
+ *                 type: string
+ *               contact_interlocuteur:
+ *                 type: string
+ *               contenu_contrat:
+ *                 type: string
+ *               cout:
+ *                 type: string
+ *               modalite_paiement:
+ *                 type: string
  */
 
 /**
@@ -394,6 +464,16 @@ module.exports = router;
  *                 type: string
  *               id_partenaire:
  *                 type: integer
+ *               nom_interlocuteur:
+ *                 type: string
+ *               contact_interlocuteur:
+ *                 type: string
+ *               contenu_contrat:
+ *                 type: string
+ *               cout:
+ *                 type: string
+ *               modalite_paiement:
+ *                 type: string
  */
 
 /**
@@ -488,6 +568,21 @@ module.exports = router;
  *           nullable: true
  *         id_partenaire:
  *           type: integer
+ *         nom_interlocuteur:
+ *           type: string
+ *           nullable: true
+ *         contact_interlocuteur:
+ *           type: string
+ *           nullable: true
+ *         contenu_contrat:
+ *           type: string
+ *           nullable: true
+ *         cout:
+ *           type: string
+ *           nullable: true
+ *         modalite_paiement:
+ *           type: string
+ *           nullable: true
  *         created_at:
  *           type: string
  *           format: date-time
