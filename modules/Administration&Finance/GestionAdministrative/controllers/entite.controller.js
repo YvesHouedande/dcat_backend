@@ -30,7 +30,7 @@ const getEntites = async (req, res) => {
 }
 
 const getEntiteById = async (req, res) => {
-    try {                   
+    try {
         const { id } = req.params;
         const entite = await entiteService.getEntiteById(id);
         if (!entite) {
@@ -55,7 +55,7 @@ const updateEntite = async (req, res) => {
     } catch (error) {
         console.error("Error updating entite:", error);
         res.status(500).json({ message: "Internal server error" });
-    }
+    }z
 }
 const deleteEntite = async (req, res) => {
     try {
