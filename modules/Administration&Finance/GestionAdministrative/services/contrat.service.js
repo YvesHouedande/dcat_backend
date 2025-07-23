@@ -65,6 +65,7 @@ const getDocumentById=async(id)=>{
     return result;
 };
 
+
 const updateContrat=async(id,data)=>{
     const [result]=await db
     .update(contrats)
