@@ -17,6 +17,15 @@ const getEmployeById = async (id) => {
     return result;
 }
 
+const employesByEmail = async (email) => {
+    const [result] = await db
+    .select()
+    .from(employes)
+    .where(eq(employes.email_employes, email));
+    return result;
+}
+
+
 const getEmployeByFonction = async (id) => {
     const result = await db
     .select()

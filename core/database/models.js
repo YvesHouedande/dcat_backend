@@ -473,7 +473,7 @@ const documents = pgTable("documents", {
 
 const dossiers = pgTable("dossiers", {
   id_dossier: serial("id_dossier").primaryKey(),
-  libelle_dossier: varchar("libelle_dossier", { length: 100 }),
+  libelle_dossier: varchar("libelle_dossier", { length: 100 }).unique(),
   type_dossier: varchar("type_dossier", { length: 50 }),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
