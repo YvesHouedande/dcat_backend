@@ -1,7 +1,11 @@
 const entiteService = require('../services/entite.service');
 
 const createEntite = async (req, res) => {
-    try {   
+    try {
+        // Validation douce du champ id_partenaire
+        if (typeof req.body.id_partenaire !== 'undefined' && isNaN(parseInt(req.body.id_partenaire))) {
+            return res.status(400).json({ message: "id_partenaire doit être un entier si fourni." });
+        }
         const entite = await entiteService.createEntite(req.body);
         res
         .status(201)
@@ -47,6 +51,10 @@ const getEntiteById = async (req, res) => {
 const updateEntite = async (req, res) => {
     try {
         const { id } = req.params;
+        // Validation douce du champ id_partenaire
+        if (typeof req.body.id_partenaire !== 'undefined' && isNaN(parseInt(req.body.id_partenaire))) {
+            return res.status(400).json({ message: "id_partenaire doit être un entier si fourni." });
+        }
         const updatedEntite = await entiteService.updateEntite(id, req.body);
         if (!updatedEntite) {
             return res.status(404).json({ message: "Entite not found" });
@@ -55,7 +63,7 @@ const updateEntite = async (req, res) => {
     } catch (error) {
         console.error("Error updating entite:", error);
         res.status(500).json({ message: "Internal server error" });
-    }z
+    }
 }
 const deleteEntite = async (req, res) => {
     try {

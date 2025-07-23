@@ -41,12 +41,7 @@ const deleteEntite=async(id)=>{
 }
 
 const getEntitesByPartenaire = async (id_partenaire) => {
-    // On récupère le partenaire pour obtenir son id_entite
-    const [partenaire] = await db.select().from(partenaires).where(eq(partenaires.id_partenaire, id_partenaire));
-    if (!partenaire || !partenaire.id_entite) return [];
-    // On récupère l'entité associée
-    const [entite] = await db.select().from(entites).where(eq(entites.id_entite, partenaire.id_entite));
-    return entite ? [entite] : [];
+    return await db.select().from(entites).where(eq(entites.id_partenaire, id_partenaire));
 }
 
 module.exports={

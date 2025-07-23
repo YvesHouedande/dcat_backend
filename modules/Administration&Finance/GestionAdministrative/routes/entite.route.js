@@ -37,6 +37,9 @@ const router = express.Router();
  *           type: string
  *           format: date-time
  *           description: Date de dernière mise à jour
+ *         id_partenaire:
+ *           type: integer
+ *           description: ID du partenaire auquel l'entité est rattachée
  */
 
 /**
