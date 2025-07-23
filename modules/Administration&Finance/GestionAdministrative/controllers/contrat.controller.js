@@ -46,57 +46,74 @@ const createContrat = async (req, res) => {
 const addDocumentToContrat = async (req, res) => {
     try {
         if (!req.file) {
-        return res.status(400).json({
-        success: false,
-        message: "Aucun fichier n'a été téléchargé"
-    });
-    }
+            return res.status(400).json({
+                success: false,
+                message: "Aucun fichier n'a été téléchargé"
+            });
+        }
 
-    const { id } = req.params;
-    const relativePath = req.file.path
-        .replace(process.cwd(), '')
-        .replace(/\\/g, '/')
-        .replace(/^\//, '');
+        const { id } = req.params;
 
-    const documentData = {
-        libelle_document: req.body.libelle_document,
-        classification_document: req.body.classification_document,
-        lien_document: relativePath,
-        etat_document: req.body.etat_document || 'actif',
-        date_document: req.body.date_document ? new Date(req.body.date_document) : new Date(),
-        id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null,
-        id_contrat: parseInt(id)
-    };
+        // Nettoyage du chemin relatif
+        const relativePath = req.file.path
+            .replace(process.cwd(), '')
+            .replace(/\\/g, '/')
+            .replace(/^\//, '');
 
-    let document;
+        const documentData = {
+            libelle_document: req.body.libelle_document,
+            classification_document: req.body.classification_document,
+            lien_document: relativePath,
+            etat_document: req.body.etat_document || 'actif',
+            date_document: req.body.date_document ? new Date(req.body.date_document) : new Date(),
+            id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null,
+            id_contrat: parseInt(id)
+        };
+
+        let document;
         try {
-        document = await contratService.addDocumentTocontrat(documentData);
-    } catch (dbError) {
-        await fs.promises.unlink(req.file.path).catch(() => {});
+            document = await contratService.addDocumentTocontrat(documentData);
+
+            return res.status(201).json({
+                success: true,
+                message: "Document ajouté au contrat avec succès",
+                data: document
+            });
+
+        } catch (dbError) {
+            // Supprimer le fichier en cas d'erreur d'enregistrement en base
+            await fs.promises.unlink(req.file.path).catch(() => {});
+
+            // Log technique (console ou fichier)
+            logger.error("Erreur lors de l'enregistrement du document en base", {
+                message: dbError.message,
+                stack: dbError.stack,
+                ...dbError
+            });
+
+            return res.status(500).json({
+                success: false,
+                message: "Erreur lors de l'enregistrement du document en base",
+                error: dbError.message,
+                stack: dbError.stack,
+                details: dbError // ⚠️ À désactiver en production
+            });
+        }
+
+    } catch (error) {
+        logger.error("Erreur interne dans addDocumentToContrat", {
+            message: error.message,
+            stack: error.stack,
+            ...error
+        });
+
         return res.status(500).json({
             success: false,
-            message: "Erreur lors de l'enregistrement du document en base",
-            error: dbError.message
-    });
-    }
-
-    res.status(201).json({
-        success: true,
-        message: `Document ajouté avec succès au contrat ${document.id_contrat}`,
-        data: {
-            document: document,
-            details: {
-                dateCreation: new Date().toISOString(),
-                chemin: relativePath
-        }
-    }
-    });
-} catch (error) {
-    res.status(500).json({
-        success: false,
-        message: "Erreur lors de l'ajout du document",
-        error: error.message
-    });
+            message: "Erreur interne",
+            error: error.message,
+            stack: error.stack,
+            details: error // ⚠️ À désactiver en production
+        });
     }
 };
 
@@ -112,14 +129,29 @@ const getAllContrats = async (req, res) => {
         logger.error("Erreur récupération contrats", {
             error: {
                 message: error.message,
-                stack: error.stack
-            }
+                stack: error.stack,
+                code: error.code,
+                name: error.name,
+                ...error
+            },
+            route: req.originalUrl,
+            params: req.params,
+            body: req.body,
+            query: req.query
         });
 
         res.status(500).json({
             success: false,
             message: "Erreur récupération contrats",
-            details: error.message
+            details: {
+                message: error.message,
+                stack: error.stack,
+                code: error.code,
+                name: error.name,
+                params: req.params,
+                body: req.body,
+                query: req.query
+            }
         });
     }
 };

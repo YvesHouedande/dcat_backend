@@ -22,6 +22,10 @@ const prepareUploadPath = (req, res, next) => {
   }
 };
 
+
+
+router.get("/", contratcontroller.getAllContrats);
+
 router.post("/", contratcontroller.createContrat);
 router.post("/:id/doc",
   prepareUploadPath,
@@ -29,7 +33,6 @@ router.post("/:id/doc",
   contratcontroller.addDocumentToContrat
 );
 
-router.get("/", contratcontroller.getAllContrats);
 router.get("/:id", contratcontroller.getContratById);
 router.get("/type/:type", contratcontroller.getContratByType);
 router.get("/partenaire/:id", contratcontroller.getContratsByPartenaire);

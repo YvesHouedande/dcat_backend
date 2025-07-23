@@ -40,18 +40,18 @@ const clients = [
 ];
 
 const roles = [
-  'gestion_adminitartive',
-  'finance',
-  'comptabilté',
-  'rh',
-  'stock_refference',
-  'stock_entree_sortie',
-  'stock_achat',
-  'gestion_intervention_projet',
-  'outil_reference',
-  'outils_entre_sortie_retour',
-  'maintenance_prestation',
-  'marketing',
+  'Gestion_administration',
+  'Gestion_finance',
+  'Gestion_comptabilite',
+  'Gestion_rh',
+  'Creation_reference_Produit',
+  'Gestion_entree_sortie_stock',
+  'Gestion_achat_stock',
+  'Gestion_intervention_projet',
+  'Creation_reference_outil',
+  'Gestion_entre_sortie_retour_outil',
+  'Gestion_maintenance_prestation',
+  'Gestion_marketing',
 ];
 
 async function setupKeycloak() {

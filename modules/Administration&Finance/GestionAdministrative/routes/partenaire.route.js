@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/partenaire.controller');
+const { protect } = require("../../../../core/auth/middleware");
 
 /**
  * @swagger
@@ -229,7 +230,8 @@ const controller = require('../controllers/partenaire.controller');
  */
 
 router.post("/", controller.createPartenaire);
-router.get("/", controller.getPartenaires);
+router.get("/",  controller.getPartenaires);
+
 router.get("/:id", controller.getPartenaireById);
 router.get("/type/:type", controller.getPartenairebyType);
 router.put("/:id", controller.updatePartenaire);
