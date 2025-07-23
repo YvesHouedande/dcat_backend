@@ -71,10 +71,25 @@ const deleteEntite = async (req, res) => {
     }
 }
 
+const getEntitesByPartenaire = async (req, res) => {
+    try {
+        const { id_partenaire } = req.params;
+        const entites = await entiteService.getEntitesByPartenaire(id_partenaire);
+        if (!entites || entites.length === 0) {
+            return res.status(404).json({ message: "Aucune entité trouvée pour ce partenaire" });
+        }
+        res.status(200).json(entites);
+    } catch (error) {
+        console.error("Erreur lors de la récupération des entités par partenaire:", error);
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+}
+
 module.exports = {
     createEntite,
     getEntites,
     getEntiteById,
     updateEntite,
-    deleteEntite
+    deleteEntite,
+    getEntitesByPartenaire
 }

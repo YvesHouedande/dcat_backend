@@ -9,22 +9,31 @@ const router = express.Router();
  *     Entite:
  *       type: object
  *       required:
- *         - name
+ *         - denomination
  *       properties:
- *         id:
+ *         id_entite:
  *           type: integer
  *           description: ID auto-généré de l'entité
- *         name:
+ *         denomination:
  *           type: string
- *           description: Nom de l'entité
- *         description:
+ *           description: Dénomination de l'entité
+ *         abreviation_nom:
  *           type: string
- *           description: Description de l'entité
- *         createdAt:
+ *           description: Abréviation du nom de l'entité
+ *         contact:
+ *           type: string
+ *           description: Contact de l'entité
+ *         adresse_postal:
+ *           type: string
+ *           description: Adresse postale de l'entité
+ *         localisation:
+ *           type: string
+ *           description: Localisation de l'entité
+ *         created_at:
  *           type: string
  *           format: date-time
  *           description: Date de création
- *         updatedAt:
+ *         updated_at:
  *           type: string
  *           format: date-time
  *           description: Date de dernière mise à jour
@@ -160,5 +169,34 @@ router.put('/:id', entiteController.updateEntite);
  *         description: Erreur serveur
  */
 router.delete('/:id', entiteController.deleteEntite);
+
+/**
+ * @swagger
+ * /administration/entites/partenaire/{id_partenaire}:
+ *   get:
+ *     summary: Récupérer les entités associées à un partenaire
+ *     tags: [Entites]
+ *     parameters:
+ *       - in: path
+ *         name: id_partenaire
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID du partenaire
+ *     responses:
+ *       200:
+ *         description: Liste des entités du partenaire
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Entite'
+ *       404:
+ *         description: Aucune entité trouvée pour ce partenaire
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/partenaire/:id_partenaire', entiteController.getEntitesByPartenaire);
 
 module.exports = router;
