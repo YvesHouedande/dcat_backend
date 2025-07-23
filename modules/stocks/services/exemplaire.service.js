@@ -43,7 +43,7 @@ async function createExemplaire(data) {
 
   return newExemplaire;
 }
-
+//test
 /**
  * Récupère les exemplaires avec pagination, nom du produit, première image du produit et filtres dynamiques
  * @param {Object} options - { page, pageSize, num_serie, date_entree, etat_exemplaire, id_produit, id_livraison, id_commande }
