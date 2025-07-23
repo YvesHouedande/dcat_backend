@@ -485,6 +485,7 @@ const dossiers = pgTable("dossiers", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 // Exemplaire_produit
+
 const exemplaires = pgTable("exemplaires", {
   id_exemplaire: serial("id_exemplaire").primaryKey(),
   num_serie: text("num_serie").unique(),
@@ -492,6 +493,14 @@ const exemplaires = pgTable("exemplaires", {
   etat_exemplaire: varchar("etat_exemplaire", { length: 75 }).default(
     "Disponible"
   ), //"Vendu", "Disponible", "Utilisation", "En maintenance", "Endommage", "Reserve"
+  frais_divers: decimal("frais_divers", { precision: 10, scale: 2 }),
+  coef_divers: decimal("coef_divers", { precision: 10, scale: 2 }),
+  marge_haute: decimal("marge_haute", { precision: 10, scale: 2 }),
+  marge_basse: decimal("marge_basse", { precision: 10, scale: 2 }),
+  prix_de_vente: decimal("prix_de_vente", { precision: 10, scale: 2 }),
+  prix_de_revient: decimal("prix_de_revient", { precision: 10, scale: 2 }),
+  prix_achat: decimal("prix_achat", { precision: 10, scale: 2 }),
+  date_achat: date("date_achat"),
   id_livraison: integer("id_livraison").references(
     () => livraisons.id_livraison
   ),
