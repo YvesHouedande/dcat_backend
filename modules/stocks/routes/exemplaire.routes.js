@@ -222,4 +222,84 @@ router.get("/produit/:id", controller.getExemplairesByProduit);
 
 router.get("/produit/:id/etat/:etat", controller.filterExemplairesByEtat);  // id : id du produit de l'exemplaire ; etat : etat de l'exemplaire ("Vendu"...)
 
+/**
+ * @swagger
+ * /stocks/exemplaires/{id}/reserver:
+ *   post:
+ *     summary: Met l'état d'un exemplaire à 'Reserve'
+ *     tags: [Exemplaires]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'exemplaire
+ *     responses:
+ *       200:
+ *         description: Exemplaire réservé
+ *       400:
+ *         description: ID invalide
+ *       500:
+ *         description: Erreur serveur
+ */
+router.post('/:id/reserver', controller.reserverExemplaireController);
+
+/**
+ * @swagger
+ * /stocks/exemplaires/{id}/annuler-reservation:
+ *   post:
+ *     summary: Annule la réservation d'un exemplaire (remet à 'Disponible')
+ *     tags: [Exemplaires]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'exemplaire
+ *     responses:
+ *       200:
+ *         description: Réservation annulée, exemplaire disponible
+ *       400:
+ *         description: ID invalide ou exemplaire non réservé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.post('/:id/annuler-reservation', controller.annulerReservationExemplaireController);
+
+/**
+ * @swagger
+ * /stocks/exemplaires/{id}/changer-etat:
+ *   post:
+ *     summary: Change l'état d'un exemplaire à une valeur donnée
+ *     tags: [Exemplaires]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'exemplaire
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               etat:
+ *                 type: string
+ *                 example: Reserve
+ *                 description: "Nouvel état (Disponible, Reserve, Vendu, Utilisation, En maintenance, Endommage)"
+ *     responses:
+ *       200:
+ *         description: Etat modifié
+ *       400:
+ *         description: ID ou état invalide
+ *       500:
+ *         description: Erreur serveur
+ */
+router.post('/:id/changer-etat', controller.changerEtatExemplaireController);
+
 module.exports = router;

@@ -163,6 +163,53 @@ const filterExemplairesByEtat = async (req, res) => {
   }
 };
 
+/**
+ * Met l'état d'un exemplaire à 'Reserve'
+ * @route POST /stocks/exemplaires/:id/reserver
+ */
+const reserverExemplaireController = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: 'ID invalide' });
+    const result = await exemplaireService.reserverExemplaire(id);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+/**
+ * Annule la réservation d'un exemplaire (remet à 'Disponible')
+ * @route POST /stocks/exemplaires/:id/annuler-reservation
+ */
+const annulerReservationExemplaireController = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: 'ID invalide' });
+    const result = await exemplaireService.annulerReservationExemplaire(id);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+/**
+ * Change l'état d'un exemplaire à une valeur donnée
+ * @route POST /stocks/exemplaires/:id/changer-etat
+ * @body { etat: string }
+ */
+const changerEtatExemplaireController = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { etat } = req.body;
+    if (isNaN(id) || !etat) return res.status(400).json({ error: 'ID et etat requis' });
+    const result = await exemplaireService.changerEtatExemplaire(id, etat);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 // // Vérifie si un exemplaire spécifique est en cours d'utilisation
 // const isExemplaireInUse = async (req, res) => {
 //   try {
@@ -199,6 +246,9 @@ module.exports = {
   deleteExemplaire,
   getExemplairesByProduit,
   filterExemplairesByEtat,
+  reserverExemplaireController,
+  annulerReservationExemplaireController,
+  changerEtatExemplaireController,
   // isExemplaireInUse,
   // isExemplairesInUse,
 };

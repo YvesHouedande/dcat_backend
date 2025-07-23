@@ -195,6 +195,59 @@ async function filterExemplairesByEtat(id, etat) {
   };
 }
 
+/**
+ * Met l'état d'un exemplaire à 'Reserve'
+ */
+async function reserverExemplaire(id) {
+  return await db.transaction(async (tx) => {
+    const [ex] = await tx.select().from(exemplaires).where(eq(exemplaires.id_exemplaire, id));
+    if (!ex) throw new Error("Exemplaire introuvable");
+    if (ex.etat_exemplaire === etatExemplaire[5]) return ex; // déjà réservé
+    const [updated] = await tx.update(exemplaires)
+      .set({ etat_exemplaire: etatExemplaire[5], updated_at: new Date() })
+      .where(eq(exemplaires.id_exemplaire, id))
+      .returning();
+    return updated;
+  });
+}
+
+/**
+ * Annule la réservation d'un exemplaire (remet à 'Disponible')
+ */
+async function annulerReservationExemplaire(id) {
+  return await db.transaction(async (tx) => {
+    const [ex] = await tx.select().from(exemplaires).where(eq(exemplaires.id_exemplaire, id));
+    if (!ex) throw new Error("Exemplaire introuvable");
+    if (ex.etat_exemplaire !== etatExemplaire[5]) throw new Error("L'exemplaire n'est pas réservé");
+    const [updated] = await tx.update(exemplaires)
+      .set({ etat_exemplaire: etatExemplaire[1], updated_at: new Date() })
+      .where(eq(exemplaires.id_exemplaire, id))
+      .returning();
+    return updated;
+  });
+}
+
+/**
+ * Change l'état d'un exemplaire à une valeur donnée (avec validation)
+ * @param {number} id - ID de l'exemplaire
+ * @param {string} etat - Nouvel état
+ * @returns {Promise<object>} - L'exemplaire mis à jour
+ */
+async function changerEtatExemplaire(id, etat) {
+  if (!etatExemplaire.includes(etat)) {
+    throw new Error(`Etat invalide. Les états autorisés sont : ${etatExemplaire.join(', ')}`);
+  }
+  return await db.transaction(async (tx) => {
+    const [ex] = await tx.select().from(exemplaires).where(eq(exemplaires.id_exemplaire, id));
+    if (!ex) throw new Error("Exemplaire introuvable");
+    const [updated] = await tx.update(exemplaires)
+      .set({ etat_exemplaire: etat, updated_at: new Date() })
+      .where(eq(exemplaires.id_exemplaire, id))
+      .returning();
+    return updated;
+  });
+}
+
 // // // Vérifie si un exemplaire spécifique est en cours d'utilisation
 // // async function isExemplaireInUse(exId) {
 // //   const [result] = await db
@@ -227,6 +280,9 @@ module.exports = {
   // isExemplairesInUse,
 
   filterExemplairesByEtat,
+  reserverExemplaire,
+  annulerReservationExemplaire,
+  changerEtatExemplaire,
 
   //variable
   etatExemplaire,
