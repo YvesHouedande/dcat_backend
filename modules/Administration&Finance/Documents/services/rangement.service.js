@@ -79,5 +79,6 @@ module.exports = {
     updateDossier,
     deleteDossier,
     deleteDocumentByDossier,
-    deleteDocumentById
+    deleteDocumentById,
+    getDossierByType
 };
