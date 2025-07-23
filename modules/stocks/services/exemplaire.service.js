@@ -43,13 +43,13 @@ async function createExemplaire(data) {
 
   return newExemplaire;
 }
-
+//test
 /**
  * Récupère les exemplaires avec pagination, nom du produit, première image du produit et filtres dynamiques
  * @param {Object} options - { page, pageSize, num_serie, date_entree, etat_exemplaire, id_produit, id_livraison, id_commande }
  * @returns {Promise<{ data: Array, total: number, page: number, pageSize: number }>} Résultat paginé
  */
-async function getExemplaires({ page = 1, pageSize = 10, num_serie, date_entree, etat_exemplaire, id_produit, id_livraison, id_commande } = {}) {
+async function getExemplaires({ page = 1, pageSize = 10, num_serie, date_entree, etat_exemplaire, id_produit, id_livraison, id_commande, created_at, updated_at, frais_divers, coef_divers, marge_haute, marge_basse, prix_de_vente, prix_de_revient, prix_achat, date_achat, ...advancedFilters } = {}) {
   const offset = (page - 1) * pageSize;
   const filters = [];
   if (num_serie) filters.push(eq(exemplaires.num_serie, num_serie));
@@ -58,6 +58,45 @@ async function getExemplaires({ page = 1, pageSize = 10, num_serie, date_entree,
   if (id_produit) filters.push(eq(exemplaires.id_produit, id_produit));
   if (id_livraison) filters.push(eq(exemplaires.id_livraison, id_livraison));
   if (id_commande) filters.push(eq(exemplaires.id_commande, id_commande));
+  if (created_at) filters.push(eq(exemplaires.created_at, created_at));
+  if (updated_at) filters.push(eq(exemplaires.updated_at, updated_at));
+  if (frais_divers) filters.push(eq(exemplaires.frais_divers, frais_divers));
+  if (coef_divers) filters.push(eq(exemplaires.coef_divers, coef_divers));
+  if (marge_haute) filters.push(eq(exemplaires.marge_haute, marge_haute));
+  if (marge_basse) filters.push(eq(exemplaires.marge_basse, marge_basse));
+  if (prix_de_vente) filters.push(eq(exemplaires.prix_de_vente, prix_de_vente));
+  if (prix_de_revient) filters.push(eq(exemplaires.prix_de_revient, prix_de_revient));
+  if (prix_achat) filters.push(eq(exemplaires.prix_achat, prix_achat));
+  if (date_achat) filters.push(eq(exemplaires.date_achat, date_achat));
+
+  // Filtres avancés pour les champs numériques (min, max, proche)
+  const champsNumeriques = [
+    "frais_divers", "coef_divers", "marge_haute", "marge_basse",
+    "prix_de_vente", "prix_de_revient", "prix_achat"
+  ];
+  const champsDates = ["date_achat"];
+  champsNumeriques.forEach((champ) => {
+    if (advancedFilters[`${champ}_min`] !== undefined)
+      filters.push(sql`${exemplaires[champ]} >= ${advancedFilters[`${champ}_min`]}`);
+    if (advancedFilters[`${champ}_max`] !== undefined)
+      filters.push(sql`${exemplaires[champ]} <= ${advancedFilters[`${champ}_max`]}`);
+    if (advancedFilters[`${champ}_proche`] !== undefined) {
+      let marge = 10;
+      if (champ === "coef_divers") marge = 0.5;
+      if (champ === "marge_haute" || champ === "marge_basse") marge = 1;
+      if (champ === "frais_divers") marge = 5;
+      filters.push(sql`ABS(${exemplaires[champ]} - ${advancedFilters[`${champ}_proche`]}) <= ${marge}`);
+    }
+  });
+  champsDates.forEach((champ) => {
+    if (advancedFilters[`${champ}_min`])
+      filters.push(sql`${exemplaires[champ]} >= ${advancedFilters[`${champ}_min`]}`);
+    if (advancedFilters[`${champ}_max`])
+      filters.push(sql`${exemplaires[champ]} <= ${advancedFilters[`${champ}_max`]}`);
+    if (advancedFilters[`${champ}_proche`]) {
+      filters.push(sql`ABS(DATE_PART('day', ${exemplaires[champ]}::timestamp - ${advancedFilters[`${champ}_proche`]}::timestamp)) <= 3`);
+    }
+  });
 
   // Total count avec filtres
   const [{ count: total }] = await db
@@ -293,6 +332,61 @@ async function changerEtatExemplaire(id, etat) {
   });
 }
 
+/**
+ * Retourne la liste des prix de vente, de revient et d'achat distincts pour tous les exemplaires d'un produit donné, avec filtres simples
+ * @param {number} id_produit
+ * @param {Object} options - filtres simples (num_serie, date_entree, etat_exemplaire, id_livraison, id_commande, created_at, updated_at, prix_de_vente, prix_de_revient, prix_achat, date_achat)
+ * @returns {Promise<{prix_de_vente: number, prix_de_revient: number, prix_achat: number}[]>}
+ */
+async function getDistinctPrixExemplairesByProduit(id_produit, options = {}) {
+  const {
+    num_serie,
+    date_entree,
+    etat_exemplaire,
+    id_livraison,
+    id_commande,
+    created_at,
+    updated_at,
+    prix_de_vente,
+    prix_de_revient,
+    prix_achat,
+    date_achat,
+  } = options;
+  const filters = [eq(exemplaires.id_produit, id_produit)];
+  if (num_serie) filters.push(eq(exemplaires.num_serie, num_serie));
+  if (date_entree) filters.push(eq(exemplaires.date_entree, date_entree));
+  if (etat_exemplaire) filters.push(eq(exemplaires.etat_exemplaire, etat_exemplaire));
+  if (id_livraison) filters.push(eq(exemplaires.id_livraison, id_livraison));
+  if (id_commande) filters.push(eq(exemplaires.id_commande, id_commande));
+  if (created_at) filters.push(eq(exemplaires.created_at, created_at));
+  if (updated_at) filters.push(eq(exemplaires.updated_at, updated_at));
+  if (prix_de_vente) filters.push(eq(exemplaires.prix_de_vente, prix_de_vente));
+  if (prix_de_revient) filters.push(eq(exemplaires.prix_de_revient, prix_de_revient));
+  if (prix_achat) filters.push(eq(exemplaires.prix_achat, prix_achat));
+  if (date_achat) filters.push(eq(exemplaires.date_achat, date_achat));
+
+  const rows = await db
+    .select({
+      prix_de_vente: exemplaires.prix_de_vente,
+      prix_de_revient: exemplaires.prix_de_revient,
+      prix_achat: exemplaires.prix_achat,
+    })
+    .from(exemplaires)
+    .where(and(...filters));
+
+  // On filtre côté JS pour ne garder que les combinaisons distinctes
+  const seen = new Set();
+  const distinct = [];
+  for (const row of rows) {
+    const key = `${row.prix_de_vente}|${row.prix_de_revient}|${row.prix_achat}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      distinct.push(row);
+    }
+  }
+  return distinct;
+}
+
 // // // Vérifie si un exemplaire spécifique est en cours d'utilisation
 // // async function isExemplaireInUse(exId) {
 // //   const [result] = await db
@@ -328,6 +422,7 @@ module.exports = {
   reserverExemplaire,
   annulerReservationExemplaire,
   changerEtatExemplaire,
+  getDistinctPrixExemplairesByProduit,
 
   //variable
   etatExemplaire,

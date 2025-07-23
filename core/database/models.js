@@ -99,6 +99,7 @@ const entites = pgTable("entites", {
   contact: varchar("contact", { length: 25 }),
   adresse_postal: varchar("adresse_postal", { length: 50 }),
   localisation: text("localisation"),
+  id_partenaire: integer("id_partenaire").references(() => partenaires.id_partenaire),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -342,7 +343,6 @@ const partenaires = pgTable("partenaires", {
   localisation: varchar("localisation", { length: 50 }),
   type_partenaire: varchar("type_partenaire", { length: 50 }),
   statut: varchar("statut", { length: 50 }),
-  id_entite: integer("id_entite").references(() => entites.id_entite),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
