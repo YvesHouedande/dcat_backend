@@ -17,24 +17,45 @@ const getExemplaires = async (req, res) => {
     // Récupérer page, pageSize et les filtres depuis la query string
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
-    const num_serie = req.query.num_serie;
-    const date_entree = req.query.date_entree;
-    const etat_exemplaire = req.query.etat_exemplaire;
-    const id_produit = req.query.id_produit ? parseInt(req.query.id_produit) : undefined;
-    const id_livraison = req.query.id_livraison ? parseInt(req.query.id_livraison) : undefined;
-    const id_commande = req.query.id_commande ? parseInt(req.query.id_commande) : undefined;
-
-    const result = await exemplaireService.getExemplaires({
+    // Filtres simples
+    const options = {
       page,
       pageSize,
-      num_serie,
-      date_entree,
-      etat_exemplaire,
-      id_produit,
-      id_livraison,
-      id_commande,
+    };
+    [
+      "num_serie", "date_entree", "etat_exemplaire", "id_produit", "id_livraison", "id_commande",
+      "created_at", "updated_at", "frais_divers", "coef_divers", "marge_haute", "marge_basse",
+      "prix_de_vente", "prix_de_revient", "prix_achat", "date_achat"
+    ].forEach((champ) => {
+      if (req.query[champ] !== undefined) {
+        if (champ.startsWith("id_")) {
+          options[champ] = parseInt(req.query[champ]);
+        } else if (["frais_divers", "coef_divers", "marge_haute", "marge_basse", "prix_de_vente", "prix_de_revient", "prix_achat"].includes(champ)) {
+          options[champ] = parseFloat(req.query[champ]);
+        } else {
+          options[champ] = req.query[champ];
+        }
+      }
     });
-
+    // Filtres avancés (min, max, proche)
+    const champsNumeriques = [
+      "frais_divers", "coef_divers", "marge_haute", "marge_basse",
+      "prix_de_vente", "prix_de_revient", "prix_achat"
+    ];
+    const champsDates = ["date_achat"];
+    [...champsNumeriques, ...champsDates].forEach((champ) => {
+      ["min", "max", "proche"].forEach((suffixe) => {
+        const key = `${champ}_${suffixe}`;
+        if (req.query[key] !== undefined) {
+          if (champsNumeriques.includes(champ)) {
+            options[key] = parseFloat(req.query[key]);
+          } else {
+            options[key] = req.query[key];
+          }
+        }
+      });
+    });
+    const result = await exemplaireService.getExemplaires(options);
     // Transformer image_produit en URL complète
     const hostPrefix = `${req.protocol}://${req.get("host")}/`;
     result.data = result.data.map((item) => ({
@@ -43,7 +64,6 @@ const getExemplaires = async (req, res) => {
         ? hostPrefix + item.image_produit.replace(/\\/g, "/")
         : null,
     }));
-
     return res.status(200).json(result);
   } catch (error) {
     res
@@ -266,6 +286,36 @@ const changerEtatExemplaireController = async (req, res) => {
 //   }
 // };
 
+
+const distinctPrixExemplaires = async (req, res) => {
+  try {
+    const id_produit = parseInt(req.params.id);
+    if (isNaN(id_produit)) {
+      return res.status(400).json({ error: "ID de produit invalide" });
+    }
+    // Filtres simples depuis la query string
+    const options = {};
+    [
+      "num_serie", "date_entree", "etat_exemplaire", "id_livraison", "id_commande",
+      "created_at", "updated_at", "prix_de_vente", "prix_de_revient", "prix_achat", "date_achat"
+    ].forEach((champ) => {
+      if (req.query[champ] !== undefined) {
+        if (champ.startsWith("id_")) {
+          options[champ] = parseInt(req.query[champ]);
+        } else if (["prix_de_vente", "prix_de_revient", "prix_achat"].includes(champ)) {
+          options[champ] = parseFloat(req.query[champ]);
+        } else {
+          options[champ] = req.query[champ];
+        }
+      }
+    });
+    const result = await exemplaireService.getDistinctPrixExemplairesByProduit(id_produit, options);
+    return res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ error: "Une erreur est survenue", details: error.message });
+  }
+};
+
 module.exports = {
   createExemplaire,
   getExemplaires,
@@ -278,6 +328,7 @@ module.exports = {
   reserverExemplaireController,
   annulerReservationExemplaireController,
   changerEtatExemplaireController,
+  distinctPrixExemplaires,
   // isExemplaireInUse,
   // isExemplairesInUse,
 };
