@@ -30,30 +30,111 @@ router.post("/", controller.createExemplaire);
  * @swagger
  * /stocks/exemplaires:
  *   get:
- *     summary: Récupère tous les exemplaires
+ *     summary: Récupère tous les exemplaires (avec pagination, filtres, nom du produit et image du produit)
  *     tags: [Exemplaires]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page pour la pagination
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
+ *       - in: query
+ *         name: num_serie
+ *         schema:
+ *           type: string
+ *         description: Filtrer par numéro de série exact
+ *       - in: query
+ *         name: date_entree
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer par date d'entrée (format YYYY-MM-DD)
+ *       - in: query
+ *         name: etat_exemplaire
+ *         schema:
+ *           type: string
+ *           enum: [Vendu, Disponible, Utilisation, En maintenance, Endommage, Reserve]
+ *         description: Filtrer par état de l'exemplaire
+ *       - in: query
+ *         name: id_produit
+ *         schema:
+ *           type: integer
+ *         description: Filtrer par ID du produit
+ *       - in: query
+ *         name: id_livraison
+ *         schema:
+ *           type: integer
+ *         description: Filtrer par ID de la livraison
+ *       - in: query
+ *         name: id_commande
+ *         schema:
+ *           type: integer
+ *         description: Filtrer par ID de la commande
  *     responses:
  *       200:
- *         description: Liste des exemplaires
+ *         description: Liste paginée des exemplaires filtrés
  *         content:
  *           application/json:
- *             example:
- *               - id_exemplaire: 11
- *                 num_serie: "serie-5"
- *                 date_entree: "2025-04-23"
- *                 etat_exemplaire: "Disponible"
- *                 id_livraison: 1
- *                 id_produit: 5
- *                 created_at: "2025-04-28T15:07:29.561Z"
- *                 updated_at: "2025-04-28T15:54:11.714Z"
- *               - id_exemplaire: 12
- *                 num_serie: "serie-6"
- *                 date_entree: "2025-04-23"
- *                 etat_exemplaire: "Reserve"
- *                 id_livraison: 1
- *                 id_produit: 5
- *                 created_at: "2025-04-28T15:07:40.083Z"
- *                 updated_at: "2025-04-28T16:19:41.256Z"
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_exemplaire:
+ *                         type: integer
+ *                         example: 11
+ *                       num_serie:
+ *                         type: string
+ *                         example: "serie-5"
+ *                       date_entree:
+ *                         type: string
+ *                         format: date
+ *                         example: "2025-04-23"
+ *                       etat_exemplaire:
+ *                         type: string
+ *                         example: "Disponible"
+ *                       id_livraison:
+ *                         type: integer
+ *                         example: 1
+ *                       id_produit:
+ *                         type: integer
+ *                         example: 5
+ *                       id_commande:
+ *                         type: integer
+ *                         example: 2
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-04-28T15:07:29.561Z"
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2025-04-28T15:54:11.714Z"
+ *                       nom_produit:
+ *                         type: string
+ *                         example: "Caméra intérieure Somfy"
+ *                       image_produit:
+ *                         type: string
+ *                         example: "http://localhost:2000/media/images/stock_moyensgeneraux/produits/bread-5671124_1280_1753273770247.jpg"
+ *                 total:
+ *                   type: integer
+ *                   example: 25
+ *                 page:
+ *                   type: integer
+ *                   example: 1
+ *                 pageSize:
+ *                   type: integer
+ *                   example: 10
  */
 
 router.get("/", controller.getExemplaires);
@@ -221,5 +302,85 @@ router.get("/produit/:id", controller.getExemplairesByProduit);
 
 
 router.get("/produit/:id/etat/:etat", controller.filterExemplairesByEtat);  // id : id du produit de l'exemplaire ; etat : etat de l'exemplaire ("Vendu"...)
+
+/**
+ * @swagger
+ * /stocks/exemplaires/{id}/reserver:
+ *   post:
+ *     summary: Met l'état d'un exemplaire à 'Reserve'
+ *     tags: [Exemplaires]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'exemplaire
+ *     responses:
+ *       200:
+ *         description: Exemplaire réservé
+ *       400:
+ *         description: ID invalide
+ *       500:
+ *         description: Erreur serveur
+ */
+router.post('/:id/reserver', controller.reserverExemplaireController);
+
+/**
+ * @swagger
+ * /stocks/exemplaires/{id}/annuler-reservation:
+ *   post:
+ *     summary: Annule la réservation d'un exemplaire (remet à 'Disponible')
+ *     tags: [Exemplaires]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'exemplaire
+ *     responses:
+ *       200:
+ *         description: Réservation annulée, exemplaire disponible
+ *       400:
+ *         description: ID invalide ou exemplaire non réservé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.post('/:id/annuler-reservation', controller.annulerReservationExemplaireController);
+
+/**
+ * @swagger
+ * /stocks/exemplaires/{id}/changer-etat:
+ *   post:
+ *     summary: Change l'état d'un exemplaire à une valeur donnée
+ *     tags: [Exemplaires]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'exemplaire
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               etat:
+ *                 type: string
+ *                 example: Reserve
+ *                 description: "Nouvel état (Disponible, Reserve, Vendu, Utilisation, En maintenance, Endommage)"
+ *     responses:
+ *       200:
+ *         description: Etat modifié
+ *       400:
+ *         description: ID ou état invalide
+ *       500:
+ *         description: Erreur serveur
+ */
+router.post('/:id/changer-etat', controller.changerEtatExemplaireController);
 
 module.exports = router;

@@ -1,7 +1,7 @@
 const { eq, sql, and, inArray, isNull, count } = require("drizzle-orm");
 const { db } = require("../../../core/database/config");
 // const db = require("../utils/drizzle-wrapper");
-const { exemplaires, produits } = require("../../../core/database/models");
+const { exemplaires, produits, images } = require("../../../core/database/models");
 
 /**
  *
@@ -44,8 +44,53 @@ async function createExemplaire(data) {
   return newExemplaire;
 }
 
-async function getExemplaires() {
-  return db.select().from(exemplaires);
+/**
+ * Récupère les exemplaires avec pagination, nom du produit, première image du produit et filtres dynamiques
+ * @param {Object} options - { page, pageSize, num_serie, date_entree, etat_exemplaire, id_produit, id_livraison, id_commande }
+ * @returns {Promise<{ data: Array, total: number, page: number, pageSize: number }>} Résultat paginé
+ */
+async function getExemplaires({ page = 1, pageSize = 10, num_serie, date_entree, etat_exemplaire, id_produit, id_livraison, id_commande } = {}) {
+  const offset = (page - 1) * pageSize;
+  const filters = [];
+  if (num_serie) filters.push(eq(exemplaires.num_serie, num_serie));
+  if (date_entree) filters.push(eq(exemplaires.date_entree, date_entree));
+  if (etat_exemplaire) filters.push(eq(exemplaires.etat_exemplaire, etat_exemplaire));
+  if (id_produit) filters.push(eq(exemplaires.id_produit, id_produit));
+  if (id_livraison) filters.push(eq(exemplaires.id_livraison, id_livraison));
+  if (id_commande) filters.push(eq(exemplaires.id_commande, id_commande));
+
+  // Total count avec filtres
+  const [{ count: total }] = await db
+    .select({ count: sql`COUNT(*)::int` })
+    .from(exemplaires)
+    .where(filters.length ? and(...filters) : undefined);
+
+  // Main query with joins et filtres
+  const exemplairesData = await db
+    .select({
+      ...exemplaires,
+      nom_produit: produits.desi_produit,
+      image_produit: images.lien_image,
+    })
+    .from(exemplaires)
+    .leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
+    .leftJoin(
+      images,
+      and(
+        eq(images.id_produit, exemplaires.id_produit),
+        eq(images.numero_image, 1)
+      )
+    )
+    .where(filters.length ? and(...filters) : undefined)
+    .offset(offset)
+    .limit(pageSize);
+
+  return {
+    data: exemplairesData,
+    total,
+    page,
+    pageSize,
+  };
 }
 
 async function getExemplaireById(id) {
@@ -195,6 +240,59 @@ async function filterExemplairesByEtat(id, etat) {
   };
 }
 
+/**
+ * Met l'état d'un exemplaire à 'Reserve'
+ */
+async function reserverExemplaire(id) {
+  return await db.transaction(async (tx) => {
+    const [ex] = await tx.select().from(exemplaires).where(eq(exemplaires.id_exemplaire, id));
+    if (!ex) throw new Error("Exemplaire introuvable");
+    if (ex.etat_exemplaire === etatExemplaire[5]) return ex; // déjà réservé
+    const [updated] = await tx.update(exemplaires)
+      .set({ etat_exemplaire: etatExemplaire[5], updated_at: new Date() })
+      .where(eq(exemplaires.id_exemplaire, id))
+      .returning();
+    return updated;
+  });
+}
+
+/**
+ * Annule la réservation d'un exemplaire (remet à 'Disponible')
+ */
+async function annulerReservationExemplaire(id) {
+  return await db.transaction(async (tx) => {
+    const [ex] = await tx.select().from(exemplaires).where(eq(exemplaires.id_exemplaire, id));
+    if (!ex) throw new Error("Exemplaire introuvable");
+    if (ex.etat_exemplaire !== etatExemplaire[5]) throw new Error("L'exemplaire n'est pas réservé");
+    const [updated] = await tx.update(exemplaires)
+      .set({ etat_exemplaire: etatExemplaire[1], updated_at: new Date() })
+      .where(eq(exemplaires.id_exemplaire, id))
+      .returning();
+    return updated;
+  });
+}
+
+/**
+ * Change l'état d'un exemplaire à une valeur donnée (avec validation)
+ * @param {number} id - ID de l'exemplaire
+ * @param {string} etat - Nouvel état
+ * @returns {Promise<object>} - L'exemplaire mis à jour
+ */
+async function changerEtatExemplaire(id, etat) {
+  if (!etatExemplaire.includes(etat)) {
+    throw new Error(`Etat invalide. Les états autorisés sont : ${etatExemplaire.join(', ')}`);
+  }
+  return await db.transaction(async (tx) => {
+    const [ex] = await tx.select().from(exemplaires).where(eq(exemplaires.id_exemplaire, id));
+    if (!ex) throw new Error("Exemplaire introuvable");
+    const [updated] = await tx.update(exemplaires)
+      .set({ etat_exemplaire: etat, updated_at: new Date() })
+      .where(eq(exemplaires.id_exemplaire, id))
+      .returning();
+    return updated;
+  });
+}
+
 // // // Vérifie si un exemplaire spécifique est en cours d'utilisation
 // // async function isExemplaireInUse(exId) {
 // //   const [result] = await db
@@ -227,6 +325,9 @@ module.exports = {
   // isExemplairesInUse,
 
   filterExemplairesByEtat,
+  reserverExemplaire,
+  annulerReservationExemplaire,
+  changerEtatExemplaire,
 
   //variable
   etatExemplaire,
