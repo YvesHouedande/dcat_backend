@@ -157,7 +157,6 @@ const express = require('express');
 const router = express.Router();
 const rangementController = require('../controllers/rangement.controller');
 
-
 router.post('/create', rangementController.createDossier);
 router.get('/', rangementController.getDossiers);
 router.get('/:id', rangementController.getDossierById);
