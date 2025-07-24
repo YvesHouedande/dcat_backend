@@ -7,16 +7,11 @@ const createInterlocuteur = async (data) => {
     return result;
 }
 
-const getInterlocuteurs = async (options = {}) => {
-    const { limit = 10, offset = 0 } = options;
-    const [totalResult] = await db.select({ count: db.fn.count() }).from(interlocuteurs);
-    const total = Number(totalResult.count);
+const getInterlocuteurs = async () => {
     const data = await db
         .select()
-        .from(interlocuteurs)
-        .limit(limit)
-        .offset(offset);
-    return { data, total };
+        .from(interlocuteurs);
+    return { data };
 }
 
 const getInterlocuteurbyPartenaire = async (id) => {

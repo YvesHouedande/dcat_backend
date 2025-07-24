@@ -192,55 +192,25 @@ module.exports = router;
  *         required: true
  *         schema:
  *           type: string
- *       - in: query
- *         name: page
- *         required: false
- *         description: Numéro de la page (par défaut 1)
- *         schema:
- *           type: integer
- *           default: 1
- *       - in: query
- *         name: limit
- *         required: false
- *         description: Nombre d'éléments par page (par défaut 10)
- *         schema:
- *           type: integer
- *           default: 10
  *     responses:
  *       200:
- *         description: Liste paginée des contrats
+ *         description: Liste des contrats du type demandé
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 page:
- *                   type: integer
- *                   example: 1
- *                 limit:
- *                   type: integer
- *                   example: 10
- *                 total:
- *                   type: integer
- *                   example: 42
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Contrat'
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Contrat'
  *             example:
- *               page: 1
- *               limit: 10
- *               total: 42
- *               data:
- *                 - id_contrat: 1
- *                   nom_contrat: "Contrat A"
- *                   type_de_contrat: "Type 1"
- *                   date_debut: "2024-03-01"
- *                   date_fin: "2025-03-01"
- *                   statut: "actif"
- *                   id_partenaire: 2
- *                   created_at: "2024-03-01T12:00:00Z"
- *                   updated_at: "2024-03-01T12:00:00Z"
+ *               - id_contrat: 1
+ *                 nom_contrat: "Contrat A"
+ *                 type_de_contrat: "Type 1"
+ *                 date_debut: "2024-03-01"
+ *                 date_fin: "2025-03-01"
+ *                 statut: "actif"
+ *                 id_partenaire: 2
+ *                 created_at: "2024-03-01T12:00:00Z"
+ *                 updated_at: "2024-03-01T12:00:00Z"
  *       404:
  *         description: Aucun contrat trouvé
  */

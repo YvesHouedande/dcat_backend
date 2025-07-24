@@ -15,38 +15,25 @@ const createDemande = async (data) => {
     }
 };
 
-const getAllDemandes = async (options = {}) => {
+const getAllDemandes = async () => {
     try {
-        const { limit = 10, offset = 0 } = options;
-        const [totalResult] = await db.select({ count: db.fn.count() }).from(demandes);
-        const total = Number(totalResult.count);
         const data = await db
             .select()
-            .from(demandes)
-            .limit(limit)
-            .offset(offset);
-        return { data, total };
+            .from(demandes);
+        return { data };
     } catch (error) {
         console.error("Error fetching demandes:", error);
         throw error;
     }
 };
 
-const getdemandeBytype = async (type, options = {}) => {
+const getdemandeBytype = async (type) => {
     try {
-        const { limit = 10, offset = 0 } = options;
-        const [totalResult] = await db
-            .select({ count: db.fn.count() })
-            .from(demandes)
-            .where(eq(demandes.type_demande, type));
-        const total = Number(totalResult.count);
         const data = await db
             .select()
             .from(demandes)
-            .where(eq(demandes.type_demande, type))
-            .limit(limit)
-            .offset(offset);
-        return { data, total };
+            .where(eq(demandes.type_demande, type));
+        return { data };
     } catch (error) {
         console.error("Error fetching demande by type:", error);
         throw error;
@@ -121,20 +108,12 @@ const deleteDocumentByDemande = async (id_demande) => {
     return result;
 };
 
-const getDemnandeByEmploye = async (id_employe, options = {}) => {
-    const { limit = 10, offset = 0 } = options;
-    const [totalResult] = await db
-        .select({ count: db.fn.count() })
-        .from(demandes)
-        .where(eq(demandes.id_employes, id_employe));
-    const total = Number(totalResult.count);
+const getDemnandeByEmploye = async (id_employe) => {
     const data = await db
         .select()
         .from(demandes)
-        .where(eq(demandes.id_employes, id_employe))
-        .limit(limit)
-        .offset(offset);
-    return { data, total };
+        .where(eq(demandes.id_employes, id_employe));
+    return { data };
 };
 
 const deleteDocumentById = async (id_document) => {

@@ -352,8 +352,8 @@
  * @swagger
  * /administration/rangement/documents/{id}:
  *   get:
- *     summary: Récupérer les documents d'un dossier (paginé)
- *     description: Retourne la liste paginée des documents associés à un dossier spécifique. Les paramètres de pagination sont optionnels.
+ *     summary: Récupérer les documents d'un dossier
+ *     description: Retourne la liste des documents associés à un dossier spécifique.
  *     tags: [Rangement]
  *     parameters:
  *       - in: path
@@ -362,58 +362,28 @@
  *         description: Identifiant du dossier
  *         schema:
  *           type: integer
- *       - in: query
- *         name: page
- *         required: false
- *         description: Numéro de la page (par défaut 1)
- *         schema:
- *           type: integer
- *           default: 1
- *       - in: query
- *         name: limit
- *         required: false
- *         description: Nombre d'éléments par page (par défaut 10)
- *         schema:
- *           type: integer
- *           default: 10
  *     responses:
  *       200:
- *         description: Liste paginée des documents du dossier
+ *         description: Liste des documents du dossier
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 page:
- *                   type: integer
- *                   example: 1
- *                 limit:
- *                   type: integer
- *                   example: 10
- *                 total:
- *                   type: integer
- *                   example: 42
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Document'
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Document'
  *             example:
- *               page: 1
- *               limit: 10
- *               total: 42
- *               data:
- *                 - id_documents: 1
- *                   libelle_document: "Contrat 2024"
- *                   date_document: "2024-03-01"
- *                   lien_document: "media/documents/contrat2024.pdf"
- *                   etat_document: "Actif"
- *                   id_dossier: 2
- *                 - id_documents: 2
- *                   libelle_document: "Facture Janvier"
- *                   date_document: "2024-01-15"
- *                   lien_document: "media/documents/facture_janvier.pdf"
- *                   etat_document: "Actif"
- *                   id_dossier: 2
+ *               - id_documents: 1
+ *                 libelle_document: "Contrat 2024"
+ *                 date_document: "2024-03-01"
+ *                 lien_document: "media/documents/contrat2024.pdf"
+ *                 etat_document: "Actif"
+ *                 id_dossier: 2
+ *               - id_documents: 2
+ *                 libelle_document: "Facture Janvier"
+ *                 date_document: "2024-01-15"
+ *                 lien_document: "media/documents/facture_janvier.pdf"
+ *                 etat_document: "Actif"
+ *                 id_dossier: 2
  *       500:
  *         description: Erreur serveur
  */

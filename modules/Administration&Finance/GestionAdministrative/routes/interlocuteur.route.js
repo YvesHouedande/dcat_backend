@@ -66,53 +66,22 @@ router.post("/", interlocuteurController.createInterlocuteur);
  *   get:
  *     summary: Récupérer tous les interlocuteurs
  *     tags: [Interlocuteur]
- *     parameters:
- *       - in: query
- *         name: page
- *         required: false
- *         description: Numéro de la page (par défaut 1)
- *         schema:
- *           type: integer
- *           default: 1
- *       - in: query
- *         name: limit
- *         required: false
- *         description: Nombre d'éléments par page (par défaut 10)
- *         schema:
- *           type: integer
- *           default: 10
  *     responses:
  *       200:
- *         description: Liste paginée des interlocuteurs
+ *         description: Liste des interlocuteurs
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 page:
- *                   type: integer
- *                   example: 1
- *                 limit:
- *                   type: integer
- *                   example: 10
- *                 total:
- *                   type: integer
- *                   example: 42
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Interlocuteur'
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Interlocuteur'
  *             example:
- *               page: 1
- *               limit: 10
- *               total: 42
- *               data:
- *                 - nom_interlocuteur: "Martin"
- *                   prenom_interlocuteur: "Paul"
- *                   contact_interlocuteur: "0600000000"
- *                   email_interlocuteur: "paul.martin@example.com"
- *                   fonction_interlocuteur: "Directeur"
- *                   id_partenaire: 2
+ *               - nom_interlocuteur: "Martin"
+ *                 prenom_interlocuteur: "Paul"
+ *                 contact_interlocuteur: "0600000000"
+ *                 email_interlocuteur: "paul.martin@example.com"
+ *                 fonction_interlocuteur: "Directeur"
+ *                 id_partenaire: 2
  */
 router.get("/", interlocuteurController.getInterlocuteurs);
 

@@ -3,16 +3,11 @@ const {db} = require("../../../../core/database/config");
 const {employes} = require("../../../../core/database/models");
 
 
-const getEmployes = async (options = {}) => {
-    const { limit = 10, offset = 0 } = options;
-    const [totalResult] = await db.select({ count: db.fn.count() }).from(employes);
-    const total = Number(totalResult.count);
+const getEmployes = async () => {
     const data = await db
         .select()
-        .from(employes)
-        .limit(limit)
-        .offset(offset);
-    return { data, total };
+        .from(employes);
+    return data;
 }
 
 const getEmployeById = async (id) => {

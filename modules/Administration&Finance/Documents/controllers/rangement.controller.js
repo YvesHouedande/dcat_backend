@@ -22,19 +22,8 @@ const createDossier = async (req, res) => {
 }
 const getDossiers = async (req, res) => {
     try {
-        let { page = 1, limit = 10 } = req.query;
-        page = parseInt(page);
-        limit = parseInt(limit);
-        if (isNaN(page) || page < 1) page = 1;
-        if (isNaN(limit) || limit < 1) limit = 10;
-        const offset = (page - 1) * limit;
-        const { data, total } = await dossierService.getDossiers({ limit, offset });
-        res.status(200).json({
-            page,
-            limit,
-            total,
-            data
-        });
+        const dossiers = await dossierService.getDossiers();
+        res.status(200).json(dossiers);
     } catch (error) {
         logger.error("Error fetching dossiers:", { error, route: req.originalUrl });
         res.status(500).json({ message: "Internal Server Error" });
@@ -161,19 +150,8 @@ const deleteDocumentById = async (req, res) => {
 const getDossierByType = async (req, res) => {
     try {
         const { type } = req.params;
-        let { page = 1, limit = 10 } = req.query;
-        page = parseInt(page);
-        limit = parseInt(limit);
-        if (isNaN(page) || page < 1) page = 1;
-        if (isNaN(limit) || limit < 1) limit = 10;
-        const offset = (page - 1) * limit;
-        const { data, total } = await dossierService.getDossierByType(type, { limit, offset });
-        res.status(200).json({
-            page,
-            limit,
-            total,
-            data
-        });
+        const dossiers = await dossierService.getDossierByType(type);
+        res.status(200).json(dossiers);
     } catch (error) {
         logger.error("Error fetching dossiers by type:", { error, route: req.originalUrl });
         res.status(500).json({ message: "Internal Server Error" });
@@ -183,19 +161,8 @@ const getDossierByType = async (req, res) => {
 const getdocumentsBydossier = async (req, res) => {
     try {
         const { id } = req.params;
-        let { page = 1, limit = 10 } = req.query;
-        page = parseInt(page);
-        limit = parseInt(limit);
-        if (isNaN(page) || page < 1) page = 1;
-        if (isNaN(limit) || limit < 1) limit = 10;
-        const offset = (page - 1) * limit;
-        const { documents, total } = await dossierService.getdocumentsBydossier(id, { limit, offset });
-        res.status(200).json({
-            page,
-            limit,
-            total,
-            data: documents
-        });
+        const { documents } = await dossierService.getdocumentsBydossier(id);
+        res.status(200).json(documents);
     } catch (error) {
         logger.error("Error fetching documents by dossier:", { error, route: req.originalUrl });
         res.status(500).json({ message: "Internal Server Error" });

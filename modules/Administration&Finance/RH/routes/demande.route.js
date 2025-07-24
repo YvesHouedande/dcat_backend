@@ -33,7 +33,8 @@ router.get('/employe/:id_employe', demandeController.getDemandeByEmploye);
 router.get('/:id', demandeController.getDemandeById);
 router.put('/:id', demandeController.updateDemande);
 router.delete('/:id', demandeController.deleteDemande);
-router.delete('/:id/docdemande/:docId', demandeController.deleteDocumentById);
+router.delete('/:id/docdemande/:docId', protect(['Gestion_administration']), demandeController.deleteDocumentById);
+
 
 module.exports = router;
 
@@ -193,55 +194,15 @@ module.exports = router;
  *     summary: Récupérer toutes les demandes RH
  *     tags:
  *       - Demandes RH
- *     parameters:
- *       - in: query
- *         name: page
- *         required: false
- *         description: Numéro de la page (par défaut 1)
- *         schema:
- *           type: integer
- *           default: 1
- *       - in: query
- *         name: limit
- *         required: false
- *         description: Nombre d'éléments par page (par défaut 10)
- *         schema:
- *           type: integer
- *           default: 10
  *     responses:
  *       200:
- *         description: Liste paginée des demandes RH
+ *         description: Liste des demandes RH
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 page:
- *                   type: integer
- *                   example: 1
- *                 limit:
- *                   type: integer
- *                   example: 10
- *                 total:
- *                   type: integer
- *                   example: 42
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/DemandeRH'
- *             example:
- *               page: 1
- *               limit: 10
- *               total: 42
- *               data:
- *                 - id_demandes: 1
- *                   motif: "Congé annuel"
- *                   date_absence: "2024-03-01"
- *                   type_demande: "congé"
- *                   id_employes: 2
- *                   status: "validée"
- *                   created_at: "2024-03-01T12:00:00Z"
- *                   updated_at: "2024-03-01T12:00:00Z"
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/DemandeRH'
  *       500:
  *         description: Erreur serveur
  */
@@ -286,54 +247,15 @@ module.exports = router;
  *         required: true
  *         schema:
  *           type: string
- *       - in: query
- *         name: page
- *         required: false
- *         description: Numéro de la page (par défaut 1)
- *         schema:
- *           type: integer
- *           default: 1
- *       - in: query
- *         name: limit
- *         required: false
- *         description: Nombre d'éléments par page (par défaut 10)
- *         schema:
- *           type: integer
- *           default: 10
  *     responses:
  *       200:
- *         description: Liste paginée des demandes RH par type
+ *         description: Liste des demandes RH par type
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 page:
- *                   type: integer
- *                   example: 1
- *                 limit:
- *                   type: integer
- *                   example: 10
- *                 total:
- *                   type: integer
- *                   example: 42
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/DemandeRH'
- *             example:
- *               page: 1
- *               limit: 10
- *               total: 42
- *               data:
- *                 - id_demandes: 1
- *                   motif: "Congé annuel"
- *                   date_absence: "2024-03-01"
- *                   type_demande: "congé"
- *                   id_employes: 2
- *                   status: "validée"
- *                   created_at: "2024-03-01T12:00:00Z"
- *                   updated_at: "2024-03-01T12:00:00Z"
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/DemandeRH'
  *       500:
  *         description: Erreur serveur
  */
@@ -351,54 +273,15 @@ module.exports = router;
  *         required: true
  *         schema:
  *           type: integer
- *       - in: query
- *         name: page
- *         required: false
- *         description: Numéro de la page (par défaut 1)
- *         schema:
- *           type: integer
- *           default: 1
- *       - in: query
- *         name: limit
- *         required: false
- *         description: Nombre d'éléments par page (par défaut 10)
- *         schema:
- *           type: integer
- *           default: 10
  *     responses:
  *       200:
- *         description: Liste paginée des demandes RH de l'employé
+ *         description: Liste des demandes RH de l'employé
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 page:
- *                   type: integer
- *                   example: 1
- *                 limit:
- *                   type: integer
- *                   example: 10
- *                 total:
- *                   type: integer
- *                   example: 42
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/DemandeRH'
- *             example:
- *               page: 1
- *               limit: 10
- *               total: 42
- *               data:
- *                 - id_demandes: 1
- *                   motif: "Congé annuel"
- *                   date_absence: "2024-03-01"
- *                   type_demande: "congé"
- *                   id_employes: 2
- *                   status: "validée"
- *                   created_at: "2024-03-01T12:00:00Z"
- *                   updated_at: "2024-03-01T12:00:00Z"
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/DemandeRH'
  *       500:
  *         description: Erreur serveur
  */

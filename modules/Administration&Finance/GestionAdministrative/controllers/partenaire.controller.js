@@ -20,19 +20,8 @@ const createPartenaire = async (req, res) => {
 
 const getPartenaires = async (req, res) => {
   try {
-    let { page = 1, limit = 10 } = req.query;
-    page = parseInt(page);
-    limit = parseInt(limit);
-    if (isNaN(page) || page < 1) page = 1;
-    if (isNaN(limit) || limit < 1) limit = 10;
-    const offset = (page - 1) * limit;
-    const { data, total } = await partenaireService.getPartenaires({ limit, offset });
-    return res.status(200).json({
-      page,
-      limit,
-      total,
-      data
-    });
+    const { data } = await partenaireService.getPartenaires();
+    return res.status(200).json(data);
   } catch (error) {
     console.error("Erreur lors de la récupération des partenaires :", error);
     res.status(500).json({ error: "Erreur serveur lors de la récupération des partenaires", details: error.message });
