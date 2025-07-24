@@ -15,6 +15,15 @@ const tachesController = require("../controllers/taches.controller");
  *         nom_tache:
  *           type: string
  *           description: Nom de la tâche
+ *         desc_tache:
+ *           type: string
+ *           description: Description de la tâche
+ *         priorite:
+ *           type: string
+ *           description: Priorité de la tâche
+ *         statut:
+ *           type: string
+ *           description: Statut de la tâche
  *         date_debut:
  *           type: string
  *           format: date
@@ -192,6 +201,15 @@ router.get("/:id", tachesController.getTacheById);
  *               nom_tache:
  *                 type: string
  *                 description: Nom de la tâche
+ *               desc_tache:
+ *                 type: string
+ *                 description: Description de la tâche
+ *               priorite:
+ *                 type: string
+ *                 description: Priorité de la tâche
+ *               statut:
+ *                 type: string
+ *                 description: Statut de la tâche
  *               date_debut:
  *                 type: string
  *                 format: date
@@ -249,6 +267,15 @@ router.post("/", tachesController.createTache);
  *               nom_tache:
  *                 type: string
  *                 description: Nom de la tâche
+ *               desc_tache:
+ *                 type: string
+ *                 description: Description de la tâche
+ *               priorite:
+ *                 type: string
+ *                 description: Priorité de la tâche
+ *               statut:
+ *                 type: string
+ *                 description: Statut de la tâche
  *               date_debut:
  *                 type: string
  *                 format: date

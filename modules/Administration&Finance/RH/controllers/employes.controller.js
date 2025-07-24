@@ -44,6 +44,24 @@ const getEmployeByFonction = async (req, res) => {
     }
 };
 
+const getEmployesByEmail = async (req, res) => {
+    try {
+        const {email} = req.params;
+        if (!email) {
+            return res.status(400).json
+({ message: "Email manquant" });
+        }
+        const employe = await employeservice.employesByEmail(email);
+        if (!employe) {
+            return res.status(404).json({message: "Aucun employé trouvé pour cet email"});
+        }
+        return res.status(200).json(employe);
+    } catch (error) {
+        console.error("Erreur lors de la récupération par email:", error);
+        return res.status(500).json({ message: "Erreur interne lors de la récupération par email" });
+    }
+};
+
 const getEmployeByStatut = async (req, res) => {
     try {
         const {statut} = req.params;
@@ -109,6 +127,7 @@ module.exports = {
     getEmployes,
     getEmployeById,
     getEmployeByFonction,
+    getEmployesByEmail,
     getEmployeByStatut,
     updateEmploye,
     deleteEmploye
