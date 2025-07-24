@@ -30,14 +30,16 @@ router.post("/", controller.createExemplaire);
  * @swagger
  * /stocks/exemplaires:
  *   get:
- *     summary: Récupère tous les exemplaires (pagination, filtres avancés, nom du produit, image du produit)
+ *     summary: Récupère la liste paginée des exemplaires avec filtres avancés
  *     description: |
- *       Permet de filtrer les exemplaires selon tous les champs du modèle, y compris les champs numériques (prix, marges, etc.) et dates.
+ *       Cette route permet de récupérer tous les exemplaires avec la possibilité de filtrer sur tous les champs du modèle, y compris les champs numériques (prix, marges, etc.) et les dates.
  *       
- *       **Filtres avancés disponibles pour chaque champ numérique ou date :**
- *       - `{champ}_min` : valeur minimale (>=)
- *       - `{champ}_max` : valeur maximale (<=)
- *       - `{champ}_proche` : valeur "proche" (voir marge ci-dessous)
+ *       **Filtres disponibles :**
+ *       - Tous les champs du modèle peuvent être filtrés par valeur exacte.
+ *       - Pour les champs numériques et dates, il est possible d'utiliser les suffixes suivants :
+ *         - `{champ}_min` : valeur minimale (>=)
+ *         - `{champ}_max` : valeur maximale (<=)
+ *         - `{champ}_proche` : valeur proche (voir marge ci-dessous)
  *       
  *       **Marge de proximité appliquée pour `_proche` :**
  *         - `prix_de_vente`, `prix_de_revient`, `prix_achat` : ±10
@@ -56,13 +58,13 @@ router.post("/", controller.createExemplaire);
  *         schema:
  *           type: integer
  *           default: 1
- *         description: Numéro de page pour la pagination
+ *         description: Numéro de page pour la pagination (par défaut 1)
  *       - in: query
  *         name: pageSize
  *         schema:
  *           type: integer
  *           default: 10
- *         description: Nombre d'éléments par page
+ *         description: Nombre d'éléments par page (par défaut 10, max 100)
  *       - in: query
  *         name: num_serie
  *         schema:
@@ -330,6 +332,29 @@ router.post("/", controller.createExemplaire);
  *                 pageSize:
  *                   type: integer
  *                   example: 10
+ *       400:
+ *         description: Paramètres de requête invalides
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Paramètre de filtre invalide"
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "une erreur est survenue"
+ *                 details:
+ *                   type: string
+ *                   example: "Détail de l'erreur technique"
  */
 router.get("/", controller.getExemplaires);
 
@@ -597,7 +622,7 @@ router.get("/produit/:id", controller.getExemplairesByProduit);
  *       500:
  *         description: Erreur serveur
  */
-router.get("/produit/:id/prix-distincts", controller.distinctPrixExemplaires);
+router.get("/produit/:id/prix-distincts", controller.getDistinctPrixExemplairesByProduit);
 
 /**
  * @swagger

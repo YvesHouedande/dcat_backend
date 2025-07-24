@@ -365,6 +365,9 @@ const contrats = pgTable("contrats", {
   id_partenaire: integer("id_partenaire").references(
     () => partenaires.id_partenaire
   ),
+  id_entite: integer("id_entite").references(
+    () => entites.id_entite
+  ),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
