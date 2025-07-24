@@ -30,6 +30,14 @@ const etatExemplaire = [
  */
 async function createExemplaire(data) {
   const { id_produit } = data;
+  // Cette partie n'est pas correcte car getExemplaireByNumSerie est une fonction asynchrone.
+  // Il faut utiliser "await" pour attendre le résultat de la promesse.
+  const result = await getExemplaireByNumSerie(data.num_serie);
+  if (result != null) {
+    const error = new Error("Exemplaire déjà existant, numéro de série déjà utilisé");
+    error.status = 403;
+    throw error;
+  }
   const [newExemplaire] = await db.insert(exemplaires).values(data).returning();
 
   // Incrémenter la quantité du produit lié
@@ -43,14 +51,51 @@ async function createExemplaire(data) {
 
   return newExemplaire;
 }
-//test
+
 /**
  * Récupère les exemplaires avec pagination, nom du produit, première image du produit et filtres dynamiques
  * @param {Object} options - { page, pageSize, num_serie, date_entree, etat_exemplaire, id_produit, id_livraison, id_commande }
  * @returns {Promise<{ data: Array, total: number, page: number, pageSize: number }>} Résultat paginé
  */
-async function getExemplaires({ page = 1, pageSize = 10, num_serie, date_entree, etat_exemplaire, id_produit, id_livraison, id_commande, created_at, updated_at, frais_divers, coef_divers, marge_haute, marge_basse, prix_de_vente, prix_de_revient, prix_achat, date_achat, ...advancedFilters } = {}) {
-  const offset = (page - 1) * pageSize;
+/**
+ * Récupère les exemplaires avec pagination personnalisable, nom du produit, première image du produit et filtres dynamiques
+ * @param {Object} options - { page, pageSize, num_serie, ... }
+ * @returns {Promise<{ data: Array, total: number, page: number, pageSize: number }>} Résultat paginé
+ *
+ * Pour choisir le nombre d'éléments à afficher, il suffit de passer le paramètre `pageSize` dans les options (ou dans la query string côté contrôleur).
+ * Exemple : /api/exemplaires?page=1&pageSize=25
+ */
+async function getExemplaires({
+  page = 1,
+  pageSize = 10,
+  num_serie,
+  date_entree,
+  etat_exemplaire,
+  id_produit,
+  id_livraison,
+  id_commande,
+  created_at,
+  updated_at,
+  frais_divers,
+  coef_divers,
+  marge_haute,
+  marge_basse,
+  prix_de_vente,
+  prix_de_revient,
+  prix_achat,
+  date_achat,
+  ...advancedFilters
+} = {}) {
+  // L'utilisateur peut choisir le nombre d'éléments à afficher via pageSize
+  let pageNumber = parseInt(page, 10);
+  let pageSizeNumber = parseInt(pageSize, 10);
+
+  // Valeurs par défaut et bornes
+  if (isNaN(pageNumber) || pageNumber < 1) pageNumber = 1;
+  if (isNaN(pageSizeNumber) || pageSizeNumber < 1) pageSizeNumber = 10;
+  if (pageSizeNumber > 100) pageSizeNumber = 100; // Limite pour éviter les abus
+
+  const offset = (pageNumber - 1) * pageSizeNumber;
   const filters = [];
   if (num_serie) filters.push(eq(exemplaires.num_serie, num_serie));
   if (date_entree) filters.push(eq(exemplaires.date_entree, date_entree));
@@ -98,13 +143,13 @@ async function getExemplaires({ page = 1, pageSize = 10, num_serie, date_entree,
     }
   });
 
-  // Total count avec filtres
+  // Récupération du nombre total d'exemplaires correspondant aux filtres
   const [{ count: total }] = await db
     .select({ count: sql`COUNT(*)::int` })
     .from(exemplaires)
     .where(filters.length ? and(...filters) : undefined);
 
-  // Main query with joins et filtres
+  // Récupération des exemplaires paginés avec jointures
   const exemplairesData = await db
     .select({
       ...exemplaires,
@@ -113,6 +158,8 @@ async function getExemplaires({ page = 1, pageSize = 10, num_serie, date_entree,
     })
     .from(exemplaires)
     .leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
+    // Pour éviter de dupliquer les exemplaires si un produit a plusieurs images,
+    // on ne fait la jointure qu'avec l'image principale (numero_image = 1)
     .leftJoin(
       images,
       and(
@@ -121,14 +168,27 @@ async function getExemplaires({ page = 1, pageSize = 10, num_serie, date_entree,
       )
     )
     .where(filters.length ? and(...filters) : undefined)
-    .offset(offset)
-    .limit(pageSize);
+    .limit(pageSizeNumber)
+    .offset(offset);
+
+  // Suppression des doublons d'exemplaires (même id_exemplaire)
+  const exemplairesUniques = [];
+  const seen = new Set();
+  for (const ex of exemplairesData) {
+    if (!seen.has(ex.id_exemplaire)) {
+      exemplairesUniques.push(ex);
+      seen.add(ex.id_exemplaire);
+    }
+  }
 
   return {
-    data: exemplairesData,
+    data: exemplairesUniques,
     total,
-    page,
-    pageSize,
+    page: pageNumber,
+    pageSize: pageSizeNumber,
+    totalPages: Math.ceil(total / pageSizeNumber),
+    hasNextPage: offset + exemplairesUniques.length < total,
+    hasPrevPage: pageNumber > 1
   };
 }
 
