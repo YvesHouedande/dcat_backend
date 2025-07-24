@@ -29,7 +29,7 @@ const getPartenaires = async (req, res) => {
   }
 };
 
-
+//recuperation des partenaires par id
 const getPartenaireById = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
