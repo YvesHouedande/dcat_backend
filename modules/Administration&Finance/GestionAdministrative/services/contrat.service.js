@@ -98,6 +98,13 @@ const deleteDocumentById = async (id) => {
     return result;
 };
 
+const getContratsByEntite=async(id_entite)=>{
+    return await db
+        .select()
+        .from(contrats)
+        .where(eq(contrats.id_entite, id_entite));
+};
+
 module.exports = {
     createContrat,
     getContrats,
@@ -110,5 +117,6 @@ module.exports = {
     getContratByType,
     deleteDocumentsByContrat,
     getDocumentById,
-    deleteDocumentById
+    deleteDocumentById,
+    getContratsByEntite
 }

@@ -17,6 +17,10 @@ async function safeUnlink(filePath) {
 
 const createContrat = async (req, res) => {
     try {
+        // Validation douce du champ id_entite
+        if (typeof req.body.id_entite !== 'undefined' && isNaN(parseInt(req.body.id_entite))) {
+            return res.status(400).json({ message: "id_entite doit être un entier si fourni." });
+        }
         const contratData = {
             nom_contrat: req.body.nom_contrat,
             type_contrat: req.body.type_contrat,
@@ -26,6 +30,7 @@ const createContrat = async (req, res) => {
             type_de_contrat: req.body.type_de_contrat,
             statut: req.body.statut || "actif",
             id_partenaire: req.body.id_partenaire ? parseInt(req.body.id_partenaire) : null,
+            id_entite: req.body.id_entite ? parseInt(req.body.id_entite) : null,
             duree_contrat: req.body.duree_contrat,
             nom_interlocuteur: req.body.nom_interlocuteur,
             contact_interlocuteur: req.body.contact_interlocuteur,
@@ -278,9 +283,13 @@ const updateContrat = async (req, res) => {
         if (!updateData || Object.keys(updateData).length === 0) {
             return res.status(400).json({ message: "Aucune donnée fournie" });
         }
-
+        // Validation douce du champ id_entite
+        if (typeof updateData.id_entite !== 'undefined' && isNaN(parseInt(updateData.id_entite))) {
+            return res.status(400).json({ message: "id_entite doit être un entier si fourni." });
+        }
         updateData.updated_at = new Date();
         if (updateData.id_partenaire) updateData.id_partenaire = parseInt(updateData.id_partenaire);
+        if (updateData.id_entite) updateData.id_entite = parseInt(updateData.id_entite);
         // Ajout des nouveaux champs (ils seront présents si envoyés dans le body)
         if (req.body.nom_interlocuteur !== undefined) updateData.nom_interlocuteur = req.body.nom_interlocuteur;
         if (req.body.contact_interlocuteur !== undefined) updateData.contact_interlocuteur = req.body.contact_interlocuteur;
@@ -406,6 +415,26 @@ const deleteDocumentById = async (req, res) => {
   }
 };
 
+const getContratsByEntite = async (req, res) => {
+    try {
+        const { id_entite } = req.params;
+        if (!id_entite) {
+            return res.status(400).json({ message: "ID entité requis" });
+        }
+        const contrats = await contratService.getContratsByEntite(id_entite);
+        if (!contrats || contrats.length === 0) {
+            return res.status(404).json({ message: "Aucun contrat trouvé pour cette entité." });
+        }
+        res.status(200).json({
+            success: true,
+            count: contrats.length,
+            data: contrats
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Erreur récupération contrats entité", details: error.message });
+    }
+};
+
 
 module.exports = {
     createContrat,
@@ -416,5 +445,6 @@ module.exports = {
     updateContrat,
     deleteContrat,
     deleteDocumentById,
-    addDocumentToContrat
+    addDocumentToContrat,
+    getContratsByEntite
 };

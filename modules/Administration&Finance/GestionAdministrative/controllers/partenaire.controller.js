@@ -18,6 +18,7 @@ const createPartenaire = async (req, res) => {
   }
 };
 
+//creer un partenaire
 const getPartenaires = async (req, res) => {
   try {
     const result = await partenaireService.getPartenaires();
