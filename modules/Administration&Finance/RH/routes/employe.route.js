@@ -82,6 +82,27 @@ router.get('/statut/:statut', employeController.getEmployeByStatut);
 
 /**
  * @swagger
+ * /administration/employes/email/{email}:
+ *   get:
+ *     summary: Récupère un ou plusieurs employés par email
+ *     tags: [Employes]
+ *     parameters:
+ *       - in: path
+ *         name: email
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: "Adresse email de l'employé"
+ *     responses:
+ *       200:
+ *         description: Employé(s) trouvé(s) avec cet email
+ *       404:
+ *         description: Aucun employé trouvé avec cet email
+ */
+router.get('/email/:email', employeController.getEmployesByEmail);
+
+/**
+ * @swagger
  * /administration/employes/{id}:
  *   put:
  *     summary: Met à jour les informations d'un employé
