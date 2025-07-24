@@ -30,8 +30,10 @@ const etatExemplaire = [
  */
 async function createExemplaire(data) {
   const { id_produit } = data;
-  const result= getExemplaireByNumSerie(data.num_serie);
-  if(result){
+  // Cette partie n'est pas correcte car getExemplaireByNumSerie est une fonction asynchrone.
+  // Il faut utiliser "await" pour attendre le résultat de la promesse.
+  const result = await getExemplaireByNumSerie(data.num_serie);
+  if (result != null) {
     const error = new Error("Exemplaire déjà existant, numéro de série déjà utilisé");
     error.status = 403;
     throw error;
