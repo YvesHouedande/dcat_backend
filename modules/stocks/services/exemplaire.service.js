@@ -146,7 +146,7 @@ async function getExemplaires({
     .select({ count: sql`COUNT(*)::int` })
     .from(exemplaires)
     .where(filters.length ? and(...filters) : undefined);
-//test
+
   // Récupération des exemplaires paginés avec jointures
   const exemplairesData = await db
     .select({
@@ -164,19 +164,28 @@ async function getExemplaires({
         eq(images.id_produit, exemplaires.id_produit),
         eq(images.numero_image, 1)
       )
-    
     )
     .where(filters.length ? and(...filters) : undefined)
     .limit(pageSizeNumber)
     .offset(offset);
 
+  // Suppression des doublons d'exemplaires (même id_exemplaire)
+  const exemplairesUniques = [];
+  const seen = new Set();
+  for (const ex of exemplairesData) {
+    if (!seen.has(ex.id_exemplaire)) {
+      exemplairesUniques.push(ex);
+      seen.add(ex.id_exemplaire);
+    }
+  }
+
   return {
-    data: exemplairesData,
+    data: exemplairesUniques,
     total,
     page: pageNumber,
     pageSize: pageSizeNumber,
     totalPages: Math.ceil(total / pageSizeNumber),
-    hasNextPage: offset + exemplairesData.length < total,
+    hasNextPage: offset + exemplairesUniques.length < total,
     hasPrevPage: pageNumber > 1
   };
 }
