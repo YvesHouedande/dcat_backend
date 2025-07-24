@@ -26,6 +26,7 @@ const keycloakConfig = {
   realmName: 'master'
 };
 
+
 const adminClient = new KeycloakAdminClient(keycloakConfig);
 
 const clients = [
