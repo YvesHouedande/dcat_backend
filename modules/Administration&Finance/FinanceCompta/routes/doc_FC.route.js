@@ -99,15 +99,56 @@ router.post('/ajouter',
  *     summary: Récupérer tous les documents Finance/Compta
  *     tags:
  *       - Documents Finance/Compta
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Numéro de la page (par défaut 1)
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Nombre d'éléments par page (par défaut 10)
+ *         schema:
+ *           type: integer
+ *           default: 10
  *     responses:
  *       200:
- *         description: Liste des documents
+ *         description: Liste paginée des documents
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Document'
+ *               type: object
+ *               properties:
+ *                 page:
+ *                   type: integer
+ *                   example: 1
+ *                 limit:
+ *                   type: integer
+ *                   example: 10
+ *                 total:
+ *                   type: integer
+ *                   example: 42
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Document'
+ *             example:
+ *               page: 1
+ *               limit: 10
+ *               total: 42
+ *               data:
+ *                 - id_documents: 1
+ *                   libelle_document: "Facture Janvier"
+ *                   classification_document: "finance"
+ *                   lien_document: "media/documents/finance/facture_janvier.pdf"
+ *                   etat_document: "actif"
+ *                   id_employes: 2
+ *                   id_nature_document: 1
+ *                   created_at: "2024-03-01T12:00:00Z"
+ *                   updated_at: "2024-03-01T12:00:00Z"
  */
 router.get('/', doc_FCController.getAllDocuments);
 

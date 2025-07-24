@@ -120,10 +120,19 @@ const addDocumentToDemande = async (req, res) => {
 
 const getAllDemandes = async (req, res) => {
     try {
-        logger.info("Récupération de toutes les demandes");
-        const result = await demandeService.getAllDemandes();
-        logger.info(`${result.length} demandes récupérées`);
-        res.status(200).json(result);
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 10;
+        const offset = (page - 1) * limit;
+        const { data, total } = await demandeService.getAllDemandes({ limit, offset });
+        res.status(200).json({
+            page,
+            limit,
+            total,
+            data
+        });
     } catch (error) {
         logger.error("Erreur lors de la récupération des demandes", {
             error: {
@@ -148,10 +157,16 @@ const getDemandeByType = async (req, res) => {
             return res.status(400).json({ message: "Le type de demande est requis." });
         }
         
-        const result = await demandeService.getdemandeBytype(type);
-        logger.info(`${result.length} demandes trouvées pour le type: ${type}`);
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 10;
+        const offset = (page - 1) * limit;
+        const { data, total } = await demandeService.getdemandeBytype(type, { limit, offset });
+        logger.info(`${data.length} demandes trouvées pour le type: ${type}`);
         
-        if (!result || result.length === 0) {
+        if (!data || data.length === 0) {
             logger.info(`Aucune demande trouvée pour le type: ${type}`);
             return res.status(404).json({ 
                 message: "Aucune demande trouvée pour ce type.",
@@ -159,7 +174,12 @@ const getDemandeByType = async (req, res) => {
             });
         }
         
-        res.status(200).json(result);
+        res.status(200).json({
+            page,
+            limit,
+            total,
+            data
+        });
     } catch (error) {
         logger.error(`Erreur lors de la récupération des demandes de type ${req.params.type}`, {
             error: {
@@ -204,14 +224,29 @@ const getDemandeById = async (req, res) => {
 const getDemandeByEmploye = async (req, res) => {
     try {
         const { id_employe } = req.params;
-        const result = await demandeService.getDemnandeByEmploye(id_employe);
-        res.status(200).json(result);
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 10;
+        const offset = (page - 1) * limit;
+        const { data, total } = await demandeService.getDemnandeByEmploye(id_employe, { limit, offset });
+        res.status(200).json({
+            page,
+            limit,
+            total,
+            data
+        });
     } catch (error) {
         logger.error(`Erreur lors de la récupération des demandes de l'employé ${req.params.id_employe}`, {
             error: {
                 message: error.message,
                 stack: error.stack
             }
+        });
+        res.status(500).json({
+            message: "Erreur interne lors de la récupération des demandes de l'employé.",
+            details: error.message
         });
     }
 };

@@ -42,7 +42,7 @@ const router = express.Router();
  *       400:
  *         description: Requête invalide
  */
-router.post('/', natureController.createNature);
+router.post('/',natureController.createNature);
 
 /**
  * @swagger

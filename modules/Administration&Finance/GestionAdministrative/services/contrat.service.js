@@ -18,18 +18,32 @@ const addDocumentTocontrat=async(data)=>{
     return result
 };
 
-const getContrats=async()=>{
-    return await db
-    .select()
-    .from(contrats);
+const getContrats = async (options = {}) => {
+    const { limit = 10, offset = 0 } = options;
+    const [totalResult] = await db.select({ count: db.fn.count() }).from(contrats);
+    const total = Number(totalResult.count);
+    const data = await db
+        .select()
+        .from(contrats)
+        .limit(limit)
+        .offset(offset);
+    return { data, total };
 };
 
-const getContratsbyPartenaire=async(id)=>{
-    const result = await db
-    .select()
-    .from(contrats)
-    .where(eq(contrats.id_partenaire,id))
-    return result
+const getContratsbyPartenaire = async (id, options = {}) => {
+    const { limit = 10, offset = 0 } = options;
+    const [totalResult] = await db
+        .select({ count: db.fn.count() })
+        .from(contrats)
+        .where(eq(contrats.id_partenaire, id));
+    const total = Number(totalResult.count);
+    const data = await db
+        .select()
+        .from(contrats)
+        .where(eq(contrats.id_partenaire, id))
+        .limit(limit)
+        .offset(offset);
+    return { data, total };
 };
 
 const getContratById=async(id)=>{
@@ -40,12 +54,20 @@ const getContratById=async(id)=>{
     return result
 };
 
-const getContratByType = async (type) => {
-    const result = await db
-        .select()
+const getContratByType = async (type, options = {}) => {
+    const { limit = 10, offset = 0 } = options;
+    const [totalResult] = await db
+        .select({ count: db.fn.count() })
         .from(contrats)
         .where(eq(contrats.type_de_contrat, type));
-    return result; // <-- on ne fait plus [result], on garde tout
+    const total = Number(totalResult.count);
+    const data = await db
+        .select()
+        .from(contrats)
+        .where(eq(contrats.type_de_contrat, type))
+        .limit(limit)
+        .offset(offset);
+    return { data, total };
 };
 
 
@@ -64,6 +86,7 @@ const getDocumentById=async(id)=>{
         .where(eq(documents.id_documents, id)); // <-- clé primaire correcte
     return result;
 };
+
 
 const updateContrat=async(id,data)=>{
     const [result]=await db

@@ -26,6 +26,12 @@ const createContrat = async (req, res) => {
             type_de_contrat: req.body.type_de_contrat,
             statut: req.body.statut || "actif",
             id_partenaire: req.body.id_partenaire ? parseInt(req.body.id_partenaire) : null,
+            duree_contrat: req.body.duree_contrat,
+            nom_interlocuteur: req.body.nom_interlocuteur,
+            contact_interlocuteur: req.body.contact_interlocuteur,
+            contenu_contrat: req.body.contenu_contrat,
+            cout: req.body.cout,
+            modalite_paiement: req.body.modalite_paiement
         }
         const createdContrat = await contratService.createContrat(contratData);
         res.status(201).json({
@@ -46,80 +52,117 @@ const createContrat = async (req, res) => {
 const addDocumentToContrat = async (req, res) => {
     try {
         if (!req.file) {
-        return res.status(400).json({
-        success: false,
-        message: "Aucun fichier n'a été téléchargé"
-    });
-    }
+            return res.status(400).json({
+                success: false,
+                message: "Aucun fichier n'a été téléchargé"
+            });
+        }
 
-    const { id } = req.params;
-    const relativePath = req.file.path
-        .replace(process.cwd(), '')
-        .replace(/\\/g, '/')
-        .replace(/^\//, '');
+        const { id } = req.params;
 
-    const documentData = {
-        libelle_document: req.body.libelle_document,
-        classification_document: req.body.classification_document,
-        lien_document: relativePath,
-        etat_document: req.body.etat_document || 'actif',
-        date_document: req.body.date_document ? new Date(req.body.date_document) : new Date(),
-        id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null,
-        id_contrat: parseInt(id)
-    };
+        // Nettoyage du chemin relatif
+        const relativePath = req.file.path
+            .replace(process.cwd(), '')
+            .replace(/\\/g, '/')
+            .replace(/^\//, '');
 
-    let document;
+        const documentData = {
+            libelle_document: req.body.libelle_document,
+            classification_document: req.body.classification_document,
+            lien_document: relativePath,
+            etat_document: req.body.etat_document || 'actif',
+            date_document: req.body.date_document ? new Date(req.body.date_document) : new Date(),
+            id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null,
+            id_contrat: parseInt(id)
+        };
+
+        let document;
         try {
-        document = await contratService.addDocumentTocontrat(documentData);
-    } catch (dbError) {
-        await fs.promises.unlink(req.file.path).catch(() => {});
+            document = await contratService.addDocumentTocontrat(documentData);
+
+            return res.status(201).json({
+                success: true,
+                message: "Document ajouté au contrat avec succès",
+                data: document
+            });
+
+        } catch (dbError) {
+            // Supprimer le fichier en cas d'erreur d'enregistrement en base
+            await fs.promises.unlink(req.file.path).catch(() => {});
+
+            // Log technique (console ou fichier)
+            logger.error("Erreur lors de l'enregistrement du document en base", {
+                message: dbError.message,
+                stack: dbError.stack,
+                ...dbError
+            });
+
+            return res.status(500).json({
+                success: false,
+                message: "Erreur lors de l'enregistrement du document en base",
+                error: dbError.message,
+                stack: dbError.stack,
+                details: dbError // ⚠️ À désactiver en production
+            });
+        }
+
+    } catch (error) {
+        logger.error("Erreur interne dans addDocumentToContrat", {
+            message: error.message,
+            stack: error.stack,
+            ...error
+        });
+
         return res.status(500).json({
             success: false,
-            message: "Erreur lors de l'enregistrement du document en base",
-            error: dbError.message
-    });
-    }
-
-    res.status(201).json({
-        success: true,
-        message: `Document ajouté avec succès au contrat ${document.id_contrat}`,
-        data: {
-            document: document,
-            details: {
-                dateCreation: new Date().toISOString(),
-                chemin: relativePath
-        }
-    }
-    });
-} catch (error) {
-    res.status(500).json({
-        success: false,
-        message: "Erreur lors de l'ajout du document",
-        error: error.message
-    });
+            message: "Erreur interne",
+            error: error.message,
+            stack: error.stack,
+            details: error // ⚠️ À désactiver en production
+        });
     }
 };
 
 const getAllContrats = async (req, res) => {
     try {
-        const contrats = await contratService.getContrats();
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 10;
+        const offset = (page - 1) * limit;
+        const { data, total } = await contratService.getContrats({ limit, offset });
         res.status(200).json({
-            success: true,
-            count: contrats.length,
-            data: contrats
+            page,
+            limit,
+            total,
+            data
         });
     } catch (error) {
         logger.error("Erreur récupération contrats", {
             error: {
                 message: error.message,
-                stack: error.stack
-            }
+                stack: error.stack,
+                code: error.code,
+                name: error.name,
+                ...error
+            },
+            route: req.originalUrl,
+            params: req.params,
+            body: req.body,
+            query: req.query
         });
-
         res.status(500).json({
-            success: false,
             message: "Erreur récupération contrats",
-            details: error.message
+            details: {
+                message: error.message,
+                stack: error.stack,
+                code: error.code,
+                name: error.name,
+                params: req.params,
+                body: req.body,
+                query: req.query
+            }
         });
     }
 };
@@ -130,16 +173,21 @@ const getContratsByPartenaire = async (req, res) => {
         if (!id) {
             return res.status(400).json({ message: "ID partenaire requis" });
         }
-
-        const contrats = await contratService.getContratsbyPartenaire(id);
-        if (!contrats || contrats.length === 0) {
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 10;
+        const offset = (page - 1) * limit;
+        const { data, total } = await contratService.getContratsbyPartenaire(id, { limit, offset });
+        if (!data || data.length === 0) {
             return res.status(404).json({ message: "Aucun contrat trouvé pour ce partenaire." });
         }
-
         res.status(200).json({
-            success: true,
-            count: contrats.length,
-            data: contrats
+            page,
+            limit,
+            total,
+            data
         });
     } catch (error) {
         logger.error(`Erreur récupération contrats partenaire ID: ${req.params.id}`, {
@@ -186,36 +234,36 @@ const getContratByType = async (req, res) => {
     try {
         const { type } = req.params;
         logger.info(`Recherche des contrats par type: ${type}`);
-
         if (!type) {
             logger.warn("Type de contrat non spécifié");
             return res.status(400).json({ message: "Le type de contrat est requis." });
         }
-
-        const result = await contratService.getContratByType(type);
-
-        if (!Array.isArray(result)) {
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 10;
+        const offset = (page - 1) * limit;
+        const { data, total } = await contratService.getContratByType(type, { limit, offset });
+        if (!Array.isArray(data)) {
             logger.error("Le service getContratByType n'a pas retourné un tableau");
             return res.status(500).json({
                 message: "Données invalides retournées par le service de contrat.",
                 details: "Le résultat n'est pas un tableau"
             });
         }
-
-        if (result.length === 0) {
+        if (data.length === 0) {
             logger.info(`Aucun contrat trouvé pour le type: ${type}`);
             return res.status(404).json({ 
                 message: "Aucun contrat trouvé pour ce type.",
                 details: `Type recherché: ${type}` 
             });
         }
-
-        // Ne pas ajouter le champ documents ici
-
         res.status(200).json({
-            success: true,
-            count: result.length,
-            data: result
+            page,
+            limit,
+            total,
+            data
         });
     } catch (error) {
         logger.error(`Erreur lors de la récupération des contrats de type ${req.params.type}`, {
@@ -243,6 +291,12 @@ const updateContrat = async (req, res) => {
 
         updateData.updated_at = new Date();
         if (updateData.id_partenaire) updateData.id_partenaire = parseInt(updateData.id_partenaire);
+        // Ajout des nouveaux champs (ils seront présents si envoyés dans le body)
+        if (req.body.nom_interlocuteur !== undefined) updateData.nom_interlocuteur = req.body.nom_interlocuteur;
+        if (req.body.contact_interlocuteur !== undefined) updateData.contact_interlocuteur = req.body.contact_interlocuteur;
+        if (req.body.contenu_contrat !== undefined) updateData.contenu_contrat = req.body.contenu_contrat;
+        if (req.body.cout !== undefined) updateData.cout = req.body.cout;
+        if (req.body.modalite_paiement !== undefined) updateData.modalite_paiement = req.body.modalite_paiement;
 
         const result = await contratService.updateContrat(id, updateData);
         if (!result) {

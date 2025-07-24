@@ -1,6 +1,6 @@
 const {eq} = require("drizzle-orm");
 const {db} = require("../../../../core/database/config")
-const {entites} = require("../../../../core/database/models")
+const {entites, partenaires} = require("../../../../core/database/models")
 
 const createEntite=async(data)=>{
     const [result]=await db
@@ -40,10 +40,15 @@ const deleteEntite=async(id)=>{
     return result
 }
 
+const getEntitesByPartenaire = async (id_partenaire) => {
+    return await db.select().from(entites).where(eq(entites.id_partenaire, id_partenaire));
+}
+
 module.exports={
     createEntite,
     getEntites, 
     getEntiteById, 
     updateEntite,
-    deleteEntite
+    deleteEntite,
+    getEntitesByPartenaire
 }

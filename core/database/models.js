@@ -94,7 +94,12 @@ const nature_documents = pgTable("nature_documents", {
 // Entité
 const entites = pgTable("entites", {
   id_entite: serial("id_entite").primaryKey(),
-  denomination: varchar("denomination", { length: 50 }),
+  denomination: varchar("denomination", { length: 150 }),
+  abreviation_nom: varchar("abreviation_nom", { length: 50 }),
+  contact: varchar("contact", { length: 25 }),
+  adresse_postal: varchar("adresse_postal", { length: 50 }),
+  localisation: text("localisation"),
+  id_partenaire: integer("id_partenaire").references(() => partenaires.id_partenaire),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -338,7 +343,6 @@ const partenaires = pgTable("partenaires", {
   localisation: varchar("localisation", { length: 50 }),
   type_partenaire: varchar("type_partenaire", { length: 50 }),
   statut: varchar("statut", { length: 50 }),
-  id_entite: integer("id_entite").references(() => entites.id_entite),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -348,13 +352,21 @@ const contrats = pgTable("contrats", {
   id_contrat: serial("id_contrat").primaryKey(),
   nom_contrat: varchar("nom_contrat", { length: 50 }),
   duree_contrat: varchar("duree_contrat", { length: 50 }),
-  date_debut: date("date_debut"),
-  date_fin: date("date_fin"),
   reference: varchar("reference", { length: 50 }),
   type_de_contrat: varchar("type_de_contrat", { length: 50 }),
   statut: varchar("statut", { length: 50 }),
+  nom_interlocuteur: varchar("nom_interlocuteur", { length: 100 }),
+  contact_interlocuteur: varchar("contact_interlocuteur", { length: 30 }),
+  contenu_contrat: text("contenu_contrat"),
+  cout: varchar("cout", { length: 25 }),
+  modalite_paiement: varchar("modalite_paiement", { length: 50 }),
+  date_debut: date("date_debut"),
+  date_fin: date("date_fin"),
   id_partenaire: integer("id_partenaire").references(
     () => partenaires.id_partenaire
+  ),
+  id_entite: integer("id_entite").references(
+    () => entites.id_entite
   ),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
@@ -448,9 +460,6 @@ const interventions = pgTable("interventions", {
 const documents = pgTable("documents", {
   id_documents: serial("id_documents").primaryKey(),
   libelle_document: varchar("libelle_document", { length: 100 }),
-  classification_document: varchar("classification_document", {
-    length: 50,
-  }),
   date_document: varchar("date_document", { length: 50 }),
   lien_document: varchar("lien_document", { length: 255 }),
   //etat_document : actif, archive
@@ -473,9 +482,13 @@ const documents = pgTable("documents", {
 
 const dossiers = pgTable("dossiers", {
   id_dossier: serial("id_dossier").primaryKey(),
-  libelle_dossier: varchar("libelle_dossier", { length: 100 }),
+  libelle_dossier: varchar("libelle_dossier", { length: 100 }).unique(),
+  type_dossier: varchar("type_dossier", { length: 50 }),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 // Exemplaire_produit
+
 const exemplaires = pgTable("exemplaires", {
   id_exemplaire: serial("id_exemplaire").primaryKey(),
   num_serie: text("num_serie").unique(),
@@ -483,6 +496,14 @@ const exemplaires = pgTable("exemplaires", {
   etat_exemplaire: varchar("etat_exemplaire", { length: 75 }).default(
     "Disponible"
   ), //"Vendu", "Disponible", "Utilisation", "En maintenance", "Endommage", "Reserve"
+  frais_divers: decimal("frais_divers", { precision: 10, scale: 2 }),
+  coef_divers: decimal("coef_divers", { precision: 10, scale: 2 }),
+  marge_haute: decimal("marge_haute", { precision: 10, scale: 2 }),
+  marge_basse: decimal("marge_basse", { precision: 10, scale: 2 }),
+  prix_de_vente: decimal("prix_de_vente", { precision: 10, scale: 2 }),
+  prix_de_revient: decimal("prix_de_revient", { precision: 10, scale: 2 }),
+  prix_achat: decimal("prix_achat", { precision: 10, scale: 2 }),
+  date_achat: date("date_achat"),
   id_livraison: integer("id_livraison").references(
     () => livraisons.id_livraison
   ),

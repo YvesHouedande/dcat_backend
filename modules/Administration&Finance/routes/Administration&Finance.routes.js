@@ -10,7 +10,7 @@ const demandeRoutes = require("../RH/routes/demande.route")
 const docFCRoutes = require("../FinanceCompta/routes/doc_FC.route");
 const employeRoutes = require("../RH/routes/employe.route");
 const fonctionRoutes = require("../RH/routes/fonction.route");
-
+const rangementRoutes = require("../Documents/routes/rangement.route");
 
 router.use("/interlocuteurs",interlocuteurRoutes);
 router.use("/partenaires", partenaireRoutes);
@@ -21,6 +21,7 @@ router.use("/demandes", demandeRoutes);
 router.use("/documents", docFCRoutes);
 router.use("/employes", employeRoutes);
 router.use("/fonctions",fonctionRoutes);
+router.use("/rangement", rangementRoutes);
 
 
 // Protect all routes under Administration & Finance

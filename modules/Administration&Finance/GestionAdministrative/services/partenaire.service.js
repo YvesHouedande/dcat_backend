@@ -44,8 +44,16 @@ const createPartenaire = async (data) => {
   return result;
 }
 
-const getPartenaires = async () => {
-  return await db.select().from(partenaires);
+const getPartenaires = async (options = {}) => {
+  const { limit = 10, offset = 0 } = options;
+  const [totalResult] = await db.select({ count: db.fn.count() }).from(partenaires);
+  const total = Number(totalResult.count);
+  const data = await db
+    .select()
+    .from(partenaires)
+    .limit(limit)
+    .offset(offset);
+  return { data, total };
 }
 
 const getPartenairebyType = async (type) => {

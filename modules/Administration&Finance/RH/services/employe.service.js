@@ -3,10 +3,16 @@ const {db} = require("../../../../core/database/config");
 const {employes} = require("../../../../core/database/models");
 
 
-const getEmployes = async () => {
-    return await db
-    .select()
-    .from(employes);
+const getEmployes = async (options = {}) => {
+    const { limit = 10, offset = 0 } = options;
+    const [totalResult] = await db.select({ count: db.fn.count() }).from(employes);
+    const total = Number(totalResult.count);
+    const data = await db
+        .select()
+        .from(employes)
+        .limit(limit)
+        .offset(offset);
+    return { data, total };
 }
 
 const getEmployeById = async (id) => {
@@ -16,6 +22,15 @@ const getEmployeById = async (id) => {
     .where(eq(employes.id_employes, id));
     return result;
 }
+
+const employesByEmail = async (email) => {
+    const [result] = await db
+    .select()
+    .from(employes)
+    .where(eq(employes.email_employes, email));
+    return result;
+}
+
 
 const getEmployeByFonction = async (id) => {
     const result = await db

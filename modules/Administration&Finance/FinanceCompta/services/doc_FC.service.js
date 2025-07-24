@@ -3,10 +3,16 @@ const {documents} = require('../../../../core/database/models');
 const {db} = require('../../../../core/database/config');
 
 
-const getDocument = async()=> {
-    return await db
-    .select()
-    .from(documents);
+const getDocument = async (options = {}) => {
+    const { limit = 10, offset = 0 } = options;
+    const [totalResult] = await db.select({ count: db.fn.count() }).from(documents);
+    const total = Number(totalResult.count);
+    const data = await db
+        .select()
+        .from(documents)
+        .limit(limit)
+        .offset(offset);
+    return { data, total };
 }
 
 const getDocumentbyId = async(id)=> {
