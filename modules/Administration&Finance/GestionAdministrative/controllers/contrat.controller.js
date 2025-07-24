@@ -125,11 +125,18 @@ const addDocumentToContrat = async (req, res) => {
 
 const getAllContrats = async (req, res) => {
     try {
-        const contrats = await contratService.getContrats();
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 10;
+        const offset = (page - 1) * limit;
+        const { data, total } = await contratService.getContrats({ limit, offset });
         res.status(200).json({
-            success: true,
-            count: contrats.length,
-            data: contrats
+            page,
+            limit,
+            total,
+            data
         });
     } catch (error) {
         logger.error("Erreur récupération contrats", {
@@ -145,9 +152,7 @@ const getAllContrats = async (req, res) => {
             body: req.body,
             query: req.query
         });
-
         res.status(500).json({
-            success: false,
             message: "Erreur récupération contrats",
             details: {
                 message: error.message,
@@ -168,16 +173,21 @@ const getContratsByPartenaire = async (req, res) => {
         if (!id) {
             return res.status(400).json({ message: "ID partenaire requis" });
         }
-
-        const contrats = await contratService.getContratsbyPartenaire(id);
-        if (!contrats || contrats.length === 0) {
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 10;
+        const offset = (page - 1) * limit;
+        const { data, total } = await contratService.getContratsbyPartenaire(id, { limit, offset });
+        if (!data || data.length === 0) {
             return res.status(404).json({ message: "Aucun contrat trouvé pour ce partenaire." });
         }
-
         res.status(200).json({
-            success: true,
-            count: contrats.length,
-            data: contrats
+            page,
+            limit,
+            total,
+            data
         });
     } catch (error) {
         logger.error(`Erreur récupération contrats partenaire ID: ${req.params.id}`, {
@@ -224,36 +234,36 @@ const getContratByType = async (req, res) => {
     try {
         const { type } = req.params;
         logger.info(`Recherche des contrats par type: ${type}`);
-
         if (!type) {
             logger.warn("Type de contrat non spécifié");
             return res.status(400).json({ message: "Le type de contrat est requis." });
         }
-
-        const result = await contratService.getContratByType(type);
-
-        if (!Array.isArray(result)) {
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 10;
+        const offset = (page - 1) * limit;
+        const { data, total } = await contratService.getContratByType(type, { limit, offset });
+        if (!Array.isArray(data)) {
             logger.error("Le service getContratByType n'a pas retourné un tableau");
             return res.status(500).json({
                 message: "Données invalides retournées par le service de contrat.",
                 details: "Le résultat n'est pas un tableau"
             });
         }
-
-        if (result.length === 0) {
+        if (data.length === 0) {
             logger.info(`Aucun contrat trouvé pour le type: ${type}`);
             return res.status(404).json({ 
                 message: "Aucun contrat trouvé pour ce type.",
                 details: `Type recherché: ${type}` 
             });
         }
-
-        // Ne pas ajouter le champ documents ici
-
         res.status(200).json({
-            success: true,
-            count: result.length,
-            data: result
+            page,
+            limit,
+            total,
+            data
         });
     } catch (error) {
         logger.error(`Erreur lors de la récupération des contrats de type ${req.params.type}`, {

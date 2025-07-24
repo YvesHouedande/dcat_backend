@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const upload = require('../../../utils/middleware/uploadMiddleware');
 const demandeController = require('../controllers/demande.controller');
+const { protect } = require('../../../../core/auth/middleware');
 
 const UPLOAD_PATHS = {
   DEMANDES: 'media/documents/administration/RH/demandes'
@@ -26,7 +27,7 @@ router.post('/:id/documents',
   upload.single('document'),
   demandeController.addDocumentToDemande
 );
-router.get('/', demandeController.getAllDemandes);
+router.get('/', protect(['Gestion_administration']), demandeController.getAllDemandes);
 router.get('/type/:type', demandeController.getDemandeByType);
 router.get('/employe/:id_employe', demandeController.getDemandeByEmploye);
 router.get('/:id', demandeController.getDemandeById);
@@ -192,15 +193,55 @@ module.exports = router;
  *     summary: Récupérer toutes les demandes RH
  *     tags:
  *       - Demandes RH
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Numéro de la page (par défaut 1)
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Nombre d'éléments par page (par défaut 10)
+ *         schema:
+ *           type: integer
+ *           default: 10
  *     responses:
  *       200:
- *         description: Liste des demandes RH
+ *         description: Liste paginée des demandes RH
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/DemandeRH'
+ *               type: object
+ *               properties:
+ *                 page:
+ *                   type: integer
+ *                   example: 1
+ *                 limit:
+ *                   type: integer
+ *                   example: 10
+ *                 total:
+ *                   type: integer
+ *                   example: 42
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/DemandeRH'
+ *             example:
+ *               page: 1
+ *               limit: 10
+ *               total: 42
+ *               data:
+ *                 - id_demandes: 1
+ *                   motif: "Congé annuel"
+ *                   date_absence: "2024-03-01"
+ *                   type_demande: "congé"
+ *                   id_employes: 2
+ *                   status: "validée"
+ *                   created_at: "2024-03-01T12:00:00Z"
+ *                   updated_at: "2024-03-01T12:00:00Z"
  *       500:
  *         description: Erreur serveur
  */
@@ -245,15 +286,54 @@ module.exports = router;
  *         required: true
  *         schema:
  *           type: string
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Numéro de la page (par défaut 1)
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Nombre d'éléments par page (par défaut 10)
+ *         schema:
+ *           type: integer
+ *           default: 10
  *     responses:
  *       200:
- *         description: Liste des demandes RH par type
+ *         description: Liste paginée des demandes RH par type
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/DemandeRH'
+ *               type: object
+ *               properties:
+ *                 page:
+ *                   type: integer
+ *                   example: 1
+ *                 limit:
+ *                   type: integer
+ *                   example: 10
+ *                 total:
+ *                   type: integer
+ *                   example: 42
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/DemandeRH'
+ *             example:
+ *               page: 1
+ *               limit: 10
+ *               total: 42
+ *               data:
+ *                 - id_demandes: 1
+ *                   motif: "Congé annuel"
+ *                   date_absence: "2024-03-01"
+ *                   type_demande: "congé"
+ *                   id_employes: 2
+ *                   status: "validée"
+ *                   created_at: "2024-03-01T12:00:00Z"
+ *                   updated_at: "2024-03-01T12:00:00Z"
  *       500:
  *         description: Erreur serveur
  */
@@ -271,15 +351,54 @@ module.exports = router;
  *         required: true
  *         schema:
  *           type: integer
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Numéro de la page (par défaut 1)
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Nombre d'éléments par page (par défaut 10)
+ *         schema:
+ *           type: integer
+ *           default: 10
  *     responses:
  *       200:
- *         description: Liste des demandes RH de l'employé
+ *         description: Liste paginée des demandes RH de l'employé
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/DemandeRH'
+ *               type: object
+ *               properties:
+ *                 page:
+ *                   type: integer
+ *                   example: 1
+ *                 limit:
+ *                   type: integer
+ *                   example: 10
+ *                 total:
+ *                   type: integer
+ *                   example: 42
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/DemandeRH'
+ *             example:
+ *               page: 1
+ *               limit: 10
+ *               total: 42
+ *               data:
+ *                 - id_demandes: 1
+ *                   motif: "Congé annuel"
+ *                   date_absence: "2024-03-01"
+ *                   type_demande: "congé"
+ *                   id_employes: 2
+ *                   status: "validée"
+ *                   created_at: "2024-03-01T12:00:00Z"
+ *                   updated_at: "2024-03-01T12:00:00Z"
  *       500:
  *         description: Erreur serveur
  */

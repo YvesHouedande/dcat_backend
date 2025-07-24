@@ -2,8 +2,19 @@ const employeservice = require('../services/employe.service');
 
 const getEmployes = async (req, res) => {
     try {
-        const employes = await employeservice.getEmployes();
-        return res.status(200).json(employes);
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 10;
+        const offset = (page - 1) * limit;
+        const { data, total } = await employeservice.getEmployes({ limit, offset });
+        return res.status(200).json({
+            page,
+            limit,
+            total,
+            data
+        });
     } catch (error) {
         console.error("Erreur lors de la récupération des employés:", error);
         return res.status(500).json({ message: "Erreur interne lors de la récupération des employés" });

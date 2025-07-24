@@ -22,19 +22,18 @@ const createDossier = async (req, res) => {
 }
 const getDossiers = async (req, res) => {
     try {
-        const dossiers = await dossierService.getDossiers();
-        // Si aucune ressource, retourner [] avec code 200
-        if (!dossiers || dossiers.length === 0) {
-            return res.status(200).json({
-                success: true,
-                count: 0,
-                data: []
-            });
-        }
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 10;
+        const offset = (page - 1) * limit;
+        const { data, total } = await dossierService.getDossiers({ limit, offset });
         res.status(200).json({
-            success: true,
-            count: dossiers.length,
-            data: dossiers
+            page,
+            limit,
+            total,
+            data
         });
     } catch (error) {
         logger.error("Error fetching dossiers:", { error, route: req.originalUrl });
@@ -48,10 +47,8 @@ const getDossierById = async (req, res) => {
         const dossier = Array.isArray(result) ? result[0] : result;
 
         if (!dossier) {
-            return res.status(200).json([]); // Dossier non trouvé
+            return res.status(200).json([]);
         }
-        const documents = await dossierService.getdocumentsBydossier(id);
-        dossier.documents = Array.isArray(documents) ? documents : [];
         res.status(200).json(dossier);
     } catch (error) {
         logger.error(`Erreur lors de la récupération du dossier ${req.params.id}`, {
@@ -164,16 +161,46 @@ const deleteDocumentById = async (req, res) => {
 const getDossierByType = async (req, res) => {
     try {
         const { type } = req.params;
-        const dossiers = await dossierService.getDossierByType(type);
-        if (!dossiers || dossiers.length === 0) {
-            return res.status(404).json({ message: "No dossiers found for this type" });
-        }
-        res.status(200).json(dossiers);
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 10;
+        const offset = (page - 1) * limit;
+        const { data, total } = await dossierService.getDossierByType(type, { limit, offset });
+        res.status(200).json({
+            page,
+            limit,
+            total,
+            data
+        });
     } catch (error) {
         logger.error("Error fetching dossiers by type:", { error, route: req.originalUrl });
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
+
+const getdocumentsBydossier = async (req, res) => {
+    try {
+        const { id } = req.params;
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 10;
+        const offset = (page - 1) * limit;
+        const { documents, total } = await dossierService.getdocumentsBydossier(id, { limit, offset });
+        res.status(200).json({
+            page,
+            limit,
+            total,
+            data: documents
+        });
+    } catch (error) {
+        logger.error("Error fetching documents by dossier:", { error, route: req.originalUrl });
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}
 
 module.exports = {
     createDossier,
@@ -182,6 +209,7 @@ module.exports = {
     updateDossier,
     deleteDossier,
     deleteDocumentById,
-    getDossierByType
+    getDossierByType,
+    getdocumentsBydossier
 };
 
