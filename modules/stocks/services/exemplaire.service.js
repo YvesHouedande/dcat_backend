@@ -146,7 +146,7 @@ async function getExemplaires({
     .select({ count: sql`COUNT(*)::int` })
     .from(exemplaires)
     .where(filters.length ? and(...filters) : undefined);
-
+//test
   // Récupération des exemplaires paginés avec jointures
   const exemplairesData = await db
     .select({
