@@ -120,10 +120,8 @@ const addDocumentToDemande = async (req, res) => {
 
 const getAllDemandes = async (req, res) => {
     try {
-        logger.info("Récupération de toutes les demandes");
-        const result = await demandeService.getAllDemandes();
-        logger.info(`${result.length} demandes récupérées`);
-        res.status(200).json(result);
+        const { data } = await demandeService.getAllDemandes();
+        res.status(200).json(data);
     } catch (error) {
         logger.error("Erreur lors de la récupération des demandes", {
             error: {
@@ -142,24 +140,20 @@ const getDemandeByType = async (req, res) => {
     try {
         const { type } = req.params;
         logger.info(`Recherche de demandes par type: ${type}`);
-        
         if (!type) {
             logger.warn("Type de demande non spécifié");
             return res.status(400).json({ message: "Le type de demande est requis." });
         }
-        
-        const result = await demandeService.getdemandeBytype(type);
-        logger.info(`${result.length} demandes trouvées pour le type: ${type}`);
-        
-        if (!result || result.length === 0) {
+        const { data } = await demandeService.getdemandeBytype(type);
+        logger.info(`${data.length} demandes trouvées pour le type: ${type}`);
+        if (!data || data.length === 0) {
             logger.info(`Aucune demande trouvée pour le type: ${type}`);
             return res.status(404).json({ 
                 message: "Aucune demande trouvée pour ce type.",
                 details: `Type recherché: ${type}` 
             });
         }
-        
-        res.status(200).json(result);
+        res.status(200).json(data);
     } catch (error) {
         logger.error(`Erreur lors de la récupération des demandes de type ${req.params.type}`, {
             error: {
@@ -204,14 +198,18 @@ const getDemandeById = async (req, res) => {
 const getDemandeByEmploye = async (req, res) => {
     try {
         const { id_employe } = req.params;
-        const result = await demandeService.getDemnandeByEmploye(id_employe);
-        res.status(200).json(result);
+        const { data } = await demandeService.getDemnandeByEmploye(id_employe);
+        res.status(200).json(data);
     } catch (error) {
         logger.error(`Erreur lors de la récupération des demandes de l'employé ${req.params.id_employe}`, {
             error: {
                 message: error.message,
                 stack: error.stack
             }
+        });
+        res.status(500).json({
+            message: "Erreur interne lors de la récupération des demandes de l'employé.",
+            details: error.message
         });
     }
 };

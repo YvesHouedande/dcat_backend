@@ -69,6 +69,19 @@ router.post("/", interlocuteurController.createInterlocuteur);
  *     responses:
  *       200:
  *         description: Liste des interlocuteurs
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Interlocuteur'
+ *             example:
+ *               - nom_interlocuteur: "Martin"
+ *                 prenom_interlocuteur: "Paul"
+ *                 contact_interlocuteur: "0600000000"
+ *                 email_interlocuteur: "paul.martin@example.com"
+ *                 fonction_interlocuteur: "Directeur"
+ *                 id_partenaire: 2
  */
 router.get("/", interlocuteurController.getInterlocuteurs);
 

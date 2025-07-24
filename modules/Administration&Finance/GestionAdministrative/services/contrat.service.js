@@ -18,18 +18,27 @@ const addDocumentTocontrat=async(data)=>{
     return result
 };
 
-const getContrats=async()=>{
-    return await db
-    .select()
-    .from(contrats);
+const getContrats = async () => {
+    const data = await db
+        .select()
+        .from(contrats);
+    return { data };
 };
 
-const getContratsbyPartenaire=async(id)=>{
-    const result = await db
-    .select()
-    .from(contrats)
-    .where(eq(contrats.id_partenaire,id))
-    return result
+const getContratsbyPartenaire = async (id, options = {}) => {
+    const { limit = 10, offset = 0 } = options;
+    const [totalResult] = await db
+        .select({ count: db.fn.count() })
+        .from(contrats)
+        .where(eq(contrats.id_partenaire, id));
+    const total = Number(totalResult.count);
+    const data = await db
+        .select()
+        .from(contrats)
+        .where(eq(contrats.id_partenaire, id))
+        .limit(limit)
+        .offset(offset);
+    return { data, total };
 };
 
 const getContratById=async(id)=>{
@@ -41,11 +50,11 @@ const getContratById=async(id)=>{
 };
 
 const getContratByType = async (type) => {
-    const result = await db
+    const data = await db
         .select()
         .from(contrats)
         .where(eq(contrats.type_de_contrat, type));
-    return result; // <-- on ne fait plus [result], on garde tout
+    return { data };
 };
 
 

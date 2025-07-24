@@ -58,66 +58,56 @@ module.exports = router;
  *   get:
  *     summary: Lister tous les contrats
  *     tags: [Contrats]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Numéro de la page (par défaut 1)
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Nombre d'éléments par page (par défaut 10)
+ *         schema:
+ *           type: integer
+ *           default: 10
  *     responses:
  *       200:
- *         description: Liste des contrats
+ *         description: Liste paginée des contrats
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
- *                 count:
+ *                 page:
  *                   type: integer
+ *                   example: 1
+ *                 limit:
+ *                   type: integer
+ *                   example: 10
+ *                 total:
+ *                   type: integer
+ *                   example: 42
  *                 data:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       id_contrat:
- *                         type: integer
- *                       nom_contrat:
- *                         type: string
- *                         nullable: true
- *                       date_debut:
- *                         type: string
- *                         format: date
- *                       date_fin:
- *                         type: string
- *                         format: date
- *                       reference:
- *                         type: string
- *                         nullable: true
- *                       type_de_contrat:
- *                         type: string
- *                         nullable: true
- *                       statut:
- *                         type: string
- *                         nullable: true
- *                       id_partenaire:
- *                         type: integer
- *                       created_at:
- *                         type: string
- *                         format: date-time
- *                       updated_at:
- *                         type: string
- *                         format: date-time
- *                       nom_interlocuteur:
- *                         type: string
- *                         nullable: true
- *                       contact_interlocuteur:
- *                         type: string
- *                         nullable: true
- *                       contenu_contrat:
- *                         type: string
- *                         nullable: true
- *                       cout:
- *                         type: string
- *                         nullable: true
- *                       modalite_paiement:
- *                         type: string
- *                         nullable: true
+ *                     $ref: '#/components/schemas/Contrat'
+ *             example:
+ *               page: 1
+ *               limit: 10
+ *               total: 42
+ *               data:
+ *                 - id_contrat: 1
+ *                   nom_contrat: "Contrat A"
+ *                   type_de_contrat: "Type 1"
+ *                   date_debut: "2024-03-01"
+ *                   date_fin: "2025-03-01"
+ *                   statut: "actif"
+ *                   id_partenaire: 2
+ *                   created_at: "2024-03-01T12:00:00Z"
+ *                   updated_at: "2024-03-01T12:00:00Z"
  *       404:
  *         description: Aucun contrat trouvé
  */
@@ -205,66 +195,23 @@ module.exports = router;
  *           type: string
  *     responses:
  *       200:
- *         description: Liste des contrats
+ *         description: Liste des contrats du type demandé
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 count:
- *                   type: integer
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id_contrat:
- *                         type: integer
- *                       nom_contrat:
- *                         type: string
- *                         nullable: true
- *                       duree_contrat:
- *                        type: string
- *                       date_debut:
- *                         type: string
- *                         format: date
- *                       date_fin:
- *                         type: string
- *                         format: date
- *                       reference:
- *                         type: string
- *                         nullable: true
- *                       type_de_contrat:
- *                         type: string
- *                         nullable: true
- *                       statut:
- *                         type: string
- *                         nullable: true
- *                       id_partenaire:
- *                         type: integer
- *                       created_at:
- *                         type: string
- *                         format: date-time
- *                       updated_at:
- *                         type: string
- *                         format: date-time
- *                       nom_interlocuteur:
- *                         type: string
- *                         nullable: true
- *                       contact_interlocuteur:
- *                         type: string
- *                         nullable: true
- *                       contenu_contrat:
- *                         type: string
- *                         nullable: true
- *                       cout:
- *                         type: string
- *                         nullable: true
- *                       modalite_paiement:
- *                         type: string
- *                         nullable: true
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Contrat'
+ *             example:
+ *               - id_contrat: 1
+ *                 nom_contrat: "Contrat A"
+ *                 type_de_contrat: "Type 1"
+ *                 date_debut: "2024-03-01"
+ *                 date_fin: "2025-03-01"
+ *                 statut: "actif"
+ *                 id_partenaire: 2
+ *                 created_at: "2024-03-01T12:00:00Z"
+ *                 updated_at: "2024-03-01T12:00:00Z"
  *       404:
  *         description: Aucun contrat trouvé
  */
@@ -281,68 +228,55 @@ module.exports = router;
  *         required: true
  *         schema:
  *           type: integer
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Numéro de la page (par défaut 1)
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Nombre d'éléments par page (par défaut 10)
+ *         schema:
+ *           type: integer
+ *           default: 10
  *     responses:
  *       200:
- *         description: Liste des contrats
+ *         description: Liste paginée des contrats
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
- *                 count:
+ *                 page:
  *                   type: integer
+ *                   example: 1
+ *                 limit:
+ *                   type: integer
+ *                   example: 10
+ *                 total:
+ *                   type: integer
+ *                   example: 42
  *                 data:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       id_contrat:
- *                         type: integer
- *                       nom_contrat:
- *                         type: string
- *                         nullable: true
- *                       duree_contrat:
- *                        type: string
- *                       date_debut:
- *                         type: string
- *                         format: date
- *                       date_fin:
- *                         type: string
- *                         format: date
- *                       reference:
- *                         type: string
- *                         nullable: true
- *                       type_de_contrat:
- *                         type: string
- *                         nullable: true
- *                       statut:
- *                         type: string
- *                         nullable: true
- *                       id_partenaire:
- *                         type: integer
- *                       created_at:
- *                         type: string
- *                         format: date-time
- *                       updated_at:
- *                         type: string
- *                         format: date-time
- *                       nom_interlocuteur:
- *                         type: string
- *                         nullable: true
- *                       contact_interlocuteur:
- *                         type: string
- *                         nullable: true
- *                       contenu_contrat:
- *                         type: string
- *                         nullable: true
- *                       cout:
- *                         type: string
- *                         nullable: true
- *                       modalite_paiement:
- *                         type: string
- *                         nullable: true
+ *                     $ref: '#/components/schemas/Contrat'
+ *             example:
+ *               page: 1
+ *               limit: 10
+ *               total: 42
+ *               data:
+ *                 - id_contrat: 1
+ *                   nom_contrat: "Contrat A"
+ *                   type_de_contrat: "Type 1"
+ *                   date_debut: "2024-03-01"
+ *                   date_fin: "2025-03-01"
+ *                   statut: "actif"
+ *                   id_partenaire: 2
+ *                   created_at: "2024-03-01T12:00:00Z"
+ *                   updated_at: "2024-03-01T12:00:00Z"
  *       404:
  *         description: Aucun contrat trouvé
  */

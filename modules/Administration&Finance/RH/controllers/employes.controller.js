@@ -2,8 +2,8 @@ const employeservice = require('../services/employe.service');
 
 const getEmployes = async (req, res) => {
     try {
-        const employes = await employeservice.getEmployes();
-        return res.status(200).json(employes);
+        const data = await employeservice.getEmployes();
+        return res.status(200).json(data);
     } catch (error) {
         console.error("Erreur lors de la récupération des employés:", error);
         return res.status(500).json({ message: "Erreur interne lors de la récupération des employés" });

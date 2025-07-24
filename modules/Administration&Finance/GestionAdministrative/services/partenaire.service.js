@@ -45,7 +45,10 @@ const createPartenaire = async (data) => {
 }
 
 const getPartenaires = async () => {
-  return await db.select().from(partenaires);
+  const data = await db
+    .select()
+    .from(partenaires);
+  return { data };
 }
 
 const getPartenairebyType = async (type) => {

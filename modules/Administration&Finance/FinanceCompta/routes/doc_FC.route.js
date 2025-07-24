@@ -101,13 +101,23 @@ router.post('/ajouter',
  *       - Documents Finance/Compta
  *     responses:
  *       200:
- *         description: Liste des documents
+ *         description: Liste de tous les documents
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Document'
+ *             example:
+ *               - id_documents: 1
+ *                 libelle_document: "Facture Janvier"
+ *                 classification_document: "finance"
+ *                 lien_document: "media/documents/finance/facture_janvier.pdf"
+ *                 etat_document: "actif"
+ *                 id_employes: 2
+ *                 id_nature_document: 1
+ *                 created_at: "2024-03-01T12:00:00Z"
+ *                 updated_at: "2024-03-01T12:00:00Z"
  */
 router.get('/', doc_FCController.getAllDocuments);
 
