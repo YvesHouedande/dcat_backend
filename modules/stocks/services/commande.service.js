@@ -17,8 +17,8 @@ const {
 
 const { etatExemplaire } = require("./exemplaire.service");
 
-// const etatCommande= ['en_cours', 'Livrée', 'Annulée', 'Retournée'];
-const etatCommande = ["Livrée"];
+// const etatCommande= ['en_cours', 'en_attente', 'livree', 'annulee', 'retournee'];
+const etatCommande = ["livree"];
 
 const { typeSortie } = require("./sortieExemplaire.service");
 
@@ -764,7 +764,7 @@ const safeDeleteCommande = async (idCommande, type = "vente directe") => {
     // 🔒 Refuser suppression si l'etat fait partie de la liste
     if (etatCommande.includes(commande.etat_commande)) {
       throw new Error(
-        "Impossible de supprimer une commande livrée ou facturée."
+        "Impossible de supprimer une commande livrée"
       );
     }
 
