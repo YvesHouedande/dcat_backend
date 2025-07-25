@@ -18,16 +18,11 @@ const addDocumentTocontrat=async(data)=>{
     return result
 };
 
-const getContrats = async (options = {}) => {
-    const { limit = 10, offset = 0 } = options;
-    const [totalResult] = await db.select({ count: db.fn.count() }).from(contrats);
-    const total = Number(totalResult.count);
+const getContrats = async () => {
     const data = await db
         .select()
-        .from(contrats)
-        .limit(limit)
-        .offset(offset);
-    return { data, total };
+        .from(contrats);
+    return { data };
 };
 
 const getContratsbyPartenaire = async (id, options = {}) => {
@@ -54,20 +49,12 @@ const getContratById=async(id)=>{
     return result
 };
 
-const getContratByType = async (type, options = {}) => {
-    const { limit = 10, offset = 0 } = options;
-    const [totalResult] = await db
-        .select({ count: db.fn.count() })
-        .from(contrats)
-        .where(eq(contrats.type_de_contrat, type));
-    const total = Number(totalResult.count);
+const getContratByType = async (type) => {
     const data = await db
         .select()
         .from(contrats)
-        .where(eq(contrats.type_de_contrat, type))
-        .limit(limit)
-        .offset(offset);
-    return { data, total };
+        .where(eq(contrats.type_de_contrat, type));
+    return { data };
 };
 
 
@@ -120,6 +107,13 @@ const deleteDocumentById = async (id) => {
     return result;
 };
 
+const getContratsByEntite=async(id_entite)=>{
+    return await db
+        .select()
+        .from(contrats)
+        .where(eq(contrats.id_entite, id_entite));
+};
+
 module.exports = {
     createContrat,
     getContrats,
@@ -132,5 +126,6 @@ module.exports = {
     getContratByType,
     deleteDocumentsByContrat,
     getDocumentById,
-    deleteDocumentById
+    deleteDocumentById,
+    getContratsByEntite
 }

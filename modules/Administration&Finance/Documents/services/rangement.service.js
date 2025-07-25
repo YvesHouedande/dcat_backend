@@ -3,16 +3,8 @@ const {db} = require("../../../../core/database/config");
 const {dossiers,documents} = require("../../../../core/database/models");
 
 
-const getDossiers = async (options = {}) => {
-    const { limit = 10, offset = 0 } = options;
-    const [totalResult] = await db.select({ count: db.fn.count() }).from(dossiers);
-    const total = Number(totalResult.count);
-    const data = await db
-        .select()
-        .from(dossiers)
-        .limit(limit)
-        .offset(offset);
-    return { data, total };
+const getDossiers = async () => {
+    return await db.select().from(dossiers);
 }
 
 const getDossierById = async (id) => {
@@ -23,36 +15,12 @@ const getDossierById = async (id) => {
     return result;
 }
 
-const getdocumentsBydossier = async (id, options = {}) => {
-    const { limit = 10, offset = 0 } = options;
-    const [totalResult] = await db
-        .select({ count: db.fn.count() })
-        .from(documents)
-        .where(eq(documents.id_dossier, id));
-    const total = Number(totalResult.count);
-    const documentsList = await db
-        .select()
-        .from(documents)
-        .where(eq(documents.id_dossier, id))
-        .limit(limit)
-        .offset(offset);
-    return { documents: documentsList, total };
+const getdocumentsBydossier = async (id) => {
+    return await db.select().from(documents).where(eq(documents.id_dossier, id));
 }
 
-const getDossierByType = async (type, options = {}) => {
-    const { limit = 10, offset = 0 } = options;
-    const [totalResult] = await db
-        .select({ count: db.fn.count() })
-        .from(dossiers)
-        .where(eq(dossiers.type_dossier, type));
-    const total = Number(totalResult.count);
-    const data = await db
-        .select()
-        .from(dossiers)
-        .where(eq(dossiers.type_dossier, type))
-        .limit(limit)
-        .offset(offset);
-    return { data, total };
+const getDossierByType = async (type) => {
+    return await db.select().from(dossiers).where(eq(dossiers.type_dossier, type));
 }
 
 const createDossier = async (dossierData) => {

@@ -8,12 +8,10 @@ const router = express.Router();
  *   schemas:
  *     Entite:
  *       type: object
- *       required:
- *         - denomination
  *       properties:
  *         id_entite:
  *           type: integer
- *           description: ID auto-généré de l'entité
+ *           description: ID unique de l'entité
  *         denomination:
  *           type: string
  *           description: Dénomination de l'entité
@@ -29,17 +27,17 @@ const router = express.Router();
  *         localisation:
  *           type: string
  *           description: Localisation de l'entité
+ *         id_partenaire:
+ *           type: integer
+ *           description: ID du partenaire associé
  *         created_at:
  *           type: string
  *           format: date-time
- *           description: Date de création
+ *           description: Date de création de l'entité
  *         updated_at:
  *           type: string
  *           format: date-time
- *           description: Date de dernière mise à jour
- *         id_partenaire:
- *           type: integer
- *           description: ID du partenaire auquel l'entité est rattachée
+ *           description: Date de dernière mise à jour de l'entité
  */
 
 /**
@@ -47,6 +45,7 @@ const router = express.Router();
  * /administration/entites:
  *   post:
  *     summary: Créer une nouvelle entité
+ *     description: Enregistre une nouvelle entité dans le système.
  *     tags: [Entites]
  *     requestBody:
  *       required: true
@@ -71,10 +70,11 @@ router.post('/', entiteController.createEntite);
  * /administration/entites:
  *   get:
  *     summary: Récupérer toutes les entités
+ *     description: Retourne la liste de toutes les entités enregistrées.
  *     tags: [Entites]
  *     responses:
  *       200:
- *         description: Liste des entités
+ *         description: Liste des entités récupérée avec succès
  *         content:
  *           application/json:
  *             schema:
@@ -91,17 +91,18 @@ router.get('/', entiteController.getEntites);
  * /administration/entites/{id}:
  *   get:
  *     summary: Récupérer une entité par son ID
+ *     description: Retourne les détails d'une entité spécifique.
  *     tags: [Entites]
  *     parameters:
  *       - in: path
  *         name: id
  *         schema:
- *           type: string
+ *           type: integer
  *         required: true
  *         description: ID de l'entité
  *     responses:
  *       200:
- *         description: Détails de l'entité
+ *         description: Détails de l'entité récupérés avec succès
  *         content:
  *           application/json:
  *             schema:
@@ -118,12 +119,13 @@ router.get('/:id', entiteController.getEntiteById);
  * /administration/entites/{id}:
  *   put:
  *     summary: Mettre à jour une entité existante
+ *     description: Modifie les informations d'une entité existante.
  *     tags: [Entites]
  *     parameters:
  *       - in: path
  *         name: id
  *         schema:
- *           type: string
+ *           type: integer
  *         required: true
  *         description: ID de l'entité à mettre à jour
  *     requestBody:
@@ -151,12 +153,13 @@ router.put('/:id', entiteController.updateEntite);
  * /administration/entites/{id}:
  *   delete:
  *     summary: Supprimer une entité
+ *     description: Supprime une entité existante par son ID.
  *     tags: [Entites]
  *     parameters:
  *       - in: path
  *         name: id
  *         schema:
- *           type: string
+ *           type: integer
  *         required: true
  *         description: ID de l'entité à supprimer
  *     responses:
@@ -178,6 +181,7 @@ router.delete('/:id', entiteController.deleteEntite);
  * /administration/entites/partenaire/{id_partenaire}:
  *   get:
  *     summary: Récupérer les entités associées à un partenaire
+ *     description: Retourne la liste de toutes les entités associées à un partenaire donné.
  *     tags: [Entites]
  *     parameters:
  *       - in: path
@@ -188,7 +192,7 @@ router.delete('/:id', entiteController.deleteEntite);
  *         description: ID du partenaire
  *     responses:
  *       200:
- *         description: Liste des entités du partenaire
+ *         description: Liste des entités du partenaire récupérée avec succès
  *         content:
  *           application/json:
  *             schema:

@@ -329,6 +329,21 @@ const interventionsController = {
         message: error.message
       });
     }
+  },
+
+  getAllInterventionDocuments: async (req, res) => {
+    try {
+      const documents = await interventionsService.getAllInterventionDocuments();
+      res.status(200).json({
+        success: true,
+        data: documents
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
   }
 };
 

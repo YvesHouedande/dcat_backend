@@ -7,25 +7,14 @@ const documentService = require('../services/doc_FC.service');
  */
 const getAllDocuments = async (req, res) => {
     try {
-        let { page = 1, limit = 10 } = req.query;
-        page = parseInt(page);
-        limit = parseInt(limit);
-        if (isNaN(page) || page < 1) page = 1;
-        if (isNaN(limit) || limit < 1) limit = 10;
-        const offset = (page - 1) * limit;
-        const { data, total } = await documentService.getDocument({ limit, offset });
+        const data = await documentService.getDocument();
         if (!data || data.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: "Aucun document trouvé"
             });
         }
-        return res.status(200).json({
-            page,
-            limit,
-            total,
-            data
-        });
+        return res.status(200).json(data);
     } catch (error) {
         console.error("Erreur lors de la récupération des documents:", error);
         return res.status(500).json({
