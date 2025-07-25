@@ -17,7 +17,22 @@ const router = express.Router();
  *     tags: [Employes]
  *     responses:
  *       200:
- *         description: Liste des employés
+ *         description: Liste de tous les employés
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *             example:
+ *               - id_employes: 1
+ *                 nom_employes: "Dupont"
+ *                 prenom_employes: "Jean"
+ *                 email_employes: "jean.dupont@example.com"
+ *                 status_employes: "actif"
+ *                 id_fonction: 2
+ *                 created_at: "2024-03-01T12:00:00Z"
+ *                 updated_at: "2024-03-01T12:00:00Z"
  */
 router.get('/', employeController.getEmployes);
 

@@ -17,10 +17,10 @@ const createDemande = async (data) => {
 
 const getAllDemandes = async () => {
     try {
-        const result = await db
-        .select()
-        .from(demandes)
-        return result;
+        const data = await db
+            .select()
+            .from(demandes);
+        return { data };
     } catch (error) {
         console.error("Error fetching demandes:", error);
         throw error;
@@ -29,11 +29,11 @@ const getAllDemandes = async () => {
 
 const getdemandeBytype = async (type) => {
     try {
-        const result = await db
-        .select()
-        .from(demandes)
-        .where(eq(demandes.type_demande, type))
-        return result;
+        const data = await db
+            .select()
+            .from(demandes)
+            .where(eq(demandes.type_demande, type));
+        return { data };
     } catch (error) {
         console.error("Error fetching demande by type:", error);
         throw error;
@@ -109,11 +109,11 @@ const deleteDocumentByDemande = async (id_demande) => {
 };
 
 const getDemnandeByEmploye = async (id_employe) => {
-    const result = await db
-    .select()
-    .from(demandes)
-    .where(eq(demandes.id_employes, id_employe))
-    return result;
+    const data = await db
+        .select()
+        .from(demandes)
+        .where(eq(demandes.id_employes, id_employe));
+    return { data };
 };
 
 const deleteDocumentById = async (id_document) => {

@@ -3,10 +3,11 @@ const {documents} = require('../../../../core/database/models');
 const {db} = require('../../../../core/database/config');
 
 
-const getDocument = async()=> {
-    return await db
-    .select()
-    .from(documents);
+const getDocument = async () => {
+    const data = await db
+        .select()
+        .from(documents);
+    return data;
 }
 
 const getDocumentbyId = async(id)=> {

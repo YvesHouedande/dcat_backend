@@ -11,8 +11,8 @@ const createInterlocuteur = async (req, res) => {
 
 const getInterlocuteurs = async (req, res) => {
     try {
-        const interlocuteurs = await interlocuteurService.getInterlocuteurs();
-        res.status(200).json(interlocuteurs);
+        const { data } = await interlocuteurService.getInterlocuteurs();
+        res.status(200).json(data);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

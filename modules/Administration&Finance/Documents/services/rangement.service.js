@@ -4,9 +4,7 @@ const {dossiers,documents} = require("../../../../core/database/models");
 
 
 const getDossiers = async () => {
-    return await db
-        .select()
-        .from(dossiers);
+    return await db.select().from(dossiers);
 }
 
 const getDossierById = async (id) => {
@@ -18,18 +16,11 @@ const getDossierById = async (id) => {
 }
 
 const getdocumentsBydossier = async (id) => {
-    return await db
-        .select()
-        .from(documents)
-        .where(eq(documents.id_dossier, id))
+    return await db.select().from(documents).where(eq(documents.id_dossier, id));
 }
 
 const getDossierByType = async (type) => {
-    const result = await db
-        .select()
-        .from(dossiers)
-        .where(eq(dossiers.type_dossier, type));
-    return result;
+    return await db.select().from(dossiers).where(eq(dossiers.type_dossier, type));
 }
 
 const createDossier = async (dossierData) => {

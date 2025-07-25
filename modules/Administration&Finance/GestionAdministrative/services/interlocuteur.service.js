@@ -8,7 +8,10 @@ const createInterlocuteur = async (data) => {
 }
 
 const getInterlocuteurs = async () => {
-    return await db.select().from(interlocuteurs);
+    const data = await db
+        .select()
+        .from(interlocuteurs);
+    return { data };
 }
 
 const getInterlocuteurbyPartenaire = async (id) => {

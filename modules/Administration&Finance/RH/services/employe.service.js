@@ -4,9 +4,10 @@ const {employes} = require("../../../../core/database/models");
 
 
 const getEmployes = async () => {
-    return await db
-    .select()
-    .from(employes);
+    const data = await db
+        .select()
+        .from(employes);
+    return data;
 }
 
 const getEmployeById = async (id) => {

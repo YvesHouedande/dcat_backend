@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const upload = require('../../../utils/middleware/uploadMiddleware');
 const demandeController = require('../controllers/demande.controller');
+const { protect } = require('../../../../core/auth/middleware');
 
 const UPLOAD_PATHS = {
   DEMANDES: 'media/documents/administration/RH/demandes'
@@ -26,13 +27,14 @@ router.post('/:id/documents',
   upload.single('document'),
   demandeController.addDocumentToDemande
 );
-router.get('/', demandeController.getAllDemandes);
+router.get('/', protect(['Gestion_administration']), demandeController.getAllDemandes);
 router.get('/type/:type', demandeController.getDemandeByType);
 router.get('/employe/:id_employe', demandeController.getDemandeByEmploye);
 router.get('/:id', demandeController.getDemandeById);
 router.put('/:id', demandeController.updateDemande);
 router.delete('/:id', demandeController.deleteDemande);
-router.delete('/:id/docdemande/:docId', demandeController.deleteDocumentById);
+router.delete('/:id/docdemande/:docId', protect(['Gestion_administration']), demandeController.deleteDocumentById);
+
 
 module.exports = router;
 

@@ -16,6 +16,13 @@ const getEntites=async()=>{
     .from(entites);
 }
 
+const entitesByPartenaire=async(id_partenaire)=>{
+    return await db
+    .select()
+    .from(entites)
+    .where(eq(entites.id_partenaire,id_partenaire))
+}
+
 const getEntiteById=async(id)=>{
     const [result]=await db
     .select()
@@ -50,5 +57,6 @@ module.exports={
     getEntiteById, 
     updateEntite,
     deleteEntite,
-    getEntitesByPartenaire
+    getEntitesByPartenaire,
+    entitesByPartenaire
 }
