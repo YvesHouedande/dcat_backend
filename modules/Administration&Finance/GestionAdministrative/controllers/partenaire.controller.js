@@ -49,6 +49,7 @@ const getPartenaireById = async (req, res) => {
     res.status(500).json({ error: "Erreur serveur lors de la récupération du partenaire", details: error.message });
   }
 };
+//recuperation des partenaires par type
 const getPartenairebyType = async (req, res) => {
   try {
     const type = req.params.type;
@@ -66,6 +67,7 @@ const getPartenairebyType = async (req, res) => {
   }
 };
 
+//mettre a jour un partenaire
 const updatePartenaire = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -87,6 +89,7 @@ const updatePartenaire = async (req, res) => {
   }
 };
 
+//supprimer un partenaire
 const deletePartenaire = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
