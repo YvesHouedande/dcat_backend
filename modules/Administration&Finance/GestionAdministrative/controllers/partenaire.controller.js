@@ -1,4 +1,5 @@
 const partenaireService = require("../services/partenaire.service");
+const entiteService = require("../services/entite.service");
 
 const createPartenaire = async (req, res) => {
   try {
@@ -40,13 +41,15 @@ const getPartenaireById = async (req, res) => {
     if (!result) {
       return res.status(404).json({ error: "Partenaire non trouvé." });
     }
-    return res.status(200).json(result);
+    // Récupérer les entités liées à ce partenaire
+    const entites = await entiteService.getEntitesByPartenaire(id);
+    return res.status(200).json({ ...result, entites });
   } catch (error) {
     console.error("Erreur lors de la récupération du partenaire :", error);
     res.status(500).json({ error: "Erreur serveur lors de la récupération du partenaire", details: error.message });
   }
-
 };
+//recuperation des partenaires par type
 const getPartenairebyType = async (req, res) => {
   try {
     const type = req.params.type;
@@ -64,6 +67,7 @@ const getPartenairebyType = async (req, res) => {
   }
 };
 
+//mettre a jour un partenaire
 const updatePartenaire = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -85,6 +89,7 @@ const updatePartenaire = async (req, res) => {
   }
 };
 
+//supprimer un partenaire
 const deletePartenaire = async (req, res) => {
   try {
     const id = parseInt(req.params.id);

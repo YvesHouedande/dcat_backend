@@ -131,8 +131,7 @@ const refresh_tokens = pgTable("refresh_tokens", {
 const commandes = pgTable("commandes", {
   id_commande: serial("id_commande").primaryKey(),
   date_de_commande: date("date_de_commande"),
-  etat_commande: varchar("etat_commande", { length: 50 }).default("en_attente"), //['en_cours', 'Livrée', 'Annulée', 'Retournée'];
-  date_livraison: date("date_livraison"),
+  etat_commande: varchar("etat_commande", { length: 50 }).default("en_attente"), //['en_cours', 'en_attente', 'livree', 'annulee', 'retournee'];
   lieu_de_livraison: varchar("lieu_de_livraison", { length: 50 }),
   mode_de_paiement: varchar("mode_de_paiement", { length: 50 }),
   commande_produits_reserves: boolean("commande_produits_reserves").default(false), //0: non, 1: oui

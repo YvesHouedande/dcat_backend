@@ -125,7 +125,88 @@ const { protect } = require("../../../../core/auth/middleware");
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Partenaire'
+ *               type: object
+ *               properties:
+ *                 id_partenaire:
+ *                   type: integer
+ *                 nom_partenaire:
+ *                   type: string
+ *                   nullable: true
+ *                 telephone_partenaire:
+ *                   type: string
+ *                   nullable: true
+ *                 email_partenaire:
+ *                   type: string
+ *                   nullable: true
+ *                 specialite:
+ *                   type: string
+ *                   nullable: true
+ *                 localisation:
+ *                   type: string
+ *                 type_partenaire:
+ *                   type: string
+ *                   nullable: true
+ *                 statut:
+ *                   type: string
+ *                   nullable: true
+ *                 created_at:
+ *                   type: string
+ *                   format: date-time
+ *                 updated_at:
+ *                   type: string
+ *                   format: date-time
+ *                 entites:
+ *                   type: array
+ *                   description: Liste des entités liées à ce partenaire
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_entite:
+ *                         type: integer
+ *                       denomination:
+ *                         type: string
+ *                       abreviation_nom:
+ *                         type: string
+ *                       contact:
+ *                         type: string
+ *                       adresse_postal:
+ *                         type: string
+ *                       id_partenaire:
+ *                         type: integer
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *             example:
+ *               id_partenaire: 1
+ *               nom_partenaire: "Entreprise X"
+ *               telephone_partenaire: "0600000000"
+ *               email_partenaire: "contact@entreprise.com"
+ *               specialite: "Informatique"
+ *               localisation: "Paris"
+ *               type_partenaire: "Fournisseur"
+ *               statut: "actif"
+ *               created_at: "2024-03-01T12:00:00Z"
+ *               updated_at: "2024-03-01T12:00:00Z"
+ *               entites:
+ *                 - id_entite: 10
+ *                   denomination: "Entité A"
+ *                   abreviation_nom: "EA"
+ *                   contact: "0123456789"
+ *                   adresse_postal: "1 rue de Paris"
+ *                   id_partenaire: 1
+ *                   created_at: "2024-03-01T12:00:00Z"
+ *                   updated_at: "2024-03-01T12:00:00Z"
+ *                 - id_entite: 11
+ *                   denomination: "Entité B"
+ *                   abreviation_nom: "EB"
+ *                   contact: "0987654321"
+ *                   adresse_postal: "2 avenue de Lyon"
+ *                   id_partenaire: 1
+ *                   created_at: "2024-03-01T12:00:00Z"
+ *                   updated_at: "2024-03-01T12:00:00Z"
  *       400:
  *         description: ID invalide
  *       404:
