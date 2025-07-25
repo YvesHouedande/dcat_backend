@@ -1,4 +1,4 @@
-const {eq} = require("drizzle-orm");
+const {eq, sql} = require("drizzle-orm");
 const {db} = require("../../../../core/database/config");
 const {interlocuteurs} = require("../../../../core/database/models");
 
@@ -7,11 +7,32 @@ const createInterlocuteur = async (data) => {
     return result;
 }
 
-const getInterlocuteurs = async () => {
+const getInterlocuteurs = async (page = 1, limit = 10) => {
+    const pageNumber = parseInt(page, 10) > 0 ? parseInt(page, 10) : 1;
+    const pageSize = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 10;
+    const offset = (pageNumber - 1) * pageSize;
+
+    // Récupérer les interlocuteurs paginés
     const data = await db
         .select()
+        .from(interlocuteurs)
+        .limit(pageSize)
+        .offset(offset);
+
+    // Récupérer le total
+    const [{ count }] = await db
+        .select({ count: sql`count(*)` })
         .from(interlocuteurs);
-    return { data };
+
+    return {
+        data,
+        pagination: {
+            page: pageNumber,
+            limit: pageSize,
+            total: Number(count),
+            totalPages: Math.ceil(Number(count) / pageSize)
+        }
+    };
 }
 
 const getInterlocuteurbyPartenaire = async (id) => {

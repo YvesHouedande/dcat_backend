@@ -35,7 +35,7 @@
 //     deletePartenaire
 // }
 
-const { eq } = require("drizzle-orm");
+const { eq, sql } = require("drizzle-orm");
 const { db } = require("../../../../core/database/config");
 const { partenaires } = require("../../../../core/database/models");
 
@@ -44,18 +44,62 @@ const createPartenaire = async (data) => {
   return result;
 }
 
-const getPartenaires = async () => {
+const getPartenaires = async (page = 1, limit = 10) => {
+  const pageNumber = parseInt(page, 10) > 0 ? parseInt(page, 10) : 1;
+  const pageSize = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 10;
+  const offset = (pageNumber - 1) * pageSize;
+
+  // Récupérer les données paginées
   const data = await db
     .select()
+    .from(partenaires)
+    .limit(pageSize)
+    .offset(offset);
+
+  // Récupérer le total
+  const [{ count }] = await db
+    .select({ count: sql`count(*)` })
     .from(partenaires);
-  return { data };
+
+  return {
+    data,
+    pagination: {
+      page: pageNumber,
+      limit: pageSize,
+      total: Number(count),
+      totalPages: Math.ceil(Number(count) / pageSize)
+    }
+  };
 }
 
-const getPartenairebyType = async (type) => {
-  const [result] = await db
-  .select().from(partenaires)
-  .where(eq(partenaires.type_partenaire, type));
-  return result;
+const getPartenairebyType = async (type, page = 1, limit = 10) => {
+  const pageNumber = parseInt(page, 10) > 0 ? parseInt(page, 10) : 1;
+  const pageSize = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 10;
+  const offset = (pageNumber - 1) * pageSize;
+
+  // Données paginées filtrées par type
+  const data = await db
+    .select()
+    .from(partenaires)
+    .where(eq(partenaires.type_partenaire, type))
+    .limit(pageSize)
+    .offset(offset);
+
+  // Total pour ce type
+  const [{ count }] = await db
+    .select({ count: sql`count(*)` })
+    .from(partenaires)
+    .where(eq(partenaires.type_partenaire, type));
+
+  return {
+    data,
+    pagination: {
+      page: pageNumber,
+      limit: pageSize,
+      total: Number(count),
+      totalPages: Math.ceil(Number(count) / pageSize)
+    }
+  };
 }
 const getPartenaireById = async (id) => {
   const [result] = await db.select().from(partenaires).where(eq(partenaires.id_partenaire, id));

@@ -59,25 +59,42 @@ module.exports = router;
  *   get:
  *     summary: Lister tous les contrats
  *     tags: [Contrats]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page pour la pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
  *     responses:
  *       200:
- *         description: Liste des contrats
+ *         description: Liste paginée des contrats
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Contrat'
- *             example:
- *               - id_contrat: 1
- *                 nom_contrat: "Contrat A"
- *                 type_de_contrat: "Type 1"
- *                 date_debut: "2024-03-01"
- *                 date_fin: "2025-03-01"
- *                 statut: "actif"
- *                 id_partenaire: 2
- *                 created_at: "2024-03-01T12:00:00Z"
- *                 updated_at: "2024-03-01T12:00:00Z"
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Contrat'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
  *       404:
  *         description: Aucun contrat trouvé
  */
@@ -163,25 +180,41 @@ module.exports = router;
  *         required: true
  *         schema:
  *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page pour la pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
  *     responses:
  *       200:
- *         description: Liste des contrats du type demandé
+ *         description: Liste paginée des contrats du type demandé
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Contrat'
- *             example:
- *               - id_contrat: 1
- *                 nom_contrat: "Contrat A"
- *                 type_de_contrat: "Type 1"
- *                 date_debut: "2024-03-01"
- *                 date_fin: "2025-03-01"
- *                 statut: "actif"
- *                 id_partenaire: 2
- *                 created_at: "2024-03-01T12:00:00Z"
- *                 updated_at: "2024-03-01T12:00:00Z"
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Contrat'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
  *       404:
  *         description: Aucun contrat trouvé
  */
@@ -266,11 +299,24 @@ module.exports = router;
  * /administration/contrats/sans/sans-entite:
  *   get:
  *     summary: Liste les contrats dont le partenaire n'est rattaché à aucune entité
- *     description: Retourne la liste de tous les contrats pour lesquels le partenaire associé n'a pas d'entité (partenaires sans entité).
+ *     description: Retourne la liste paginée de tous les contrats pour lesquels le partenaire associé n'a pas d'entité (partenaires sans entité).
  *     tags: [Contrats]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page pour la pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
  *     responses:
  *       200:
- *         description: Liste des contrats dont le partenaire n'a pas d'entité
+ *         description: Liste paginée des contrats dont le partenaire n'a pas d'entité
  *         content:
  *           application/json:
  *             schema:
@@ -285,6 +331,17 @@ module.exports = router;
  *                         $ref: '#/components/schemas/Contrat'
  *                       partenaires:
  *                         $ref: '#/components/schemas/Partenaire'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
  *       500:
  *         description: Erreur lors de la récupération des contrats
  */

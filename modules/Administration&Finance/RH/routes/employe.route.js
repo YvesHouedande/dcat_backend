@@ -15,24 +15,57 @@ const router = express.Router();
  *   get:
  *     summary: Récupère la liste de tous les employés
  *     tags: [Employes]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page pour la pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
  *     responses:
  *       200:
- *         description: Liste de tous les employés
+ *         description: Liste paginée de tous les employés
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
  *             example:
- *               - id_employes: 1
- *                 nom_employes: "Dupont"
- *                 prenom_employes: "Jean"
- *                 email_employes: "jean.dupont@example.com"
- *                 status_employes: "actif"
- *                 id_fonction: 2
- *                 created_at: "2024-03-01T12:00:00Z"
- *                 updated_at: "2024-03-01T12:00:00Z"
+ *               data:
+ *                 - id_employes: 1
+ *                   nom_employes: "Dupont"
+ *                   prenom_employes: "Jean"
+ *                   email_employes: "jean.dupont@example.com"
+ *                   status_employes: "actif"
+ *                   id_fonction: 2
+ *                   created_at: "2024-03-01T12:00:00Z"
+ *                   updated_at: "2024-03-01T12:00:00Z"
+ *               pagination:
+ *                 total: 100
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 10
  */
 router.get('/', employeController.getEmployes);
 
@@ -89,9 +122,51 @@ router.get('/fonction/:id', employeController.getEmployeByFonction);
  *         schema:
  *           type: string
  *         description: "Statut de l'employé (par exemple : 'actif', 'inactif')"
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page pour la pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
  *     responses:
  *       200:
- *         description: Liste des employés avec ce statut
+ *         description: Liste paginée des employés avec ce statut
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *             example:
+ *               data:
+ *                 - id_employes: 1
+ *                   nom_employes: "Dupont"
+ *                   status_employes: "actif"
+ *               pagination:
+ *                 total: 20
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 2
  */
 router.get('/statut/:statut', employeController.getEmployeByStatut);
 

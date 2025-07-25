@@ -19,11 +19,30 @@ const addDocumentTocontrat=async(data)=>{
     return result
 };
 
-const getContrats = async () => {
+const getContrats = async (page = 1, limit = 10) => {
+    const pageNumber = parseInt(page, 10) > 0 ? parseInt(page, 10) : 1;
+    const pageSize = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 10;
+    const offset = (pageNumber - 1) * pageSize;
+
     const data = await db
         .select()
+        .from(contrats)
+        .limit(pageSize)
+        .offset(offset);
+
+    const [{ count }] = await db
+        .select({ count: sql`count(*)` })
         .from(contrats);
-    return { data };
+
+    return {
+        data,
+        pagination: {
+            page: pageNumber,
+            limit: pageSize,
+            total: Number(count),
+            totalPages: Math.ceil(Number(count) / pageSize)
+        }
+    };
 };
 
 const getContratsbyPartenaire = async (id) => {
@@ -42,12 +61,32 @@ const getContratById=async(id)=>{
     return result
 };
 
-const getContratByType = async (type) => {
+const getContratByType = async (type, page = 1, limit = 10) => {
+    const pageNumber = parseInt(page, 10) > 0 ? parseInt(page, 10) : 1;
+    const pageSize = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 10;
+    const offset = (pageNumber - 1) * pageSize;
+
     const data = await db
         .select()
         .from(contrats)
+        .where(eq(contrats.type_de_contrat, type))
+        .limit(pageSize)
+        .offset(offset);
+
+    const [{ count }] = await db
+        .select({ count: sql`count(*)` })
+        .from(contrats)
         .where(eq(contrats.type_de_contrat, type));
-    return { data };
+
+    return {
+        data,
+        pagination: {
+            page: pageNumber,
+            limit: pageSize,
+            total: Number(count),
+            totalPages: Math.ceil(Number(count) / pageSize)
+        }
+    };
 };
 
 
@@ -107,16 +146,36 @@ const getContratsByEntite=async(id_entite)=>{
         .where(eq(contrats.id_entite, id_entite));
 };
 
-const getContratsPartenairesSansEntite = async () => {
-  // LEFT JOIN partenaires -> entites, puis INNER JOIN contrats sur partenaires
-  // On ne garde que les partenaires sans entite (entites.id_entite IS NULL)
-  const data = await db
-    .select()
-    .from(contrats)
-    .innerJoin(partenaires, eq(contrats.id_partenaire, partenaires.id_partenaire))
-    .leftJoin(entites, eq(partenaires.id_partenaire, entites.id_partenaire))
-    .where(sql`${entites.id_entite} IS NULL`);
-  return data;
+const getContratsPartenairesSansEntite = async (page = 1, limit = 10) => {
+    const pageNumber = parseInt(page, 10) > 0 ? parseInt(page, 10) : 1;
+    const pageSize = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 10;
+    const offset = (pageNumber - 1) * pageSize;
+
+    const data = await db
+        .select()
+        .from(contrats)
+        .innerJoin(partenaires, eq(contrats.id_partenaire, partenaires.id_partenaire))
+        .leftJoin(entites, eq(partenaires.id_partenaire, entites.id_partenaire))
+        .where(sql`${entites.id_entite} IS NULL`)
+        .limit(pageSize)
+        .offset(offset);
+
+    const [{ count }] = await db
+        .select({ count: sql`count(*)` })
+        .from(contrats)
+        .innerJoin(partenaires, eq(contrats.id_partenaire, partenaires.id_partenaire))
+        .leftJoin(entites, eq(partenaires.id_partenaire, entites.id_partenaire))
+        .where(sql`${entites.id_entite} IS NULL`);
+
+    return {
+        data,
+        pagination: {
+            page: pageNumber,
+            limit: pageSize,
+            total: Number(count),
+            totalPages: Math.ceil(Number(count) / pageSize)
+        }
+    };
 };
 
 module.exports = {
