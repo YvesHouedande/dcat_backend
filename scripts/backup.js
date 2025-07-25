@@ -1,56 +1,122 @@
-const { exec } = require('child_process');
+const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
+require('dotenv').config();
 
-// Configuration
-const config = {
+const pool = new Pool({
+  host: process.env.DB_HOST || 'localhost',
+  port: Number(process.env.DB_PORT) || 5432,
   user: process.env.APP_DB_USER,
   password: process.env.APP_DB_PASSWORD,
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.APP_DB_NAME
-};
+  database: process.env.APP_DB_NAME,
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
+});
 
-// Dossier de sauvegarde (relatif au projet)
-const backupDir = path.join(__dirname, '../backup'); // Nom du dossier en minuscules
-
-// Création du dossier s'il n'existe pas
+const backupDir = path.resolve(__dirname, '../backup');
 if (!fs.existsSync(backupDir)) {
   fs.mkdirSync(backupDir, { recursive: true });
 }
 
-// Nom du fichier avec date ISO (YYYY-MM-DD)
-const dateStr = new Date().toISOString().split('T')[0];
+const dateStr = new Date().toISOString().replace(/[:.]/g, '-');
 const backupFile = path.join(backupDir, `backup_${dateStr}.sql`);
 
-// Construction de la commande
-const connectionString = `postgresql://${config.user}:${encodeURIComponent(config.password)}@${config.host}:${config.port}/${config.database}`;
-const cmd = `npx pg-dump "${connectionString}" > "${backupFile}"`;
+async function getTableDefinition(client, schema, table) {
+  const res = await client.query(`
+    SELECT 
+      column_name, 
+      data_type,
+      is_nullable,
+      column_default
+    FROM 
+      information_schema.columns
+    WHERE 
+      table_schema = $1 AND 
+      table_name = $2
+    ORDER BY 
+      ordinal_position
+  `, [schema, table]);
 
-console.log(`Sauvegarde en cours vers: ${backupFile}`);
+  return res.rows.map(col => {
+    let def = `${col.column_name} ${col.data_type.toUpperCase()}`;
+    if (col.is_nullable === 'NO') def += ' NOT NULL';
+    if (col.column_default) def += ` DEFAULT ${col.column_default}`;
+    return def;
+  }).join(',\n  ');
+}
 
-// Exécution
-exec(cmd, (error, stdout, stderr) => {
-  if (error) {
-    console.error('❌ Erreur:', error.message);
-    if (fs.existsSync(backupFile)) {
-      fs.unlinkSync(backupFile); // Supprime le fichier partiel en cas d'erreur
+async function createBackup() {
+  let client;
+  try {
+    client = await pool.connect();
+    console.log('✅ Connected to PostgreSQL');
+
+    const writeStream = fs.createWriteStream(backupFile);
+    writeStream.write(`-- PostgreSQL Backup - ${new Date().toISOString()}\n\n`);
+    writeStream.write('BEGIN;\n\n');
+
+    // 1. Sauvegarde des schémas
+    const schemas = await client.query(`
+      SELECT schema_name 
+      FROM information_schema.schemata 
+      WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
+    `);
+
+    for (const schema of schemas.rows) {
+      const schemaName = schema.schema_name;
+      writeStream.write(`CREATE SCHEMA IF NOT EXISTS ${schemaName};\n\n`);
+
+      // 2. Sauvegarde des tables
+      const tables = await client.query(`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = $1 AND table_type = 'BASE TABLE'
+      `, [schemaName]);
+
+      for (const table of tables.rows) {
+        const tableName = table.table_name;
+        const fullTableName = `${schemaName}.${tableName}`;
+        console.log(`🔍 Saving table: ${fullTableName}`);
+
+        // Structure de la table
+        const columnsDef = await getTableDefinition(client, schemaName, tableName);
+        writeStream.write(`CREATE TABLE ${fullTableName} (\n  ${columnsDef}\n);\n\n`);
+
+        // Données de la table
+        const dataQuery = await client.query(`SELECT * FROM ${fullTableName}`);
+        if (dataQuery.rows.length > 0) {
+          writeStream.write(`-- Data for ${fullTableName}\n`);
+          
+          for (const row of dataQuery.rows) {
+            const columns = Object.keys(row);
+            const values = columns.map(col => {
+              const val = row[col];
+              if (val === null) return 'NULL';
+              if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
+              return val;
+            });
+            
+            writeStream.write(
+              `INSERT INTO ${fullTableName} (${columns.join(', ')}) ` +
+              `VALUES (${values.join(', ')});\n`
+            );
+          }
+          writeStream.write('\n');
+        }
+      }
     }
+
+    writeStream.write('COMMIT;\n');
+    writeStream.end();
+    console.log(`✅ Backup saved to: ${backupFile}`);
+
+  } catch (error) {
+    console.error('❌ Backup failed:', error);
+    if (fs.existsSync(backupFile)) fs.unlinkSync(backupFile);
     process.exit(1);
+  } finally {
+    if (client) client.release();
+    await pool.end();
   }
+}
 
-  // Vérification que le fichier a bien été créé
-  if (fs.existsSync(backupFile)) {
-    const stats = fs.statSync(backupFile);
-    if (stats.size > 0) {
-      console.log(`✅ Sauvegarde réussie (${(stats.size / 1024 / 1024).toFixed(2)} MB)`);
-      console.log(`📁 Emplacement: ${backupFile}`);
-    } else {
-      console.error('⚠ Le fichier de sauvegarde est vide');
-      fs.unlinkSync(backupFile);
-    }
-  } else {
-    console.error('⚠ Le fichier de sauvegarde n\'a pas été créé');
-  }
-});
+createBackup();

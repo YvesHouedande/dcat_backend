@@ -2,7 +2,6 @@
 "scripts": {
   "start": "nodemon server.js",
   "backup": "node scripts/backup.js",
-  "backup:legacy": "npx pg-dump postgresql://$APP_DB_USER:$APP_DB_PASSWORD@$DB_HOST:$DB_PORT/$APP_DB_NAME > backup/backup_$(date +%Y-%m-%d).sql",
   "migrate:generate": "drizzle-kit generate:sql --out ./migrations",
   "migrate:dry-run": "drizzle-kit migrate --dry-run",
   "migrate:up": "npm run backup && drizzle-kit migrate",
