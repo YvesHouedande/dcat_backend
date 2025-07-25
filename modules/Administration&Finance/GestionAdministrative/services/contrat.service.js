@@ -1,6 +1,7 @@
-const {eq} = require("drizzle-orm");
+const {eq, sql} = require("drizzle-orm");
 const {db} = require("../../../../core/database/config")
 const {contrats,documents} = require("../../../../core/database/models")
+const {partenaires,entites} = require("../../../../core/database/models")
 
 const createContrat=async(data)=>{
     const [result]=await db
@@ -25,20 +26,12 @@ const getContrats = async () => {
     return { data };
 };
 
-const getContratsbyPartenaire = async (id, options = {}) => {
-    const { limit = 10, offset = 0 } = options;
-    const [totalResult] = await db
-        .select({ count: db.fn.count() })
-        .from(contrats)
-        .where(eq(contrats.id_partenaire, id));
-    const total = Number(totalResult.count);
+const getContratsbyPartenaire = async (id) => {
     const data = await db
         .select()
         .from(contrats)
-        .where(eq(contrats.id_partenaire, id))
-        .limit(limit)
-        .offset(offset);
-    return { data, total };
+        .where(eq(contrats.id_partenaire, id));
+    return data;
 };
 
 const getContratById=async(id)=>{
@@ -114,6 +107,18 @@ const getContratsByEntite=async(id_entite)=>{
         .where(eq(contrats.id_entite, id_entite));
 };
 
+const getContratsPartenairesSansEntite = async () => {
+  // LEFT JOIN partenaires -> entites, puis INNER JOIN contrats sur partenaires
+  // On ne garde que les partenaires sans entite (entites.id_entite IS NULL)
+  const data = await db
+    .select()
+    .from(contrats)
+    .innerJoin(partenaires, eq(contrats.id_partenaire, partenaires.id_partenaire))
+    .leftJoin(entites, eq(partenaires.id_partenaire, entites.id_partenaire))
+    .where(sql`${entites.id_entite} IS NULL`);
+  return data;
+};
+
 module.exports = {
     createContrat,
     getContrats,
@@ -127,5 +132,6 @@ module.exports = {
     deleteDocumentsByContrat,
     getDocumentById,
     deleteDocumentById,
-    getContratsByEntite
+    getContratsByEntite,
+    getContratsPartenairesSansEntite
 }

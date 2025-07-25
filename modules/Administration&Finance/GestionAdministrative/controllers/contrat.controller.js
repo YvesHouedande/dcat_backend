@@ -167,7 +167,7 @@ const getContratsByPartenaire = async (req, res) => {
         if (!id) {
             return res.status(400).json({ message: "ID partenaire requis" });
         }
-        const { data } = await contratService.getContratsbyPartenaire(id);
+        const data = await contratService.getContratsbyPartenaire(id);
         if (!data || data.length === 0) {
             return res.status(404).json({ message: "Aucun contrat trouvé pour ce partenaire." });
         }
@@ -413,6 +413,19 @@ const getContratsByEntite = async (req, res) => {
     }
 };
 
+const getContratsPartenairesSansEntite = async (req, res) => {
+  try {
+    const data = await contratService.getContratsPartenairesSansEntite();
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la récupération des contrats des partenaires sans entité",
+      details: error.message
+    });
+  }
+};
+
 
 module.exports = {
     createContrat,
@@ -424,5 +437,6 @@ module.exports = {
     deleteContrat,
     deleteDocumentById,
     addDocumentToContrat,
-    getContratsByEntite
+    getContratsByEntite,
+    getContratsPartenairesSansEntite
 };
