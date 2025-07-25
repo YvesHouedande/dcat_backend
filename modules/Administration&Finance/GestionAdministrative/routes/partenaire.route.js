@@ -270,7 +270,9 @@ const { protect } = require("../../../../core/auth/middleware");
  */
 
 router.post("/", controller.createPartenaire);
-router.get("/",  controller.getPartenaires);
+router.get("/", protect(['Gestion_administration']), controller.getPartenaires);
+// router.get("/", controller.getPartenaires);
+
 
 router.get("/:id", controller.getPartenaireById);
 router.get("/type/:type", controller.getPartenairebyType);

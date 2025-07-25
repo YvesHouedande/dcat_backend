@@ -1,7 +1,13 @@
 {
-  "scripts": {
-    "start": "nodemon server.js"
-  },
+"scripts": {
+  "start": "nodemon server.js",
+  "backup": "node scripts/backup.js",
+  "backup:legacy": "npx pg-dump postgresql://$APP_DB_USER:$APP_DB_PASSWORD@$DB_HOST:$DB_PORT/$APP_DB_NAME > backup/backup_$(date +%Y-%m-%d).sql",
+  "migrate:generate": "drizzle-kit generate:sql --out ./migrations",
+  "migrate:dry-run": "drizzle-kit migrate --dry-run",
+  "migrate:up": "npm run backup && drizzle-kit migrate",
+  "migrate:down": "drizzle-kit migrate down"
+},
   "dependencies": {
     "@keycloak/keycloak-admin-client": "^26.1.4",
     "bcrypt": "^6.0.0",
@@ -33,5 +39,8 @@
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.17.0",
     "ws": "^8.18.2"
+  },
+  "devDependencies": {
+    "pg-dump": "^0.10.0"
   }
 }
