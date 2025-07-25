@@ -19,6 +19,7 @@ const createPartenaire = async (req, res) => {
   }
 };
 
+//creer un partenaire
 const getPartenaires = async (req, res) => {
   try {
     const { data } = await partenaireService.getPartenaires();
@@ -29,7 +30,7 @@ const getPartenaires = async (req, res) => {
   }
 };
 
-
+//recuperation des partenaires par id
 const getPartenaireById = async (req, res) => {
   try {
     const id = parseInt(req.params.id);

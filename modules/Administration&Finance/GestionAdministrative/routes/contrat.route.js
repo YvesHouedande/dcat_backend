@@ -36,6 +36,7 @@ router.post("/:id/doc",
 router.get("/:id", contratcontroller.getContratById);
 router.get("/type/:type", contratcontroller.getContratByType);
 router.get("/partenaire/:id", contratcontroller.getContratsByPartenaire);
+router.get("/entite/:id_entite", contratcontroller.getContratsByEntite);
 
 router.put("/:id", contratcontroller.updateContrat);
 
@@ -282,6 +283,46 @@ module.exports = router;
 
 /**
  * @swagger
+ * /administration/contrats/entite/{id_entite}:
+ *   get:
+ *     summary: Récupérer les contrats d'une entité
+ *     description: Retourne la liste de tous les contrats associés à une entité donnée.
+ *     tags: [Contrats]
+ *     parameters:
+ *       - in: path
+ *         name: id_entite
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'entité
+ *     responses:
+ *       200:
+ *         description: Liste des contrats de l'entité récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: integer
+ *                   example: 2
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Contrat'
+ *       404:
+ *         description: Aucun contrat trouvé pour cette entité
+ *       400:
+ *         description: ID entité manquant ou invalide
+ *       500:
+ *         description: Erreur serveur
+ */
+
+/**
+ * @swagger
  * /administration/contrats:
  *   post:
  *     summary: Créer un nouveau contrat
@@ -322,6 +363,8 @@ module.exports = router;
  *                 type: string
  *               modalite_paiement:
  *                 type: string
+ *               id_entite:
+ *                 type: integer
  */
 
 /**
@@ -408,6 +451,8 @@ module.exports = router;
  *                 type: string
  *               modalite_paiement:
  *                 type: string
+ *               id_entite:
+ *                 type: integer
  */
 
 /**
@@ -480,49 +525,59 @@ module.exports = router;
  *       properties:
  *         id_contrat:
  *           type: integer
+ *           description: ID unique du contrat
  *         nom_contrat:
  *           type: string
- *           nullable: true
+ *           description: Nom du contrat
  *         duree_contrat:
- *          type: string
+ *           type: string
+ *           description: Durée du contrat
  *         date_debut:
  *           type: string
  *           format: date
+ *           description: Date de début du contrat
  *         date_fin:
  *           type: string
  *           format: date
+ *           description: Date de fin du contrat
  *         reference:
  *           type: string
- *           nullable: true
+ *           description: Référence du contrat
  *         type_de_contrat:
  *           type: string
- *           nullable: true
+ *           description: Type du contrat
  *         statut:
  *           type: string
- *           nullable: true
+ *           description: Statut du contrat
  *         id_partenaire:
  *           type: integer
+ *           description: ID du partenaire associé
+ *         id_entite:
+ *           type: integer
+ *           description: ID de l'entité associée
  *         nom_interlocuteur:
  *           type: string
- *           nullable: true
+ *           description: Nom de l'interlocuteur
  *         contact_interlocuteur:
  *           type: string
- *           nullable: true
+ *           description: Contact de l'interlocuteur
  *         contenu_contrat:
  *           type: string
- *           nullable: true
+ *           description: Contenu du contrat
  *         cout:
  *           type: string
- *           nullable: true
+ *           description: Coût du contrat
  *         modalite_paiement:
  *           type: string
- *           nullable: true
+ *           description: Modalité de paiement
  *         created_at:
  *           type: string
  *           format: date-time
+ *           description: Date de création
  *         updated_at:
  *           type: string
  *           format: date-time
+ *           description: Date de dernière mise à jour
  *         documents:
  *           type: array
  *           items:

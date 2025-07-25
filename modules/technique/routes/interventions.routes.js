@@ -848,4 +848,31 @@ router.delete("/:id/documents/:documentId", interventionsController.deleteDocume
  */
 router.get("/partenaire/:partenaireId", interventionsController.getInterventionsByPartenaire);
 
+/**
+ * @swagger
+ * /technique/interventions/documents:
+ *   get:
+ *     summary: Récupérer tous les documents des interventions
+ *     description: Retourne la liste de tous les documents associés à toutes les interventions.
+ *     tags: [Interventions]
+ *     responses:
+ *       200:
+ *         description: Liste de tous les documents des interventions récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Document'
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get("/documents", interventionsController.getAllInterventionDocuments);
+
 module.exports = router;

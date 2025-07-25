@@ -267,6 +267,13 @@ const interventionsService = {
     }
   },
 
+  getAllInterventionDocuments: async () => {
+    return await db
+      .select()
+      .from(documents)
+      .where(sql`${documents.id_intervention} IS NOT NULL`);
+  },
+
  
   getDocumentById: async (documentId) => {
     try {
