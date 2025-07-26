@@ -130,8 +130,9 @@ const addDocumentToContrat = async (req, res) => {
 
 const getAllContrats = async (req, res) => {
     try {
-        const { data } = await contratService.getContrats();
-        res.status(200).json(data);
+        const { page = 1, limit = 10 } = req.query;
+        const result = await contratService.getContrats(page, limit);
+        res.status(200).json(result);
     } catch (error) {
         logger.error("Erreur récupération contrats", {
             error: {
@@ -167,7 +168,7 @@ const getContratsByPartenaire = async (req, res) => {
         if (!id) {
             return res.status(400).json({ message: "ID partenaire requis" });
         }
-        const { data } = await contratService.getContratsbyPartenaire(id);
+        const data = await contratService.getContratsbyPartenaire(id);
         if (!data || data.length === 0) {
             return res.status(404).json({ message: "Aucun contrat trouvé pour ce partenaire." });
         }
@@ -216,28 +217,28 @@ const getContratById = async (req, res) => {
 const getContratByType = async (req, res) => {
     try {
         const { type } = req.params;
+        const { page = 1, limit = 10 } = req.query;
         logger.info(`Recherche des contrats par type: ${type}`);
         if (!type) {
             logger.warn("Type de contrat non spécifié");
             return res.status(400).json({ message: "Le type de contrat est requis." });
         }
-        const { data } = await contratService.getContratByType(type);
-        if (!Array.isArray(data)) {
+        const result = await contratService.getContratByType(type, page, limit);
+        if (!Array.isArray(result.data)) {
             logger.error("Le service getContratByType n'a pas retourné un tableau");
             return res.status(500).json({
                 message: "Données invalides retournées par le service de contrat.",
                 details: "Le résultat n'est pas un tableau"
             });
         }
-        if (data.length === 0) {
+        if (result.data.length === 0) {
             logger.info(`Aucun contrat trouvé pour le type: ${type}`);
             return res.status(404).json({ 
                 message: "Aucun contrat trouvé pour ce type.",
                 details: `Type recherché: ${type}` 
             });
         }
-        // Retourne simplement le tableau des contrats sans pagination
-        res.status(200).json(data);
+        res.status(200).json(result);
     } catch (error) {
         logger.error(`Erreur lors de la récupération des contrats de type ${req.params.type}` , {
             error: {
@@ -413,6 +414,20 @@ const getContratsByEntite = async (req, res) => {
     }
 };
 
+const getContratsPartenairesSansEntite = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const result = await contratService.getContratsPartenairesSansEntite(page, limit);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la récupération des contrats des partenaires sans entité",
+      details: error.message
+    });
+  }
+};
+
 
 module.exports = {
     createContrat,
@@ -424,5 +439,6 @@ module.exports = {
     deleteContrat,
     deleteDocumentById,
     addDocumentToContrat,
-    getContratsByEntite
+    getContratsByEntite,
+    getContratsPartenairesSansEntite
 };

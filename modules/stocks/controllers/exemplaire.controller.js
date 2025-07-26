@@ -14,7 +14,7 @@ const createExemplaire = async (req, res) => {
       .json({ error: "une erreur est survenue", details: error.message });
   }
 };
-
+//test
 const getExemplaires = async (req, res) => {
   try {
     // Récupération des paramètres de pagination

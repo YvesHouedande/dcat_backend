@@ -66,22 +66,48 @@ router.post("/", interlocuteurController.createInterlocuteur);
  *   get:
  *     summary: Récupérer tous les interlocuteurs
  *     tags: [Interlocuteur]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
  *     responses:
  *       200:
- *         description: Liste des interlocuteurs
+ *         description: Liste paginée des interlocuteurs
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Interlocuteur'
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Interlocuteur'
+ *                 page:
+ *                   type: integer
+ *                 totalPages:
+ *                   type: integer
+ *                 totalItems:
+ *                   type: integer
  *             example:
- *               - nom_interlocuteur: "Martin"
- *                 prenom_interlocuteur: "Paul"
- *                 contact_interlocuteur: "0600000000"
- *                 email_interlocuteur: "paul.martin@example.com"
- *                 fonction_interlocuteur: "Directeur"
- *                 id_partenaire: 2
+ *               data:
+ *                 - nom_interlocuteur: "Martin"
+ *                   prenom_interlocuteur: "Paul"
+ *                   contact_interlocuteur: "0600000000"
+ *                   email_interlocuteur: "paul.martin@example.com"
+ *                   fonction_interlocuteur: "Directeur"
+ *                   id_partenaire: 2
+ *               page: 1
+ *               totalPages: 3
+ *               totalItems: 25
  */
 router.get("/", interlocuteurController.getInterlocuteurs);
 

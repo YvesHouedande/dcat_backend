@@ -407,7 +407,7 @@ router.get("/:id", controller.getCommandeById);
  *     description: |
  *       Modifie les informations d’une commande existante :
  *       • dates, lieu, mode de paiement
- *       • état commande (ex. « Validé », « En cours », « Annulée » …)
+ *       • état commande (ex. « en_cours », « en_attente », « livree », « annulee », « retournee »)
  *       • rattachement client ou partenaire
  *       • (optionnel) mise à jour des produits / quantités si le service le gère
  *     tags: [Commandes]
