@@ -171,20 +171,24 @@ const notificationService = {
       const results = [];
 
       // Messages selon le nouveau statut
-      const statusMessages = {
-        'Livré': {
-          client: 'Votre commande a été marquée comme livrée.',
-          admin: `La commande de ${clientInfo ? clientInfo.nom : 'un client'} a été marquée comme livrée.`
-        },
-        'Annulé': {
-          client: 'Votre commande a été annulée.',
-          admin: `La commande de ${clientInfo ? clientInfo.nom : 'un client'} a été annulée.`
-        },
-        'Retourné': {
-          client: 'Votre commande a été retournée.',
-          admin: `La commande de ${clientInfo ? clientInfo.nom : 'un client'} a été retournée.`
-        }
-      };
+          const statusMessages = {
+      'livree': {
+        client: 'Votre commande a été marquée comme livrée.',
+        admin: `La commande de ${clientInfo ? clientInfo.nom : 'un client'} a été marquée comme livrée.`
+      },
+      'annulee': {
+        client: 'Votre commande a été annulée.',
+        admin: `La commande de ${clientInfo ? clientInfo.nom : 'un client'} a été annulée.`
+      },
+      'retournee': {
+        client: 'Votre commande a été retournée.',
+        admin: `La commande de ${clientInfo ? clientInfo.nom : 'un client'} a été retournée.`
+      },
+      'en_cours': {
+        client: 'Votre commande est maintenant en cours de traitement.',
+        admin: `La commande de ${clientInfo ? clientInfo.nom : 'un client'} est maintenant en cours de traitement.`
+      }
+    };
 
       const messages = statusMessages[newStatus];
       if (!messages) {
@@ -200,7 +204,7 @@ const notificationService = {
       results.push({ type: 'client', notification: clientNotification });
 
       // Notifications admins (pour annulation et retour uniquement)
-      if ((newStatus === 'Annulé' || newStatus === 'Retourné') && admins && admins.length > 0) {
+      if ((newStatus === 'annulee' || newStatus === 'retournee') && admins && admins.length > 0) {
         for (const admin of admins) {
           // Éviter de notifier le client s'il est admin
           if (admin.id_client !== clientId) {

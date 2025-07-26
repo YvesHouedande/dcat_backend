@@ -32,7 +32,7 @@ const { authMiddleware } = require('../middleware/auth');
  *           description: Date à laquelle la commande a été passée
  *         etat_commande:
  *           type: string
- *           description: État actuel de la commande (En attente, En cours, Livrée, Annulée)
+          *           description: État actuel de la commande (en_attente, en_cours, livree, annulee, retournee)
  *         date_livraison:
  *           type: string
  *           format: date
@@ -234,7 +234,7 @@ router.get('/client/:clientId', commandesController.getClientCommandes);
  *         required: true
  *         schema:
  *           type: string
- *           enum: [En attente, En cours, Livrée, Annulée]
+          *           enum: [en_attente, en_cours, livree, annulee, retournee]
  *         description: Statut des commandes à récupérer
  *     responses:
  *       200:
@@ -321,7 +321,7 @@ router.get('/:id/products', commandesController.getCommandeProducts);
  *             properties:
  *               etat_commande:
  *                 type: string
- *                 enum: [En attente, En cours, Livrée, Annulée]
+ *                 enum: [en_attente, en_cours, livree, annulee, retournee]
  *                 description: Nouveau statut de la commande
  *     responses:
  *       200:
@@ -425,7 +425,7 @@ router.patch('/:id/update-date', commandesController.updateLivraisonDate);
  *             properties:
  *               etat_commande:
  *                 type: string
- *                 enum: [En attente, En cours, Livrée, Annulée]
+ *                 enum: [en_attente, en_cours, livree, annulee, retournee]
  *                 description: Nouveau statut de la commande
  *               date_livraison:
  *                 type: string

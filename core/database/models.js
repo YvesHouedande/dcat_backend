@@ -132,7 +132,7 @@ const commandes = pgTable("commandes", {
   id_commande: serial("id_commande").primaryKey(),
   date_de_commande: date("date_de_commande"),
   etat_commande: varchar("etat_commande", { length: 50 }).default("en_attente"), 
-  //['en_cours', 'Livrée', 'Annulée', 'Retournée'];
+  //['en_cours', 'en_attente', 'livree', 'annulee', 'retournee'];
   date_livraison: date("date_livraison"),
   lieu_de_livraison: varchar("lieu_de_livraison", { length: 50 }),
   mode_de_paiement: varchar("mode_de_paiement", { length: 50 }),

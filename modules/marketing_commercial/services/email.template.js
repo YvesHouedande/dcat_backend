@@ -29,7 +29,7 @@ function formatPrice(price) {
 
 // Fonction pour générer l'indicateur d'étapes moderne
 function generateStepIndicator(currentStatus, deliveryDate = null) {
-  // Seulement 2 étapes : En attente et Livrée
+  // 3 étapes principales : En attente -> En cours -> Livrée
   const steps = [
     { 
       id: 'en_attente', 
@@ -37,20 +37,27 @@ function generateStepIndicator(currentStatus, deliveryDate = null) {
       icon: '⏳'
     },
     { 
-      id: 'Livré', 
+      id: 'en_cours', 
+      name: 'En cours', 
+      icon: '🚚'
+    },
+    { 
+      id: 'livree', 
       name: 'Livrée', 
       icon: '✅'
     }
   ];
   
-  // Déterminer l'étape actuelle (simple : 0 pour en attente, 1 pour livrée)
+  // Déterminer l'étape actuelle
   let currentStepIndex = 0;
-  if (currentStatus === 'Livré') {
+  if (currentStatus === 'en_cours') {
     currentStepIndex = 1;
+  } else if (currentStatus === 'livree') {
+    currentStepIndex = 2;
   }
   
-  // Calculer le pourcentage de progression (0% ou 100%)
-  const progressPercentage = currentStepIndex * 100;
+  // Calculer le pourcentage de progression
+  const progressPercentage = currentStepIndex * 50; // 0%, 50%, 100%
   
   // Générer le statut (sans description)
   let statusText = '';
@@ -59,13 +66,16 @@ function generateStepIndicator(currentStatus, deliveryDate = null) {
     case 'en_attente':
       statusText = 'En attente';
       break;
-    case 'Livré':
+    case 'en_cours':
+      statusText = 'En cours';
+      break;
+    case 'livree':
       statusText = 'Livrée';
       break;
-    case 'Annulé':
+    case 'annulee':
       statusText = 'Annulée';
       break;
-    case 'Retourné':
+    case 'retournee':
       statusText = 'Retournée';
       break;
     default:
@@ -73,7 +83,7 @@ function generateStepIndicator(currentStatus, deliveryDate = null) {
   }
   
   // Pour les commandes annulées ou retournées, affichage simple
-  if (currentStatus === 'Annulé' || currentStatus === 'Retourné') {
+  if (currentStatus === 'annulee' || currentStatus === 'retournee') {
     return `
       <div class="order-progress">
         <div class="current-status">
@@ -83,25 +93,34 @@ function generateStepIndicator(currentStatus, deliveryDate = null) {
     `;
   }
   
-  // HTML texte simple : En attente --------- Livrée
-  let step1Class, step2Class;
+  // HTML texte simple : En attente --- En cours --- Livrée
+  let step1Class, step2Class, step3Class;
   
-  if (currentStepIndex >= 1) {
-    // Livré - la livraison est en couleur
-    step1Class = 'step-inactive';
+  if (currentStepIndex >= 2) {
+    // Livrée - toutes les étapes sont complétées
+    step1Class = 'step-completed';
     step2Class = 'step-completed';
+    step3Class = 'step-completed';
+  } else if (currentStepIndex >= 1) {
+    // En cours - la première étape est complétée, la deuxième en cours
+    step1Class = 'step-completed';
+    step2Class = 'step-pending';
+    step3Class = 'step-inactive';
   } else {
-    // En attente - l'attente est en couleur
+    // En attente - première étape en cours
     step1Class = 'step-pending';
     step2Class = 'step-inactive';
+    step3Class = 'step-inactive';
   }
   
   let stepsHTML = `
     <div class="order-progress">
       <div class="steps-text">
         <span class="${step1Class}">1.En attente</span>
-        <span class="step-separator">---------</span>
-        <span class="${step2Class}">2.Livrée</span>
+        <span class="step-separator">---</span>
+        <span class="${step2Class}">2.En cours</span>
+        <span class="step-separator">---</span>
+        <span class="${step3Class}">3.Livrée</span>
       </div>
     </div>
   `;
