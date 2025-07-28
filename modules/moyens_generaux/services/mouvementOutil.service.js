@@ -14,7 +14,7 @@ const {
   partenaires,
   images,
 } = require("../../../core/database/models");
-
+//test
 const LIBELLE_OUTIL = "outil";
 
 /**
