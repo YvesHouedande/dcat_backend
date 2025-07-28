@@ -114,6 +114,7 @@ const produitsService = {
     prixMax = null
   ) => {
     try {
+      console.log("je fais mes tests de corrections");
       console.log("Service getEquipementsWithPagination appelé avec:", {
         page,
         limit,
@@ -140,11 +141,8 @@ const produitsService = {
         prixMax,
       });
 
-      // Conditions de base - comme dans getAllEquipements
-      const baseConditions = [
-        eq(type_produits.libelle, "equipement"),
-        isNotNull(produits.prix_produit),
-      ];
+      // Conditions de base simplifiées pour debug
+      const baseConditions = [isNotNull(produits.prix_produit)];
 
       // Ajouter le filtre par famille si spécifié
       if (familleId && !isNaN(parseInt(familleId))) {
