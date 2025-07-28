@@ -339,7 +339,7 @@ const commandesController = {
       }
 
       // Annuler la commande via le service
-      const commandeAnnulee = await commandesService.updateCommandeStatus(commandeId, 'Annulé');
+      const commandeAnnulee = await commandesService.updateCommandeStatus(commandeId, 'annulee');
       
       res.json({ 
         success: true, 

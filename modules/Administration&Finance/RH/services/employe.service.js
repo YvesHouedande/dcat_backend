@@ -1,13 +1,28 @@
 const {eq} = require("drizzle-orm");
 const {db} = require("../../../../core/database/config");
 const {employes} = require("../../../../core/database/models");
+const { sql } = require("drizzle-orm");
 
 
-const getEmployes = async () => {
+const getEmployes = async (page = 1, limit = 10) => {
+    const offset = (page - 1) * limit;
     const data = await db
         .select()
+        .from(employes)
+        .limit(limit)
+        .offset(offset);
+    const [{ count }] = await db
+        .select({ count: sql`count(*)` })
         .from(employes);
-    return data;
+    return {
+        data,
+        pagination: {
+            total: Number(count),
+            page,
+            limit,
+            totalPages: Math.ceil(Number(count) / limit)
+        }
+    };
 }
 
 const getEmployeById = async (id) => {
@@ -36,12 +51,27 @@ const getEmployeByFonction = async (id) => {
 }
 
 
-const getEmployeByStatut = async (statut) => {
-    const result = await db
-    .select()
-    .from(employes)
-    .where(eq(employes.status_employes, statut));
-    return result;
+const getEmployeByStatut = async (statut, page = 1, limit = 10) => {
+    const offset = (page - 1) * limit;
+    const data = await db
+        .select()
+        .from(employes)
+        .where(eq(employes.status_employes, statut))
+        .limit(limit)
+        .offset(offset);
+    const [{ count }] = await db
+        .select({ count: sql`count(*)` })
+        .from(employes)
+        .where(eq(employes.status_employes, statut));
+    return {
+        data,
+        pagination: {
+            total: Number(count),
+            page,
+            limit,
+            totalPages: Math.ceil(Number(count) / limit)
+        }
+    };
 }
 
 const updateEmploye = async (id, data) => {

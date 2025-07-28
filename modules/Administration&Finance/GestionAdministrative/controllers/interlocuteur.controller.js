@@ -11,8 +11,10 @@ const createInterlocuteur = async (req, res) => {
 
 const getInterlocuteurs = async (req, res) => {
     try {
-        const { data } = await interlocuteurService.getInterlocuteurs();
-        res.status(200).json(data);
+        const page = req.query.page || 1;
+        const limit = req.query.limit || 10;
+        const result = await interlocuteurService.getInterlocuteurs(page, limit);
+        res.status(200).json(result);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

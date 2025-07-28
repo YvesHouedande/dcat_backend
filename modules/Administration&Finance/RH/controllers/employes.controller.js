@@ -2,8 +2,10 @@ const employeservice = require('../services/employe.service');
 
 const getEmployes = async (req, res) => {
     try {
-        const data = await employeservice.getEmployes();
-        return res.status(200).json(data);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const result = await employeservice.getEmployes(page, limit);
+        return res.status(200).json(result);
     } catch (error) {
         console.error("Erreur lors de la récupération des employés:", error);
         return res.status(500).json({ message: "Erreur interne lors de la récupération des employés" });
@@ -44,6 +46,7 @@ const getEmployeByFonction = async (req, res) => {
     }
 };
 
+
 const getEmployesByEmail = async (req, res) => {
     try {
         const {email} = req.params;
@@ -68,11 +71,13 @@ const getEmployeByStatut = async (req, res) => {
         if (!statut) {
             return res.status(400).json({ message: "Statut manquant" });
         }
-        const employe = await employeservice.getEmployeByStatut(statut);
-        if (!employe) {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const result = await employeservice.getEmployeByStatut(statut, page, limit);
+        if (!result.data || result.data.length === 0) {
             return res.status(404).json({message: "Aucun employé trouvé pour ce statut"});
         }
-        return res.status(200).json(employe);
+        return res.status(200).json(result);
     } catch (error) {
         console.error("Erreur lors de la récupération par statut:", error);
         return res.status(500).json({ message: "Erreur interne lors de la récupération par statut" });

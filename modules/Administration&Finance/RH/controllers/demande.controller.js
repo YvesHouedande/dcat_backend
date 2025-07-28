@@ -120,8 +120,10 @@ const addDocumentToDemande = async (req, res) => {
 
 const getAllDemandes = async (req, res) => {
     try {
-        const { data } = await demandeService.getAllDemandes();
-        res.status(200).json(data);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const { data, pagination } = await demandeService.getAllDemandes(page, limit);
+        res.status(200).json({ data, pagination });
     } catch (error) {
         logger.error("Erreur lors de la récupération des demandes", {
             error: {
@@ -144,7 +146,9 @@ const getDemandeByType = async (req, res) => {
             logger.warn("Type de demande non spécifié");
             return res.status(400).json({ message: "Le type de demande est requis." });
         }
-        const { data } = await demandeService.getdemandeBytype(type);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const { data, pagination } = await demandeService.getdemandeBytype(type, page, limit);
         logger.info(`${data.length} demandes trouvées pour le type: ${type}`);
         if (!data || data.length === 0) {
             logger.info(`Aucune demande trouvée pour le type: ${type}`);
@@ -153,7 +157,7 @@ const getDemandeByType = async (req, res) => {
                 details: `Type recherché: ${type}` 
             });
         }
-        res.status(200).json(data);
+        res.status(200).json({ data, pagination });
     } catch (error) {
         logger.error(`Erreur lors de la récupération des demandes de type ${req.params.type}`, {
             error: {
@@ -198,8 +202,10 @@ const getDemandeById = async (req, res) => {
 const getDemandeByEmploye = async (req, res) => {
     try {
         const { id_employe } = req.params;
-        const { data } = await demandeService.getDemnandeByEmploye(id_employe);
-        res.status(200).json(data);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const { data, pagination } = await demandeService.getDemnandeByEmploye(id_employe, page, limit);
+        res.status(200).json({ data, pagination });
     } catch (error) {
         logger.error(`Erreur lors de la récupération des demandes de l'employé ${req.params.id_employe}`, {
             error: {

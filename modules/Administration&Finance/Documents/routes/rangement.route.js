@@ -68,7 +68,7 @@
  * /administration/rangement/create:
  *   post:
  *     summary: Créer un nouveau dossier
- *     description: Création d'un nouveau dossier
+ *     description: Création d'un nouveau dossier. Si un dossier avec le même libellé et type existe déjà, un message d'erreur est retourné.
  *     tags: [Rangement]
  *     requestBody:
  *       required: true
@@ -95,6 +95,28 @@
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Dossier'
+ *       409:
+ *         description: Un dossier avec ce libellé et ce type existe déjà
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Un dossier avec ce libellé et ce type existe déjà.
+ *                 code:
+ *                   type: string
+ *                   example: DOSSIER_EXISTS
+ *                 details:
+ *                   type: object
+ *                   properties:
+ *                     libelle:
+ *                       type: string
+ *                       example: MonDossier
+ *                     type:
+ *                       type: string
+ *                       example: Contrat
  *       400:
  *         description: Données invalides
  *       500:
@@ -350,10 +372,57 @@
 
 /**
  * @swagger
- * /administration/rangement/documents/{id}:
+ * /administration/rangement/libelle/{libelle}/type/{type}:
  *   get:
- *     summary: Récupérer les documents d'un dossier
- *     description: Retourne la liste des documents associés à un dossier spécifique.
+ *     summary: Récupérer un dossier par libellé et type
+ *     description: Retourne le dossier correspondant au libellé et type fournis.
+ *     tags: [Rangement]
+ *     parameters:
+ *       - in: path
+ *         name: libelle
+ *         required: true
+ *         description: Libellé du dossier
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: type
+ *         required: true
+ *         description: Type du dossier
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Dossier trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Dossier'
+ *             example:
+ *               id_dossier: 1
+ *               libelle_dossier: "MonDossier"
+ *               type_dossier: "Contrat"
+ *               created_at: "2024-03-01T12:00:00Z"
+ *               updated_at: "2024-03-01T12:00:00Z"
+ *       404:
+ *         description: Aucun dossier trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Aucun dossier trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
+
+/**
+ * @swagger
+ * /administration/rangement/documents/{id}/libelle/{libelle}/type/{type}:
+ *   get:
+ *     summary: Récupérer les documents d'un dossier par id, libellé et type
+ *     description: Retourne le dossier et ses documents associés si les trois paramètres correspondent.
  *     tags: [Rangement]
  *     parameters:
  *       - in: path
@@ -362,28 +431,62 @@
  *         description: Identifiant du dossier
  *         schema:
  *           type: integer
+ *       - in: path
+ *         name: libelle
+ *         required: true
+ *         description: Libellé du dossier
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: type
+ *         required: true
+ *         description: Type du dossier
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
- *         description: Liste des documents du dossier
+ *         description: Dossier et documents trouvés
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Document'
+ *               type: object
+ *               properties:
+ *                 dossier:
+ *                   $ref: '#/components/schemas/Dossier'
+ *                 documents:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Document'
  *             example:
- *               - id_documents: 1
- *                 libelle_document: "Contrat 2024"
- *                 date_document: "2024-03-01"
- *                 lien_document: "media/documents/contrat2024.pdf"
- *                 etat_document: "Actif"
- *                 id_dossier: 2
- *               - id_documents: 2
- *                 libelle_document: "Facture Janvier"
- *                 date_document: "2024-01-15"
- *                 lien_document: "media/documents/facture_janvier.pdf"
- *                 etat_document: "Actif"
- *                 id_dossier: 2
+ *               dossier:
+ *                 id_dossier: 1
+ *                 libelle_dossier: "MonDossier"
+ *                 type_dossier: "Contrat"
+ *                 created_at: "2024-03-01T12:00:00Z"
+ *                 updated_at: "2024-03-01T12:00:00Z"
+ *               documents:
+ *                 - id_documents: 1
+ *                   libelle_document: "Contrat 2024"
+ *                   date_document: "2024-03-01"
+ *                   lien_document: "media/documents/contrat2024.pdf"
+ *                   etat_document: "Actif"
+ *                   id_dossier: 1
+ *                 - id_documents: 2
+ *                   libelle_document: "Facture Janvier"
+ *                   date_document: "2024-01-15"
+ *                   lien_document: "media/documents/facture_janvier.pdf"
+ *                   etat_document: "Actif"
+ *                   id_dossier: 1
+ *       404:
+ *         description: Aucun dossier trouvé avec ces paramètres
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Aucun dossier trouvé avec ces paramètres
  *       500:
  *         description: Erreur serveur
  */
@@ -400,6 +503,7 @@ router.put('/:id', rangementController.updateDossier);
 router.delete('/:id', rangementController.deleteDossier);
 router.delete('/document/:id', rangementController.deleteDocumentById);
 router.get('/type/:type', rangementController.getDossierByType);
-router.get('/documents/:id', rangementController.getdocumentsBydossier);
+router.get('/libelle/:libelle/type/:type', rangementController.getDossierByLibelleAndType);
+router.get('/documents/:id/libelle/:libelle/type/:type', rangementController.getDocumentsByDossierFullParams);
 
 module.exports = router;

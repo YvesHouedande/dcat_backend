@@ -371,7 +371,7 @@ const commandesService = {
   // Mettre à jour le statut d'une commande
   updateCommandeStatus: async (id, newStatus) => {
     // Validation du statut
-    const validStatuses = ['en_attente', 'Livré', 'Annulé', 'Retourné'];
+    const validStatuses = ['en_attente', 'en_cours', 'livree', 'annulee', 'retournee'];
     if (!validStatuses.includes(newStatus)) {
       throw new Error(`État de commande invalide. Les valeurs autorisées sont: ${validStatuses.join(', ')}`);
     }
@@ -419,17 +419,17 @@ const commandesService = {
     
     // Envoyer une notification au client
     let notificationMessage = "";
+    let notificationType = 'status_update';
     
-    if (newStatus === 'Livré') {
+    if (newStatus === 'livree') {
       notificationMessage = "Votre commande a été marquée comme livrée.";
-    } else if (newStatus === 'Annulé') {
+    } else if (newStatus === 'annulee') {
       notificationMessage = "Votre commande a été annulée.";
-    } else if (newStatus === 'Retourné') {
+    } else if (newStatus === 'retournee') {
       notificationMessage = "Votre commande a été retournée.";
-    } else if (newStatus === 'en_attente' && dateChanged) { // Cas de validation
-      notificationMessage = `Votre commande a été validée. Date de livraison prévue: ${newDateFormatted}.`;
-      notificationType = 'date_update';
-    } // Pas de notif pour 'en_attente' sans date
+    } else if (newStatus === 'en_cours') {
+      notificationMessage = "Votre commande est maintenant en cours de traitement.";
+    } // Pas de notif pour 'en_attente' sans changement
     
     if (notificationMessage) {
       // Notification par email
@@ -437,9 +437,9 @@ const commandesService = {
         type: notificationType,
         message: notificationMessage, // Message brut
         commandeId: id,
-        newStatus: statusChanged ? newStatus : undefined,
-        newDate: newDateFormatted // Toujours envoyer la date formatée si disponible
-      }).catch(err => console.error("Erreur d'envoi notification (combined):", err));
+        newStatus: newStatus,
+        newDate: null
+      }).catch(err => console.error("Erreur d'envoi notification (status):", err));
       
       // Notification WebSocket intelligente
       await notificationService.sendStatusChangeNotifications(
@@ -451,7 +451,7 @@ const commandesService = {
       ).catch(err => console.error("Erreur d'envoi notification WebSocket (status):", err));
       
       // Envoyer une notification aux admins pour les cas d'annulation et de retour (email)
-      if ((newStatus === 'Annulé' || newStatus === 'Retourné') && admins && admins.length > 0) {
+      if ((newStatus === 'annulee' || newStatus === 'retournee') && admins && admins.length > 0) {
         await emailNotificationService.sendStatusChangeNotificationToAdmin(
           existingCommande[0], 
           client.length > 0 ? client[0] : null, 
@@ -471,6 +471,7 @@ const commandesService = {
       .select({
         id_commande: commandes.id_commande,
         date_livraison: commandes.date_livraison,
+        etat_commande: commandes.etat_commande,
         id_client: commandes.id_client
       })
       .from(commandes)
@@ -488,6 +489,7 @@ const commandesService = {
     }
     
     const oldDate = commandeExistante[0].date_livraison;
+    const currentStatus = commandeExistante[0].etat_commande;
     const newDateFormatted = formatDate(dateObj);
     const oldDateFormatted = formatDate(oldDate);
 
@@ -496,22 +498,35 @@ const commandesService = {
         return commandeExistante[0]; // Retourner la commande existante sans notif
     }
 
-    // Mettre à jour la date de livraison
+    // Préparer les données de mise à jour
+    const updateData = {
+      date_livraison: dateObj,
+      updated_at: new Date()
+    };
+
+    // Si la commande est en attente, la passer en cours
+    if (currentStatus === 'en_attente') {
+      updateData.etat_commande = 'en_cours';
+    }
+
+    // Mettre à jour la date de livraison et éventuellement le statut
     const result = await db
       .update(commandes)
-      .set({
-        date_livraison: dateObj,
-        updated_at: new Date()
-      })
+      .set(updateData)
       .where(eq(commandes.id_commande, id))
       .returning();
     
     // Envoyer une notification de validation au client
+    const notificationMessage = currentStatus === 'en_attente' 
+      ? `Votre commande a été validée et est maintenant en cours de traitement. Date de livraison prévue: ${newDateFormatted}.`
+      : `Date de livraison mise à jour: ${newDateFormatted}.`;
+
     await emailNotificationService.notifyClient(commandeExistante[0].id_client, {
       type: 'date_update',
-      message: `Votre commande a été validée. Date de livraison prévue: ${newDateFormatted}.`, // Message brut
+      message: notificationMessage,
       commandeId: id,
-      newDate: newDateFormatted
+      newDate: newDateFormatted,
+      newStatus: updateData.etat_commande || currentStatus
     }).catch(err => console.error("Erreur d'envoi notification (date):", err));
     
     return result[0];
@@ -520,7 +535,7 @@ const commandesService = {
   // Mettre à jour le statut et la date de livraison d'une commande
   updateCommandeStatusAndDate: async (id, newStatus, dateLivraison = null) => {
     // Validation du statut
-    const validStatuses = ['en_attente', 'Livré', 'Annulé', 'Retourné'];
+    const validStatuses = ['en_attente', 'en_cours', 'livree', 'annulee', 'retournee'];
     if (!validStatuses.includes(newStatus)) {
       throw new Error(`État de commande invalide. Les valeurs autorisées sont: ${validStatuses.join(', ')}`);
     }
@@ -587,18 +602,22 @@ const commandesService = {
     let notificationMessage = "";
     let notificationType = 'commande_update';
 
-    if (newStatus === 'Livré' && statusChanged) {
+    if (newStatus === 'livree' && statusChanged) {
       notificationMessage = "Votre commande a été marquée comme livrée.";
       notificationType = 'status_update';
-    } else if (newStatus === 'Annulé' && statusChanged) {
+    } else if (newStatus === 'annulee' && statusChanged) {
       notificationMessage = "Votre commande a été annulée.";
       notificationType = 'status_update';
-    } else if (newStatus === 'Retourné') {
+    } else if (newStatus === 'retournee' && statusChanged) {
       notificationMessage = "Votre commande a été retournée.";
-    } else if (newStatus === 'en_attente' && dateChanged) { // Cas de validation
+      notificationType = 'status_update';
+    } else if (newStatus === 'en_cours' && statusChanged) {
+      notificationMessage = "Votre commande est maintenant en cours de traitement.";
+      notificationType = 'status_update';
+    } else if (newStatus === 'en_cours' && dateChanged && !statusChanged) { // Cas de validation avec date
       notificationMessage = `Votre commande a été validée. Date de livraison prévue: ${newDateFormatted}.`;
       notificationType = 'date_update';
-    } // Pas de notif pour 'en_attente' sans date
+    } // Pas de notif pour 'en_attente' sans changement
     
     if (notificationMessage) {
       await emailNotificationService.notifyClient(existingCommande[0].id_client, {
