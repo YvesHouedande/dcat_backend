@@ -15,10 +15,6 @@ const getDossierById = async (id) => {
     return result;
 }
 
-const getdocumentsBydossier = async (id) => {
-    return await db.select().from(documents).where(eq(documents.id_dossier, id));
-}
-
 const getDossierByType = async (type) => {
     return await db.select().from(dossiers).where(eq(dossiers.type_dossier, type));
 }
@@ -62,14 +58,42 @@ const deleteDocumentById = async (id) => {
     return result;
 }
 
+const getDossierByLibelleAndType = async (libelle, type) => {
+    const [result] = await db
+        .select()
+        .from(dossiers)
+        .where(
+            eq(dossiers.libelle_dossier, libelle),
+            eq(dossiers.type_dossier, type)
+        );
+    return result;
+}
+
+const getDocumentsByDossierFullParams = async (id, libelle, type) => {
+    // On vérifie d'abord que le dossier existe avec ces trois paramètres
+    const [dossier] = await db
+        .select()
+        .from(dossiers)
+        .where(
+            eq(dossiers.id_dossier, id),
+            eq(dossiers.libelle_dossier, libelle),
+            eq(dossiers.type_dossier, type)
+        );
+    if (!dossier) return null;
+    // On récupère les documents liés à ce dossier
+    const docs = await db.select().from(documents).where(eq(documents.id_dossier, id));
+    return { dossier, documents: docs };
+}
+
 module.exports = {
     getDossiers,
     getDossierById,
-    getdocumentsBydossier,
     createDossier,
     updateDossier,
     deleteDossier,
     deleteDocumentByDossier,
     deleteDocumentById,
-    getDossierByType
+    getDossierByType,
+    getDossierByLibelleAndType,
+    getDocumentsByDossierFullParams
 };

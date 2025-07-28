@@ -13,6 +13,18 @@ async function safeUnlink(path) {
 const createDossier = async (req, res) => {
     try {
         const dossierData = req.body;
+        // Vérifier si un dossier existe déjà avec ce libellé et ce type
+        const existing = await dossierService.getDossierByLibelleAndType(dossierData.libelle_dossier, dossierData.type_dossier);
+        if (existing) {
+            return res.status(409).json({
+                message: "Un dossier avec ce libellé et ce type existe déjà.",
+                code: "DOSSIER_EXISTS",
+                details: {
+                    libelle: dossierData.libelle_dossier,
+                    type: dossierData.type_dossier
+                }
+            });
+        }
         const newDossier = await dossierService.createDossier(dossierData);
         res.status(201).json(newDossier);
     } catch (error) {
@@ -158,16 +170,33 @@ const getDossierByType = async (req, res) => {
     }
 };
 
-const getdocumentsBydossier = async (req, res) => {
+const getDossierByLibelleAndType = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { documents } = await dossierService.getdocumentsBydossier(id);
-        res.status(200).json(documents);
+        const { libelle, type } = req.params;
+        const dossier = await dossierService.getDossierByLibelleAndType(libelle, type);
+        if (!dossier) {
+            return res.status(404).json({ message: "Aucun dossier trouvé" });
+        }
+        res.status(200).json(dossier);
     } catch (error) {
-        logger.error("Error fetching documents by dossier:", { error, route: req.originalUrl });
-        res.status(500).json({ message: "Internal Server Error" });
+        logger.error("Erreur lors de la récupération du dossier par libellé et type:", { error, route: req.originalUrl });
+        res.status(500).json({ message: "Erreur serveur" });
     }
-}
+};
+
+const getDocumentsByDossierFullParams = async (req, res) => {
+    try {
+        const { id, libelle, type } = req.params;
+        const result = await dossierService.getDocumentsByDossierFullParams(id, libelle, type);
+        if (!result) {
+            return res.status(404).json({ message: "Aucun dossier trouvé avec ces paramètres" });
+        }
+        res.status(200).json(result);
+    } catch (error) {
+        logger.error("Erreur lors de la récupération des documents par id, libellé et type:", { error, route: req.originalUrl });
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+};
 
 module.exports = {
     createDossier,
@@ -177,6 +206,7 @@ module.exports = {
     deleteDossier,
     deleteDocumentById,
     getDossierByType,
-    getdocumentsBydossier
+    getDossierByLibelleAndType,
+    getDocumentsByDossierFullParams
 };
 
