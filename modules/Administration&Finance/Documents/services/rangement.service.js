@@ -3,8 +3,28 @@ const {db} = require("../../../../core/database/config");
 const {dossiers,documents} = require("../../../../core/database/models");
 
 
-const getDossiers = async () => {
-    return await db.select().from(dossiers);
+const getDossiers = async (page = 1, limit = 10) => {
+    const offset = (page - 1) * limit;
+    
+    const [totalCount] = await db
+        .select({ count: require("drizzle-orm").sql`count(*)` })
+        .from(dossiers);
+    
+    const results = await db
+        .select()
+        .from(dossiers)
+        .limit(limit)
+        .offset(offset);
+    
+    return {
+        data: results,
+        pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total: parseInt(totalCount.count),
+            totalPages: Math.ceil(totalCount.count / limit)
+        }
+    };
 }
 
 const getDossierById = async (id) => {
@@ -103,27 +123,76 @@ const createDocument = async (documentData) => {
     return result;
 }
 
-const getDossiersByTypeAndLibelle = async (type, libelle = "") => {
+const getDossiersByTypeAndLibelle = async (type, libelle = "", page = 1, limit = 10) => {
+    const offset = (page - 1) * limit;
+    
     // Vérifier si libellé est undefined, null, ou une chaîne vide
     if (libelle === undefined || libelle === null || libelle === "" || libelle === "undefined") {
         // Si libellé n'est pas fourni, on récupère tous les dossiers du type (insensible à la casse)
         const { sql } = require("drizzle-orm");
-        return await db.select().from(dossiers).where(
-            sql`LOWER(${dossiers.type_dossier}) = LOWER(${type})`
-        );
+        
+        const [totalCount] = await db
+            .select({ count: require("drizzle-orm").sql`count(*)` })
+            .from(dossiers)
+            .where(sql`LOWER(${dossiers.type_dossier}) = LOWER(${type})`);
+        
+        const results = await db
+            .select()
+            .from(dossiers)
+            .where(sql`LOWER(${dossiers.type_dossier}) = LOWER(${type})`)
+            .limit(limit)
+            .offset(offset);
+        
+        return {
+            data: results,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total: parseInt(totalCount.count),
+                totalPages: Math.ceil(totalCount.count / limit)
+            }
+        };
     } else {
         // Si libellé est fourni, on filtre par type et libellé (insensible à la casse)
         const { and, sql } = require("drizzle-orm");
-        return await db.select().from(dossiers).where(
-            and(
-                sql`LOWER(${dossiers.type_dossier}) = LOWER(${type})`,
-                sql`LOWER(${dossiers.libelle_dossier}) = LOWER(${libelle})`
+        
+        const [totalCount] = await db
+            .select({ count: require("drizzle-orm").sql`count(*)` })
+            .from(dossiers)
+            .where(
+                and(
+                    sql`LOWER(${dossiers.type_dossier}) = LOWER(${type})`,
+                    sql`LOWER(${dossiers.libelle_dossier}) = LOWER(${libelle})`
+                )
+            );
+        
+        const results = await db
+            .select()
+            .from(dossiers)
+            .where(
+                and(
+                    sql`LOWER(${dossiers.type_dossier}) = LOWER(${type})`,
+                    sql`LOWER(${dossiers.libelle_dossier}) = LOWER(${libelle})`
+                )
             )
-        );
+            .limit(limit)
+            .offset(offset);
+        
+        return {
+            data: results,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total: parseInt(totalCount.count),
+                totalPages: Math.ceil(totalCount.count / limit)
+            }
+        };
     }
 }
 
-const getDocumentsByDossierIdAndLibelle = async (id, libelle = "") => {
+const getDocumentsByDossierIdAndLibelle = async (id, libelle = "", page = 1, limit = 10) => {
+    const offset = (page - 1) * limit;
+    
     // Vérifier d'abord que le dossier existe
     const [dossier] = await db
         .select()
@@ -135,15 +204,62 @@ const getDocumentsByDossierIdAndLibelle = async (id, libelle = "") => {
     // Récupérer les documents selon le libellé
     if (libelle === "" || !libelle) {
         // Si libellé n'est pas fourni, récupérer tous les documents du dossier
-        const docs = await db.select().from(documents).where(eq(documents.id_dossier, id));
-        return { dossier, documents: docs };
+        const [totalCount] = await db
+            .select({ count: require("drizzle-orm").sql`count(*)` })
+            .from(documents)
+            .where(eq(documents.id_dossier, id));
+        
+        const docs = await db
+            .select()
+            .from(documents)
+            .where(eq(documents.id_dossier, id))
+            .limit(limit)
+            .offset(offset);
+        
+        return { 
+            dossier, 
+            documents: {
+                data: docs,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    total: parseInt(totalCount.count),
+                    totalPages: Math.ceil(totalCount.count / limit)
+                }
+            }
+        };
     } else {
         // Si libellé est fourni, filtrer par libellé du document
-        const docs = await db.select().from(documents).where(
-            eq(documents.id_dossier, id),
-            eq(documents.libelle_document, libelle)
-        );
-        return { dossier, documents: docs };
+        const [totalCount] = await db
+            .select({ count: require("drizzle-orm").sql`count(*)` })
+            .from(documents)
+            .where(
+                eq(documents.id_dossier, id),
+                eq(documents.libelle_document, libelle)
+            );
+        
+        const docs = await db
+            .select()
+            .from(documents)
+            .where(
+                eq(documents.id_dossier, id),
+                eq(documents.libelle_document, libelle)
+            )
+            .limit(limit)
+            .offset(offset);
+        
+        return { 
+            dossier, 
+            documents: {
+                data: docs,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    total: parseInt(totalCount.count),
+                    totalPages: Math.ceil(totalCount.count / limit)
+                }
+            }
+        };
     }
 }
 

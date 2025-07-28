@@ -35,8 +35,18 @@ const createDossier = async (req, res) => {
 }
 const getDossiers = async (req, res) => {
     try {
-        const dossiers = await dossierService.getDossiers();
-        res.status(200).json(dossiers);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        
+        // Validation des paramètres de pagination
+        if (page < 1 || limit < 1 || limit > 100) {
+            return res.status(400).json({ 
+                message: "Paramètres de pagination invalides. page >= 1, limit >= 1 et limit <= 100" 
+            });
+        }
+        
+        const result = await dossierService.getDossiers(page, limit);
+        res.status(200).json(result);
     } catch (error) {
         logger.error("Error fetching dossiers:", { error, route: req.originalUrl });
         res.status(500).json({ message: "Internal Server Error" });
@@ -263,8 +273,18 @@ const addDocumentToDossier = async (req, res) => {
 const getDossiersByTypeAndLibelle = async (req, res) => {
     try {
         const { type, libelle } = req.params;
-        const dossiers = await dossierService.getDossiersByTypeAndLibelle(type, libelle);
-        res.status(200).json(dossiers);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        
+        // Validation des paramètres de pagination
+        if (page < 1 || limit < 1 || limit > 100) {
+            return res.status(400).json({ 
+                message: "Paramètres de pagination invalides. page >= 1, limit >= 1 et limit <= 100" 
+            });
+        }
+        
+        const result = await dossierService.getDossiersByTypeAndLibelle(type, libelle, page, limit);
+        res.status(200).json(result);
     } catch (error) {
         logger.error("Erreur lors de la récupération des dossiers par type et libellé:", { error, route: req.originalUrl });
         res.status(500).json({ message: "Erreur serveur" });
@@ -274,7 +294,17 @@ const getDossiersByTypeAndLibelle = async (req, res) => {
 const getDocumentsByDossierIdAndLibelle = async (req, res) => {
     try {
         const { id, libelle } = req.params;
-        const result = await dossierService.getDocumentsByDossierIdAndLibelle(id, libelle);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        
+        // Validation des paramètres de pagination
+        if (page < 1 || limit < 1 || limit > 100) {
+            return res.status(400).json({ 
+                message: "Paramètres de pagination invalides. page >= 1, limit >= 1 et limit <= 100" 
+            });
+        }
+        
+        const result = await dossierService.getDocumentsByDossierIdAndLibelle(id, libelle, page, limit);
         if (!result) {
             return res.status(404).json({ message: "Dossier non trouvé" });
         }
