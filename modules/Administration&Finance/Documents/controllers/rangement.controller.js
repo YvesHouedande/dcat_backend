@@ -172,7 +172,17 @@ const deleteDocumentById = async (req, res) => {
 
 const createDocument = async (req, res) => {
     try {
-        const documentData = req.body;
+        const documentData = {
+            ...req.body,
+            // Conversion des IDs en entiers si fournis
+            id_livrable: req.body.id_livrable ? parseInt(req.body.id_livrable) : null,
+            id_projet: req.body.id_projet ? parseInt(req.body.id_projet) : null,
+            id_demandes: req.body.id_demandes ? parseInt(req.body.id_demandes) : null,
+            id_contrat: req.body.id_contrat ? parseInt(req.body.id_contrat) : null,
+            id_employes: req.body.id_employes ? parseInt(req.body.id_employes) : null,
+            id_intervention: req.body.id_intervention ? parseInt(req.body.id_intervention) : null,
+            id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null
+        };
         const newDocument = await dossierService.createDocument(documentData);
         res.status(201).json(newDocument);
     } catch (error) {
@@ -222,7 +232,15 @@ const addDocumentToDossier = async (req, res) => {
             date_document: req.body.date_document ? new Date(req.body.date_document) : new Date(),
             lien_document: relativePath,
             etat_document: req.body.etat_document || 'Actif',
-            id_dossier: parseInt(id_dossier)
+            id_dossier: parseInt(id_dossier),
+            // Nouveaux champs pour les relations
+            id_livrable: req.body.id_livrable ? parseInt(req.body.id_livrable) : null,
+            id_projet: req.body.id_projet ? parseInt(req.body.id_projet) : null,
+            id_demandes: req.body.id_demandes ? parseInt(req.body.id_demandes) : null,
+            id_contrat: req.body.id_contrat ? parseInt(req.body.id_contrat) : null,
+            id_employes: req.body.id_employes ? parseInt(req.body.id_employes) : null,
+            id_intervention: req.body.id_intervention ? parseInt(req.body.id_intervention) : null,
+            id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null
         };
 
         let document;
