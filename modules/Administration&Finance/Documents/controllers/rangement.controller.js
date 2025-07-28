@@ -13,18 +13,19 @@ async function safeUnlink(path) {
 const createDossier = async (req, res) => {
     try {
         const dossierData = req.body;
-        // Vérifier si un dossier existe déjà avec ce libellé et ce type
-        const existing = await dossierService.getDossierByLibelleAndType(dossierData.libelle_dossier, dossierData.type_dossier);
+        
+        // Vérifier si un dossier existe déjà avec ce libellé (contrainte unique)
+        const existing = await dossierService.getDossierByLibelle(dossierData.libelle_dossier);
         if (existing) {
             return res.status(409).json({
-                message: "Un dossier avec ce libellé et ce type existe déjà.",
+                message: "Un dossier avec ce libellé existe déjà.",
                 code: "DOSSIER_EXISTS",
                 details: {
-                    libelle: dossierData.libelle_dossier,
-                    type: dossierData.type_dossier
+                    libelle: dossierData.libelle_dossier
                 }
             });
         }
+        
         const newDossier = await dossierService.createDossier(dossierData);
         res.status(201).json(newDossier);
     } catch (error) {
@@ -86,7 +87,7 @@ const deleteDossier = async (req, res) => {
         if (!dossier) return res.status(404).json({ message: "Dossier introuvable." });
 
         // Récupérer tous les documents liés au dossier
-        const documents = await dossierService.getdocumentsBydossier(id);
+        const documents = await dossierService.getDocumentsByDossier(id);
 
         if (documents && documents.length > 0) {
             logger.info(`${documents.length} document(s) trouvé(s) pour le dossier ${id}`);

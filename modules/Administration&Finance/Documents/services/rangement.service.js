@@ -15,6 +15,25 @@ const getDossierById = async (id) => {
     return result;
 }
 
+const getDossierByLibelleAndType = async (libelle, type) => {
+    const [result] = await db
+        .select()
+        .from(dossiers)
+        .where(
+            eq(dossiers.libelle_dossier, libelle),
+            eq(dossiers.type_dossier, type)
+        );
+    return result;
+}
+
+const getDossierByLibelle = async (libelle) => {
+    const [result] = await db
+        .select()
+        .from(dossiers)
+        .where(eq(dossiers.libelle_dossier, libelle));
+    return result;
+}
+
 const createDossier = async (dossierData) => {
     const [result] = await db
         .insert(dossiers)
@@ -43,6 +62,14 @@ const deleteDocumentByDossier = async (id_dossier) => {
         .delete(documents)
         .where(eq(documents.id_dossier, id_dossier))
         .returning();
+    return result;
+}
+
+const getDocumentsByDossier = async (id_dossier) => {
+    const result = await db
+        .select()
+        .from(documents)
+        .where(eq(documents.id_dossier, id_dossier));
     return result;
 }
 
@@ -113,10 +140,13 @@ const getDocumentsByDossierIdAndLibelle = async (id, libelle = "") => {
 module.exports = {
     getDossiers,
     getDossierById,
+    getDossierByLibelleAndType,
+    getDossierByLibelle,
     createDossier,
     updateDossier,
     deleteDossier,
     deleteDocumentByDossier,
+    getDocumentsByDossier,
     deleteDocumentById,
     getDossiersByTypeAndLibelle,
     getDocumentsByDossierIdAndLibelle,
