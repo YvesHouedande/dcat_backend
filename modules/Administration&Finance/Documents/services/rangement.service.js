@@ -16,21 +16,25 @@ const getDossierById = async (id) => {
 }
 
 const getDossierByLibelleAndType = async (libelle, type) => {
+    const { and, sql } = require("drizzle-orm");
     const [result] = await db
         .select()
         .from(dossiers)
         .where(
-            eq(dossiers.libelle_dossier, libelle),
-            eq(dossiers.type_dossier, type)
+            and(
+                sql`LOWER(${dossiers.libelle_dossier}) = LOWER(${libelle})`,
+                sql`LOWER(${dossiers.type_dossier}) = LOWER(${type})`
+            )
         );
     return result;
 }
 
 const getDossierByLibelle = async (libelle) => {
+    const { sql } = require("drizzle-orm");
     const [result] = await db
         .select()
         .from(dossiers)
-        .where(eq(dossiers.libelle_dossier, libelle));
+        .where(sql`LOWER(${dossiers.libelle_dossier}) = LOWER(${libelle})`);
     return result;
 }
 
@@ -100,14 +104,21 @@ const createDocument = async (documentData) => {
 }
 
 const getDossiersByTypeAndLibelle = async (type, libelle = "") => {
-    if (libelle === "" || !libelle) {
-        // Si libellé n'est pas fourni, on récupère tous les dossiers du type
-        return await db.select().from(dossiers).where(eq(dossiers.type_dossier, type));
-    } else {
-        // Si libellé est fourni, on filtre par type et libellé
+    // Vérifier si libellé est undefined, null, ou une chaîne vide
+    if (libelle === undefined || libelle === null || libelle === "" || libelle === "undefined") {
+        // Si libellé n'est pas fourni, on récupère tous les dossiers du type (insensible à la casse)
+        const { sql } = require("drizzle-orm");
         return await db.select().from(dossiers).where(
-            eq(dossiers.type_dossier, type),
-            eq(dossiers.libelle_dossier, libelle)
+            sql`LOWER(${dossiers.type_dossier}) = LOWER(${type})`
+        );
+    } else {
+        // Si libellé est fourni, on filtre par type et libellé (insensible à la casse)
+        const { and, sql } = require("drizzle-orm");
+        return await db.select().from(dossiers).where(
+            and(
+                sql`LOWER(${dossiers.type_dossier}) = LOWER(${type})`,
+                sql`LOWER(${dossiers.libelle_dossier}) = LOWER(${libelle})`
+            )
         );
     }
 }

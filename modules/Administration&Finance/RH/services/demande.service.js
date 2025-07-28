@@ -44,16 +44,17 @@ const getAllDemandes = async (page = 1, limit = 10) => {
 const getdemandeBytype = async (type, page = 1, limit = 10) => {
     try {
         const offset = (page - 1) * limit;
+        const { sql } = require("drizzle-orm");
         const data = await db
             .select()
             .from(demandes)
-            .where(eq(demandes.type_demande, type))
+            .where(sql`LOWER(${demandes.type_demande}) = LOWER(${type})`)
             .limit(limit)
             .offset(offset);
         const [{ count: total }] = await db
             .select({ count: sql`COUNT(*)::int` })
             .from(demandes)
-            .where(eq(demandes.type_demande, type));
+            .where(sql`LOWER(${demandes.type_demande}) = LOWER(${type})`);
         return {
             data,
             pagination: {

@@ -77,19 +77,19 @@ const getPartenairebyType = async (type, page = 1, limit = 10) => {
   const pageSize = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 10;
   const offset = (pageNumber - 1) * pageSize;
 
-  // Données paginées filtrées par type
+  // Données paginées filtrées par type (insensible à la casse)
   const data = await db
     .select()
     .from(partenaires)
-    .where(eq(partenaires.type_partenaire, type))
+    .where(sql`LOWER(${partenaires.type_partenaire}) = LOWER(${type})`)
     .limit(pageSize)
     .offset(offset);
 
-  // Total pour ce type
+  // Total pour ce type (insensible à la casse)
   const [{ count }] = await db
     .select({ count: sql`count(*)` })
     .from(partenaires)
-    .where(eq(partenaires.type_partenaire, type));
+    .where(sql`LOWER(${partenaires.type_partenaire}) = LOWER(${type})`);
 
   return {
     data,
