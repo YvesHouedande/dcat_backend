@@ -85,6 +85,7 @@ const getDocumentsByDossierFullParams = async (id, libelle, type) => {
     return { dossier, documents: docs };
 }
 
+
 module.exports = {
     getDossiers,
     getDossierById,
