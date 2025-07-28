@@ -422,7 +422,7 @@
  * /administration/dossier/type/{type}/libelle/{libelle}:
  *   get:
  *     summary: Récupérer les dossiers par type et libellé optionnel
- *     description: Retourne les dossiers du type spécifié. Si le libellé est fourni, filtre également par libellé. Si le libellé n'est pas fourni ou est vide, retourne tous les dossiers du type.
+ *     description: Retourne les dossiers du type spécifié. Si le libellé est fourni, recherche les dossiers dont le libellé contient la valeur recherchée (recherche partielle insensible à la casse). Si le libellé n'est pas fourni ou est vide, retourne tous les dossiers du type.
  *     tags: [Dossier]
  *     parameters:
  *       - in: path
@@ -434,7 +434,7 @@
  *       - in: path
  *         name: libelle
  *         required: false
- *         description: Libellé du dossier (optionnel)
+ *         description: Libellé du dossier (recherche partielle - optionnel)
  *         schema:
  *           type: string
  *       - in: query
@@ -517,7 +517,7 @@
  * /administration/dossier/{id}/documents/libelle/{libelle}:
  *   get:
  *     summary: Récupérer les documents d'un dossier par id et libellé optionnel
- *     description: Retourne les documents du dossier spécifié. Si le libellé est fourni, filtre également par libellé du document. Si le libellé n'est pas fourni ou est vide, retourne tous les documents du dossier.
+ *     description: Retourne les documents du dossier spécifié. Si le libellé est fourni, recherche les documents dont le libellé contient la valeur recherchée (recherche partielle insensible à la casse). Si le libellé n'est pas fourni ou est vide, retourne tous les documents du dossier.
  *     tags: [Dossier]
  *     parameters:
  *       - in: path
@@ -529,7 +529,7 @@
  *       - in: path
  *         name: libelle
  *         required: false
- *         description: Libellé du document (optionnel)
+ *         description: Libellé du document (recherche partielle - optionnel)
  *         schema:
  *           type: string
  *       - in: query

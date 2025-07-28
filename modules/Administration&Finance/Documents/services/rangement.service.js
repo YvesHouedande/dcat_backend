@@ -153,7 +153,7 @@ const getDossiersByTypeAndLibelle = async (type, libelle = "", page = 1, limit =
             }
         };
     } else {
-        // Si libellé est fourni, on filtre par type et libellé (insensible à la casse)
+        // Si libellé est fourni, on filtre par type et libellé (recherche partielle insensible à la casse)
         const { and, sql } = require("drizzle-orm");
         
         const [totalCount] = await db
@@ -162,7 +162,7 @@ const getDossiersByTypeAndLibelle = async (type, libelle = "", page = 1, limit =
             .where(
                 and(
                     sql`LOWER(${dossiers.type_dossier}) = LOWER(${type})`,
-                    sql`LOWER(${dossiers.libelle_dossier}) = LOWER(${libelle})`
+                    sql`LOWER(${dossiers.libelle_dossier}) LIKE LOWER(${'%' + libelle + '%'})`
                 )
             );
         
@@ -172,7 +172,7 @@ const getDossiersByTypeAndLibelle = async (type, libelle = "", page = 1, limit =
             .where(
                 and(
                     sql`LOWER(${dossiers.type_dossier}) = LOWER(${type})`,
-                    sql`LOWER(${dossiers.libelle_dossier}) = LOWER(${libelle})`
+                    sql`LOWER(${dossiers.libelle_dossier}) LIKE LOWER(${'%' + libelle + '%'})`
                 )
             )
             .limit(limit)
@@ -229,21 +229,27 @@ const getDocumentsByDossierIdAndLibelle = async (id, libelle = "", page = 1, lim
             }
         };
     } else {
-        // Si libellé est fourni, filtrer par libellé du document
+        // Si libellé est fourni, filtrer par libellé du document (recherche partielle insensible à la casse)
+        const { and, sql } = require("drizzle-orm");
+        
         const [totalCount] = await db
             .select({ count: require("drizzle-orm").sql`count(*)` })
             .from(documents)
             .where(
-                eq(documents.id_dossier, id),
-                eq(documents.libelle_document, libelle)
+                and(
+                    eq(documents.id_dossier, id),
+                    sql`LOWER(${documents.libelle_document}) LIKE LOWER(${'%' + libelle + '%'})`
+                )
             );
         
         const docs = await db
             .select()
             .from(documents)
             .where(
-                eq(documents.id_dossier, id),
-                eq(documents.libelle_document, libelle)
+                and(
+                    eq(documents.id_dossier, id),
+                    sql`LOWER(${documents.libelle_document}) LIKE LOWER(${'%' + libelle + '%'})`
+                )
             )
             .limit(limit)
             .offset(offset);

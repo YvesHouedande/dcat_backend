@@ -45,16 +45,20 @@ const getdemandeBytype = async (type, page = 1, limit = 10) => {
     try {
         const offset = (page - 1) * limit;
         const { sql } = require("drizzle-orm");
+        
+        // Recherche partielle avec LIKE et wildcards
+        const searchPattern = `%${type.toLowerCase()}%`;
+        
         const data = await db
             .select()
             .from(demandes)
-            .where(sql`LOWER(${demandes.type_demande}) = LOWER(${type})`)
+            .where(sql`LOWER(${demandes.type_demande}) LIKE ${searchPattern}`)
             .limit(limit)
             .offset(offset);
         const [{ count: total }] = await db
             .select({ count: sql`COUNT(*)::int` })
             .from(demandes)
-            .where(sql`LOWER(${demandes.type_demande}) = LOWER(${type})`);
+            .where(sql`LOWER(${demandes.type_demande}) LIKE ${searchPattern}`);
         return {
             data,
             pagination: {

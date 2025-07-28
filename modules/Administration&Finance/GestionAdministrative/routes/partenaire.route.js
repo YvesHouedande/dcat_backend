@@ -397,6 +397,62 @@ const { protect } = require("../../../../core/auth/middleware");
  *         description: Erreur serveur
  */
 
+/**
+ * @swagger
+ * /administration/partenaires/type/{type}:
+ *   get:
+ *     summary: Obtenir les partenaires par type (recherche partielle)
+ *     description: Recherche partielle des partenaires dont le type contient la chaîne spécifiée (insensible à la casse)
+ *     tags: [Partenaires]
+ *     parameters:
+ *       - in: path
+ *         name: type
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Type de partenaire à rechercher (recherche partielle)
+ *         example: "commercial"
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page pour la pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
+ *     responses:
+ *       200:
+ *         description: Liste paginée des partenaires correspondant au type recherché
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Partenaire'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       404:
+ *         description: Aucun partenaire trouvé pour ce type
+ *       500:
+ *         description: Erreur serveur
+ */
+
 router.post("/", controller.createPartenaire);
 // router.get("/", protect(['Gestion_administration']), controller.getPartenaires);
 router.get("/", controller.getPartenaires);

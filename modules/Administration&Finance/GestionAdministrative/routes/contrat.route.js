@@ -172,7 +172,8 @@ module.exports = router;
  * @swagger
  * /administration/contrats/type/{type}:
  *   get:
- *     summary: Obtenir les contrats par type
+ *     summary: Obtenir les contrats par type (recherche partielle)
+ *     description: Recherche partielle des contrats dont le type contient la chaîne spécifiée (insensible à la casse)
  *     tags: [Contrats]
  *     parameters:
  *       - in: path
@@ -180,6 +181,8 @@ module.exports = router;
  *         required: true
  *         schema:
  *           type: string
+ *         description: Type de contrat à rechercher (recherche partielle)
+ *         example: "commercial"
  *       - in: query
  *         name: page
  *         schema:
@@ -194,7 +197,7 @@ module.exports = router;
  *         description: Nombre d'éléments par page
  *     responses:
  *       200:
- *         description: Liste paginée des contrats du type demandé
+ *         description: Liste paginée des contrats correspondant au type recherché
  *         content:
  *           application/json:
  *             schema:
@@ -216,7 +219,7 @@ module.exports = router;
  *                     totalPages:
  *                       type: integer
  *       404:
- *         description: Aucun contrat trouvé
+ *         description: Aucun contrat trouvé pour ce type
  */
 
 /**
