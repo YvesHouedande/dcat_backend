@@ -179,7 +179,23 @@ const produitsService = {
 
       console.log("Conditions de requête (simplifiées):", baseConditions);
 
-      // TEMPORAIRE: Requête la plus simple possible
+      // Debug: Vérifier s'il y a des produits en base
+      const totalProductsCount = await db
+        .select({ count: sql`count(*)` })
+        .from(produits);
+      console.log(
+        "Nombre total de produits en base:",
+        totalProductsCount[0]?.count
+      );
+
+      // Debug: Vérifier les types de produits
+      const typesInDb = await db.select().from(type_produits);
+      console.log(
+        "Types de produits en base:",
+        typesInDb.map((t) => t.libelle)
+      );
+
+      // Construire la requête avec les jointures d'abord
       let query = db
         .select({
           id: produits.id_produit,
@@ -190,7 +206,13 @@ const produitsService = {
           famille_id: familles.id_famille,
           famille_libelle: familles.libelle_famille,
         })
-        .from(produits);
+        .from(produits)
+        .leftJoin(
+          type_produits,
+          eq(produits.id_type_produit, type_produits.id_type_produit)
+        )
+        .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+        .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele));
 
       // Ajouter les conditions seulement si il y en a
       if (baseConditions.length > 0) {
@@ -198,20 +220,22 @@ const produitsService = {
       }
 
       const productsData = await query
-        .leftJoin(
-          type_produits,
-          eq(produits.id_type_produit, type_produits.id_type_produit)
-        )
-        .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
-        .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
         .limit(validatedLimit)
         .offset(offset)
         .orderBy(desc(produits.id_produit));
 
       console.log(`Produits récupérés: ${productsData.length}`);
 
-      // TEMPORAIRE: Compter TOUS les produits
-      let countQuery = db.select({ count: sql`count(*)` }).from(produits);
+      // Compter les produits avec les mêmes conditions
+      let countQuery = db
+        .select({ count: sql`count(*)` })
+        .from(produits)
+        .leftJoin(
+          type_produits,
+          eq(produits.id_type_produit, type_produits.id_type_produit)
+        )
+        .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+        .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele));
 
       // Ajouter les conditions seulement si il y en a
       if (baseConditions.length > 0) {
