@@ -141,8 +141,11 @@ const produitsService = {
         prixMax,
       });
 
-      // Conditions de base simplifiées pour debug
-      const baseConditions = [isNotNull(produits.prix_produit)];
+      // Conditions de base : produits avec prix ET de type equipement
+      const baseConditions = [
+        isNotNull(produits.prix_produit),
+        eq(type_produits.libelle, "equipement"),
+      ];
 
       // Ajouter le filtre par famille si spécifié
       if (familleId && !isNaN(parseInt(familleId))) {
