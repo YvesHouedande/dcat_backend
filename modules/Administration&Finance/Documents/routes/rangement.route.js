@@ -1,7 +1,7 @@
 /**
  * @swagger
  * tags:
- *   name: Rangement
+ *   name: Dossier
  *   description: API pour la gestion des dossiers et documents
  */
 
@@ -65,11 +65,11 @@
 
 /**
  * @swagger
- * /administration/rangement/create:
+ * /administration/dossier/create:
  *   post:
  *     summary: Créer un nouveau dossier
- *     description: Création d'un nouveau dossier
- *     tags: [Rangement]
+ *     description: Création d'un nouveau dossier. Si un dossier avec le même libellé et type existe déjà, un message d'erreur est retourné.
+ *     tags: [Dossier]
  *     requestBody:
  *       required: true
  *       content:
@@ -95,6 +95,28 @@
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Dossier'
+ *       409:
+ *         description: Un dossier avec ce libellé et ce type existe déjà
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Un dossier avec ce libellé et ce type existe déjà.
+ *                 code:
+ *                   type: string
+ *                   example: DOSSIER_EXISTS
+ *                 details:
+ *                   type: object
+ *                   properties:
+ *                     libelle:
+ *                       type: string
+ *                       example: MonDossier
+ *                     type:
+ *                       type: string
+ *                       example: Contrat
  *       400:
  *         description: Données invalides
  *       500:
@@ -103,11 +125,11 @@
 
 /**
  * @swagger
- * /administration/rangement:
+ * /administration/dossier:
  *   get:
  *     summary: Récupérer tous les dossiers
  *     description: Liste paginée de tous les dossiers
- *     tags: [Rangement]
+ *     tags: [Dossier]
  *     parameters:
  *       - in: query
  *         name: page
@@ -165,11 +187,11 @@
 
 /**
  * @swagger
- * /administration/rangement/{id}:
+ * /administration/dossier/{id}:
  *   get:
  *     summary: Récupérer un dossier par ID
  *     description: Détails d'un dossier spécifique
- *     tags: [Rangement]
+ *     tags: [Dossier]
  *     parameters:
  *       - in: path
  *         name: id
@@ -192,11 +214,11 @@
 
 /**
  * @swagger
- * /administration/rangement/{id}:
+ * /administration/dossier/{id}:
  *   put:
  *     summary: Mettre à jour un dossier
  *     description: Modification des informations d'un dossier
- *     tags: [Rangement]
+ *     tags: [Dossier]
  *     parameters:
  *       - in: path
  *         name: id
@@ -234,11 +256,11 @@
 
 /**
  * @swagger
- * /administration/rangement/{id}:
+ * /administration/dossier/{id}:
  *   delete:
  *     summary: Supprimer un dossier
  *     description: Suppression d'un dossier et ses documents
- *     tags: [Rangement]
+ *     tags: [Dossier]
  *     parameters:
  *       - in: path
  *         name: id
@@ -257,11 +279,11 @@
 
 /**
  * @swagger
- * /administration/rangement/document/{id}:
+ * /administration/dossier/document/{id}:
  *   delete:
  *     summary: Supprimer un document
  *     description: Suppression d'un document spécifique
- *     tags: [Rangement]
+ *     tags: [Dossier]
  *     parameters:
  *       - in: path
  *         name: id
@@ -280,81 +302,154 @@
 
 /**
  * @swagger
- * /administration/rangement/type/{type}:
- *   get:
- *     summary: Récupérer les dossiers par type
- *     description: Liste paginée des dossiers d'un type spécifique
- *     tags: [Rangement]
+ * /administration/dossier/{id_dossier}/document/add:
+ *   post:
+ *     summary: Ajouter un document à un dossier spécifique
+ *     description: Création d'un nouveau document associé à un dossier existant identifié par son ID avec upload de fichier
+ *     tags: [Dossier]
  *     parameters:
  *       - in: path
- *         name: type
+ *         name: id_dossier
  *         required: true
- *         description: Type de dossier
- *         schema:
- *           type: string
- *       - in: query
- *         name: page
- *         required: false
- *         description: Numéro de la page (par défaut 1)
+ *         description: Identifiant du dossier
  *         schema:
  *           type: integer
- *           default: 1
- *       - in: query
- *         name: limit
- *         required: false
- *         description: Nombre d'éléments par page (par défaut 10)
- *         schema:
- *           type: integer
- *           default: 10
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - document
+ *               - libelle_document
+ *             properties:
+ *               document:
+ *                 type: string
+ *                 format: binary
+ *                 description: Fichier à uploader
+ *               libelle_document:
+ *                 type: string
+ *                 maxLength: 100
+ *                 description: Nom du document
+ *               date_document:
+ *                 type: string
+ *                 format: date
+ *                 description: Date du document (optionnel, par défaut date actuelle)
+ *               etat_document:
+ *                 type: string
+ *                 maxLength: 50
+ *                 enum: [Actif, Archive]
+ *                 default: Actif
+ *                 description: État du document
  *     responses:
- *       200:
- *         description: Liste paginée des dossiers du type
+ *       201:
+ *         description: Document créé avec succès
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 page:
- *                   type: integer
- *                   example: 1
- *                 limit:
- *                   type: integer
- *                   example: 10
- *                 total:
- *                   type: integer
- *                   example: 42
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Document ajouté au dossier avec succès
  *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Dossier'
- *             example:
- *               page: 1
- *               limit: 10
- *               total: 42
- *               data:
- *                 - id_dossier: 1
- *                   libelle_dossier: "Dossier A"
- *                   type_dossier: "Contrat"
- *                   created_at: "2024-03-01T12:00:00Z"
- *                   updated_at: "2024-03-01T12:00:00Z"
- *                 - id_dossier: 2
- *                   libelle_dossier: "Dossier B"
- *                   type_dossier: "Facture"
- *                   created_at: "2024-03-02T12:00:00Z"
- *                   updated_at: "2024-03-02T12:00:00Z"
+ *                   type: object
+ *                   properties:
+ *                     document:
+ *                       $ref: '#/components/schemas/Document'
+ *                     details:
+ *                       type: object
+ *                       properties:
+ *                         dateCreation:
+ *                           type: string
+ *                           format: date-time
+ *                         chemin:
+ *                           type: string
+ *       400:
+ *         description: Aucun fichier téléchargé ou ID invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Aucun fichier n'a été téléchargé
  *       404:
- *         description: Aucun dossier trouvé
+ *         description: Dossier non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Dossier non trouvé
  *       500:
  *         description: Erreur serveur
  */
 
 /**
  * @swagger
- * /administration/rangement/documents/{id}:
+ * /administration/dossier/type/{type}/libelle/{libelle}:
  *   get:
- *     summary: Récupérer les documents d'un dossier
- *     description: Retourne la liste des documents associés à un dossier spécifique.
- *     tags: [Rangement]
+ *     summary: Récupérer les dossiers par type et libellé optionnel
+ *     description: Retourne les dossiers du type spécifié. Si le libellé est fourni, filtre également par libellé. Si le libellé n'est pas fourni ou est vide, retourne tous les dossiers du type.
+ *     tags: [Dossier]
+ *     parameters:
+ *       - in: path
+ *         name: type
+ *         required: true
+ *         description: Type du dossier
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: libelle
+ *         required: false
+ *         description: Libellé du dossier (optionnel)
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Liste des dossiers trouvés
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Dossier'
+ *             example:
+ *               - id_dossier: 1
+ *                 libelle_dossier: "MonDossier"
+ *                 type_dossier: "Contrat"
+ *                 created_at: "2024-03-01T12:00:00Z"
+ *                 updated_at: "2024-03-01T12:00:00Z"
+ *               - id_dossier: 2
+ *                 libelle_dossier: "AutreDossier"
+ *                 type_dossier: "Contrat"
+ *                 created_at: "2024-03-02T12:00:00Z"
+ *                 updated_at: "2024-03-02T12:00:00Z"
+ *       500:
+ *         description: Erreur serveur
+ */
+
+/**
+ * @swagger
+ * /administration/dossier/{id}/documents/libelle/{libelle}:
+ *   get:
+ *     summary: Récupérer les documents d'un dossier par id et libellé optionnel
+ *     description: Retourne les documents du dossier spécifié. Si le libellé est fourni, filtre également par libellé du document. Si le libellé n'est pas fourni ou est vide, retourne tous les documents du dossier.
+ *     tags: [Dossier]
  *     parameters:
  *       - in: path
  *         name: id
@@ -362,44 +457,96 @@
  *         description: Identifiant du dossier
  *         schema:
  *           type: integer
+ *       - in: path
+ *         name: libelle
+ *         required: false
+ *         description: Libellé du document (optionnel)
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
- *         description: Liste des documents du dossier
+ *         description: Dossier et documents trouvés
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Document'
+ *               type: object
+ *               properties:
+ *                 dossier:
+ *                   $ref: '#/components/schemas/Dossier'
+ *                 documents:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Document'
  *             example:
- *               - id_documents: 1
- *                 libelle_document: "Contrat 2024"
- *                 date_document: "2024-03-01"
- *                 lien_document: "media/documents/contrat2024.pdf"
- *                 etat_document: "Actif"
- *                 id_dossier: 2
- *               - id_documents: 2
- *                 libelle_document: "Facture Janvier"
- *                 date_document: "2024-01-15"
- *                 lien_document: "media/documents/facture_janvier.pdf"
- *                 etat_document: "Actif"
- *                 id_dossier: 2
+ *               dossier:
+ *                 id_dossier: 1
+ *                 libelle_dossier: "MonDossier"
+ *                 type_dossier: "Contrat"
+ *                 created_at: "2024-03-01T12:00:00Z"
+ *                 updated_at: "2024-03-01T12:00:00Z"
+ *               documents:
+ *                 - id_documents: 1
+ *                   libelle_document: "Contrat 2024"
+ *                   date_document: "2024-03-01"
+ *                   lien_document: "media/documents/contrat2024.pdf"
+ *                   etat_document: "Actif"
+ *                   id_dossier: 1
+ *                 - id_documents: 2
+ *                   libelle_document: "Facture Janvier"
+ *                   date_document: "2024-01-15"
+ *                   lien_document: "media/documents/facture_janvier.pdf"
+ *                   etat_document: "Actif"
+ *                   id_dossier: 1
+ *       404:
+ *         description: Dossier non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Dossier non trouvé
  *       500:
  *         description: Erreur serveur
  */
 
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
+const upload = require('../../../utils/middleware/uploadMiddleware');
 const rangementController = require('../controllers/rangement.controller');
 const { protect } = require('../../../../core/auth/middleware');
 
+const UPLOAD_PATHS = {
+  DOSSIERS: 'media/documents/administration/dossiers'
+};
+
 router.post('/create',rangementController.createDossier);
+router.post('/document/add', rangementController.createDocument);
+router.post('/:id_dossier/document/add',
+  (req, res, next) => {
+    try {
+      const uploadPath = path.join(process.cwd(), UPLOAD_PATHS.DOSSIERS);
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      req.uploadPath = uploadPath;
+      next();
+    } catch (err) {
+      next(err);
+    }
+  },
+  upload.single('document'),
+  rangementController.addDocumentToDossier
+);
 router.get('/', rangementController.getDossiers);
 router.get('/:id', rangementController.getDossierById);
 router.put('/:id', rangementController.updateDossier);
 router.delete('/:id', rangementController.deleteDossier);
 router.delete('/document/:id', rangementController.deleteDocumentById);
-router.get('/type/:type', rangementController.getDossierByType);
-router.get('/documents/:id', rangementController.getdocumentsBydossier);
+router.get('/type/:type/libelle/:libelle?', rangementController.getDossiersByTypeAndLibelle);
+router.get('/:id/documents/libelle/:libelle?', rangementController.getDocumentsByDossierIdAndLibelle);
 
 module.exports = router;
