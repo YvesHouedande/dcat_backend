@@ -17,36 +17,108 @@ const controller = require("../controllers/mouvementOutil.controller");
  * @swagger
  * /moyens-generaux/outils:
  *   get:
- *     summary: Récupère tous les outils
+ *     summary: Récupère tous les outils avec pagination et filtres
  *     tags: [Outils]
+ *     parameters:
+ *       - name: page
+ *         in: query
+ *         description: Numéro de page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         description: Nombre d'éléments par page
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - name: sortBy
+ *         in: query
+ *         description: Champ de tri
+ *         schema:
+ *           type: string
+ *           default: "created_at"
+ *       - name: sortOrder
+ *         in: query
+ *         description: Ordre de tri (asc ou desc)
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: "desc"
+ *       - name: search
+ *         in: query
+ *         description: Recherche dans la désignation, description et code produit
+ *         schema:
+ *           type: string
+ *       - name: categoryId
+ *         in: query
+ *         description: ID de la catégorie
+ *         schema:
+ *           type: integer
+ *       - name: familleLibelle
+ *         in: query
+ *         description: Libellé de la famille
+ *         schema:
+ *           type: string
+ *       - name: marqueLibelle
+ *         in: query
+ *         description: Libellé de la marque
+ *         schema:
+ *           type: string
+ *       - name: modeleLibelle
+ *         in: query
+ *         description: Libellé du modèle
+ *         schema:
+ *           type: string
+ *       - name: qteMin
+ *         in: query
+ *         description: Quantité minimum
+ *         schema:
+ *           type: integer
+ *       - name: qteMax
+ *         in: query
+ *         description: Quantité maximum
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
- *         description: Liste des outils avec leurs détails
+ *         description: Liste des outils avec pagination et informations complètes
  *         content:
  *           application/json:
  *             example:
- *               - produits:
- *                   id_produit: 7
- *                   code_produit: "outils-1"
- *                   desi_produit: "outils-1"
- *                   desc_produit: "test"
- *                   image_produit: "media\\images\\stock_moyensgeneraux\\produits\\tomate_1745872525356.jpeg"
- *                   qte_produit: 1
- *                   emplacement_produit: null
- *                   caracteristiques_produit: null
- *                   prix_produit: null
- *                   id_categorie: null
- *                   id_type_produit: 5
- *                   id_modele: null
- *                   id_famille: null
- *                   id_marque: null
- *                   created_at: "2025-04-28T20:20:28.899Z"
- *                   updated_at: "2025-04-28T20:35:25.365Z"
- *                 type_produits:
- *                   id_type_produit: 5
- *                   libelle: "Outil"
- *                   created_at: "2025-04-28T17:30:41.395Z"
- *                   updated_at: "2025-04-28T17:30:41.395Z"
+ *               data:
+ *                 - produit:
+ *                     id_produit: 7
+ *                     code_produit: "outils-1"
+ *                     desi_produit: "outils-1"
+ *                     desc_produit: "test"
+ *                     image_produit: "media\\images\\stock_moyensgeneraux\\produits\\tomate_1745872525356.jpeg"
+ *                     qte_produit: 1
+ *                     emplacement_produit: null
+ *                     caracteristiques_produit: null
+ *                     prix_produit: null
+ *                     id_categorie: null
+ *                     id_type_produit: 5
+ *                     id_modele: null
+ *                     id_famille: null
+ *                     id_marque: null
+ *                     created_at: "2025-04-28T20:20:28.899Z"
+ *                     updated_at: "2025-04-28T20:35:25.365Z"
+ *                   category: null
+ *                   type:
+ *                     id_type_produit: 5
+ *                     libelle: "Outil"
+ *                     created_at: "2025-04-28T17:30:41.395Z"
+ *                     updated_at: "2025-04-28T17:30:41.395Z"
+ *                   modele: null
+ *                   famille: null
+ *                   marque: null
+ *                   images: null
+ *               pagination:
+ *                 total: 1
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 1
  */
 
 router.get("/", controller.getAllOutils);
@@ -102,8 +174,66 @@ router.get("/exemplaires", controller.getExemplairesOutils);
  * @swagger
  * /moyens-generaux/outils/sortie:
  *   post:
- *     summary: Enregistre une sortie d'outil
+ *     summary: Enregistre une sortie d'outil (affectation d'un outil à un employé)
+ *     description: >
+ *       Permet d'enregistrer la sortie d'un exemplaire d'outil pour un employé donné, en précisant le contexte d'utilisation, l'état de l'outil avant la sortie, la date de sortie, le site d'intervention et un commentaire éventuel.
+ *       Cette opération crée une trace de la sortie dans l'historique des mouvements d'outils.
  *     tags: [Outils]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id_exemplaire:
+ *                 type: integer
+ *                 description: ID de l'exemplaire de l'outil à sortir
+ *                 example: 13
+ *               id_employes:
+ *                 type: integer
+ *                 description: ID de l'employé à qui l'outil est affecté
+ *                 example: 1
+ *               but_usage:
+ *                 type: string
+ *                 description: But ou motif d'utilisation de l'outil
+ *                 example: "test"
+ *               etat_avant:
+ *                 type: string
+ *                 description: "État de l'outil avant la sortie (ex: bon, endommagé, usé)"
+ *                 example: "bon"
+ *               date_de_sortie:
+ *                 type: string
+ *                 format: date
+ *                 description: Date de la sortie de l'outil (format YYYY-MM-DD)
+ *                 example: "2025-04-29"
+ *               site_intervention:
+ *                 type: string
+ *                 description: Site ou lieu d'intervention où l'outil sera utilisé
+ *                 example: "test"
+ *               commentaire:
+ *                 type: string
+ *                 description: Commentaire ou remarque supplémentaire
+ *                 example: "test"
+ *     responses:
+ *       201:
+ *         description: Sortie d'outil enregistrée avec succès
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Sortie d'outil enregistrée avec succès"
+ *       400:
+ *         description: Données invalides ou champs obligatoires manquants
+ *         content:
+ *           application/json:
+ *             example:
+ *               error: "Champs obligatoires manquants ou données invalides"
+ *       500:
+ *         description: Erreur serveur lors de l'enregistrement de la sortie
+ *         content:
+ *           application/json:
+ *             example:
+ *               error: "Erreur interne du serveur"
  */
 router.post("/sortie", controller.enregistrerSortieOutil);
 
@@ -111,8 +241,63 @@ router.post("/sortie", controller.enregistrerSortieOutil);
  * @swagger
  * /moyens-generaux/outils/entree:
  *   post:
- *     summary: Enregistre une entrée d'outil
+ *     summary: Enregistre le retour  d'un outil par un employé
+ *     description: >
+ *       Permet d'enregistrer le retour d'un exemplaire d'outil précédemment sorti par un employé.  
+ *       Cette route enregistre l'état de l'outil après utilisation, la date de retour, et un commentaire éventuel.
  *     tags: [Outils]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - id_exemplaire
+ *               - id_employes
+ *               - etat_apres
+ *               - date_de_retour
+ *             properties:
+ *               id_exemplaire:
+ *                 type: integer
+ *                 description: ID de l'exemplaire de l'outil à retourner
+ *                 example: 13
+ *               id_employes:
+ *                 type: integer
+ *                 description: ID de l'employé qui retourne l'outil
+ *                 example: 1
+ *               etat_apres:
+ *                 type: string
+ *                 description: "État de l'outil après utilisation ex: bon, endommagé, usé"
+ *                 example: "mauvais"
+ *               date_de_retour:
+ *                 type: string
+ *                 format: date
+ *                 description: Date de retour de l'outil (format YYYY-MM-DD)
+ *                 example: "2025-04-29"
+ *               commentaire:
+ *                 type: string
+ *                 description: Commentaire ou remarque supplémentaire sur l'état ou le retour de l'outil
+ *                 example: "test retour"
+ *     responses:
+ *       201:
+ *         description: Entrée  d'outil enregistrée avec succès
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Entrée d'outil enregistrée avec succès"
+ *       400:
+ *         description: Données invalides ou champs obligatoires manquants
+ *         content:
+ *           application/json:
+ *             example:
+ *               error: "Champs obligatoires manquants ou données invalides"
+ *       500:
+ *         description: Erreur serveur lors de l'enregistrement de l'entrée
+ *         content:
+ *           application/json:
+ *             example:
+ *               error: "Erreur interne du serveur"
  */
 router.post("/entree", controller.enregistrerEntreeOutil);
 

@@ -1,10 +1,38 @@
 const toolsService = require("../services/mouvementOutil.service");
 
-// Récupérer la liste de tous les produits de type "outil".
+// Récupérer la liste de tous les produits de type "outil" avec pagination et filtres.
 const getAllOutils = async (req, res) => {
   try {
-    const outils = await toolsService.getAllOutils();
-    res.status(200).json(outils);
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "created_at",
+      sortOrder = "desc",
+      search = "",
+      categoryId,
+      familleLibelle,
+      marqueLibelle,
+      modeleLibelle,
+      qteMin,
+      qteMax,
+    } = req.query;
+
+    const options = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      sortBy,
+      sortOrder,
+      search,
+      categoryId: categoryId ? parseInt(categoryId) : undefined,
+      familleLibelle,
+      marqueLibelle,
+      modeleLibelle,
+      qteMin: qteMin ? parseInt(qteMin) : undefined,
+      qteMax: qteMax ? parseInt(qteMax) : undefined,
+    };
+
+    const result = await toolsService.getAllOutils(options);
+    res.status(200).json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

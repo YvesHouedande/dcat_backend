@@ -148,7 +148,7 @@ const commandes = pgTable("commandes", {
 // Type_produit
 const type_produits = pgTable("type_produits", {
   id_type_produit: serial("id_type_produit").primaryKey(),
-  libelle: varchar("libelle", { length: 50 }),
+  libelle: varchar("libelle", { length: 50 }), //equipement/outil
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -230,7 +230,7 @@ const prestations = pgTable("prestations", {
 });
 
 // Livrable
-//test
+
 const livrables = pgTable("livrables", {
   id_livrable: serial("id_livrable").primaryKey(),
   libelle_livrable: varchar("libelle_livrable", { length: 100 }),
