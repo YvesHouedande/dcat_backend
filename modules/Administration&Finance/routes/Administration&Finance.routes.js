@@ -21,7 +21,7 @@ router.use("/demandes", demandeRoutes);
 router.use("/documents", docFCRoutes);
 router.use("/employes", employeRoutes);
 router.use("/fonctions",fonctionRoutes);
-router.use("/rangement", rangementRoutes);
+router.use("/dossier", rangementRoutes);
 
 
 // Protect all routes under Administration & Finance

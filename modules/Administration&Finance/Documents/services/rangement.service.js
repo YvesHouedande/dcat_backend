@@ -15,10 +15,6 @@ const getDossierById = async (id) => {
     return result;
 }
 
-const getDossierByType = async (type) => {
-    return await db.select().from(dossiers).where(eq(dossiers.type_dossier, type));
-}
-
 const createDossier = async (dossierData) => {
     const [result] = await db
         .insert(dossiers)
@@ -58,31 +54,59 @@ const deleteDocumentById = async (id) => {
     return result;
 }
 
-const getDossierByLibelleAndType = async (libelle, type) => {
-    const [result] = await db
-        .select()
-        .from(dossiers)
-        .where(
-            eq(dossiers.libelle_dossier, libelle),
-            eq(dossiers.type_dossier, type)
-        );
-    return result;
-}
-
-const getDocumentsByDossierFullParams = async (id, libelle, type) => {
-    // On vérifie d'abord que le dossier existe avec ces trois paramètres
+const createDocument = async (documentData) => {
+    // Vérifier d'abord que le dossier existe
     const [dossier] = await db
         .select()
         .from(dossiers)
-        .where(
-            eq(dossiers.id_dossier, id),
-            eq(dossiers.libelle_dossier, libelle),
-            eq(dossiers.type_dossier, type)
+        .where(eq(dossiers.id_dossier, documentData.id_dossier));
+    
+    if (!dossier) {
+        throw new Error("Dossier non trouvé");
+    }
+    
+    const [result] = await db
+        .insert(documents)
+        .values(documentData)
+        .returning();
+    return result;
+}
+
+const getDossiersByTypeAndLibelle = async (type, libelle = "") => {
+    if (libelle === "" || !libelle) {
+        // Si libellé n'est pas fourni, on récupère tous les dossiers du type
+        return await db.select().from(dossiers).where(eq(dossiers.type_dossier, type));
+    } else {
+        // Si libellé est fourni, on filtre par type et libellé
+        return await db.select().from(dossiers).where(
+            eq(dossiers.type_dossier, type),
+            eq(dossiers.libelle_dossier, libelle)
         );
+    }
+}
+
+const getDocumentsByDossierIdAndLibelle = async (id, libelle = "") => {
+    // Vérifier d'abord que le dossier existe
+    const [dossier] = await db
+        .select()
+        .from(dossiers)
+        .where(eq(dossiers.id_dossier, id));
+    
     if (!dossier) return null;
-    // On récupère les documents liés à ce dossier
-    const docs = await db.select().from(documents).where(eq(documents.id_dossier, id));
-    return { dossier, documents: docs };
+    
+    // Récupérer les documents selon le libellé
+    if (libelle === "" || !libelle) {
+        // Si libellé n'est pas fourni, récupérer tous les documents du dossier
+        const docs = await db.select().from(documents).where(eq(documents.id_dossier, id));
+        return { dossier, documents: docs };
+    } else {
+        // Si libellé est fourni, filtrer par libellé du document
+        const docs = await db.select().from(documents).where(
+            eq(documents.id_dossier, id),
+            eq(documents.libelle_document, libelle)
+        );
+        return { dossier, documents: docs };
+    }
 }
 
 
@@ -94,7 +118,7 @@ module.exports = {
     deleteDossier,
     deleteDocumentByDossier,
     deleteDocumentById,
-    getDossierByType,
-    getDossierByLibelleAndType,
-    getDocumentsByDossierFullParams
+    getDossiersByTypeAndLibelle,
+    getDocumentsByDossierIdAndLibelle,
+    createDocument
 };
