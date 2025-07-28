@@ -81,7 +81,7 @@ async function getAllOutils(options = {}) {
 
   if (familleLibelle) {
     filters.push(sql`LOWER(${familles.libelle_famille}) = LOWER(${familleLibelle})`);
-  }
+  }//test
   if (marqueLibelle) {
     filters.push(sql`LOWER(${marques.libelle_marque}) = LOWER(${marqueLibelle})`);
   }
