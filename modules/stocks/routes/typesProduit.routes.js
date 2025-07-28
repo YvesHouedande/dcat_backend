@@ -15,6 +15,25 @@ const controller = require("../controllers/typesProduit.controller");
  *   post:
  *     summary: Crée un nouveau type de produit
  *     tags: [Types de Produits]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               libelle:
+ *                 type: string
+ *                 description: Libellé du type de produit .par exemple "equipement" ou "outil"
+ *                 enum: [equipement, outil]
+ *                 example: equipement
+ *     responses:
+ *       201:
+ *         description: Type de produit créé avec succès
+ *       400:
+ *         description: Données invalides ou champ manquant
+ *       500:
+ *         description: Erreur serveur
  */
 router.post("/", controller.createTypeProduit);
 
