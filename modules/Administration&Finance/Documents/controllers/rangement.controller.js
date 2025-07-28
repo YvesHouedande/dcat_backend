@@ -159,41 +159,127 @@ const deleteDocumentById = async (req, res) => {
     }
 };
 
-const getDossierByType = async (req, res) => {
+const createDocument = async (req, res) => {
     try {
-        const { type } = req.params;
-        const dossiers = await dossierService.getDossierByType(type);
-        res.status(200).json(dossiers);
+        const documentData = req.body;
+        const newDocument = await dossierService.createDocument(documentData);
+        res.status(201).json(newDocument);
     } catch (error) {
-        logger.error("Error fetching dossiers by type:", { error, route: req.originalUrl });
-        res.status(500).json({ message: "Internal Server Error" });
-    }
-};
-
-const getDossierByLibelleAndType = async (req, res) => {
-    try {
-        const { libelle, type } = req.params;
-        const dossier = await dossierService.getDossierByLibelleAndType(libelle, type);
-        if (!dossier) {
-            return res.status(404).json({ message: "Aucun dossier trouvé" });
+        if (error.message === "Dossier non trouvé") {
+            return res.status(404).json({ message: "Dossier non trouvé" });
         }
-        res.status(200).json(dossier);
-    } catch (error) {
-        logger.error("Erreur lors de la récupération du dossier par libellé et type:", { error, route: req.originalUrl });
+        logger.error("Erreur lors de la création du document:", { error, route: req.originalUrl });
         res.status(500).json({ message: "Erreur serveur" });
     }
 };
 
-const getDocumentsByDossierFullParams = async (req, res) => {
+const addDocumentToDossier = async (req, res) => {
     try {
-        const { id, libelle, type } = req.params;
-        const result = await dossierService.getDocumentsByDossierFullParams(id, libelle, type);
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "Aucun fichier n'a été téléchargé"
+            });
+        }
+
+        const { id_dossier } = req.params;
+        if (!id_dossier || isNaN(parseInt(id_dossier))) {
+            return res.status(400).json({
+                success: false,
+                message: "ID du dossier manquant ou invalide"
+            });
+        }
+
+        // Vérifier si le dossier existe
+        const dossier = await dossierService.getDossierById(id_dossier);
+        if (!dossier) {
+            // Supprimer le fichier uploadé si le dossier n'existe pas
+            await fs.promises.unlink(req.file.path).catch(() => {});
+            return res.status(404).json({ 
+                success: false,
+                message: "Dossier non trouvé" 
+            });
+        }
+
+        const relativePath = req.file.path
+            .replace(process.cwd(), '')
+            .replace(/\\/g, '/')
+            .replace(/^\//, '');
+
+        const docData = {
+            libelle_document: req.body.libelle_document,
+            date_document: req.body.date_document ? new Date(req.body.date_document) : new Date(),
+            lien_document: relativePath,
+            etat_document: req.body.etat_document || 'Actif',
+            id_dossier: parseInt(id_dossier)
+        };
+
+        let document;
+        try {
+            document = await dossierService.createDocument(docData);
+            logger.info("Document ajouté au dossier", { documentId: document.id_documents, dossierId: id_dossier });
+        } catch (dbError) {
+            await fs.promises.unlink(req.file.path).catch(() => {});
+            logger.error("Erreur base de données lors de l'ajout du document au dossier", {
+                error: {
+                    message: dbError.message,
+                    stack: dbError.stack
+                }
+            });
+            return res.status(500).json({
+                success: false,
+                message: "Erreur lors de l'enregistrement du document en base",
+                error: dbError.message
+            });
+        }
+
+        res.status(201).json({
+            success: true,
+            message: "Document ajouté au dossier avec succès",
+            data: {
+                document,
+                details: {
+                    dateCreation: new Date().toISOString(),
+                    chemin: relativePath
+                }
+            }
+        });
+    } catch (error) {
+        logger.error("Erreur lors de l'ajout du document au dossier", {
+            error: {
+                message: error.message,
+                stack: error.stack
+            }
+        });
+        res.status(500).json({
+            success: false,
+            message: "Erreur interne lors de l'ajout du document au dossier.",
+            error: error.message
+        });
+    }
+};
+
+const getDossiersByTypeAndLibelle = async (req, res) => {
+    try {
+        const { type, libelle } = req.params;
+        const dossiers = await dossierService.getDossiersByTypeAndLibelle(type, libelle);
+        res.status(200).json(dossiers);
+    } catch (error) {
+        logger.error("Erreur lors de la récupération des dossiers par type et libellé:", { error, route: req.originalUrl });
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+};
+
+const getDocumentsByDossierIdAndLibelle = async (req, res) => {
+    try {
+        const { id, libelle } = req.params;
+        const result = await dossierService.getDocumentsByDossierIdAndLibelle(id, libelle);
         if (!result) {
-            return res.status(404).json({ message: "Aucun dossier trouvé avec ces paramètres" });
+            return res.status(404).json({ message: "Dossier non trouvé" });
         }
         res.status(200).json(result);
     } catch (error) {
-        logger.error("Erreur lors de la récupération des documents par id, libellé et type:", { error, route: req.originalUrl });
+        logger.error("Erreur lors de la récupération des documents par id et libellé:", { error, route: req.originalUrl });
         res.status(500).json({ message: "Erreur serveur" });
     }
 };
@@ -205,8 +291,9 @@ module.exports = {
     updateDossier,
     deleteDossier,
     deleteDocumentById,
-    getDossierByType,
-    getDossierByLibelleAndType,
-    getDocumentsByDossierFullParams
+    createDocument,
+    addDocumentToDossier,
+    getDossiersByTypeAndLibelle,
+    getDocumentsByDossierIdAndLibelle
 };
 
