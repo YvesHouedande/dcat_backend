@@ -230,6 +230,7 @@ const prestations = pgTable("prestations", {
 });
 
 // Livrable
+//test
 const livrables = pgTable("livrables", {
   id_livrable: serial("id_livrable").primaryKey(),
   libelle_livrable: varchar("libelle_livrable", { length: 100 }),
@@ -238,6 +239,8 @@ const livrables = pgTable("livrables", {
   reserves: text("reserves"),
   approbation: text("approbation"),
   recommandation: text("recommandation"),
+  type_livrable: varchar("type_livrable", { length: 100 }),
+  client: varchar("client", { length: 100 }),
   id_projet: integer("id_projet").references(() => projets.id_projet),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
