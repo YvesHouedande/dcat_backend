@@ -105,7 +105,7 @@ const produitsService = {
   },
 
   // Récupérer tous les produits avec pagination, recherche et filtre de prix
-  getAllEquipements: async (
+  getAllEquipementsWithPaginationParameter: async (
     page = 1,
     limit = 20,
     familleId = null,

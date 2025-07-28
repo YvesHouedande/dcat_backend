@@ -1,4 +1,4 @@
-const produitsService = require('../services/produits.service');
+const produitsService = require("../services/produits.service");
 
 const produitsController = {
   getEquipementsByFamille: async (req, res) => {
@@ -13,88 +13,105 @@ const produitsController = {
 
   getAllEquipements: async (req, res) => {
     try {
-      console.log('Requête de pagination reçue:', {
+      console.log("Requête de pagination reçue:", {
         query: req.query,
         method: req.method,
-        url: req.url
+        url: req.url,
       });
 
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 20;
-      const familleId = req.query.familleId ? parseInt(req.query.familleId) : null;
+      const familleId = req.query.familleId
+        ? parseInt(req.query.familleId)
+        : null;
       const searchQuery = req.query.search ? req.query.search.trim() : null;
       const prixMin = req.query.prixMin ? parseFloat(req.query.prixMin) : null;
       const prixMax = req.query.prixMax ? parseFloat(req.query.prixMax) : null;
-      
+
       // Validation des paramètres
       if (page < 1) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Le numéro de page doit être supérieur à 0' 
-        });
-      }
-      
-      if (limit < 1 || limit > 100) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'La limite doit être entre 1 et 100' 
-        });
-      }
-      
-      if (familleId !== null && isNaN(familleId)) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'familleId doit être un nombre valide' 
-        });
-      }
-      
-      // Validation des paramètres de prix
-      if (prixMin !== null && (isNaN(prixMin) || prixMin < 0)) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'prixMin doit être un nombre positif valide' 
-        });
-      }
-      
-      if (prixMax !== null && (isNaN(prixMax) || prixMax < 0)) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'prixMax doit être un nombre positif valide' 
-        });
-      }
-      
-      // Validation de la cohérence des prix
-      if (prixMin !== null && prixMax !== null && prixMin > prixMax) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Le prix minimum ne peut pas être supérieur au prix maximum' 
+        return res.status(400).json({
+          success: false,
+          error: "Le numéro de page doit être supérieur à 0",
         });
       }
 
-      console.log('Paramètres validés:', { page, limit, familleId, searchQuery, prixMin, prixMax });
-      
-      const result = await produitsService.getAllEquipements(page, limit, familleId, searchQuery, prixMin, prixMax);
-      
-      console.log('Résultat du service:', {
-        productsCount: result.products.length,
-        pagination: result.pagination
+      if (limit < 1 || limit > 100) {
+        return res.status(400).json({
+          success: false,
+          error: "La limite doit être entre 1 et 100",
+        });
+      }
+
+      if (familleId !== null && isNaN(familleId)) {
+        return res.status(400).json({
+          success: false,
+          error: "familleId doit être un nombre valide",
+        });
+      }
+
+      // Validation des paramètres de prix
+      if (prixMin !== null && (isNaN(prixMin) || prixMin < 0)) {
+        return res.status(400).json({
+          success: false,
+          error: "prixMin doit être un nombre positif valide",
+        });
+      }
+
+      if (prixMax !== null && (isNaN(prixMax) || prixMax < 0)) {
+        return res.status(400).json({
+          success: false,
+          error: "prixMax doit être un nombre positif valide",
+        });
+      }
+
+      // Validation de la cohérence des prix
+      if (prixMin !== null && prixMax !== null && prixMin > prixMax) {
+        return res.status(400).json({
+          success: false,
+          error: "Le prix minimum ne peut pas être supérieur au prix maximum",
+        });
+      }
+
+      console.log("Paramètres validés:", {
+        page,
+        limit,
+        familleId,
+        searchQuery,
+        prixMin,
+        prixMax,
       });
-      
-      res.json({ 
-        success: true, 
+
+      const result =
+        await produitsService.getAllEquipementsWithPaginationParameter(
+          page,
+          limit,
+          familleId,
+          searchQuery,
+          prixMin,
+          prixMax
+        );
+
+      console.log("Résultat du service:", {
+        productsCount: result.products.length,
+        pagination: result.pagination,
+      });
+
+      res.json({
+        success: true,
         produits: result.products,
-        pagination: result.pagination
+        pagination: result.pagination,
       });
     } catch (error) {
-      console.error('Erreur dans getAllEquipements:', {
+      console.error("Erreur dans getAllEquipements:", {
         message: error.message,
         stack: error.stack,
-        query: req.query
+        query: req.query,
       });
-      
-      res.status(500).json({ 
-        success: false, 
-        error: `Erreur serveur: ${error.message}` 
+
+      res.status(500).json({
+        success: false,
+        error: `Erreur serveur: ${error.message}`,
       });
     }
   },
@@ -143,8 +160,11 @@ const produitsController = {
     try {
       const { productId } = req.params;
       const limit = req.query.limit ? parseInt(req.query.limit) : 4;
-      
-      const produits = await produitsService.getSimilarProductsByLibelle(productId, limit);
+
+      const produits = await produitsService.getSimilarProductsByLibelle(
+        productId,
+        limit
+      );
       res.json({ success: true, produits });
     } catch (error) {
       // Si le produit n'est pas trouvé, renvoyer 404
