@@ -277,4 +277,31 @@ router.get('/admin/all', clientsController.getAllClients);
 router.post('/request-password-reset', clientsController.requestPasswordReset);
 router.post('/reset-password', clientsController.resetPassword);
 
+/**
+ * @swagger
+ * /marketing_commercial/clients/count:
+ *   get:
+ *     summary: Récupère le nombre total de clients
+ *     description: Retourne le nombre total de clients enregistrés (excluant les administrateurs)
+ *     tags: [Clients]
+ *     responses:
+ *       200:
+ *         description: Nombre de clients récupéré avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: integer
+ *                   description: Nombre total de clients (excluant les admins)
+ *                   example: 42
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/count', clientsController.getClientsCount);
+
 module.exports = router;
