@@ -14,7 +14,7 @@ const {
   partenaires,
   images,
 } = require("../../../core/database/models");
-//test
+
 const LIBELLE_OUTIL = "outil";
 
 /**
@@ -22,6 +22,7 @@ const LIBELLE_OUTIL = "outil";
  * @param {Object} options - Options de pagination et filtres
  * @returns {Promise<Object>} Liste paginée des exemplaires d'outils
  */
+
 async function getAllOutils(options = {}) {
   const {
     page = 1,
@@ -39,9 +40,9 @@ async function getAllOutils(options = {}) {
 
   const offset = (page - 1) * limit;
 
-  // Construire les conditions de filtrage - simplifié pour déboguer
+  // Construction des conditions de filtrage
   const whereConditions = [
-    eq(produits.id_type_produit, 2) // ID du type "outil"
+    eq(type_produits.libelle, LIBELLE_OUTIL)
   ];
 
   if (search) {
@@ -57,31 +58,26 @@ async function getAllOutils(options = {}) {
   if (categoryId) {
     whereConditions.push(eq(produits.id_categorie, categoryId));
   }
-
   if (familleLibelle) {
     whereConditions.push(like(familles.libelle, `%${familleLibelle}%`));
   }
-
   if (marqueLibelle) {
     whereConditions.push(like(marques.libelle, `%${marqueLibelle}%`));
   }
-
   if (modeleLibelle) {
     whereConditions.push(like(modeles.libelle, `%${modeleLibelle}%`));
   }
-
   if (qteMin !== undefined) {
     whereConditions.push(gte(produits.qte_produit, qteMin));
   }
-
   if (qteMax !== undefined) {
     whereConditions.push(lte(produits.qte_produit, qteMax));
   }
 
-  // Récupérer les exemplaires avec informations simplifiées
-  let _exemplaires = [];
+  // Récupération des exemplaires d'outils
+  let exemplairesResult = [];
   try {
-    _exemplaires = await db
+    exemplairesResult = await db
       .select({
         id_exemplaire: exemplaires.id_exemplaire,
         num_serie: exemplaires.num_serie,
@@ -94,13 +90,6 @@ async function getAllOutils(options = {}) {
           lien_image: images.lien_image,
           numero_image: images.numero_image,
         },
-        // image_produit: sql`(
-        //   SELECT images.lien_image
-        //   FROM images
-        //   WHERE images.id_produit = produits.id_produit AND images.numero_image = 1
-        //   ORDER BY images.numero_image DESC
-        //   LIMIT 1
-        // )`.as("image_produit"),
         fournisseur: {
           nom: partenaires.nom_partenaire,
           telephone: partenaires.telephone_partenaire,
@@ -110,7 +99,6 @@ async function getAllOutils(options = {}) {
           type: partenaires.type_partenaire,
           statut: partenaires.statut,
         },
-        // Date de sortie la plus récente
         date_sortie_outil: sql`(
           SELECT employe_sortir_exemplaires.date_de_sortie
           FROM employe_sortir_exemplaires
@@ -118,7 +106,6 @@ async function getAllOutils(options = {}) {
           ORDER BY employe_sortir_exemplaires.created_at DESC
           LIMIT 1
         )`.as("date_sortie_outil"),
-        // Date de retour la plus récente
         date_retour_outil: sql`(
           SELECT employe_entrer_exemplaires.date_de_retour
           FROM employe_entrer_exemplaires
@@ -129,6 +116,7 @@ async function getAllOutils(options = {}) {
       })
       .from(exemplaires)
       .leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
+      .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
       .leftJoin(images, eq(produits.id_produit, images.id_produit))
       .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
       .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
@@ -138,45 +126,45 @@ async function getAllOutils(options = {}) {
       .leftJoin(partenaires, eq(livraisons.id_partenaire, partenaires.id_partenaire))
       .where(and(...whereConditions))
       .orderBy(
-        sortOrder === "asc" ? asc(exemplaires[sortBy]) : desc(exemplaires[sortBy])
+        sortOrder === "asc"
+          ? asc(exemplaires[sortBy])
+          : desc(exemplaires[sortBy])
       )
       .limit(limit)
       .offset(offset);
 
-    // Vérifier si les résultats sont valides
-    if (!_exemplaires || !Array.isArray(_exemplaires)) {
-      _exemplaires = [];
+    if (!exemplairesResult || !Array.isArray(exemplairesResult)) {
+      exemplairesResult = [];
     }
   } catch (err) {
-    _exemplaires = [];
+    console.error("Erreur lors de la récupération des exemplaires d'outils :", err);
+    exemplairesResult = [];
   }
 
-  // Compter le total
+  // Comptage du total pour la pagination
   let total = 0;
   try {
-    // const countQuery = db
-    //   .select({ count: sql`count(*)` })
-    //   .from(exemplaires)
-    //   .leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
-    //   .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
-    //   .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
-    //   .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
-    //   .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
-    //   .leftJoin(livraisons, eq(exemplaires.id_livraison, livraisons.id_livraison))
-    //   .where(and(...whereConditions));
-    const countQuery = _exemplaires.length;
+    const totalResult = await db
+      .select({ count: sql`count(*)` })
+      .from(exemplaires)
+      .leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
+      .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
+      .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
+      .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+      .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
+      .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
+      .leftJoin(livraisons, eq(exemplaires.id_livraison, livraisons.id_livraison))
+      .leftJoin(partenaires, eq(livraisons.id_partenaire, partenaires.id_partenaire))
+      .where(and(...whereConditions));
 
-    // const totalResult = await countQuery;
-    // total = Number(totalResult[0]?.count || 0);
-    total = countQuery;
-
+    total = Number(totalResult[0]?.count || 0);
   } catch (err) {
     console.error("Erreur dans le comptage:", err);
     total = 0;
   }
 
   return {
-    data: _exemplaires,
+    data: exemplairesResult,
     pagination: {
       total,
       page,
