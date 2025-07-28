@@ -32,6 +32,19 @@ const getAllOutils = async (req, res) => {
     };
 
     const result = await toolsService.getAllOutils(options);
+
+        // ---------------------- URL complètes pour les images ----------------------
+        const hostPrefix = `${req.protocol}://${req.get("host")}/`;
+
+        result.data = result.data.map((item) => ({
+          ...item,
+          image_produit: item.image_produit && item.image_produit.lien_image
+            ? {
+                ...item.image_produit,
+                url: hostPrefix + item.image_produit.lien_image.replace(/\\/g, "/"),
+              }
+            : null,
+        }));
     res.status(200).json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -198,6 +211,59 @@ const getOutilsStatistiques = async (req, res) => {
   }
 };
 
+// Récupère toutes les sorties d'un outil spécifique
+const getSortiesOutil = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    if (!id) {
+      return res.status(400).json({ error: "ID produit requis" });
+    }
+
+    const result = await toolsService.getSortiesOutil(parseInt(id), page, limit);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Récupère toutes les entrées d'un outil spécifique
+const getEntreesOutil = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    if (!id) {
+      return res.status(400).json({ error: "ID produit requis" });
+    }
+
+    const result = await toolsService.getEntreesOutil(parseInt(id), page, limit);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Récupère les exemplaires d'un outil spécifique avec pagination
+const getExemplairesOutil = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    if (!id) {
+      return res.status(400).json({ error: "ID produit requis" });
+    }
+
+    const result = await toolsService.getExemplairesOutil(parseInt(id), page, limit);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 module.exports = {
   getAllOutils,
@@ -213,4 +279,7 @@ module.exports = {
   deleteMouvement,
   updateMouvement,
   getOutilsStatistiques,
+  getSortiesOutil,
+  getEntreesOutil,
+  getExemplairesOutil,
 };

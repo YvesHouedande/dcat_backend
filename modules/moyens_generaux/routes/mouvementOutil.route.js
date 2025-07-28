@@ -22,19 +22,19 @@ const controller = require("../controllers/mouvementOutil.controller");
  *     parameters:
  *       - name: page
  *         in: query
- *         description: Numéro de page
+ *         description: Numéro de page (par défaut 1)
  *         schema:
  *           type: integer
  *           default: 1
  *       - name: limit
  *         in: query
- *         description: Nombre d'éléments par page
+ *         description: Nombre d'éléments par page (par défaut 10)
  *         schema:
  *           type: integer
  *           default: 10
  *       - name: sortBy
  *         in: query
- *         description: Champ de tri
+ *         description: Champ de tri (ex: "created_at", "nom_produit", etc.)
  *         schema:
  *           type: string
  *           default: "created_at"
@@ -47,7 +47,7 @@ const controller = require("../controllers/mouvementOutil.controller");
  *           default: "desc"
  *       - name: search
  *         in: query
- *         description: Recherche dans la désignation, description et code produit
+ *         description: Recherche sur la désignation, la description ou le code produit
  *         schema:
  *           type: string
  *       - name: categoryId
@@ -82,40 +82,35 @@ const controller = require("../controllers/mouvementOutil.controller");
  *           type: integer
  *     responses:
  *       200:
- *         description: Liste des outils avec pagination et informations complètes
+ *         description: Liste paginée des outils avec leurs informations principales et l'URL de l'image principale.
  *         content:
  *           application/json:
  *             example:
  *               data:
- *                 - produit:
- *                     id_produit: 7
- *                     code_produit: "outils-1"
- *                     desi_produit: "outils-1"
- *                     desc_produit: "test"
- *                     image_produit: "media\\images\\stock_moyensgeneraux\\produits\\tomate_1745872525356.jpeg"
- *                     qte_produit: 1
- *                     emplacement_produit: null
- *                     caracteristiques_produit: null
- *                     prix_produit: null
- *                     id_categorie: null
- *                     id_type_produit: 5
- *                     id_modele: null
- *                     id_famille: null
- *                     id_marque: null
- *                     created_at: "2025-04-28T20:20:28.899Z"
- *                     updated_at: "2025-04-28T20:35:25.365Z"
- *                   category: null
- *                   type:
- *                     id_type_produit: 5
- *                     libelle: "Outil"
- *                     created_at: "2025-04-28T17:30:41.395Z"
- *                     updated_at: "2025-04-28T17:30:41.395Z"
- *                   modele: null
- *                   famille: null
- *                   marque: null
- *                   images: null
+ *                 - id_produit: 6
+ *                   code_produit: "OUTIL-001"
+ *                   desi_produit: "Échelle"
+ *                   desc_produit: "Échelle aluminium 3m"
+ *                   qte_produit: 5
+ *                   seuil_min_produit: 2
+ *                   emplacement_produit: "Entrepôt A"
+ *                   caracteristiques_produit: "3m, aluminium"
+ *                   prix_produit: 120.00
+ *                   id_categorie: 1
+ *                   id_type_produit: 5
+ *                   id_modele: 2
+ *                   id_famille: 3
+ *                   id_marque: 4
+ *                   created_at: "2025-06-24T10:00:00.000Z"
+ *                   updated_at: "2025-06-24T10:00:00.000Z"
+ *                   image_produit:
+ *                     id_image: 12
+ *                     libelle_image: "Photo principale"
+ *                     numero_image: 1
+ *                     lien_image: "media/images/stock_moyensgeneraux/produits/outil1.jpg"
+ *                     url: "http://localhost:3000/media/images/stock_moyensgeneraux/produits/outil1.jpg"
  *               pagination:
- *                 total: 1
+ *                 total: 2
  *                 page: 1
  *                 limit: 10
  *                 totalPages: 1
@@ -169,6 +164,120 @@ router.get("/", controller.getAllOutils);
  */
 
 router.get("/exemplaires", controller.getExemplairesOutils);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/exemplaires/{id}:
+ *   get:
+ *     summary: Récupère les exemplaires d'un outil spécifique avec pagination
+ *     tags: [Outils]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID du produit (outil)
+ *         schema:
+ *           type: integer
+ *       - name: page
+ *         in: query
+ *         description: Numéro de page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         description: Nombre d'éléments par page
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Liste paginée des exemplaires de l'outil avec informations complètes
+ *         content:
+ *           application/json:
+ *             example:
+ *               produit:
+ *                 produit:
+ *                   id_produit: 7
+ *                   code_produit: "outils-1"
+ *                   desi_produit: "outils-1"
+ *                   desc_produit: "test"
+ *                   qte_produit: 1
+ *                   emplacement_produit: null
+ *                   caracteristiques_produit: null
+ *                   prix_produit: null
+ *                   id_categorie: null
+ *                   id_type_produit: 5
+ *                   id_modele: null
+ *                   id_famille: null
+ *                   id_marque: null
+ *                   created_at: "2025-04-28T20:20:28.899Z"
+ *                   updated_at: "2025-04-28T20:35:25.365Z"
+ *                 type_produit:
+ *                   id_type_produit: 5
+ *                   libelle: "Outil"
+ *                   created_at: "2025-04-28T17:30:41.395Z"
+ *                   updated_at: "2025-04-28T17:30:41.395Z"
+ *                 categorie: null
+ *                 famille: null
+ *                 marque: null
+ *                 modele: null
+ *                 images:
+ *                   - id_image: 1
+ *                     libelle_image: "Image principale"
+ *                     lien_image: "media/images/outil1.jpg"
+ *                     numero_image: 1
+ *                     created_at: "2025-04-28T15:08:37.092Z"
+ *               exemplaires:
+ *                 - exemplaire:
+ *                     id_exemplaire: 13
+ *                     num_serie: "serie-6"
+ *                     date_entree: "2025-04-23"
+ *                     etat_exemplaire: "Disponible"
+ *                     id_livraison: 3
+ *                     id_produit: 7
+ *                     created_at: "2025-04-28T15:08:37.092Z"
+ *                     updated_at: "2025-04-28T16:19:41.256Z"
+ *                   derniere_sortie:
+ *                     date_de_sortie: "2025-04-29"
+ *                     created_at: "2025-04-29T12:03:38.157Z"
+ *                     etat_avant: "bon"
+ *                     site_intervention: "Site A"
+ *                     but_usage: "Maintenance"
+ *                     commentaire: "Sortie pour intervention"
+ *                     employe:
+ *                       id_employes: 1
+ *                       nom_employes: "Dupont"
+ *                       prenom_employes: "Jean"
+ *                       email_employes: "jean.dupont@example.com"
+ *                   dernier_retour:
+ *                     date_de_retour: "2025-04-29"
+ *                     created_at: "2025-04-29T12:07:36.981Z"
+ *                     etat_apres: "mauvais"
+ *                     commentaire: "Retour avec dommages"
+ *                     employe:
+ *                       id_employes: 1
+ *                       nom_employes: "Dupont"
+ *                       prenom_employes: "Jean"
+ *                       email_employes: "jean.dupont@example.com"
+ *                 - exemplaire:
+ *                     id_exemplaire: 14
+ *                     num_serie: "serie-7"
+ *                     date_entree: "2025-04-24"
+ *                     etat_exemplaire: "Disponible"
+ *                     id_livraison: 3
+ *                     id_produit: 7
+ *                     created_at: "2025-04-28T15:08:37.092Z"
+ *                     updated_at: "2025-04-28T16:19:41.256Z"
+ *                   derniere_sortie: null
+ *                   dernier_retour: null
+ *               pagination:
+ *                 total: 2
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 1
+ */
+router.get("/exemplaires/:id", controller.getExemplairesOutil);
 
 /**
  * @swagger
@@ -339,6 +448,110 @@ router.get("/etat/:id_exemplaire/:id_employes", controller.estOutilRetourne);
  *     tags: [Outils]
  */
 router.get("/historique/:id", controller.getHistoriqueOutils);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/sorties/{id}:
+ *   get:
+ *     summary: Récupère toutes les sorties d'un outil spécifique
+ *     tags: [Outils]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID du produit (outil)
+ *         schema:
+ *           type: integer
+ *       - name: page
+ *         in: query
+ *         description: Numéro de page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         description: Nombre d'éléments par page
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Liste paginée des sorties de l'outil
+ *         content:
+ *           application/json:
+ *             example:
+ *               data:
+ *                 - id_exemplaire: 13
+ *                   id_employes: 1
+ *                   etat_avant: "bon"
+ *                   date_de_sortie: "2025-04-29"
+ *                   site_intervention: "Site A"
+ *                   but_usage: "Maintenance"
+ *                   commentaire: "Sortie pour intervention"
+ *                   created_at: "2025-04-29T12:03:38.157Z"
+ *                   employe:
+ *                     id_employes: 1
+ *                     nom_employes: "Dupont"
+ *                     prenom_employes: "Jean"
+ *                     email_employes: "jean.dupont@example.com"
+ *               pagination:
+ *                 total: 1
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 1
+ */
+router.get("/sorties/:id", controller.getSortiesOutil);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/entrees/{id}:
+ *   get:
+ *     summary: Récupère toutes les entrées d'un outil spécifique
+ *     tags: [Outils]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID du produit (outil)
+ *         schema:
+ *           type: integer
+ *       - name: page
+ *         in: query
+ *         description: Numéro de page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         description: Nombre d'éléments par page
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Liste paginée des entrées de l'outil
+ *         content:
+ *           application/json:
+ *             example:
+ *               data:
+ *                 - id_exemplaire: 13
+ *                   id_employes: 1
+ *                   etat_apres: "mauvais"
+ *                   date_de_retour: "2025-04-29"
+ *                   commentaire: "Retour avec dommages"
+ *                   created_at: "2025-04-29T12:07:36.981Z"
+ *                   employe:
+ *                     id_employes: 1
+ *                     nom_employes: "Dupont"
+ *                     prenom_employes: "Jean"
+ *                     email_employes: "jean.dupont@example.com"
+ *               pagination:
+ *                 total: 1
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 1
+ */
+router.get("/entrees/:id", controller.getEntreesOutil);
 
 /**
  * @swagger
