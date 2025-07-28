@@ -40,8 +40,31 @@ const { db } = require("../../../../core/database/config");
 const { partenaires } = require("../../../../core/database/models");
 
 const createPartenaire = async (data) => {
-  const [result] = await db.insert(partenaires).values(data).returning();
-  return result;
+  try {
+    // S'assurer que les données ne contiennent que les champs valides
+    const cleanData = {
+      nom_partenaire: data.nom_partenaire,
+      telephone_partenaire: data.telephone_partenaire,
+      email_partenaire: data.email_partenaire,
+      specialite: data.specialite,
+      localisation: data.localisation,
+      type_partenaire: data.type_partenaire,
+      statut: data.statut
+    };
+    
+    // Supprimer les propriétés undefined ou null
+    Object.keys(cleanData).forEach(key => {
+      if (cleanData[key] === undefined || cleanData[key] === null) {
+        delete cleanData[key];
+      }
+    });
+    
+    const [result] = await db.insert(partenaires).values(cleanData).returning();
+    return result;
+  } catch (error) {
+    console.error('Erreur dans createPartenaire service:', error);
+    throw error;
+  }
 }
 
 const getPartenaires = async (page = 1, limit = 10) => {
@@ -77,19 +100,22 @@ const getPartenairebyType = async (type, page = 1, limit = 10) => {
   const pageSize = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 10;
   const offset = (pageNumber - 1) * pageSize;
 
-  // Données paginées filtrées par type
+  // Recherche partielle avec LIKE et wildcards
+  const searchPattern = `%${type.toLowerCase()}%`;
+
+  // Données paginées filtrées par type (recherche partielle)
   const data = await db
     .select()
     .from(partenaires)
-    .where(eq(partenaires.type_partenaire, type))
+    .where(sql`LOWER(${partenaires.type_partenaire}) LIKE ${searchPattern}`)
     .limit(pageSize)
     .offset(offset);
 
-  // Total pour ce type
+  // Total pour ce type (recherche partielle)
   const [{ count }] = await db
     .select({ count: sql`count(*)` })
     .from(partenaires)
-    .where(eq(partenaires.type_partenaire, type));
+    .where(sql`LOWER(${partenaires.type_partenaire}) LIKE ${searchPattern}`);
 
   return {
     data,

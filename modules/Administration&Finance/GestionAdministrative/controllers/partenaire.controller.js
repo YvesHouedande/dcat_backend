@@ -3,19 +3,40 @@ const entiteService = require("../services/entite.service");
 
 const createPartenaire = async (req, res) => {
   try {
-    const { nom_partenaire, type_partenaire, telephone_partenaire } = req.body;
-    if (!nom_partenaire || !type_partenaire || !telephone_partenaire) {
-      return res.status(400).json({ error: "Tous les champs obligatoires doivent être remplis (nom, type, adresse, téléphone)." });
+    const { nom_partenaire, type_partenaire, telephone_partenaire, localisation } = req.body;
+    
+    // Validation des champs obligatoires selon le modèle de données
+    if (!localisation) {
+      return res.status(400).json({ error: "Le champ 'localisation' est obligatoire." });
     }
-    const result = await partenaireService.createPartenaire(req.body);
+    
+    // Préparer les données en préservant les valeurs vides mais valides
+    const partenaireData = {
+      nom_partenaire: nom_partenaire,
+      telephone_partenaire: telephone_partenaire,
+      email_partenaire: req.body.email_partenaire,
+      specialite: req.body.specialite,
+      localisation: localisation,
+      type_partenaire: type_partenaire,
+      statut: req.body.statut
+    };
+    
+    const result = await partenaireService.createPartenaire(partenaireData);
     return res.status(201).json(result);
   } catch (error) {
-    console.error("Erreur lors de la création du partenaire :", error);
-    console.error("Body reçu :", req.body);
     if (error.name === "ValidationError") {
-      return res.status(400).json({ error: "Données invalides", details: error.message });
+      return res.status(400).json({ 
+        error: "Données invalides", 
+        details: error.message,
+        body_received: req.body 
+      });
     }
-    res.status(500).json({ error: "Erreur serveur lors de la création du partenaire", details: error.message });
+    res.status(500).json({ 
+      error: "Erreur serveur lors de la création du partenaire", 
+      details: error.message,
+      body_received: req.body,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
@@ -27,8 +48,11 @@ const getPartenaires = async (req, res) => {
     const { data, pagination } = await partenaireService.getPartenaires(page, limit);
     return res.status(200).json({ data, pagination });
   } catch (error) {
-    console.error("Erreur lors de la récupération des partenaires :", error);
-    res.status(500).json({ error: "Erreur serveur lors de la récupération des partenaires", details: error.message });
+    res.status(500).json({ 
+      error: "Erreur serveur lors de la récupération des partenaires", 
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
@@ -78,7 +102,20 @@ const updatePartenaire = async (req, res) => {
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    const result = await partenaireService.updatePartenaire(id, req.body);
+    
+    // Préparer les données en préservant les valeurs vides mais valides
+    const updateData = {};
+    
+    // Traiter chaque champ individuellement en préservant les chaînes vides
+    if (req.body.nom_partenaire !== undefined) updateData.nom_partenaire = req.body.nom_partenaire;
+    if (req.body.telephone_partenaire !== undefined) updateData.telephone_partenaire = req.body.telephone_partenaire;
+    if (req.body.email_partenaire !== undefined) updateData.email_partenaire = req.body.email_partenaire;
+    if (req.body.specialite !== undefined) updateData.specialite = req.body.specialite;
+    if (req.body.localisation !== undefined) updateData.localisation = req.body.localisation;
+    if (req.body.type_partenaire !== undefined) updateData.type_partenaire = req.body.type_partenaire;
+    if (req.body.statut !== undefined) updateData.statut = req.body.statut;
+    
+    const result = await partenaireService.updatePartenaire(id, updateData);
     if (!result) {
       return res.status(404).json({ error: "Partenaire non trouvé pour la mise à jour." });
     }

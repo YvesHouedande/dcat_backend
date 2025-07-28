@@ -141,7 +141,7 @@ const getAllDemandes = async (req, res) => {
 const getDemandeByType = async (req, res) => {
     try {
         const { type } = req.params;
-        logger.info(`Recherche de demandes par type: ${type}`);
+        logger.info(`Recherche partielle de demandes par type: ${type}`);
         if (!type) {
             logger.warn("Type de demande non spécifié");
             return res.status(400).json({ message: "Le type de demande est requis." });
@@ -149,24 +149,24 @@ const getDemandeByType = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const { data, pagination } = await demandeService.getdemandeBytype(type, page, limit);
-        logger.info(`${data.length} demandes trouvées pour le type: ${type}`);
+        logger.info(`${data.length} demandes trouvées pour la recherche partielle: ${type}`);
         if (!data || data.length === 0) {
-            logger.info(`Aucune demande trouvée pour le type: ${type}`);
+            logger.info(`Aucune demande trouvée pour la recherche partielle: ${type}`);
             return res.status(404).json({ 
-                message: "Aucune demande trouvée pour ce type.",
-                details: `Type recherché: ${type}` 
+                message: "Aucune demande trouvée pour cette recherche partielle.",
+                details: `Terme recherché: ${type}` 
             });
         }
         res.status(200).json({ data, pagination });
     } catch (error) {
-        logger.error(`Erreur lors de la récupération des demandes de type ${req.params.type}`, {
+        logger.error(`Erreur lors de la récupération des demandes pour la recherche partielle ${req.params.type}`, {
             error: {
                 message: error.message,
                 stack: error.stack
             }
         });
         res.status(500).json({ 
-            message: "Erreur interne lors de la récupération par type.",
+            message: "Erreur interne lors de la récupération par recherche partielle.",
             details: error.message 
         });
     }

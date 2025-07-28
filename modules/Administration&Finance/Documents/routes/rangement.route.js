@@ -153,23 +153,26 @@
  *             schema:
  *               type: object
  *               properties:
- *                 page:
- *                   type: integer
- *                   example: 1
- *                 limit:
- *                   type: integer
- *                   example: 10
- *                 total:
- *                   type: integer
- *                   example: 42
  *                 data:
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Dossier'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                     total:
+ *                       type: integer
+ *                       example: 42
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 5
  *             example:
- *               page: 1
- *               limit: 10
- *               total: 42
  *               data:
  *                 - id_dossier: 1
  *                   libelle_dossier: "Dossier A"
@@ -181,6 +184,21 @@
  *                   type_dossier: "Facture"
  *                   created_at: "2024-03-02T12:00:00Z"
  *                   updated_at: "2024-03-02T12:00:00Z"
+ *               pagination:
+ *                 page: 1
+ *                 limit: 10
+ *                 total: 42
+ *                 totalPages: 5
+ *       400:
+ *         description: Paramètres de pagination invalides
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Paramètres de pagination invalides. page >= 1, limit >= 1 et limit <= 100
  *       500:
  *         description: Erreur serveur
  */
@@ -404,7 +422,7 @@
  * /administration/dossier/type/{type}/libelle/{libelle}:
  *   get:
  *     summary: Récupérer les dossiers par type et libellé optionnel
- *     description: Retourne les dossiers du type spécifié. Si le libellé est fourni, filtre également par libellé. Si le libellé n'est pas fourni ou est vide, retourne tous les dossiers du type.
+ *     description: Retourne les dossiers du type spécifié. Si le libellé est fourni, recherche les dossiers dont le libellé contient la valeur recherchée (recherche partielle insensible à la casse). Si le libellé n'est pas fourni ou est vide, retourne tous les dossiers du type.
  *     tags: [Dossier]
  *     parameters:
  *       - in: path
@@ -416,29 +434,80 @@
  *       - in: path
  *         name: libelle
  *         required: false
- *         description: Libellé du dossier (optionnel)
+ *         description: Libellé du dossier (recherche partielle - optionnel)
  *         schema:
  *           type: string
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Numéro de la page (par défaut 1)
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           minimum: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Nombre d'éléments par page (par défaut 10, maximum 100)
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           minimum: 1
+ *           maximum: 100
  *     responses:
  *       200:
- *         description: Liste des dossiers trouvés
+ *         description: Liste paginée des dossiers trouvés
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Dossier'
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Dossier'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                     total:
+ *                       type: integer
+ *                       example: 25
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 3
  *             example:
- *               - id_dossier: 1
- *                 libelle_dossier: "MonDossier"
- *                 type_dossier: "Contrat"
- *                 created_at: "2024-03-01T12:00:00Z"
- *                 updated_at: "2024-03-01T12:00:00Z"
- *               - id_dossier: 2
- *                 libelle_dossier: "AutreDossier"
- *                 type_dossier: "Contrat"
- *                 created_at: "2024-03-02T12:00:00Z"
- *                 updated_at: "2024-03-02T12:00:00Z"
+ *               data:
+ *                 - id_dossier: 1
+ *                   libelle_dossier: "MonDossier"
+ *                   type_dossier: "Contrat"
+ *                   created_at: "2024-03-01T12:00:00Z"
+ *                   updated_at: "2024-03-01T12:00:00Z"
+ *                 - id_dossier: 2
+ *                   libelle_dossier: "AutreDossier"
+ *                   type_dossier: "Contrat"
+ *                   created_at: "2024-03-02T12:00:00Z"
+ *                   updated_at: "2024-03-02T12:00:00Z"
+ *               pagination:
+ *                 page: 1
+ *                 limit: 10
+ *                 total: 25
+ *                 totalPages: 3
+ *       400:
+ *         description: Paramètres de pagination invalides
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Paramètres de pagination invalides. page >= 1, limit >= 1 et limit <= 100
  *       500:
  *         description: Erreur serveur
  */
@@ -448,7 +517,7 @@
  * /administration/dossier/{id}/documents/libelle/{libelle}:
  *   get:
  *     summary: Récupérer les documents d'un dossier par id et libellé optionnel
- *     description: Retourne les documents du dossier spécifié. Si le libellé est fourni, filtre également par libellé du document. Si le libellé n'est pas fourni ou est vide, retourne tous les documents du dossier.
+ *     description: Retourne les documents du dossier spécifié. Si le libellé est fourni, recherche les documents dont le libellé contient la valeur recherchée (recherche partielle insensible à la casse). Si le libellé n'est pas fourni ou est vide, retourne tous les documents du dossier.
  *     tags: [Dossier]
  *     parameters:
  *       - in: path
@@ -460,12 +529,29 @@
  *       - in: path
  *         name: libelle
  *         required: false
- *         description: Libellé du document (optionnel)
+ *         description: Libellé du document (recherche partielle - optionnel)
  *         schema:
  *           type: string
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Numéro de la page (par défaut 1)
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           minimum: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Nombre d'éléments par page (par défaut 10, maximum 100)
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           minimum: 1
+ *           maximum: 100
  *     responses:
  *       200:
- *         description: Dossier et documents trouvés
+ *         description: Dossier et documents paginés trouvés
  *         content:
  *           application/json:
  *             schema:
@@ -474,9 +560,27 @@
  *                 dossier:
  *                   $ref: '#/components/schemas/Dossier'
  *                 documents:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Document'
+ *                   type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Document'
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         page:
+ *                           type: integer
+ *                           example: 1
+ *                         limit:
+ *                           type: integer
+ *                           example: 10
+ *                         total:
+ *                           type: integer
+ *                           example: 15
+ *                         totalPages:
+ *                           type: integer
+ *                           example: 2
  *             example:
  *               dossier:
  *                 id_dossier: 1
@@ -485,18 +589,34 @@
  *                 created_at: "2024-03-01T12:00:00Z"
  *                 updated_at: "2024-03-01T12:00:00Z"
  *               documents:
- *                 - id_documents: 1
- *                   libelle_document: "Contrat 2024"
- *                   date_document: "2024-03-01"
- *                   lien_document: "media/documents/contrat2024.pdf"
- *                   etat_document: "Actif"
- *                   id_dossier: 1
- *                 - id_documents: 2
- *                   libelle_document: "Facture Janvier"
- *                   date_document: "2024-01-15"
- *                   lien_document: "media/documents/facture_janvier.pdf"
- *                   etat_document: "Actif"
- *                   id_dossier: 1
+ *                 data:
+ *                   - id_documents: 1
+ *                     libelle_document: "Contrat 2024"
+ *                     date_document: "2024-03-01"
+ *                     lien_document: "media/documents/contrat2024.pdf"
+ *                     etat_document: "Actif"
+ *                     id_dossier: 1
+ *                   - id_documents: 2
+ *                     libelle_document: "Facture Janvier"
+ *                     date_document: "2024-01-15"
+ *                     lien_document: "media/documents/facture_janvier.pdf"
+ *                     etat_document: "Actif"
+ *                     id_dossier: 1
+ *                 pagination:
+ *                   page: 1
+ *                   limit: 10
+ *                   total: 15
+ *                   totalPages: 2
+ *       400:
+ *         description: Paramètres de pagination invalides
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Paramètres de pagination invalides. page >= 1, limit >= 1 et limit <= 100
  *       404:
  *         description: Dossier non trouvé
  *         content:

@@ -354,6 +354,24 @@ const commandesController = {
         details: error.message
       });
     }
+  },
+
+  // Récupérer les statistiques de commandes par état
+  getCommandesStats: async (req, res) => {
+    try {
+      const stats = await commandesService.getCommandesStatsByStatus();
+      res.json({ 
+        success: true, 
+        ...stats
+      });
+    } catch (error) {
+      console.error("Erreur lors de la récupération des statistiques des commandes:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Erreur lors de la récupération des statistiques des commandes",
+        details: error.message
+      });
+    }
   }
 };
 

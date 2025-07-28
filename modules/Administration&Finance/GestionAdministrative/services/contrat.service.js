@@ -66,17 +66,20 @@ const getContratByType = async (type, page = 1, limit = 10) => {
     const pageSize = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 10;
     const offset = (pageNumber - 1) * pageSize;
 
+    // Recherche partielle avec LIKE et wildcards
+    const searchPattern = `%${type.toLowerCase()}%`;
+
     const data = await db
         .select()
         .from(contrats)
-        .where(eq(contrats.type_de_contrat, type))
+        .where(sql`LOWER(${contrats.type_de_contrat}) LIKE ${searchPattern}`)
         .limit(pageSize)
         .offset(offset);
 
     const [{ count }] = await db
         .select({ count: sql`count(*)` })
         .from(contrats)
-        .where(eq(contrats.type_de_contrat, type));
+        .where(sql`LOWER(${contrats.type_de_contrat}) LIKE ${searchPattern}`);
 
     return {
         data,

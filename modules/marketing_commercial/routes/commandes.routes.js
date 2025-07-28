@@ -1,7 +1,7 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const commandesController = require('../controllers/commandes.controller');
-const { authMiddleware } = require('../middleware/auth');
+const commandesController = require("../controllers/commandes.controller");
+const { authMiddleware } = require("../middleware/auth");
 
 /**
  * @swagger
@@ -32,7 +32,7 @@ const { authMiddleware } = require('../middleware/auth');
  *           description: Date à laquelle la commande a été passée
  *         etat_commande:
  *           type: string
-          *           description: État actuel de la commande (en_attente, en_cours, livree, annulee, retournee)
+ *           description: État actuel de la commande (en_attente, en_cours, livree, annulee, retournee)
  *         date_livraison:
  *           type: string
  *           format: date
@@ -89,7 +89,7 @@ const { authMiddleware } = require('../middleware/auth');
  *         modele_libelle:
  *           type: string
  *           description: Libellé du modèle du produit
- * 
+ *
  * /marketing_commercial/commandes:
  *   post:
  *     summary: Crée une nouvelle commande
@@ -149,7 +149,57 @@ const { authMiddleware } = require('../middleware/auth');
  *       500:
  *         description: Erreur serveur
  */
-router.post('/', commandesController.createCommande);
+router.post("/", commandesController.createCommande);
+
+/**
+ * @swagger
+ * /marketing_commercial/commandes/stats:
+ *   get:
+ *     summary: Récupère les statistiques des commandes par état
+ *     description: Retourne le nombre de commandes pour chaque état (en_attente, en_cours, livree, annulee, retournee)
+ *     tags: [Commandes Marketing]
+ *     responses:
+ *       200:
+ *         description: Statistiques récupérées avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     en_attente:
+ *                       type: integer
+ *                       description: Nombre de commandes en attente
+ *                       example: 5
+ *                     en_cours:
+ *                       type: integer
+ *                       description: Nombre de commandes en cours
+ *                       example: 3
+ *                     livree:
+ *                       type: integer
+ *                       description: Nombre de commandes livrées
+ *                       example: 15
+ *                     annulee:
+ *                       type: integer
+ *                       description: Nombre de commandes annulées
+ *                       example: 2
+ *                     retournee:
+ *                       type: integer
+ *                       description: Nombre de commandes retournées
+ *                       example: 1
+ *                 total:
+ *                   type: integer
+ *                   description: Nombre total de commandes
+ *                   example: 26
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get("/stats", commandesController.getCommandesStats);
 
 /**
  * @swagger
@@ -183,7 +233,7 @@ router.post('/', commandesController.createCommande);
  *       400:
  *         description: ID de commande invalide
  */
-router.get('/:id', commandesController.getCommandeById);
+router.get("/:id", commandesController.getCommandeById);
 
 /**
  * @swagger
@@ -219,7 +269,7 @@ router.get('/:id', commandesController.getCommandeById);
  *       500:
  *         description: Erreur serveur
  */
-router.get('/client/:clientId', commandesController.getClientCommandes);
+router.get("/client/:clientId", commandesController.getClientCommandes);
 
 /**
  * @swagger
@@ -234,7 +284,7 @@ router.get('/client/:clientId', commandesController.getClientCommandes);
  *         required: true
  *         schema:
  *           type: string
-          *           enum: [en_attente, en_cours, livree, annulee, retournee]
+ *           enum: [en_attente, en_cours, livree, annulee, retournee]
  *         description: Statut des commandes à récupérer
  *     responses:
  *       200:
@@ -256,7 +306,7 @@ router.get('/client/:clientId', commandesController.getClientCommandes);
  *       500:
  *         description: Erreur serveur
  */
-router.get('/status/:status', commandesController.getCommandesByStatus);
+router.get("/status/:status", commandesController.getCommandesByStatus);
 
 /**
  * @swagger
@@ -294,7 +344,7 @@ router.get('/status/:status', commandesController.getCommandesByStatus);
  *       500:
  *         description: Erreur serveur
  */
-router.get('/:id/products', commandesController.getCommandeProducts);
+router.get("/:id/products", commandesController.getCommandeProducts);
 
 /**
  * @swagger
@@ -346,7 +396,7 @@ router.get('/:id/products', commandesController.getCommandeProducts);
  *       500:
  *         description: Erreur serveur
  */
-router.patch('/:id/update-status', commandesController.updateCommandeStatus);
+router.patch("/:id/update-status", commandesController.updateCommandeStatus);
 
 /**
  * @swagger
@@ -398,7 +448,7 @@ router.patch('/:id/update-status', commandesController.updateCommandeStatus);
  *       500:
  *         description: Erreur serveur
  */
-router.patch('/:id/update-date', commandesController.updateLivraisonDate);
+router.patch("/:id/update-date", commandesController.updateLivraisonDate);
 
 /**
  * @swagger
@@ -454,7 +504,7 @@ router.patch('/:id/update-date', commandesController.updateLivraisonDate);
  *       500:
  *         description: Erreur serveur
  */
-router.patch('/:id/update', commandesController.updateCommandeStatusAndDate);
+router.patch("/:id/update", commandesController.updateCommandeStatusAndDate);
 
 /**
  * @swagger
@@ -497,6 +547,6 @@ router.patch('/:id/update', commandesController.updateCommandeStatusAndDate);
  *       500:
  *         description: Erreur serveur
  */
-router.patch('/:id/cancel', authMiddleware, commandesController.cancelCommande);
+router.patch("/:id/cancel", authMiddleware, commandesController.cancelCommande);
 
 module.exports = router;
