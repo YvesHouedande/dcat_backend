@@ -63,7 +63,23 @@ const deleteModele = async (req, res) => {
     const result = await modeleService.deleteModele(id);
     return res.json(result);
   } catch (error) {
-    re.status(500).json({
+    res.status(500).json({
+      error: "une erreur est survenue",
+      details: error.message,
+    });
+  }
+};
+
+const getModelesByMarque = async (req, res) => {
+  try {
+    const idMarque = parseInt(req.params.idMarque);
+    if (isNaN(idMarque)) {
+      return res.status(400).json({ error: "ID de marque invalide" });
+    }
+    const result = await modeleService.getModelesByMarque(idMarque);
+    return res.status(200).json(result || []);
+  } catch (error) {
+    res.status(500).json({
       error: "une erreur est survenue",
       details: error.message,
     });
@@ -76,6 +92,7 @@ module.exports = {
   getModeleById,
   updateModele,
   deleteModele,
+  getModelesByMarque,
 };
 
 // [
