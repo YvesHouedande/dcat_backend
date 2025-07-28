@@ -4,7 +4,7 @@ const {
   refresh_tokens,
 } = require("../../../core/database/models");
 const bcrypt = require("bcryptjs");
-const { eq, or, and } = require("drizzle-orm");
+const { eq, or, and, sql } = require("drizzle-orm");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 
