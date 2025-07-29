@@ -128,6 +128,30 @@ const deleteEmploye = async (req, res) => {
         return res.status(500).json({ message: "Erreur interne lors de la suppression de l'employé" });
     }
 };
+
+const getEmployeDocuments = async (req, res) => {
+    try {
+        const {id} = req.params;
+        if (!id || isNaN(Number(id))) {
+            return res.status(400).json({ message: "ID invalide" });
+        }
+        
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        
+        const result = await employeservice.getEmployeDocuments(id, page, limit);
+        
+        if (!result.data || result.data.length === 0) {
+            return res.status(404).json({message: "Aucun document trouvé pour cet employé"});
+        }
+        
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Erreur lors de la récupération des documents de l'employé:", error);
+        return res.status(500).json({ message: "Erreur interne lors de la récupération des documents" });
+    }
+};
+
 module.exports = {
     getEmployes,
     getEmployeById,
@@ -135,5 +159,6 @@ module.exports = {
     getEmployesByEmail,
     getEmployeByStatut,
     updateEmploye,
-    deleteEmploye
+    deleteEmploye,
+    getEmployeDocuments
 };
