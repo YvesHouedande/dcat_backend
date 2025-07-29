@@ -61,6 +61,34 @@
  *         id_dossier:
  *           type: integer
  *           description: Identifiant du dossier parent
+ *         id_livrable:
+ *           type: integer
+ *           nullable: true
+ *           description: Identifiant du livrable associé
+ *         id_projet:
+ *           type: integer
+ *           nullable: true
+ *           description: Identifiant du projet associé
+ *         id_demandes:
+ *           type: integer
+ *           nullable: true
+ *           description: Identifiant de la demande associée
+ *         id_contrat:
+ *           type: integer
+ *           nullable: true
+ *           description: Identifiant du contrat associé
+ *         id_employes:
+ *           type: integer
+ *           nullable: true
+ *           description: Identifiant de l'employé associé
+ *         id_intervention:
+ *           type: integer
+ *           nullable: true
+ *           description: Identifiant de l'intervention associée
+ *         id_nature_document:
+ *           type: integer
+ *           nullable: true
+ *           description: Identifiant de la nature du document
  */
 
 /**
@@ -360,6 +388,34 @@
  *                 enum: [Actif, Archive]
  *                 default: Actif
  *                 description: État du document
+ *               id_livrable:
+ *                 type: integer
+ *                 nullable: true
+ *                 description: Identifiant du livrable associé
+ *               id_projet:
+ *                 type: integer
+ *                 nullable: true
+ *                 description: Identifiant du projet associé
+ *               id_demandes:
+ *                 type: integer
+ *                 nullable: true
+ *                 description: Identifiant de la demande associée
+ *               id_contrat:
+ *                 type: integer
+ *                 nullable: true
+ *                 description: Identifiant du contrat associé
+ *               id_employes:
+ *                 type: integer
+ *                 nullable: true
+ *                 description: Identifiant de l'employé associé
+ *               id_intervention:
+ *                 type: integer
+ *                 nullable: true
+ *                 description: Identifiant de l'intervention associée
+ *               id_nature_document:
+ *                 type: integer
+ *                 nullable: true
+ *                 description: Identifiant de la nature du document
  *     responses:
  *       201:
  *         description: Document créé avec succès
