@@ -30,7 +30,7 @@ const getAllOutils = async (req, res) => {
       qteMin: qteMin ? parseInt(qteMin) : undefined,
       qteMax: qteMax ? parseInt(qteMax) : undefined,
     };
-
+//test
     const result = await toolsService.getAllOutils(options);
 
         // ---------------------- URL complètes pour les images ----------------------
