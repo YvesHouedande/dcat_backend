@@ -57,7 +57,10 @@ const updateCategorie = async (req, res) => {
       return res.status(400).json({ error: "ID invalide" });
     }
     const result = await categorieService.updateCategorie(id, req.body);
-    res.json(result);
+    if (!result) {
+      return res.status(404).json({ error: "Categorie non trouvée" });
+    }
+    res.status(200).json({ message: "Categorie modifiée avec succès" });
   } catch (error) {
     res.status(500).json({ 
       error: "Erreur lors de la mise à jour",
@@ -73,8 +76,11 @@ const deleteCategorie = async (req, res) => {
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    await categorieService.deleteCategorie(id);
-    res.json({ message: "Categorie supprimée avec succès" });
+    const result = await categorieService.deleteCategorie(id);
+    if (!result) {
+      return res.status(404).json({ error: "Categorie non trouvée ou déjà supprimée" });
+    }
+    res.status(200).json({ message: "Categorie supprimée avec succès" });
   } catch (error) {
     res.status(500).json({ 
       error: "Erreur lors de la suppression",

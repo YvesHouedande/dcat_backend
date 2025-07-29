@@ -54,7 +54,10 @@ const updateLivraison = async (req, res) => {
       return res.status(400).json({ error: "ID invalide" });
     }
     const result = await livraisonService.updateLivraison(id, req.body);
-    res.json(result);
+    if (!result) {
+      return res.status(404).json({ error: "Livraison non trouvée" });
+    }
+    res.status(200).json({ message: "Livraison modifiée avec succès" });
   } catch (error) {
     res.status(500).json({
       error: "Erreur lors de la mise à jour",
@@ -70,8 +73,11 @@ const deleteLivraison = async (req, res) => {
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    await livraisonService.deleteLivraison(id);
-    res.json({ message: "Livraison supprimée avec succès" });
+    const result = await livraisonService.deleteLivraison(id);
+    if (!result) {
+      return res.status(404).json({ error: "Livraison non trouvée ou déjà supprimée" });
+    }
+    res.status(200).json({ message: "Livraison supprimée avec succès" });
   } catch (error) {
     res.status(500).json({
       error: "Erreur lors de la suppression",

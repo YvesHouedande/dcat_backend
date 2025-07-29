@@ -739,6 +739,510 @@ async function getExemplairesOutil(id_produit, page = 1, limit = 10) {
   };
 }
 
+/**
+ * Récupère toutes les sorties d'un exemplaire spécifique
+ * @param {number} id_exemplaire - ID de l'exemplaire
+ * @param {number} page - Numéro de page
+ * @param {number} limit - Nombre d'éléments par page
+ * @returns {Promise<Object>} Liste paginée des sorties de l'exemplaire
+ */
+async function getSortiesExemplaire(id_exemplaire, page = 1, limit = 10) {
+  if (!id_exemplaire) {
+    throw new Error("ID exemplaire requis");
+  }
+
+  const offset = (page - 1) * limit;
+
+  // Vérifier que l'exemplaire existe
+  const exemplaireExists = await db
+    .select({ id: exemplaires.id_exemplaire })
+    .from(exemplaires)
+    .where(eq(exemplaires.id_exemplaire, id_exemplaire))
+    .limit(1);
+
+  if (exemplaireExists.length === 0) {
+    return {
+      data: [],
+      pagination: {
+        total: 0,
+        page,
+        limit,
+        totalPages: 0,
+      },
+    };
+  }
+
+  // Récupérer les sorties avec informations employé
+  const sorties = await db
+    .select({
+      id_exemplaire: employe_sortir_exemplaires.id_exemplaire,
+      id_employes: employe_sortir_exemplaires.id_employes,
+      etat_avant: employe_sortir_exemplaires.etat_avant,
+      date_de_sortie: employe_sortir_exemplaires.date_de_sortie,
+      site_intervention: employe_sortir_exemplaires.site_intervention,
+      but_usage: employe_sortir_exemplaires.but_usage,
+      commentaire: employe_sortir_exemplaires.commentaire,
+      created_at: employe_sortir_exemplaires.created_at,
+      employe: {
+        id_employes: employes.id_employes,
+        nom_employes: employes.nom_employes,
+        prenom_employes: employes.prenom_employes,
+        email_employes: employes.email_employes,
+      },
+    })
+    .from(employe_sortir_exemplaires)
+    .leftJoin(employes, eq(employe_sortir_exemplaires.id_employes, employes.id_employes))
+    .where(eq(employe_sortir_exemplaires.id_exemplaire, id_exemplaire))
+    .orderBy(desc(employe_sortir_exemplaires.created_at))
+    .limit(limit)
+    .offset(offset);
+
+  // Compter le total
+  const totalResult = await db
+    .select({ count: sql`count(*)` })
+    .from(employe_sortir_exemplaires)
+    .where(eq(employe_sortir_exemplaires.id_exemplaire, id_exemplaire));
+
+  const total = Number(totalResult[0].count);
+
+  return {
+    data: sorties,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+/**
+ * Récupère toutes les entrées d'un exemplaire spécifique
+ * @param {number} id_exemplaire - ID de l'exemplaire
+ * @param {number} page - Numéro de page
+ * @param {number} limit - Nombre d'éléments par page
+ * @returns {Promise<Object>} Liste paginée des entrées de l'exemplaire
+ */
+async function getEntreesExemplaire(id_exemplaire, page = 1, limit = 10) {
+  if (!id_exemplaire) {
+    throw new Error("ID exemplaire requis");
+  }
+
+  const offset = (page - 1) * limit;
+
+  // Vérifier que l'exemplaire existe
+  const exemplaireExists = await db
+    .select({ id: exemplaires.id_exemplaire })
+    .from(exemplaires)
+    .where(eq(exemplaires.id_exemplaire, id_exemplaire))
+    .limit(1);
+
+  if (exemplaireExists.length === 0) {
+    return {
+      data: [],
+      pagination: {
+        total: 0,
+        page,
+        limit,
+        totalPages: 0,
+      },
+    };
+  }
+
+  // Récupérer les entrées avec informations employé
+  const entrees = await db
+    .select({
+      id_exemplaire: employe_entrer_exemplaires.id_exemplaire,
+      id_employes: employe_entrer_exemplaires.id_employes,
+      etat_apres: employe_entrer_exemplaires.etat_apres,
+      date_de_retour: employe_entrer_exemplaires.date_de_retour,
+      commentaire: employe_entrer_exemplaires.commentaire,
+      created_at: employe_entrer_exemplaires.created_at,
+      employe: {
+        id_employes: employes.id_employes,
+        nom_employes: employes.nom_employes,
+        prenom_employes: employes.prenom_employes,
+        email_employes: employes.email_employes,
+      },
+    })
+    .from(employe_entrer_exemplaires)
+    .leftJoin(employes, eq(employe_entrer_exemplaires.id_employes, employes.id_employes))
+    .where(eq(employe_entrer_exemplaires.id_exemplaire, id_exemplaire))
+    .orderBy(desc(employe_entrer_exemplaires.created_at))
+    .limit(limit)
+    .offset(offset);
+
+  // Compter le total
+  const totalResult = await db
+    .select({ count: sql`count(*)` })
+    .from(employe_entrer_exemplaires)
+    .where(eq(employe_entrer_exemplaires.id_exemplaire, id_exemplaire));
+
+  const total = Number(totalResult[0].count);
+
+  return {
+    data: entrees,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+/**
+ * Récupère tous les outils rentrés par un employé spécifique avec pagination et filtres
+ * @param {number} id_employe - ID de l'employé
+ * @param {Object} options - Options de pagination et filtres
+ * @returns {Promise<Object>} Liste paginée des outils rentrés par l'employé
+ */
+async function getOutilsRentresParEmploye(id_employe, options = {}) {
+  if (!id_employe) {
+    throw new Error("ID employé requis");
+  }
+
+  const {
+    page = 1,
+    limit = 10,
+    sortBy = "created_at",
+    sortOrder = "desc",
+    search = "",
+    dateDebut,
+    dateFin,
+    etatApres,
+  } = options;
+
+  const offset = (page - 1) * limit;
+
+  // Construction des conditions de filtrage
+  const whereConditions = [
+    eq(employe_entrer_exemplaires.id_employes, id_employe)
+  ];
+
+  if (search) {
+    whereConditions.push(
+      or(
+        like(produits.desi_produit, `%${search}%`),
+        like(produits.desc_produit, `%${search}%`),
+        like(produits.code_produit, `%${search}%`),
+        like(exemplaires.num_serie, `%${search}%`)
+      )
+    );
+  }
+
+  if (dateDebut) {
+    whereConditions.push(gte(employe_entrer_exemplaires.date_de_retour, dateDebut));
+  }
+
+  if (dateFin) {
+    whereConditions.push(lte(employe_entrer_exemplaires.date_de_retour, dateFin));
+  }
+
+  if (etatApres) {
+    whereConditions.push(eq(employe_entrer_exemplaires.etat_apres, etatApres));
+  }
+
+  // Récupérer les entrées avec informations complètes
+  const entrees = await db
+    .select({
+      id_exemplaire: employe_entrer_exemplaires.id_exemplaire,
+      id_employes: employe_entrer_exemplaires.id_employes,
+      etat_apres: employe_entrer_exemplaires.etat_apres,
+      date_de_retour: employe_entrer_exemplaires.date_de_retour,
+      commentaire: employe_entrer_exemplaires.commentaire,
+      created_at: employe_entrer_exemplaires.created_at,
+      exemplaire: {
+        num_serie: exemplaires.num_serie,
+        date_entree: exemplaires.date_entree,
+        etat_exemplaire: exemplaires.etat_exemplaire,
+      },
+      produit: {
+        id_produit: produits.id_produit,
+        code_produit: produits.code_produit,
+        desi_produit: produits.desi_produit,
+        desc_produit: produits.desc_produit,
+        caracteristiques_produit: produits.caracteristiques_produit,
+        emplacement_produit: produits.emplacement_produit,
+      },
+      employe: {
+        id_employes: employes.id_employes,
+        nom_employes: employes.nom_employes,
+        prenom_employes: employes.prenom_employes,
+        email_employes: employes.email_employes,
+      },
+    })
+    .from(employe_entrer_exemplaires)
+    .leftJoin(exemplaires, eq(employe_entrer_exemplaires.id_exemplaire, exemplaires.id_exemplaire))
+    .leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
+    .leftJoin(employes, eq(employe_entrer_exemplaires.id_employes, employes.id_employes))
+    .where(and(...whereConditions))
+    .orderBy(
+      sortOrder === "asc"
+        ? asc(employe_entrer_exemplaires[sortBy])
+        : desc(employe_entrer_exemplaires[sortBy])
+    )
+    .limit(limit)
+    .offset(offset);
+
+  // Compter le total
+  const totalResult = await db
+    .select({ count: sql`count(*)` })
+    .from(employe_entrer_exemplaires)
+    .leftJoin(exemplaires, eq(employe_entrer_exemplaires.id_exemplaire, exemplaires.id_exemplaire))
+    .leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
+    .where(and(...whereConditions));
+
+  const total = Number(totalResult[0].count);
+
+  return {
+    data: entrees,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+/**
+ * Récupère tous les outils sortis avec pagination et filtres
+ * @param {Object} options - Options de pagination et filtres
+ * @returns {Promise<Object>} Liste paginée des outils sortis
+ */
+async function getOutilsSortisPagines(options = {}) {
+  const {
+    page = 1,
+    limit = 10,
+    sortBy = "created_at",
+    sortOrder = "desc",
+    search = "",
+    dateDebut,
+    dateFin,
+    etatAvant,
+    siteIntervention,
+  } = options;
+
+  const offset = (page - 1) * limit;
+
+  // Construction des conditions de filtrage
+  const whereConditions = [];
+
+  if (search) {
+    whereConditions.push(
+      or(
+        like(produits.desi_produit, `%${search}%`),
+        like(produits.desc_produit, `%${search}%`),
+        like(produits.code_produit, `%${search}%`),
+        like(exemplaires.num_serie, `%${search}%`)
+      )
+    );
+  }
+
+  if (dateDebut) {
+    whereConditions.push(gte(employe_sortir_exemplaires.date_de_sortie, dateDebut));
+  }
+
+  if (dateFin) {
+    whereConditions.push(lte(employe_sortir_exemplaires.date_de_sortie, dateFin));
+  }
+
+  if (etatAvant) {
+    whereConditions.push(eq(employe_sortir_exemplaires.etat_avant, etatAvant));
+  }
+
+  if (siteIntervention) {
+    whereConditions.push(like(employe_sortir_exemplaires.site_intervention, `%${siteIntervention}%`));
+  }
+
+  // Récupérer les sorties avec informations complètes
+  const sorties = await db
+    .select({
+      id_exemplaire: employe_sortir_exemplaires.id_exemplaire,
+      id_employes: employe_sortir_exemplaires.id_employes,
+      etat_avant: employe_sortir_exemplaires.etat_avant,
+      date_de_sortie: employe_sortir_exemplaires.date_de_sortie,
+      site_intervention: employe_sortir_exemplaires.site_intervention,
+      but_usage: employe_sortir_exemplaires.but_usage,
+      commentaire: employe_sortir_exemplaires.commentaire,
+      created_at: employe_sortir_exemplaires.created_at,
+      exemplaire: {
+        num_serie: exemplaires.num_serie,
+        date_entree: exemplaires.date_entree,
+        etat_exemplaire: exemplaires.etat_exemplaire,
+      },
+      produit: {
+        id_produit: produits.id_produit,
+        code_produit: produits.code_produit,
+        desi_produit: produits.desi_produit,
+        desc_produit: produits.desc_produit,
+        caracteristiques_produit: produits.caracteristiques_produit,
+        emplacement_produit: produits.emplacement_produit,
+      },
+      employe: {
+        id_employes: employes.id_employes,
+        nom_employes: employes.nom_employes,
+        prenom_employes: employes.prenom_employes,
+        email_employes: employes.email_employes,
+      },
+    })
+    .from(employe_sortir_exemplaires)
+    .leftJoin(exemplaires, eq(employe_sortir_exemplaires.id_exemplaire, exemplaires.id_exemplaire))
+    .leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
+    .leftJoin(employes, eq(employe_sortir_exemplaires.id_employes, employes.id_employes))
+    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+    .orderBy(
+      sortOrder === "asc"
+        ? asc(employe_sortir_exemplaires[sortBy])
+        : desc(employe_sortir_exemplaires[sortBy])
+    )
+    .limit(limit)
+    .offset(offset);
+
+  // Compter le total
+  const totalResult = await db
+    .select({ count: sql`count(*)` })
+    .from(employe_sortir_exemplaires)
+    .leftJoin(exemplaires, eq(employe_sortir_exemplaires.id_exemplaire, exemplaires.id_exemplaire))
+    .leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
+    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+
+  const total = Number(totalResult[0].count);
+
+  return {
+    data: sorties,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+/**
+ * Récupère tous les outils sortis par un employé spécifique avec pagination et filtres
+ * @param {number} id_employe - ID de l'employé
+ * @param {Object} options - Options de pagination et filtres
+ * @returns {Promise<Object>} Liste paginée des outils sortis par l'employé
+ */
+async function getOutilsSortisParEmployePagines(id_employe, options = {}) {
+  if (!id_employe) {
+    throw new Error("ID employé requis");
+  }
+
+  const {
+    page = 1,
+    limit = 10,
+    sortBy = "created_at",
+    sortOrder = "desc",
+    search = "",
+    dateDebut,
+    dateFin,
+    etatAvant,
+    siteIntervention,
+  } = options;
+
+  const offset = (page - 1) * limit;
+
+  // Construction des conditions de filtrage
+  const whereConditions = [
+    eq(employe_sortir_exemplaires.id_employes, id_employe)
+  ];
+
+  if (search) {
+    whereConditions.push(
+      or(
+        like(produits.desi_produit, `%${search}%`),
+        like(produits.desc_produit, `%${search}%`),
+        like(produits.code_produit, `%${search}%`),
+        like(exemplaires.num_serie, `%${search}%`)
+      )
+    );
+  }
+
+  if (dateDebut) {
+    whereConditions.push(gte(employe_sortir_exemplaires.date_de_sortie, dateDebut));
+  }
+
+  if (dateFin) {
+    whereConditions.push(lte(employe_sortir_exemplaires.date_de_sortie, dateFin));
+  }
+
+  if (etatAvant) {
+    whereConditions.push(eq(employe_sortir_exemplaires.etat_avant, etatAvant));
+  }
+
+  if (siteIntervention) {
+    whereConditions.push(like(employe_sortir_exemplaires.site_intervention, `%${siteIntervention}%`));
+  }
+
+  // Récupérer les sorties avec informations complètes
+  const sorties = await db
+    .select({
+      id_exemplaire: employe_sortir_exemplaires.id_exemplaire,
+      id_employes: employe_sortir_exemplaires.id_employes,
+      etat_avant: employe_sortir_exemplaires.etat_avant,
+      date_de_sortie: employe_sortir_exemplaires.date_de_sortie,
+      site_intervention: employe_sortir_exemplaires.site_intervention,
+      but_usage: employe_sortir_exemplaires.but_usage,
+      commentaire: employe_sortir_exemplaires.commentaire,
+      created_at: employe_sortir_exemplaires.created_at,
+      exemplaire: {
+        num_serie: exemplaires.num_serie,
+        date_entree: exemplaires.date_entree,
+        etat_exemplaire: exemplaires.etat_exemplaire,
+      },
+      produit: {
+        id_produit: produits.id_produit,
+        code_produit: produits.code_produit,
+        desi_produit: produits.desi_produit,
+        desc_produit: produits.desc_produit,
+        caracteristiques_produit: produits.caracteristiques_produit,
+        emplacement_produit: produits.emplacement_produit,
+      },
+      employe: {
+        id_employes: employes.id_employes,
+        nom_employes: employes.nom_employes,
+        prenom_employes: employes.prenom_employes,
+        email_employes: employes.email_employes,
+      },
+    })
+    .from(employe_sortir_exemplaires)
+    .leftJoin(exemplaires, eq(employe_sortir_exemplaires.id_exemplaire, exemplaires.id_exemplaire))
+    .leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
+    .leftJoin(employes, eq(employe_sortir_exemplaires.id_employes, employes.id_employes))
+    .where(and(...whereConditions))
+    .orderBy(
+      sortOrder === "asc"
+        ? asc(employe_sortir_exemplaires[sortBy])
+        : desc(employe_sortir_exemplaires[sortBy])
+    )
+    .limit(limit)
+    .offset(offset);
+
+  // Compter le total
+  const totalResult = await db
+    .select({ count: sql`count(*)` })
+    .from(employe_sortir_exemplaires)
+    .leftJoin(exemplaires, eq(employe_sortir_exemplaires.id_exemplaire, exemplaires.id_exemplaire))
+    .leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
+    .where(and(...whereConditions));
+
+  const total = Number(totalResult[0].count);
+
+  return {
+    data: sorties,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
 module.exports = {
   getAllOutils,
   getExemplairesOutils,
@@ -756,4 +1260,9 @@ module.exports = {
   getSortiesOutil,
   getEntreesOutil,
   getExemplairesOutil,
+  getSortiesExemplaire,
+  getEntreesExemplaire,
+  getOutilsRentresParEmploye,
+  getOutilsSortisPagines,
+  getOutilsSortisParEmployePagines,
 };

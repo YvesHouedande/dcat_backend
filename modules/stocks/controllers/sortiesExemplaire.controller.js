@@ -111,6 +111,9 @@ const updateSortie = async (req, res) => {
     }
 
     const updated = await sortieService.updateSortie(parseInt(id), updateData);
+    if (!updated) {
+      return res.status(404).json({ error: "Sortie non trouvée" });
+    }
     return res.status(200).json({ message: "Sortie mise à jour",updated:updated });
   } catch (error) {
     res.status(500).json({
@@ -125,7 +128,9 @@ const deleteSortie = async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await sortieService.deleteSortie(parseInt(id));
-
+    if (!deleted) {
+      return res.status(404).json({ error: "Sortie non trouvée ou déjà supprimée" });
+    }
     return res
       .status(200)
       .json({ element:deleted,message: "Sortie supprimée"});

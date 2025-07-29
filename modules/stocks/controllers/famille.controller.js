@@ -57,7 +57,10 @@ const updateFamille = async (req, res) => {
       return res.status(400).json({ error: "ID invalide" });
     }
     const result = await familleService.updateFamille(id, req.body);
-    res.json(result);
+    if (!result) {
+      return res.status(404).json({ error: "Famille non trouvée" });
+    }
+    res.status(200).json({ message: "Famille modifiée avec succès" });
   } catch (error) {
     res.status(500).json({ 
       error: "Erreur lors de la mise à jour",
@@ -73,8 +76,11 @@ const deleteFamille = async (req, res) => {
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    await familleService.deleteFamille(id);
-    res.json({ message: "Famille supprimée avec succès" });
+    const result = await familleService.deleteFamille(id);
+    if (!result) {
+      return res.status(404).json({ error: "Famille non trouvée ou déjà supprimée" });
+    }
+    res.status(200).json({ message: "Famille supprimée avec succès" });
   } catch (error) {
     res.status(500).json({ 
       error: "Erreur lors de la suppression",
