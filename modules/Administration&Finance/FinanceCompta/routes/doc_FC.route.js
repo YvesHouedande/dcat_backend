@@ -4,6 +4,7 @@ const router = express.Router();
 const upload = require('../../../utils/middleware/uploadMiddleware');
 const path = require('path');
 const fs = require('fs');
+const { protect } = require('../../../../core/auth/middleware');
 
 const UPLOAD_PATHS = {
   INTERVENTIONS: 'media/documents/administration/finance&compta'
@@ -86,6 +87,7 @@ const prepareUploadPath = (req, res, next) => {
  *               $ref: '#/components/schemas/Document'
  */
 router.post('/ajouter',
+  protect(['Gestion_comptabilite']),
   prepareUploadPath,
   upload.single("document"),
   doc_FCController.addDocument
@@ -119,7 +121,7 @@ router.post('/ajouter',
  *                 created_at: "2024-03-01T12:00:00Z"
  *                 updated_at: "2024-03-01T12:00:00Z"
  */
-router.get('/', doc_FCController.getAllDocuments);
+router.get('/', protect(['Gestion_comptabilite']), doc_FCController.getAllDocuments);
 
 /**
  * @swagger
@@ -144,7 +146,7 @@ router.get('/', doc_FCController.getAllDocuments);
  *               items:
  *                 $ref: '#/components/schemas/Document'
  */
-router.get('/nature/:id_nature_document', doc_FCController.getDocumentByNature);
+router.get('/nature/:id_nature_document', protect(['Gestion_comptabilite']), doc_FCController.getDocumentByNature);
 
 /**
  * @swagger
@@ -180,6 +182,7 @@ router.get('/nature/:id_nature_document', doc_FCController.getDocumentByNature);
  *               $ref: '#/components/schemas/Document'
  */
 router.put('/modifier/:id', 
+  protect(['Gestion_comptabilite']),
   prepareUploadPath,
   upload.single("document"),
   doc_FCController.updateDocument
