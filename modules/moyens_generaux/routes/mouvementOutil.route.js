@@ -15,39 +15,39 @@ const controller = require("../controllers/mouvementOutil.controller");
 
 /**
  * @swagger
- * /moyens-generaux/outils:
+ * /moyens-generaux/outils/all:
  *   get:
  *     summary: Récupère tous les outils avec pagination et filtres
  *     tags: [Outils]
  *     parameters:
  *       - name: page
  *         in: query
- *         description: Numéro de page (par défaut 1)
+ *         description: Numéro de page   par défaut 1
  *         schema:
  *           type: integer
  *           default: 1
  *       - name: limit
  *         in: query
- *         description: Nombre d'éléments par page (par défaut 10)
+ *         description: Nombre d'éléments par page - par défaut 10
  *         schema:
  *           type: integer
  *           default: 10
  *       - name: sortBy
  *         in: query
- *         description: Champ de tri (ex: "created_at", "nom_produit", etc.)
+ *         description: Champ de tri ex created_at nom_produit etc
  *         schema:
  *           type: string
  *           default: "created_at"
  *       - name: sortOrder
  *         in: query
- *         description: Ordre de tri (asc ou desc)
+ *         description: Ordre de tri asc ou desc
  *         schema:
  *           type: string
  *           enum: [asc, desc]
  *           default: "desc"
  *       - name: search
  *         in: query
- *         description: Recherche sur la désignation, la description ou le code produit
+ *         description: Recherche sur la désignation la description ou le code produit
  *         schema:
  *           type: string
  *       - name: categoryId
@@ -116,7 +116,7 @@ const controller = require("../controllers/mouvementOutil.controller");
  *                 totalPages: 1
  */
 
-router.get("/", controller.getAllOutils);
+router.get("/all", controller.getAllOutils);
 
 /**
  * @swagger
@@ -175,7 +175,7 @@ router.get("/exemplaires", controller.getExemplairesOutils);
  *       - name: id
  *         in: path
  *         required: true
- *         description: ID du produit (outil)
+ *         description: ID du produit   outil
  *         schema:
  *           type: integer
  *       - name: page
@@ -309,12 +309,12 @@ router.get("/exemplaires/:id", controller.getExemplairesOutil);
  *                 example: "test"
  *               etat_avant:
  *                 type: string
- *                 description: "État de l'outil avant la sortie (ex: bon, endommagé, usé)"
+ *                 description: État de l'outil avant la sortie ex bon endommagé usé
  *                 example: "bon"
  *               date_de_sortie:
  *                 type: string
  *                 format: date
- *                 description: Date de la sortie de l'outil (format YYYY-MM-DD)
+ *                 description: Date de la sortie de l'outil   format YYYY-MM-DD
  *                 example: "2025-04-29"
  *               site_intervention:
  *                 type: string
@@ -377,12 +377,12 @@ router.post("/sortie", controller.enregistrerSortieOutil);
  *                 example: 1
  *               etat_apres:
  *                 type: string
- *                 description: "État de l'outil après utilisation ex: bon, endommagé, usé"
+ *                 description: État de l'outil après utilisation ex bon endommagé usé
  *                 example: "mauvais"
  *               date_de_retour:
  *                 type: string
  *                 format: date
- *                 description: Date de retour de l'outil (format YYYY-MM-DD)
+ *                 description: Date de retour de l'outil  format YYYY-MM-DD
  *                 example: "2025-04-29"
  *               commentaire:
  *                 type: string
@@ -459,7 +459,7 @@ router.get("/historique/:id", controller.getHistoriqueOutils);
  *       - name: id
  *         in: path
  *         required: true
- *         description: ID du produit (outil)
+ *         description: ID du produit   outil
  *         schema:
  *           type: integer
  *       - name: page
@@ -512,7 +512,7 @@ router.get("/sorties/:id", controller.getSortiesOutil);
  *       - name: id
  *         in: path
  *         required: true
- *         description: ID du produit (outil)
+ *         description: ID du produit   outil
  *         schema:
  *           type: integer
  *       - name: page

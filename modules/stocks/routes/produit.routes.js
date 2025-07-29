@@ -236,63 +236,63 @@ const controller = require("../controllers/produit.controller");
  *               - id_type_produit
  *             properties:
  *               code_produit:
- *                 description: "Code unique du produit (ex: AV001)"
+ *                 description: Code unique du produit ex AV001
  *                 type: string
  *                 example: "AV001"
  *
  *               desi_produit:
- *                 description: "Désignation du produit (ex: Téléviseur 4K Sony Bravia)"
+ *                 description: Désignation du produit ex Téléviseur 4K Sony Bravia
  *                 type: string
  *                 example: "Téléviseur 4K Sony Bravia"
  *
  *               desc_produit:
- *                 description: "Description détaillée du produit"
+ *                 description: Description détaillée du produit
  *                 type: string
  *                 example: "Téléviseur 4K HDR 55 pouces avec Android TV"
  *
  *               emplacement_produit:
- *                 description: "Emplacement en magasin (ex: RAYON-A1)"
+ *                 description: Emplacement en magasin ex RAYON-A1
  *                 type: string
  *                 example: "RAYON-A1"
  *
  *               caracteristique_produit:
- *                 description: "Caractéristiques techniques"
+ *                 description: Caractéristiques techniques
  *                 type: string
  *                 example: "Résolution 3840x2160, HDMI x4, Dolby Vision"
  *
  *               prix_produit:
- *                 description: "Prix du produit (nombre décimal, ex: 800.00)"
+ *                 description: Prix du produit nombre décimal ex 800.00
  *                 type: number
  *                 format: float
  *                 example: 80000
  *
  *               id_categorie:
- *                 description: "ID de la catégorie (nombre entier, ex: 2)"
+ *                 description: ID de la catégorie nombre entier ex 2
  *                 type: integer
  *                 example: 2
  *
  *               id_type_produit:
- *                 description: "ID du type de produit (nombre entier, ex: 1)"
+ *                 description: ID du type de produit nombre entier ex 1
  *                 type: integer
  *                 example: 1
  *
  *               id_modele:
- *                 description: "ID du modèle (nombre entier, ex: 2)"
+ *                 description: ID du modèle nombre entier ex 2
  *                 type: integer
  *                 example: 2
  *
  *               id_famille:
- *                 description: "ID de la famille (nombre entier, ex: 1)"
+ *                 description: ID de la famille nombre entier ex 1
  *                 type: integer
  *                 example: 1
  *
  *               id_marque:
- *                 description: "ID de la marque (nombre entier, ex: 2)"
+ *                 description: ID de la marque nombre entier ex 2
  *                 type: integer
  *                 example: 2
  *
  *               images:
- *                 description: "Fichiers images (formats acceptés: jpeg, png, gif)"
+ *                 description: Fichiers images formats acceptés jpeg png gif
  *                 type: array
  *                 items:
  *                   type: string
@@ -389,12 +389,12 @@ router.post("/", controller.createProduit);
  *         schema:
  *           type: string
  *           enum: [equal, below, near]
- *         description: Filtre basé sur le seuil minimum. "equal" = seuil atteint, "below" = en dessous du seuil, "near" = proche du seuil
+ *         description: Filtre basé sur le seuil minimum - equal = seuil atteint, below = en dessous du seuil, near = proche du seuil
  *       - in: query
  *         name: nearMargin
  *         schema:
  *           type: integer
- *         description: Marge de proximité pour le filtre "near"
+ *         description: Marge de proximité pour le filtre near
  *       - in: query
  *         name: sortBy
  *         schema:
@@ -410,7 +410,7 @@ router.post("/", controller.createProduit);
  *         name: page
  *         schema:
  *           type: integer
- *         description: Numéro de page (pagination)
+ *         description: Numéro de page - pagination
  *       - in: query
  *         name: limit
  *         schema:
@@ -619,7 +619,7 @@ router.get("/:id", controller.getProduitById);
  *       - in: path
  *         name: idType
  *         required: true
- *         description: ID du type de produit (1=équipement, 2=outil)
+ *         description: ID du type de produit - 1=équipement, 2=outil
  *         schema:
  *           type: integer
  *           example: 1
@@ -780,7 +780,7 @@ router.get("/type/:idType", controller.getProduitsByTypes);
  *                 items:
  *                   type: string
  *                   format: binary
- *                 description: Nouvelles images à ajouter au produit (formats acceptés: jpeg, png, gif)
+ *                 description: Nouvelles images à ajouter au produit formats acceptés jpeg png gif
  *               imagesMeta:
  *                 type: string
  *                 description: |
@@ -1101,7 +1101,7 @@ router.delete("/image/:imageId", controller.deleteImage);
  *       - in: formData
  *         name: numeros
  *         type: integer
- *         description: Numéro de l'image (pour l'ordre)
+ *         description: Numéro de l'image - pour l'ordre
  *         required: false
  *     responses:
  *       201:
