@@ -13,6 +13,19 @@ async function safeUnlink(path) {
 const createDossier = async (req, res) => {
     try {
         const dossierData = req.body;
+        
+        // Vérifier si un dossier existe déjà avec ce libellé (contrainte unique)
+        const existing = await dossierService.getDossierByLibelle(dossierData.libelle_dossier);
+        if (existing) {
+            return res.status(409).json({
+                message: "Un dossier avec ce libellé existe déjà.",
+                code: "DOSSIER_EXISTS",
+                details: {
+                    libelle: dossierData.libelle_dossier
+                }
+            });
+        }
+        
         const newDossier = await dossierService.createDossier(dossierData);
         res.status(201).json(newDossier);
     } catch (error) {
@@ -22,8 +35,18 @@ const createDossier = async (req, res) => {
 }
 const getDossiers = async (req, res) => {
     try {
-        const dossiers = await dossierService.getDossiers();
-        res.status(200).json(dossiers);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        
+        // Validation des paramètres de pagination
+        if (page < 1 || limit < 1 || limit > 100) {
+            return res.status(400).json({ 
+                message: "Paramètres de pagination invalides. page >= 1, limit >= 1 et limit <= 100" 
+            });
+        }
+        
+        const result = await dossierService.getDossiers(page, limit);
+        res.status(200).json(result);
     } catch (error) {
         logger.error("Error fetching dossiers:", { error, route: req.originalUrl });
         res.status(500).json({ message: "Internal Server Error" });
@@ -74,7 +97,7 @@ const deleteDossier = async (req, res) => {
         if (!dossier) return res.status(404).json({ message: "Dossier introuvable." });
 
         // Récupérer tous les documents liés au dossier
-        const documents = await dossierService.getdocumentsBydossier(id);
+        const documents = await dossierService.getDocumentsByDossier(id);
 
         if (documents && documents.length > 0) {
             logger.info(`${documents.length} document(s) trouvé(s) pour le dossier ${id}`);
@@ -147,27 +170,188 @@ const deleteDocumentById = async (req, res) => {
     }
 };
 
-const getDossierByType = async (req, res) => {
+const createDocument = async (req, res) => {
     try {
-        const { type } = req.params;
-        const dossiers = await dossierService.getDossierByType(type);
-        res.status(200).json(dossiers);
+        const documentData = {
+            ...req.body,
+            // Conversion des IDs en entiers si fournis
+            id_livrable: req.body.id_livrable ? parseInt(req.body.id_livrable) : null,
+            id_projet: req.body.id_projet ? parseInt(req.body.id_projet) : null,
+            id_demandes: req.body.id_demandes ? parseInt(req.body.id_demandes) : null,
+            id_contrat: req.body.id_contrat ? parseInt(req.body.id_contrat) : null,
+            id_employes: req.body.id_employes ? parseInt(req.body.id_employes) : null,
+            id_intervention: req.body.id_intervention ? parseInt(req.body.id_intervention) : null,
+            id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null
+        };
+        const newDocument = await dossierService.createDocument(documentData);
+        res.status(201).json(newDocument);
     } catch (error) {
-        logger.error("Error fetching dossiers by type:", { error, route: req.originalUrl });
-        res.status(500).json({ message: "Internal Server Error" });
+        if (error.message === "Dossier non trouvé") {
+            return res.status(404).json({ message: "Dossier non trouvé" });
+        }
+        logger.error("Erreur lors de la création du document:", { error, route: req.originalUrl });
+        res.status(500).json({ message: "Erreur serveur" });
     }
 };
 
-const getdocumentsBydossier = async (req, res) => {
+const addDocumentToDossier = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { documents } = await dossierService.getdocumentsBydossier(id);
-        res.status(200).json(documents);
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "Aucun fichier n'a été téléchargé"
+            });
+        }
+
+        const { id_dossier } = req.params;
+        if (!id_dossier || isNaN(parseInt(id_dossier))) {
+            return res.status(400).json({
+                success: false,
+                message: "ID du dossier manquant ou invalide"
+            });
+        }
+
+        // Vérifier si le dossier existe
+        const dossier = await dossierService.getDossierById(id_dossier);
+        if (!dossier) {
+            // Supprimer le fichier uploadé si le dossier n'existe pas
+            await fs.promises.unlink(req.file.path).catch(() => {});
+            return res.status(404).json({ 
+                success: false,
+                message: "Dossier non trouvé" 
+            });
+        }
+
+        const relativePath = req.file.path
+            .replace(process.cwd(), '')
+            .replace(/\\/g, '/')
+            .replace(/^\//, '');
+
+        const docData = {
+            libelle_document: req.body.libelle_document,
+            date_document: req.body.date_document ? new Date(req.body.date_document) : new Date(),
+            lien_document: relativePath,
+            etat_document: req.body.etat_document || 'Actif',
+            id_dossier: parseInt(id_dossier),
+            // Nouveaux champs pour les relations
+            id_livrable: req.body.id_livrable ? parseInt(req.body.id_livrable) : null,
+            id_projet: req.body.id_projet ? parseInt(req.body.id_projet) : null,
+            id_demandes: req.body.id_demandes ? parseInt(req.body.id_demandes) : null,
+            id_contrat: req.body.id_contrat ? parseInt(req.body.id_contrat) : null,
+            id_employes: req.body.id_employes ? parseInt(req.body.id_employes) : null,
+            id_intervention: req.body.id_intervention ? parseInt(req.body.id_intervention) : null,
+            id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null
+        };
+
+        let document;
+        try {
+            document = await dossierService.createDocument(docData);
+            logger.info("Document ajouté au dossier", { documentId: document.id_documents, dossierId: id_dossier });
+        } catch (dbError) {
+            await fs.promises.unlink(req.file.path).catch(() => {});
+            logger.error("Erreur base de données lors de l'ajout du document au dossier", {
+                error: {
+                    message: dbError.message,
+                    stack: dbError.stack
+                }
+            });
+            return res.status(500).json({
+                success: false,
+                message: "Erreur lors de l'enregistrement du document en base",
+                error: dbError.message
+            });
+        }
+
+        res.status(201).json({
+            success: true,
+            message: "Document ajouté au dossier avec succès",
+            data: {
+                document,
+                details: {
+                    dateCreation: new Date().toISOString(),
+                    chemin: relativePath
+                }
+            }
+        });
     } catch (error) {
-        logger.error("Error fetching documents by dossier:", { error, route: req.originalUrl });
-        res.status(500).json({ message: "Internal Server Error" });
+        logger.error("Erreur lors de l'ajout du document au dossier", {
+            error: {
+                message: error.message,
+                stack: error.stack
+            }
+        });
+        res.status(500).json({
+            success: false,
+            message: "Erreur interne lors de l'ajout du document au dossier.",
+            error: error.message
+        });
     }
-}
+};
+
+const getDossiersByTypeAndLibelle = async (req, res) => {
+    try {
+        const { type, libelle } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        
+        // Validation des paramètres de pagination
+        if (page < 1 || limit < 1 || limit > 100) {
+            return res.status(400).json({ 
+                message: "Paramètres de pagination invalides. page >= 1, limit >= 1 et limit <= 100" 
+            });
+        }
+        
+        const result = await dossierService.getDossiersByTypeAndLibelle(type, libelle, page, limit);
+        res.status(200).json(result);
+    } catch (error) {
+        logger.error("Erreur lors de la récupération des dossiers par type et libellé:", { error, route: req.originalUrl });
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+};
+
+const getDocumentsByDossierIdAndLibelle = async (req, res) => {
+    try {
+        const { id, libelle } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        
+        // Validation des paramètres de pagination
+        if (page < 1 || limit < 1 || limit > 100) {
+            return res.status(400).json({ 
+                message: "Paramètres de pagination invalides. page >= 1, limit >= 1 et limit <= 100" 
+            });
+        }
+        
+        const result = await dossierService.getDocumentsByDossierIdAndLibelle(id, libelle, page, limit);
+        if (!result) {
+            return res.status(404).json({ message: "Dossier non trouvé" });
+        }
+        res.status(200).json(result);
+    } catch (error) {
+        logger.error("Erreur lors de la récupération des documents par id et libellé:", { error, route: req.originalUrl });
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+};
+
+const getDocumentsIntervention = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        
+        // Validation des paramètres de pagination
+        if (page < 1 || limit < 1 || limit > 100) {
+            return res.status(400).json({ 
+                message: "Paramètres de pagination invalides. page >= 1, limit >= 1 et limit <= 100" 
+            });
+        }
+        
+        const result = await dossierService.getDocumentsIntervention(page, limit);
+        res.status(200).json(result);
+    } catch (error) {
+        logger.error("Erreur lors de la récupération des documents d'intervention:", { error, route: req.originalUrl });
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+};
 
 module.exports = {
     createDossier,
@@ -176,7 +360,10 @@ module.exports = {
     updateDossier,
     deleteDossier,
     deleteDocumentById,
-    getDossierByType,
-    getdocumentsBydossier
+    createDocument,
+    addDocumentToDossier,
+    getDossiersByTypeAndLibelle,
+    getDocumentsByDossierIdAndLibelle,
+    getDocumentsIntervention
 };
 

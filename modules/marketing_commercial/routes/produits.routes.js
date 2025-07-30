@@ -82,12 +82,49 @@ router.get('/famille/:familleId', produitsController.getEquipementsByFamille);
  * @swagger
  * /marketing_commercial/produits:
  *   get:
- *     summary: Liste tous les équipements
- *     description: Retourne tous les produits de type équipement disponibles dans le catalogue
+ *     summary: Liste les équipements avec pagination
+ *     description: Retourne une liste paginée de produits de type équipement
  *     tags: [Produits Marketing]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page à récupérer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Nombre d'éléments par page
+ *       - in: query
+ *         name: familleId
+ *         schema:
+ *           type: integer
+ *         description: Filtrer par ID de famille (optionnel)
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Terme de recherche pour filtrer les produits par désignation ou modèle (optionnel)
+ *       - in: query
+ *         name: prixMin
+ *         schema:
+ *           type: number
+ *           format: float
+ *           minimum: 0
+ *         description: Prix minimum pour filtrer les produits (optionnel)
+ *       - in: query
+ *         name: prixMax
+ *         schema:
+ *           type: number
+ *           format: float
+ *           minimum: 0
+ *         description: Prix maximum pour filtrer les produits (optionnel)
  *     responses:
  *       200:
- *         description: Liste des équipements récupérée avec succès
+ *         description: Liste paginée des produits récupérée avec succès
  *         content:
  *           application/json:
  *             schema:
@@ -100,6 +137,24 @@ router.get('/famille/:familleId', produitsController.getEquipementsByFamille);
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Produit'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       description: Page actuelle
+ *                     limit:
+ *                       type: integer
+ *                       description: Nombre d'éléments par page
+ *                     total:
+ *                       type: integer
+ *                       description: Nombre total d'éléments
+ *                     totalPages:
+ *                       type: integer
+ *                       description: Nombre total de pages
+ *                     hasMore:
+ *                       type: boolean
+ *                       description: Indique s'il y a d'autres pages à charger
  *       400:
  *         description: Erreur de requête
  *       500:
@@ -143,75 +198,7 @@ router.get('/', produitsController.getAllEquipements);
  */
 router.get('/nouveautes', produitsController.getLatestProducts);
 
-/**
- * @swagger
- * /marketing_commercial/produits/paginated:
- *   get:
- *     summary: Liste les équipements avec pagination
- *     description: Retourne une liste paginée de produits de type équipement
- *     tags: [Produits Marketing]
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Numéro de page à récupérer
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
- *         description: Nombre d'éléments par page
- *       - in: query
- *         name: familleId
- *         schema:
- *           type: integer
- *         description: Filtrer par ID de famille (optionnel)
- *       - in: query
- *         name: search
- *         schema:
- *           type: string
- *         description: Terme de recherche pour filtrer les produits par désignation ou modèle (optionnel)
- *     responses:
- *       200:
- *         description: Liste paginée des produits récupérée avec succès
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 produits:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Produit'
- *                 pagination:
- *                   type: object
- *                   properties:
- *                     page:
- *                       type: integer
- *                       description: Page actuelle
- *                     limit:
- *                       type: integer
- *                       description: Nombre d'éléments par page
- *                     total:
- *                       type: integer
- *                       description: Nombre total d'éléments
- *                     totalPages:
- *                       type: integer
- *                       description: Nombre total de pages
- *                     hasMore:
- *                       type: boolean
- *                       description: Indique s'il y a d'autres pages à charger
- *       400:
- *         description: Erreur de requête
- *       500:
- *         description: Erreur serveur
- */
-router.get('/paginated', produitsController.getPaginatedEquipements);
+
 
 /**
  * @swagger

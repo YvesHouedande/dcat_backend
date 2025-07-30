@@ -1,10 +1,51 @@
 const toolsService = require("../services/mouvementOutil.service");
 
-// Récupérer la liste de tous les produits de type "outil".
+// Récupérer la liste de tous les produits de type "outil" avec pagination et filtres.
 const getAllOutils = async (req, res) => {
   try {
-    const outils = await toolsService.getAllOutils();
-    res.status(200).json(outils);
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "created_at",
+      sortOrder = "desc",
+      search = "",
+      categoryId,
+      familleLibelle,
+      marqueLibelle,
+      modeleLibelle,
+      qteMin,
+      qteMax,
+    } = req.query;
+
+    const options = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      sortBy,
+      sortOrder,
+      search,
+      categoryId: categoryId ? parseInt(categoryId) : undefined,
+      familleLibelle,
+      marqueLibelle,
+      modeleLibelle,
+      qteMin: qteMin ? parseInt(qteMin) : undefined,
+      qteMax: qteMax ? parseInt(qteMax) : undefined,
+    };
+//test
+    const result = await toolsService.getAllOutils(options);
+
+        // ---------------------- URL complètes pour les images ----------------------
+        const hostPrefix = `${req.protocol}://${req.get("host")}/`;
+
+        result.data = result.data.map((item) => ({
+          ...item,
+          image_produit: item.image_produit && item.image_produit.lien_image
+            ? {
+                ...item.image_produit,
+                url: hostPrefix + item.image_produit.lien_image.replace(/\\/g, "/"),
+              }
+            : null,
+        }));
+    res.status(200).json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -139,7 +180,11 @@ const deleteMouvement = async (req, res) => {
     if (!type || !id_exemplaire || !id_employes || isNaN(parseInt(id_exemplaire)) || isNaN(parseInt(id_employes))) {
       return res.status(400).json({ error: 'Paramètres invalides' });
     }
-    await toolsService.deleteMouvement(type, parseInt(id_exemplaire), parseInt(id_employes));
+    const result = await toolsService.deleteMouvement(type, parseInt(id_exemplaire), parseInt(id_employes));
+    
+    if (!result) {
+      return res.status(404).json({ error: "Mouvement non trouvé ou déjà supprimé" });
+    }
     res.status(200).json({ message: 'Mouvement supprimé avec succès.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -153,7 +198,10 @@ const updateMouvement = async (req, res) => {
     if (!type || !id_exemplaire || !id_employes || isNaN(parseInt(id_exemplaire)) || isNaN(parseInt(id_employes))) {
       return res.status(400).json({ error: 'Paramètres invalides' });
     }
-    await toolsService.updateMouvement(type, parseInt(id_exemplaire), parseInt(id_employes), req.body);
+    const result = await toolsService.updateMouvement(type, parseInt(id_exemplaire), parseInt(id_employes), req.body);
+    if (!result) {
+      return res.status(404).json({ error: "Mouvement non trouvé ou déjà supprimé" });
+    }
     res.status(200).json({ message: 'Mouvement modifié avec succès.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -170,6 +218,205 @@ const getOutilsStatistiques = async (req, res) => {
   }
 };
 
+// Récupère toutes les sorties d'un outil spécifique
+const getSortiesOutil = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    if (!id) {
+      return res.status(400).json({ error: "ID produit requis" });
+    }
+
+    const result = await toolsService.getSortiesOutil(parseInt(id), page, limit);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Récupère toutes les entrées d'un outil spécifique
+const getEntreesOutil = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    if (!id) {
+      return res.status(400).json({ error: "ID produit requis" });
+    }
+
+    const result = await toolsService.getEntreesOutil(parseInt(id), page, limit);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Récupère les exemplaires d'un outil spécifique avec pagination
+const getExemplairesOutil = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    if (!id) {
+      return res.status(400).json({ error: "ID produit requis" });
+    }
+
+    const result = await toolsService.getExemplairesOutil(parseInt(id), page, limit);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Récupère toutes les sorties d'un exemplaire spécifique
+const getSortiesExemplaire = async (req, res) => {
+  try {
+    const { id_exemplaire } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    if (!id_exemplaire) {
+      return res.status(400).json({ error: "ID exemplaire requis" });
+    }
+
+    const result = await toolsService.getSortiesExemplaire(parseInt(id_exemplaire), page, limit);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Récupère toutes les entrées d'un exemplaire spécifique
+const getEntreesExemplaire = async (req, res) => {
+  try {
+    const { id_exemplaire } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    if (!id_exemplaire) {
+      return res.status(400).json({ error: "ID exemplaire requis" });
+    }
+
+    const result = await toolsService.getEntreesExemplaire(parseInt(id_exemplaire), page, limit);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Récupère tous les outils rentrés par un employé spécifique avec pagination et filtres
+const getOutilsRentresParEmploye = async (req, res) => {
+  try {
+    const { id_employe } = req.params;
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "created_at",
+      sortOrder = "desc",
+      search = "",
+      dateDebut,
+      dateFin,
+      etatApres,
+    } = req.query;
+
+    if (!id_employe) {
+      return res.status(400).json({ error: "ID employé requis" });
+    }
+
+    const options = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      sortBy,
+      sortOrder,
+      search,
+      dateDebut,
+      dateFin,
+      etatApres,
+    };
+
+    const result = await toolsService.getOutilsRentresParEmploye(parseInt(id_employe), options);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Récupère tous les outils sortis avec pagination et filtres
+const getOutilsSortisPagines = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "created_at",
+      sortOrder = "desc",
+      search = "",
+      dateDebut,
+      dateFin,
+      etatAvant,
+      siteIntervention,
+    } = req.query;
+
+    const options = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      sortBy,
+      sortOrder,
+      search,
+      dateDebut,
+      dateFin,
+      etatAvant,
+      siteIntervention,
+    };
+
+    const result = await toolsService.getOutilsSortisPagines(options);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Récupère tous les outils sortis par un employé spécifique avec pagination et filtres
+const getOutilsSortisParEmployePagines = async (req, res) => {
+  try {
+    const { id_employe } = req.params;
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "created_at",
+      sortOrder = "desc",
+      search = "",
+      dateDebut,
+      dateFin,
+      etatAvant,
+      siteIntervention,
+    } = req.query;
+
+    if (!id_employe) {
+      return res.status(400).json({ error: "ID employé requis" });
+    }
+
+    const options = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      sortBy,
+      sortOrder,
+      search,
+      dateDebut,
+      dateFin,
+      etatAvant,
+      siteIntervention,
+    };
+
+    const result = await toolsService.getOutilsSortisParEmployePagines(parseInt(id_employe), options);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 module.exports = {
   getAllOutils,
@@ -185,4 +432,12 @@ module.exports = {
   deleteMouvement,
   updateMouvement,
   getOutilsStatistiques,
+  getSortiesOutil,
+  getEntreesOutil,
+  getExemplairesOutil,
+  getSortiesExemplaire,
+  getEntreesExemplaire,
+  getOutilsRentresParEmploye,
+  getOutilsSortisPagines,
+  getOutilsSortisParEmployePagines,
 };

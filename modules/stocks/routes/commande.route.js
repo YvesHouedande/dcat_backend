@@ -34,7 +34,7 @@ const controller = require("../controllers/commande.controller");
  *               dateLivraison:
  *                 type: string
  *                 format: date
- *                 description: Date prévue de livraison (YYYY-MM-DD)
+ *                 description: Date prévue de livraison - YYYY-MM-DD
  *                 example: "2025-05-31"
  *               modePaiement:
  *                 type: string
@@ -722,7 +722,7 @@ router.delete("force/:id/:type_sortie", controller.forceDeleteCommande);
  *                         type: string
  *                         example: disponible
  *       '400':
- *         description: Paramètre invalide ou annulation impossible (stock déjà vendu, etc.)
+ *         description: Paramètre invalide ou annulation impossible - stock déjà vendu, etc.
  *         content:
  *           application/json:
  *             schema:

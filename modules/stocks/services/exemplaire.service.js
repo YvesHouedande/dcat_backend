@@ -88,14 +88,14 @@ async function getExemplaires({
 } = {}) {
   // L'utilisateur peut choisir le nombre d'éléments à afficher via pageSize
   let pageNumber = parseInt(page, 10);
-  let pageSizeNumber = parseInt(pageSize, 10);
+  pageSize = parseInt(pageSize, 10);
 
   // Valeurs par défaut et bornes
   if (isNaN(pageNumber) || pageNumber < 1) pageNumber = 1;
-  if (isNaN(pageSizeNumber) || pageSizeNumber < 1) pageSizeNumber = 10;
-  if (pageSizeNumber > 100) pageSizeNumber = 100; // Limite pour éviter les abus
+  if (isNaN(pageSize) || pageSize < 1) pageSize = 10;
+  if (pageSize > 100) pageSize = 100; // Limite pour éviter les abus
 
-  const offset = (pageNumber - 1) * pageSizeNumber;
+  const offset = (pageNumber - 1) * pageSize;
   const filters = [];
   if (num_serie) filters.push(eq(exemplaires.num_serie, num_serie));
   if (date_entree) filters.push(eq(exemplaires.date_entree, date_entree));
@@ -168,7 +168,7 @@ async function getExemplaires({
       )
     )
     .where(filters.length ? and(...filters) : undefined)
-    .limit(pageSizeNumber)
+    .limit(pageSize)
     .offset(offset);
 
   // Suppression des doublons d'exemplaires (même id_exemplaire)
@@ -185,8 +185,8 @@ async function getExemplaires({
     data: exemplairesUniques,
     total,
     page: pageNumber,
-    pageSize: pageSizeNumber,
-    totalPages: Math.ceil(total / pageSizeNumber),
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
     hasNextPage: offset + exemplairesUniques.length < total,
     hasPrevPage: pageNumber > 1
   };

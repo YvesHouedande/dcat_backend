@@ -15,24 +15,57 @@ const router = express.Router();
  *   get:
  *     summary: Récupère la liste de tous les employés
  *     tags: [Employes]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page pour la pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
  *     responses:
  *       200:
- *         description: Liste de tous les employés
+ *         description: Liste paginée de tous les employés
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
  *             example:
- *               - id_employes: 1
- *                 nom_employes: "Dupont"
- *                 prenom_employes: "Jean"
- *                 email_employes: "jean.dupont@example.com"
- *                 status_employes: "actif"
- *                 id_fonction: 2
- *                 created_at: "2024-03-01T12:00:00Z"
- *                 updated_at: "2024-03-01T12:00:00Z"
+ *               data:
+ *                 - id_employes: 1
+ *                   nom_employes: "Dupont"
+ *                   prenom_employes: "Jean"
+ *                   email_employes: "jean.dupont@example.com"
+ *                   status_employes: "actif"
+ *                   id_fonction: 2
+ *                   created_at: "2024-03-01T12:00:00Z"
+ *                   updated_at: "2024-03-01T12:00:00Z"
+ *               pagination:
+ *                 total: 100
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 10
  */
 router.get('/', employeController.getEmployes);
 
@@ -89,9 +122,51 @@ router.get('/fonction/:id', employeController.getEmployeByFonction);
  *         schema:
  *           type: string
  *         description: "Statut de l'employé (par exemple : 'actif', 'inactif')"
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page pour la pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
  *     responses:
  *       200:
- *         description: Liste des employés avec ce statut
+ *         description: Liste paginée des employés avec ce statut
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *             example:
+ *               data:
+ *                 - id_employes: 1
+ *                   nom_employes: "Dupont"
+ *                   status_employes: "actif"
+ *               pagination:
+ *                 total: 20
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 2
  */
 router.get('/statut/:statut', employeController.getEmployeByStatut);
 
@@ -206,5 +281,109 @@ router.put('/:id', employeController.updateEmploye);
  *         description: Employé non trouvé
  */
 router.delete('/:id', employeController.deleteEmploye);
+
+/**
+ * @swagger
+ * /administration/employes/{id}/documents:
+ *   get:
+ *     summary: Récupère les documents d'un employé
+ *     description: Retourne la liste paginée des documents associés à un employé spécifique
+ *     tags: [Employes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'employé
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page pour la pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
+ *     responses:
+ *       200:
+ *         description: Liste des documents récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_documents:
+ *                         type: integer
+ *                         description: ID du document
+ *                       libelle_document:
+ *                         type: string
+ *                         description: Libellé du document
+ *                       date_document:
+ *                         type: string
+ *                         description: Date du document
+ *                       lien_document:
+ *                         type: string
+ *                         description: Lien vers le document
+ *                       etat_document:
+ *                         type: string
+ *                         description: État du document (Actif, Archive)
+ *                       nature_document:
+ *                         type: string
+ *                         description: Nature du document
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                         description: Date de création
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                         description: Date de mise à jour
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                       description: Nombre total de documents
+ *                     page:
+ *                       type: integer
+ *                       description: Page actuelle
+ *                     limit:
+ *                       type: integer
+ *                       description: Nombre d'éléments par page
+ *                     totalPages:
+ *                       type: integer
+ *                       description: Nombre total de pages
+ *             example:
+ *               data:
+ *                 - id_documents: 1
+ *                   libelle_document: "Contrat de travail"
+ *                   date_document: "2024-01-15"
+ *                   lien_document: "media/documents/contrat_001.pdf"
+ *                   etat_document: "Actif"
+ *                   nature_document: "Contrat"
+ *                   created_at: "2024-01-15T10:00:00Z"
+ *                   updated_at: "2024-01-15T10:00:00Z"
+ *               pagination:
+ *                 total: 5
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 1
+ *       400:
+ *         description: ID invalide
+ *       404:
+ *         description: Aucun document trouvé pour cet employé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/:id/documents', employeController.getEmployeDocuments);
 
 module.exports = router;

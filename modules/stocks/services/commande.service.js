@@ -16,7 +16,7 @@ const {
 } = require("../../../core/database/models");
 
 const { etatExemplaire } = require("./exemplaire.service");
-//test
+
 // const etatCommande= ['en_cours', 'en_attente', 'livree', 'annulee', 'retournee'];
 const etatCommande = ["livree"];
 

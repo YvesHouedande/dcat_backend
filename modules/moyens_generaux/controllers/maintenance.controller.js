@@ -93,8 +93,11 @@ const deleteMaintenance = async (req, res) => {
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    await maintenanceService.deleteMaintenance(id);
-    res.json({ message: "Maintenance supprimée avec succès" });
+    const result = await maintenanceService.deleteMaintenance(id);
+    if (!result) {
+      return res.status(404).json({ error: "Maintenance non trouvée ou déjà supprimée" });
+    }
+    res.status(200).json({ message: "Maintenance supprimée avec succès" });
   } catch (error) {
     res.status(500).json({ 
       error: "Erreur lors de la suppression",

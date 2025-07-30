@@ -153,18 +153,22 @@ const emailNotificationService = {
       switch (notification.type) {
         case 'status_update':
         case 'commande_update':
-          if (notification.newStatus === 'Livré') {
+          if (notification.newStatus === 'livree') {
             subject = `Votre commande a été livrée`;
             statusClass = 'status-delivered';
             htmlContent = notificationTemplates.delivered(clientName, notification);
-          } else if (notification.newStatus === 'Annulé') {
+          } else if (notification.newStatus === 'annulee') {
             subject = `Annulation de votre commande`;
             statusClass = 'status-cancelled';
             htmlContent = notificationTemplates.cancelled(clientName);
-          } else if (notification.newStatus === 'Retourné') {
+          } else if (notification.newStatus === 'retournee') {
             subject = `Retour de votre commande`;
             statusClass = 'status-cancelled';
             htmlContent = notificationTemplates.returned(clientName);
+          } else if (notification.newStatus === 'en_cours') {
+            subject = `Votre commande est en cours de traitement`;
+            statusClass = 'status-confirmed';
+            htmlContent = notificationTemplates.confirmed(clientName, notification);
           } else if (notification.newDate) { // Commande validée (implicitement car newDate est défini)
             subject = `Votre commande est confirmée`;
             statusClass = 'status-confirmed';
@@ -187,10 +191,11 @@ const emailNotificationService = {
       }
       
       // Ajouter l'indicateur d'étapes moderne (remplace le badge)
-      const shouldShowStepIndicator = notification.newStatus === 'Livré' || 
+      const shouldShowStepIndicator = notification.newStatus === 'livree' || 
                                      notification.newStatus === 'en_attente' || 
-                                     notification.newStatus === 'Annulé' ||
-                                     notification.newStatus === 'Retourné' ||
+                                     notification.newStatus === 'en_cours' ||
+                                     notification.newStatus === 'annulee' ||
+                                     notification.newStatus === 'retournee' ||
                                      notification.type === 'date_update';
       
       if (shouldShowStepIndicator) {
@@ -343,12 +348,12 @@ const emailNotificationService = {
       let subject = '';
       let title = '';
       
-      if (newStatus === 'Annulé') {
-        subject = 'Commande annulée';
-        title = 'Commande annulée';
-      } else if (newStatus === 'Retourné') {
-        subject = 'Commande retournée';
-        title = 'Commande retournée';
+          if (newStatus === 'annulee') {
+      subject = 'Commande annulée';
+      title = 'Commande annulée';
+    } else if (newStatus === 'retournee') {
+      subject = 'Commande retournée';
+      title = 'Commande retournée';
       } else {
         subject = 'Changement de statut de commande';
         title = 'Changement de statut';

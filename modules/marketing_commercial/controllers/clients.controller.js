@@ -402,6 +402,24 @@ const clientsController = {
       });
     }
   },
+
+  // Récupérer le nombre total de clients (excluant les admins)
+  getClientsCount: async (req, res) => {
+    try {
+      const count = await clientsService.getClientsCount();
+      res.json({ 
+        success: true, 
+        count: count
+      });
+    } catch (error) {
+      console.error("Erreur lors du comptage des clients:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Erreur lors du comptage des clients",
+        errorCode: "COUNT_ERROR"
+      });
+    }
+  },
 };
 
 module.exports = clientsController;

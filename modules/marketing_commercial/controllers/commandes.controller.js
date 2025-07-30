@@ -339,7 +339,7 @@ const commandesController = {
       }
 
       // Annuler la commande via le service
-      const commandeAnnulee = await commandesService.updateCommandeStatus(commandeId, 'Annulé');
+      const commandeAnnulee = await commandesService.updateCommandeStatus(commandeId, 'annulee');
       
       res.json({ 
         success: true, 
@@ -351,6 +351,24 @@ const commandesController = {
       res.status(500).json({ 
         success: false, 
         error: "Erreur lors de l'annulation de la commande",
+        details: error.message
+      });
+    }
+  },
+
+  // Récupérer les statistiques de commandes par état
+  getCommandesStats: async (req, res) => {
+    try {
+      const stats = await commandesService.getCommandesStatsByStatus();
+      res.json({ 
+        success: true, 
+        ...stats
+      });
+    } catch (error) {
+      console.error("Erreur lors de la récupération des statistiques des commandes:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Erreur lors de la récupération des statistiques des commandes",
         details: error.message
       });
     }

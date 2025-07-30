@@ -4,7 +4,6 @@ const router = express.Router();
 const upload = require('../../../utils/middleware/uploadMiddleware');
 const path = require('path');
 const fs = require('fs');
-
 const UPLOAD_PATHS = {
   INTERVENTIONS: 'media/documents/administration/finance&compta'
 };
@@ -119,7 +118,7 @@ router.post('/ajouter',
  *                 created_at: "2024-03-01T12:00:00Z"
  *                 updated_at: "2024-03-01T12:00:00Z"
  */
-router.get('/', doc_FCController.getAllDocuments);
+router.get('/',doc_FCController.getAllDocuments);
 
 /**
  * @swagger
@@ -179,7 +178,7 @@ router.get('/nature/:id_nature_document', doc_FCController.getDocumentByNature);
  *             schema:
  *               $ref: '#/components/schemas/Document'
  */
-router.put('/modifier/:id', 
+router.put('/modifier/:id',
   prepareUploadPath,
   upload.single("document"),
   doc_FCController.updateDocument

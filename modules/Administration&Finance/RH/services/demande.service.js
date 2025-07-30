@@ -1,4 +1,4 @@
-const {eq} = require("drizzle-orm");
+const {eq, sql} = require("drizzle-orm");
 const {db} = require("../../../../core/database/config")
 const {demandes,documents} = require("../../../../core/database/models");
 
@@ -15,25 +15,59 @@ const createDemande = async (data) => {
     }
 };
 
-const getAllDemandes = async () => {
+const getAllDemandes = async (page = 1, limit = 10) => {
     try {
+        const offset = (page - 1) * limit;
         const data = await db
             .select()
+            .from(demandes)
+            .limit(limit)
+            .offset(offset);
+        const [{ count: total }] = await db
+            .select({ count: sql`COUNT(*)::int` })
             .from(demandes);
-        return { data };
+        return {
+            data,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
     } catch (error) {
         console.error("Error fetching demandes:", error);
         throw error;
     }
 };
 
-const getdemandeBytype = async (type) => {
+const getdemandeBytype = async (type, page = 1, limit = 10) => {
     try {
+        const offset = (page - 1) * limit;
+        const { sql } = require("drizzle-orm");
+        
+        // Recherche partielle avec LIKE et wildcards
+        const searchPattern = `%${type.toLowerCase()}%`;
+        
         const data = await db
             .select()
             .from(demandes)
-            .where(eq(demandes.type_demande, type));
-        return { data };
+            .where(sql`LOWER(${demandes.type_demande}) LIKE ${searchPattern}`)
+            .limit(limit)
+            .offset(offset);
+        const [{ count: total }] = await db
+            .select({ count: sql`COUNT(*)::int` })
+            .from(demandes)
+            .where(sql`LOWER(${demandes.type_demande}) LIKE ${searchPattern}`);
+        return {
+            data,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
     } catch (error) {
         console.error("Error fetching demande by type:", error);
         throw error;
@@ -108,12 +142,27 @@ const deleteDocumentByDemande = async (id_demande) => {
     return result;
 };
 
-const getDemnandeByEmploye = async (id_employe) => {
+const getDemnandeByEmploye = async (id_employe, page = 1, limit = 10) => {
+    const offset = (page - 1) * limit;
     const data = await db
         .select()
         .from(demandes)
+        .where(eq(demandes.id_employes, id_employe))
+        .limit(limit)
+        .offset(offset);
+    const [{ count: total }] = await db
+        .select({ count: sql`COUNT(*)::int` })
+        .from(demandes)
         .where(eq(demandes.id_employes, id_employe));
-    return { data };
+    return {
+        data,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit)
+        }
+    };
 };
 
 const deleteDocumentById = async (id_document) => {

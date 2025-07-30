@@ -216,7 +216,7 @@ const { protect } = require("../../../../core/auth/middleware");
  *
  * /administration/partenaires/type/{type}:
  *   get:
- *     summary: Récupérer les partenaires par type
+ *     summary: Récupérer les partenaires par type (paginé)
  *     tags: [Partenaires]
  *     parameters:
  *       - in: path
@@ -225,15 +225,62 @@ const { protect } = require("../../../../core/auth/middleware");
  *           type: string
  *         required: true
  *         description: Type du partenaire
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Numéro de la page (par défaut 1)
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Nombre d'éléments par page (par défaut 10)
+ *         schema:
+ *           type: integer
+ *           default: 10
  *     responses:
  *       200:
- *         description: Liste des partenaires du type donné
+ *         description: Liste paginée des partenaires du type donné
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Partenaire'
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Partenaire'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                     total:
+ *                       type: integer
+ *                       example: 42
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 5
+ *             example:
+ *               data:
+ *                 - id_partenaire: 1
+ *                   nom_partenaire: "Entreprise X"
+ *                   type_partenaire: "Fournisseur"
+ *                   telephone_partenaire: "0600000000"
+ *                   localisation: "Paris"
+ *                   statut: "actif"
+ *                   created_at: "2024-03-01T12:00:00Z"
+ *                   updated_at: "2024-03-01T12:00:00Z"
+ *               pagination:
+ *                 page: 1
+ *                 limit: 10
+ *                 total: 42
+ *                 totalPages: 5
  *       500:
  *         description: Erreur serveur
  *
@@ -350,11 +397,65 @@ const { protect } = require("../../../../core/auth/middleware");
  *         description: Erreur serveur
  */
 
+/**
+ * @swagger
+ * /administration/partenaires/type/{type}:
+ *   get:
+ *     summary: Obtenir les partenaires par type (recherche partielle)
+ *     description: Recherche partielle des partenaires dont le type contient la chaîne spécifiée (insensible à la casse)
+ *     tags: [Partenaires]
+ *     parameters:
+ *       - in: path
+ *         name: type
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Type de partenaire à rechercher (recherche partielle)
+ *         example: "commercial"
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de page pour la pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Nombre d'éléments par page
+ *     responses:
+ *       200:
+ *         description: Liste paginée des partenaires correspondant au type recherché
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Partenaire'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       404:
+ *         description: Aucun partenaire trouvé pour ce type
+ *       500:
+ *         description: Erreur serveur
+ */
+
 router.post("/", controller.createPartenaire);
-router.get("/", protect(['Gestion_administration']), controller.getPartenaires);
-// router.get("/", controller.getPartenaires);
-
-
+// router.get("/", protect(['Gestion_administration']), controller.getPartenaires);
+router.get("/", controller.getPartenaires);
 router.get("/:id", controller.getPartenaireById);
 router.get("/type/:type", controller.getPartenairebyType);
 router.put("/:id", controller.updatePartenaire);

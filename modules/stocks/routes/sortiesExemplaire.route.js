@@ -15,7 +15,7 @@ const controller = require("../controllers/sortiesExemplaire.controller");
  * /stocks/sorties-exemplaires:
  *   post:
  *     summary: Enregistre une sortie d'exemplaire du stock
- *     description: Crée une nouvelle entrée de sortie pour un exemplaire (vente directe ou en ligne)
+ *     description: Crée une nouvelle entrée de sortie pour un exemplaire - vente directe ou en ligne
  *     tags: [Sorties Exemplaire]
  *     requestBody:
  *       required: true
@@ -95,13 +95,13 @@ router.post("/", controller.createSortie);
  *         schema:
  *           type: string
  *           format: date
- *         description: Filtre les sorties à partir de cette date (format YYYY-MM-DD)
+ *         description: Filtre les sorties à partir de cette date - format YYYY-MM-DD
  *       - in: query
  *         name: date_fin
  *         schema:
  *           type: string
  *           format: date
- *         description: Filtre les sorties jusqu'à cette date (format YYYY-MM-DD)
+ *         description: Filtre les sorties jusqu'à cette date - format YYYY-MM-DD
  *     responses:
  *       200:
  *         description: Liste paginée des sorties d'exemplaires
@@ -173,7 +173,7 @@ router.get("/", controller.getSorties);
  * /stocks/sorties-exemplaires/{id}:
  *   get:
  *     summary: Récupère les détails complets d'une sortie d'exemplaire
- *     description: Retourne toutes les informations liées à une sortie d'exemplaire (détails de sortie, exemplaire et commande associée)
+ *     description: Retourne toutes les informations liées à une sortie d'exemplaire - détails de sortie, exemplaire et commande associée
  *     tags: [Sorties Exemplaire]
  *     parameters:
  *       - in: path
