@@ -687,6 +687,93 @@
  *         description: Erreur serveur
  */
 
+/**
+ * @swagger
+ * /administration/dossier/documents/intervention:
+ *   get:
+ *     summary: Récupérer tous les documents d'intervention
+ *     description: Liste paginée de tous les documents où id_intervention est non null
+ *     tags: [Dossier]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Numéro de la page (par défaut 1)
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           minimum: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Nombre d'éléments par page (par défaut 10, maximum 100)
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           minimum: 1
+ *           maximum: 100
+ *     responses:
+ *       200:
+ *         description: Liste paginée des documents d'intervention
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Document'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                     total:
+ *                       type: integer
+ *                       example: 25
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 3
+ *             example:
+ *               data:
+ *                 - id_documents: 1
+ *                   libelle_document: "Rapport d'intervention 001"
+ *                   date_document: "2024-03-01"
+ *                   lien_document: "media/documents/intervention001.pdf"
+ *                   etat_document: "Actif"
+ *                   id_dossier: 1
+ *                   id_intervention: 1
+ *                 - id_documents: 2
+ *                   libelle_document: "Photos intervention 002"
+ *                   date_document: "2024-03-02"
+ *                   lien_document: "media/documents/photos_intervention002.zip"
+ *                   etat_document: "Actif"
+ *                   id_dossier: 2
+ *                   id_intervention: 2
+ *               pagination:
+ *                 page: 1
+ *                 limit: 10
+ *                 total: 25
+ *                 totalPages: 3
+ *       400:
+ *         description: Paramètres de pagination invalides
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Paramètres de pagination invalides. page >= 1, limit >= 1 et limit <= 100
+ *       500:
+ *         description: Erreur serveur
+ */
+
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
@@ -724,5 +811,6 @@ router.delete('/:id', rangementController.deleteDossier);
 router.delete('/document/:id', rangementController.deleteDocumentById);
 router.get('/type/:type/libelle/:libelle?', rangementController.getDossiersByTypeAndLibelle);
 router.get('/:id/documents/libelle/:libelle?', rangementController.getDocumentsByDossierIdAndLibelle);
+router.get('/documents/intervention', rangementController.getDocumentsIntervention);
 
 module.exports = router;

@@ -269,6 +269,32 @@ const getDocumentsByDossierIdAndLibelle = async (id, libelle = "", page = 1, lim
     }
 }
 
+const getDocumentsIntervention = async (page = 1, limit = 10) => {
+    const offset = (page - 1) * limit;
+    const { isNotNull } = require("drizzle-orm");
+    
+    const [totalCount] = await db
+        .select({ count: require("drizzle-orm").sql`count(*)` })
+        .from(documents)
+        .where(isNotNull(documents.id_intervention));
+    
+    const results = await db
+        .select()
+        .from(documents)
+        .where(isNotNull(documents.id_intervention))
+        .limit(limit)
+        .offset(offset);
+    
+    return {
+        data: results,
+        pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total: parseInt(totalCount.count),
+            totalPages: Math.ceil(totalCount.count / limit)
+        }
+    };
+}
 
 module.exports = {
     getDossiers,
@@ -283,5 +309,6 @@ module.exports = {
     deleteDocumentById,
     getDossiersByTypeAndLibelle,
     getDocumentsByDossierIdAndLibelle,
-    createDocument
+    createDocument,
+    getDocumentsIntervention
 };
