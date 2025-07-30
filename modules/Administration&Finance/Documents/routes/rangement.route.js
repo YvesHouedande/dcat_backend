@@ -65,7 +65,7 @@
 
 /**
  * @swagger
- * /administration/rangement/create:
+istration/rangement/create:
  *   post:
  *     summary: Créer un nouveau dossier
  *     description: Création d'un nouveau dossier
