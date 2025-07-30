@@ -299,7 +299,10 @@ const updateProduit = async (req, res) => {
         updated_at: new Date(),
       };
 
-      await produitService.updateProduit(id, updateData);
+      const result = await produitService.updateProduit(id, updateData);
+      if (!result) {
+        return res.status(404).json({ error: "Produit non trouvé" });
+      }
 
       // 📦 Traitement des nouvelles images
       const imagesMeta = req.body.imagesMeta
@@ -360,7 +363,10 @@ const deleteProduit = async (req, res) => {
     }
 
     const result = await produitService.deleteProduit(id);
-    return res.json(result);
+    if (!result) {
+      return res.status(404).json({ error: "Produit non trouvé ou déjà supprimé" });
+    }
+    return res.status(200).json({ message: "Produit supprimé avec succès" });
   } catch (error) {
     res.status(500).json({
       error: "Une erreur est survenue lors de la suppression du produit",

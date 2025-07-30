@@ -90,45 +90,45 @@ router.get("/planifiees/equipements", controller.getMaintenancesPlanifieesParEqu
  *         name: page
  *         schema:
  *           type: integer
- *         description: Numéro de page (par défaut 1)
+ *         description: Numéro de page - par défaut 1
  *       - in: query
  *         name: pageSize
  *         schema:
  *           type: integer
- *         description: Nombre d'éléments par page (par défaut 20)
+ *         description: Nombre d'éléments par page - par défaut 20
  *       - in: query
  *         name: type_maintenance
  *         schema:
  *           type: string
- *         description: 'Filtrer par type de maintenance (ex: "corrective", "préventive")'
+ *         description: Filtrer par type de maintenance ex corrective préventive
  *       - in: query
  *         name: statut
  *         schema:
  *           type: string
- *         description: 'Filtrer par statut (ex: "en_attente", "effectuee")'
+ *         description: Filtrer par statut ex en_attente effectuee
  *       - in: query
  *         name: recurrence
  *         schema:
  *           type: string
- *         description: 'Filtrer par récurrence (ex: "unique", "mensuelle", "annuelle")'
+ *         description: Filtrer par récurrence ex unique mensuelle annuelle
  *       - in: query
  *         name: date_planifiee
  *         schema:
  *           type: string
  *           format: date
- *         description: Filtrer par date planifiée exacte (format AAAA-MM-JJ)
+ *         description: Filtrer par date planifiée exacte - format AAAA-MM-JJ
  *       - in: query
  *         name: date_min
  *         schema:
  *           type: string
  *           format: date
- *         description: Filtrer les maintenances planifiées à partir de cette date (inclus)
+ *         description: Filtrer les maintenances planifiées à partir de cette date - inclus
  *       - in: query
  *         name: date_max
  *         schema:
  *           type: string
  *           format: date
- *         description: Filtrer les maintenances planifiées jusqu'à cette date (inclus)
+ *         description: Filtrer les maintenances planifiées jusqu'à cette date - inclus
  *       - in: query
  *         name: id_partenaire
  *         schema:
@@ -234,14 +234,14 @@ router.get("/recurrentes", controller.getRecurrentMaintenances);
  *           type: integer
  *           default: 1
  *           minimum: 1
- *         description: Numéro de la page à récupérer (par défaut 1)
+ *         description: Numéro de la page à récupérer - par défaut 1
  *       - in: query
  *         name: pageSize
  *         schema:
  *           type: integer
  *           default: 20
  *           minimum: 1
- *         description: Nombre d'éléments par page (par défaut 20)
+ *         description: Nombre d'éléments par page - par défaut 20
  *     responses:
  *       200:
  *         description: Liste paginée des maintenances du moyen de travail
@@ -349,7 +349,7 @@ router.patch("/:id/statut", controller.updateMaintenanceStatus);
  *                 example: "effectuee"
  *     responses:
  *       200:
- *         description: Maintenance réalisée (champs mis à jour)
+ *         description: Maintenance réalisée - champs mis à jour
  */
 router.patch("/:id_maintenance/:id_moyens_de_travail/realiser", controller.realizeMaintenance);
 

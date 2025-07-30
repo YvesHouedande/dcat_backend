@@ -130,7 +130,10 @@ const updateExemplaire = async (req, res) => {
       return res.status(400).json({ error: "ID invalide" });
     }
     const result = await exemplaireService.updateExemplaire(id, data);
-    return res.json(result);
+    if (!result) {
+      return res.status(404).json({ error: "Exemplaire non trouvé" });
+    }
+    return res.status(200).json({ message: "Exemplaire modifié avec succès" });
   } catch (error) {
     res
       .status(500)
@@ -145,7 +148,10 @@ const deleteExemplaire = async (req, res) => {
       return res.status(400).json({ error: "ID invalide" });
     }
     const result = await exemplaireService.deleteExemplaire(id);
-    return res.json({ message: "élément supprimé avec succès" });
+    if (!result) {
+      return res.status(404).json({ error: "Exemplaire non trouvé ou déjà supprimé" });
+    }
+    return res.status(200).json({ message: "élément supprimé avec succès" });
   } catch (error) {
     res
       .status(500)

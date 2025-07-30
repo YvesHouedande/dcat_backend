@@ -57,7 +57,10 @@ const updateTypeProduit = async (req, res) => {
       return res.status(400).json({ error: "ID invalide" });
     }
     const result = await typeProduitService.updateTypeProduit(id, req.body);
-    res.json(result);
+    if (!result) {
+      return res.status(404).json({ error: "TypeProduit non trouvée" });
+    }
+    res.status(200).json({ message: "TypeProduit modifiée avec succès" });
   } catch (error) {
     res.status(500).json({ 
       error: "Erreur lors de la mise à jour",
@@ -73,8 +76,11 @@ const deleteTypeProduit = async (req, res) => {
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    await typeProduitService.deleteTypeProduit(id);
-    res.json({ message: "TypeProduit supprimée avec succès" });
+    const result = await typeProduitService.deleteTypeProduit(id);
+    if (!result) {
+      return res.status(404).json({ error: "TypeProduit non trouvée ou déjà supprimée" });
+    }
+    res.status(200).json({ message: "TypeProduit supprimée avec succès" });
   } catch (error) {
     res.status(500).json({ 
       error: "Erreur lors de la suppression",

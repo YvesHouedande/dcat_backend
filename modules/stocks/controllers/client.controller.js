@@ -63,7 +63,10 @@ const updateClient = async (req, res) => {
       return res.status(400).json({ error: "ID invalide" });
     }
     const result = await clientService.updateClient(id, req.body);
-    res.json(result);
+    if (!result) {
+      return res.status(404).json({ error: "Client non trouvée" });
+    }
+    res.status(200).json({ message: "Client modifiée avec succès" });
   } catch (error) {
     res.status(500).json({ 
       error: "Erreur lors de la mise à jour",
@@ -79,8 +82,11 @@ const deleteClient = async (req, res) => {
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    await clientService.deleteClient(id);
-    res.json({ message: "Client supprimée avec succès" });
+    const result = await clientService.deleteClient(id);
+    if (!result) {
+      return res.status(404).json({ error: "Client non trouvée ou déjà supprimée" });
+    }
+    res.status(200).json({ message: "Client supprimée avec succès" });
   } catch (error) {
     res.status(500).json({ 
       error: "Erreur lors de la suppression",

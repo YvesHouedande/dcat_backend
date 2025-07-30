@@ -15,39 +15,39 @@ const controller = require("../controllers/mouvementOutil.controller");
 
 /**
  * @swagger
- * /moyens-generaux/outils:
+ * /moyens-generaux/outils/all:
  *   get:
  *     summary: Récupère tous les outils avec pagination et filtres
  *     tags: [Outils]
  *     parameters:
  *       - name: page
  *         in: query
- *         description: Numéro de page (par défaut 1)
+ *         description: Numéro de page   par défaut 1
  *         schema:
  *           type: integer
  *           default: 1
  *       - name: limit
  *         in: query
- *         description: Nombre d'éléments par page (par défaut 10)
+ *         description: Nombre d'éléments par page - par défaut 10
  *         schema:
  *           type: integer
  *           default: 10
  *       - name: sortBy
  *         in: query
- *         description: Champ de tri (ex: "created_at", "nom_produit", etc.)
+ *         description: Champ de tri ex created_at nom_produit etc
  *         schema:
  *           type: string
  *           default: "created_at"
  *       - name: sortOrder
  *         in: query
- *         description: Ordre de tri (asc ou desc)
+ *         description: Ordre de tri asc ou desc
  *         schema:
  *           type: string
  *           enum: [asc, desc]
  *           default: "desc"
  *       - name: search
  *         in: query
- *         description: Recherche sur la désignation, la description ou le code produit
+ *         description: Recherche sur la désignation la description ou le code produit
  *         schema:
  *           type: string
  *       - name: categoryId
@@ -116,7 +116,7 @@ const controller = require("../controllers/mouvementOutil.controller");
  *                 totalPages: 1
  */
 
-router.get("/", controller.getAllOutils);
+router.get("/all", controller.getAllOutils);
 
 /**
  * @swagger
@@ -175,7 +175,7 @@ router.get("/exemplaires", controller.getExemplairesOutils);
  *       - name: id
  *         in: path
  *         required: true
- *         description: ID du produit (outil)
+ *         description: ID du produit   outil
  *         schema:
  *           type: integer
  *       - name: page
@@ -309,12 +309,12 @@ router.get("/exemplaires/:id", controller.getExemplairesOutil);
  *                 example: "test"
  *               etat_avant:
  *                 type: string
- *                 description: "État de l'outil avant la sortie (ex: bon, endommagé, usé)"
+ *                 description: État de l'outil avant la sortie ex bon endommagé usé
  *                 example: "bon"
  *               date_de_sortie:
  *                 type: string
  *                 format: date
- *                 description: Date de la sortie de l'outil (format YYYY-MM-DD)
+ *                 description: Date de la sortie de l'outil   format YYYY-MM-DD
  *                 example: "2025-04-29"
  *               site_intervention:
  *                 type: string
@@ -377,12 +377,12 @@ router.post("/sortie", controller.enregistrerSortieOutil);
  *                 example: 1
  *               etat_apres:
  *                 type: string
- *                 description: "État de l'outil après utilisation ex: bon, endommagé, usé"
+ *                 description: État de l'outil après utilisation ex bon endommagé usé
  *                 example: "mauvais"
  *               date_de_retour:
  *                 type: string
  *                 format: date
- *                 description: Date de retour de l'outil (format YYYY-MM-DD)
+ *                 description: Date de retour de l'outil  format YYYY-MM-DD
  *                 example: "2025-04-29"
  *               commentaire:
  *                 type: string
@@ -459,7 +459,7 @@ router.get("/historique/:id", controller.getHistoriqueOutils);
  *       - name: id
  *         in: path
  *         required: true
- *         description: ID du produit (outil)
+ *         description: ID de loutil
  *         schema:
  *           type: integer
  *       - name: page
@@ -512,7 +512,7 @@ router.get("/sorties/:id", controller.getSortiesOutil);
  *       - name: id
  *         in: path
  *         required: true
- *         description: ID du produit (outil)
+ *         description: ID du produit   outil
  *         schema:
  *           type: integer
  *       - name: page
@@ -721,5 +721,426 @@ router.put('/mouvement/:type/:id_exemplaire/:id_employes', controller.updateMouv
  *         description: Statistiques globales
  */
 router.get('/statistiques', controller.getOutilsStatistiques);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/exemplaire/{id_exemplaire}/sorties:
+ *   get:
+ *     summary: Récupère toutes les sorties d'un exemplaire spécifique
+ *     tags: [Outils]
+ *     parameters:
+ *       - name: id_exemplaire
+ *         in: path
+ *         required: true
+ *         description: ID de l'exemplaire d'outil
+ *         schema:
+ *           type: integer
+ *       - name: page
+ *         in: query
+ *         description: Numéro de page par défaut 1
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         description: Nombre d'éléments par page par défaut 10
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Liste paginée des sorties de l'exemplaire
+ *         content:
+ *           application/json:
+ *             example:
+ *               data:
+ *                 - id_exemplaire: 1
+ *                   id_employes: 5
+ *                   etat_avant: "bon"
+ *                   date_de_sortie: "2024-01-15T10:30:00Z"
+ *                   site_intervention: "Chantier A"
+ *                   but_usage: "Travaux de maintenance"
+ *                   commentaire: "Sortie pour intervention urgente"
+ *                   created_at: "2024-01-15T10:30:00Z"
+ *                   employe:
+ *                     id_employes: 5
+ *                     nom_employes: "Dupont"
+ *                     prenom_employes: "Jean"
+ *                     email_employes: "jean.dupont@example.com"
+ *               pagination:
+ *                 total: 1
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 1
+ *       400:
+ *         description: ID exemplaire requis
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/exemplaire/:id_exemplaire/sorties', controller.getSortiesExemplaire);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/exemplaire/{id_exemplaire}/entrees:
+ *   get:
+ *     summary: Récupère toutes les entrées d'un exemplaire spécifique
+ *     tags: [Outils]
+ *     parameters:
+ *       - name: id_exemplaire
+ *         in: path
+ *         required: true
+ *         description: ID de l'exemplaire d'outil
+ *         schema:
+ *           type: integer
+ *       - name: page
+ *         in: query
+ *         description: Numéro de page par défaut 1
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         description: Nombre d'éléments par page par défaut 10
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Liste paginée des entrées de l'exemplaire
+ *         content:
+ *           application/json:
+ *             example:
+ *               data:
+ *                 - id_exemplaire: 1
+ *                   id_employes: 5
+ *                   etat_apres: "bon"
+ *                   date_de_retour: "2024-01-15T16:45:00Z"
+ *                   commentaire: "Retour en bon état"
+ *                   created_at: "2024-01-15T16:45:00Z"
+ *                   employe:
+ *                     id_employes: 5
+ *                     nom_employes: "Dupont"
+ *                     prenom_employes: "Jean"
+ *                     email_employes: "jean.dupont@example.com"
+ *               pagination:
+ *                 total: 1
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 1
+ *       400:
+ *         description: ID exemplaire requis
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/exemplaire/:id_exemplaire/entrees', controller.getEntreesExemplaire);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/rentres/employe/{id_employe}:
+ *   get:
+ *     summary: Récupère tous les outils rentrés par un employé spécifique avec pagination et filtres
+ *     tags: [Outils]
+ *     parameters:
+ *       - name: id_employe
+ *         in: path
+ *         required: true
+ *         description: ID de l'employé
+ *         schema:
+ *           type: integer
+ *       - name: page
+ *         in: query
+ *         description: Numéro de page par défaut 1
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         description: Nombre d'éléments par page par défaut 10
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - name: sortBy
+ *         in: query
+ *         description: Champ de tri ex created_at date_de_retour etc
+ *         schema:
+ *           type: string
+ *           default: "created_at"
+ *       - name: sortOrder
+ *         in: query
+ *         description: Ordre de tri asc ou desc
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: "desc"
+ *       - name: search
+ *         in: query
+ *         description: Recherche sur la désignation la description le code produit ou le numéro de série
+ *         schema:
+ *           type: string
+ *       - name: dateDebut
+ *         in: query
+ *         description: Date de début pour filtrer les retours format YYYY-MM-DD
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - name: dateFin
+ *         in: query
+ *         description: Date de fin pour filtrer les retours format YYYY-MM-DD
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - name: etatApres
+ *         in: query
+ *         description: État de l'outil après retour ex bon endommagé usé
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Liste paginée des outils rentrés par l'employé
+ *         content:
+ *           application/json:
+ *             example:
+ *               data:
+ *                 - id_exemplaire: 1
+ *                   id_employes: 5
+ *                   etat_apres: "bon"
+ *                   date_de_retour: "2024-01-15T16:45:00Z"
+ *                   commentaire: "Retour en bon état"
+ *                   created_at: "2024-01-15T16:45:00Z"
+ *                   exemplaire:
+ *                     num_serie: "SERIE-001"
+ *                     date_entree: "2024-01-01"
+ *                     etat_exemplaire: "Disponible"
+ *                   produit:
+ *                     id_produit: 1
+ *                     code_produit: "OUTIL-001"
+ *                     desi_produit: "Perceuse"
+ *                     desc_produit: "Perceuse électrique"
+ *                     caracteristiques_produit: "750W, 13mm"
+ *                     emplacement_produit: "Entrepôt A"
+ *                   employe:
+ *                     id_employes: 5
+ *                     nom_employes: "Dupont"
+ *                     prenom_employes: "Jean"
+ *                     email_employes: "jean.dupont@example.com"
+ *               pagination:
+ *                 total: 1
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 1
+ *       400:
+ *         description: ID employé requis
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/rentres/employe/:id_employe', controller.getOutilsRentresParEmploye);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/sortis/pagines:
+ *   get:
+ *     summary: Récupère tous les outils sortis avec pagination et filtres
+ *     tags: [Outils]
+ *     parameters:
+ *       - name: page
+ *         in: query
+ *         description: Numéro de page par défaut 1
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         description: Nombre d'éléments par page par défaut 10
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - name: sortBy
+ *         in: query
+ *         description: Champ de tri ex created_at date_de_sortie etc
+ *         schema:
+ *           type: string
+ *           default: "created_at"
+ *       - name: sortOrder
+ *         in: query
+ *         description: Ordre de tri asc ou desc
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: "desc"
+ *       - name: search
+ *         in: query
+ *         description: Recherche sur la désignation la description le code produit ou le numéro de série
+ *         schema:
+ *           type: string
+ *       - name: dateDebut
+ *         in: query
+ *         description: Date de début pour filtrer les sorties format YYYY-MM-DD
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - name: dateFin
+ *         in: query
+ *         description: Date de fin pour filtrer les sorties format YYYY-MM-DD
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - name: etatAvant
+ *         in: query
+ *         description: État de l'outil avant sortie ex bon endommagé usé
+ *         schema:
+ *           type: string
+ *       - name: siteIntervention
+ *         in: query
+ *         description: Site d'intervention pour filtrer les sorties
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Liste paginée des outils sortis
+ *         content:
+ *           application/json:
+ *             example:
+ *               data:
+ *                 - id_exemplaire: 1
+ *                   id_employes: 5
+ *                   etat_avant: "bon"
+ *                   date_de_sortie: "2024-01-15T10:30:00Z"
+ *                   site_intervention: "Chantier A"
+ *                   but_usage: "Travaux de maintenance"
+ *                   commentaire: "Sortie pour intervention urgente"
+ *                   created_at: "2024-01-15T10:30:00Z"
+ *                   exemplaire:
+ *                     num_serie: "SERIE-001"
+ *                     date_entree: "2024-01-01"
+ *                     etat_exemplaire: "En cours d'utilisation"
+ *                   produit:
+ *                     id_produit: 1
+ *                     code_produit: "OUTIL-001"
+ *                     desi_produit: "Perceuse"
+ *                     desc_produit: "Perceuse électrique"
+ *                     caracteristiques_produit: "750W, 13mm"
+ *                     emplacement_produit: "Entrepôt A"
+ *                   employe:
+ *                     id_employes: 5
+ *                     nom_employes: "Dupont"
+ *                     prenom_employes: "Jean"
+ *                     email_employes: "jean.dupont@example.com"
+ *               pagination:
+ *                 total: 1
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 1
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/sortis/pagines', controller.getOutilsSortisPagines);
+
+/**
+ * @swagger
+ * /moyens-generaux/outils/sortis/employe/{id_employe}/pagines:
+ *   get:
+ *     summary: Récupère tous les outils sortis par un employé spécifique avec pagination et filtres
+ *     tags: [Outils]
+ *     parameters:
+ *       - name: id_employe
+ *         in: path
+ *         required: true
+ *         description: ID de l'employé
+ *         schema:
+ *           type: integer
+ *       - name: page
+ *         in: query
+ *         description: Numéro de page par défaut 1
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         description: Nombre d'éléments par page par défaut 10
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - name: sortBy
+ *         in: query
+ *         description: Champ de tri ex created_at date_de_sortie etc
+ *         schema:
+ *           type: string
+ *           default: "created_at"
+ *       - name: sortOrder
+ *         in: query
+ *         description: Ordre de tri asc ou desc
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: "desc"
+ *       - name: search
+ *         in: query
+ *         description: Recherche sur la désignation la description le code produit ou le numéro de série
+ *         schema:
+ *           type: string
+ *       - name: dateDebut
+ *         in: query
+ *         description: Date de début pour filtrer les sorties format YYYY-MM-DD
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - name: dateFin
+ *         in: query
+ *         description: Date de fin pour filtrer les sorties format YYYY-MM-DD
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - name: etatAvant
+ *         in: query
+ *         description: État de l'outil avant sortie ex bon endommagé usé
+ *         schema:
+ *           type: string
+ *       - name: siteIntervention
+ *         in: query
+ *         description: Site d'intervention pour filtrer les sorties
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Liste paginée des outils sortis par l'employé
+ *         content:
+ *           application/json:
+ *             example:
+ *               data:
+ *                 - id_exemplaire: 1
+ *                   id_employes: 5
+ *                   etat_avant: "bon"
+ *                   date_de_sortie: "2024-01-15T10:30:00Z"
+ *                   site_intervention: "Chantier A"
+ *                   but_usage: "Travaux de maintenance"
+ *                   commentaire: "Sortie pour intervention urgente"
+ *                   created_at: "2024-01-15T10:30:00Z"
+ *                   exemplaire:
+ *                     num_serie: "SERIE-001"
+ *                     date_entree: "2024-01-01"
+ *                     etat_exemplaire: "En cours d'utilisation"
+ *                   produit:
+ *                     id_produit: 1
+ *                     code_produit: "OUTIL-001"
+ *                     desi_produit: "Perceuse"
+ *                     desc_produit: "Perceuse électrique"
+ *                     caracteristiques_produit: "750W, 13mm"
+ *                     emplacement_produit: "Entrepôt A"
+ *                   employe:
+ *                     id_employes: 5
+ *                     nom_employes: "Dupont"
+ *                     prenom_employes: "Jean"
+ *                     email_employes: "jean.dupont@example.com"
+ *               pagination:
+ *                 total: 1
+ *                 page: 1
+ *                 limit: 10
+ *                 totalPages: 1
+ *       400:
+ *         description: ID employé requis
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get('/sortis/employe/:id_employe/pagines', controller.getOutilsSortisParEmployePagines);
 
 module.exports = router;

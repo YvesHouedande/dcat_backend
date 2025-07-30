@@ -25,14 +25,14 @@ router.post("/", controller.createMoyensTravail);
  *           type: integer
  *           default: 1
  *           minimum: 1
- *         description: Numéro de la page à récupérer (par défaut 1)
+ *         description: Numéro de la page à récupérer - par défaut 1
  *       - in: query
  *         name: pageSize
  *         schema:
  *           type: integer
  *           default: 20
  *           minimum: 1
- *         description: Nombre d'éléments par page (par défaut 20)
+ *         description: Nombre d'éléments par page - par défaut 20
  *       - in: query
  *         name: id_section
  *         schema:
@@ -43,7 +43,7 @@ router.post("/", controller.createMoyensTravail);
  *         schema:
  *           type: string
  *           format: date
- *         description: Filtrer par date d'acquisition (format AAAA-MM-JJ)
+ *         description: Filtrer par date d'acquisition - format AAAA-MM-JJ
  *     responses:
  *       200:
  *         description: Liste paginée et filtrée des moyens de travail

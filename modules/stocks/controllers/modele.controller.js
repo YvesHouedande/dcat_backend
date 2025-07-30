@@ -46,7 +46,10 @@ const updateModele = async (req, res) => {
     }
     console.log(req.body);
     const result = await modeleService.updateModele(id, data);
-    return res.json(result);
+    if (!result) {
+      return res.status(404).json({ error: "Modele non trouvée" });
+    }
+    res.status(200).json({ message: "Modele modifiée avec succès" });
   } catch (error) {
     res
       .status(500)
@@ -61,7 +64,10 @@ const deleteModele = async (req, res) => {
       return res.status(400).json({ error: "ID invalide" });
     }
     const result = await modeleService.deleteModele(id);
-    return res.json(result);
+    if (!result) {
+      return res.status(404).json({ error: "Modele non trouvée ou déjà supprimée" });
+    }
+    res.status(200).json({ message: "Modele supprimée avec succès" });
   } catch (error) {
     res.status(500).json({
       error: "une erreur est survenue",

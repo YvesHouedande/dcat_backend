@@ -79,8 +79,11 @@ const deleteMaintenanceMoyenTravail = async (req, res) => {
     if (isNaN(id_moyens_de_travail) || isNaN(id_maintenance)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    await maintenanceMoyenTravailService.deleteMaintenanceMoyenTravail(id_moyens_de_travail, id_maintenance);
-    res.json({ message: "Maintenance Moyen Travail supprimée avec succès" });
+    const result = await maintenanceMoyenTravailService.deleteMaintenanceMoyenTravail(id_moyens_de_travail, id_maintenance);
+    if (!result) {
+      return res.status(404).json({ error: "Maintenance Moyen Travail non trouvée ou déjà supprimée" });
+    }
+    res.status(200).json({ message: "Maintenance Moyen Travail supprimée avec succès" });
   } catch (error) {
     res.status(500).json({
       error: "Erreur lors de la suppression",

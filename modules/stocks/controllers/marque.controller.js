@@ -56,7 +56,10 @@ const updateMarque = async (req, res) => {
       return res.status(400).json({ error: "ID invalide" });
     }
     const result = await marqueService.updateMarque(id,data);
-    return res.json(result);
+    if (!result) {
+      return res.status(404).json({ error: "Marque non trouvée" });
+    }
+    res.status(200).json({ message: "Marque modifiée avec succès" });
   } catch (error) {
     res
       .status(500)
@@ -71,7 +74,10 @@ const deleteMarque = async (req, res) => {
       return res.status(400).json({ error: "ID invalide" });
     }
     const result = await marqueService.deleteMarque(id);
-    return res.json(result);
+    if (!result) {
+      return res.status(404).json({ error: "Marque non trouvée ou déjà supprimée" });
+    } 
+    res.status(200).json({ message: "Marque supprimée avec succès" });
   } catch (error) {
     res
       .status(500)

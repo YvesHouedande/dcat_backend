@@ -73,8 +73,11 @@ const deleteSection = async (req, res) => {
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    await sectionService.deleteSection(id);
-    res.json({ message: "Section supprimée avec succès" });
+    const result = await sectionService.deleteSection(id);
+    if (!result) {
+      return res.status(404).json({ error: "Section non trouvée ou déjà supprimée" });
+    }
+    res.status(200).json({ message: "Section supprimée avec succès" });
   } catch (error) {
     res.status(500).json({ 
       error: "Erreur lors de la suppression",

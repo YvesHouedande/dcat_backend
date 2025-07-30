@@ -95,8 +95,11 @@ const deleteMoyensTravail = async (req, res) => {
     if (isNaN(id)) {
       return res.status(400).json({ error: "ID invalide" });
     }
-    await moyenstravailService.deleteMoyensTravail(id);
-    res.json({ message: "MoyensTravail supprimée avec succès" });
+    const result = await moyenstravailService.deleteMoyensTravail(id);
+    if (!result) {
+      return res.status(404).json({ error: "MoyensTravail non trouvée ou déjà supprimée" });
+    }
+    res.status(200).json({ message: "MoyensTravail supprimée avec succès" });
   } catch (error) {
     res.status(500).json({ 
       error: "Erreur lors de la suppression",
