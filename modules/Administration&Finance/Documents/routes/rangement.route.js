@@ -691,8 +691,8 @@
  * @swagger
  * /administration/dossier/documents/intervention:
  *   get:
- *     summary: Récupérer tous les documents d'intervention
- *     description: Liste paginée de tous les documents où id_intervention est non null
+ *     summary: Récupérer les documents d'intervention
+ *     description: Liste paginée des documents où id_intervention est non null. Si le libellé est fourni, recherche les documents dont le libellé contient la valeur recherchée (recherche partielle insensible à la casse).
  *     tags: [Dossier]
  *     parameters:
  *       - in: query
@@ -712,6 +712,12 @@
  *           default: 10
  *           minimum: 1
  *           maximum: 100
+ *       - in: query
+ *         name: libelle
+ *         required: false
+ *         description: Libellé du document (recherche partielle - optionnel)
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Liste paginée des documents d'intervention

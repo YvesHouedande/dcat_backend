@@ -17,9 +17,12 @@ async function safeUnlink(filePath) {
 
 const createContrat = async (req, res) => {
     try {
-        // Validation douce du champ id_entite
+        // Validation douce des champs id_entite et id_partenaire
         if (typeof req.body.id_entite !== 'undefined' && isNaN(parseInt(req.body.id_entite))) {
             return res.status(400).json({ message: "id_entite doit être un entier si fourni." });
+        }
+        if (typeof req.body.id_partenaire !== 'undefined' && isNaN(parseInt(req.body.id_partenaire))) {
+            return res.status(400).json({ message: "id_partenaire doit être un entier si fourni." });
         }
         const contratData = {
             nom_contrat: req.body.nom_contrat,
@@ -28,7 +31,7 @@ const createContrat = async (req, res) => {
             date_fin: req.body.date_fin,
             reference : req.body.reference,
             type_de_contrat: req.body.type_de_contrat,
-            statut: req.body.statut || "actif",
+            statut: req.body.statut || "Actif",
             id_partenaire: req.body.id_partenaire ? parseInt(req.body.id_partenaire) : null,
             id_entite: req.body.id_entite ? parseInt(req.body.id_entite) : null,
             duree_contrat: req.body.duree_contrat,
@@ -75,7 +78,7 @@ const addDocumentToContrat = async (req, res) => {
             libelle_document: req.body.libelle_document,
             classification_document: req.body.classification_document,
             lien_document: relativePath,
-            etat_document: req.body.etat_document || 'actif',
+            etat_document: req.body.etat_document || 'Actif',
             date_document: req.body.date_document ? new Date(req.body.date_document) : new Date(),
             id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null,
             id_contrat: parseInt(id)
@@ -83,7 +86,7 @@ const addDocumentToContrat = async (req, res) => {
 
         let document;
         try {
-            document = await contratService.addDocumentTocontrat(documentData);
+            document = await contratService.addDocumentToContrat(documentData);
 
             return res.status(201).json({
                 success: true,
@@ -262,9 +265,12 @@ const updateContrat = async (req, res) => {
         if (!updateData || Object.keys(updateData).length === 0) {
             return res.status(400).json({ message: "Aucune donnée fournie" });
         }
-        // Validation douce du champ id_entite
+        // Validation douce des champs id_entite et id_partenaire
         if (typeof updateData.id_entite !== 'undefined' && isNaN(parseInt(updateData.id_entite))) {
             return res.status(400).json({ message: "id_entite doit être un entier si fourni." });
+        }
+        if (typeof updateData.id_partenaire !== 'undefined' && isNaN(parseInt(updateData.id_partenaire))) {
+            return res.status(400).json({ message: "id_partenaire doit être un entier si fourni." });
         }
         updateData.updated_at = new Date();
         if (updateData.id_partenaire) updateData.id_partenaire = parseInt(updateData.id_partenaire);

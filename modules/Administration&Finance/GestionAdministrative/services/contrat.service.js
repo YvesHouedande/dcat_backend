@@ -11,12 +11,12 @@ const createContrat=async(data)=>{
     return result
 };
 
-const addDocumentTocontrat=async(data)=>{
-    const [result]=await db
-    .insert(documents)
-    .values(data)
-    .returning()
-    return result
+const addDocumentToContrat = async (data) => {
+    const [result] = await db
+        .insert(documents)
+        .values(data)
+        .returning();
+    return result;
 };
 
 const getContrats = async (page = 1, limit = 10) => {
@@ -187,7 +187,7 @@ module.exports = {
     getContratsbyPartenaire,
     updateContrat,
     deleteContrat,
-    addDocumentTocontrat,
+    addDocumentToContrat,
     getContratById,
     getDocumentByContrat,
     getContratByType,
