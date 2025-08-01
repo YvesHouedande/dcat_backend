@@ -33,7 +33,7 @@ router.get('/employe/:id_employe', demandeController.getDemandeByEmploye);
 router.get('/:id', demandeController.getDemandeById);
 router.put('/:id', demandeController.updateDemande);
 router.delete('/:id', demandeController.deleteDemande);
-router.delete('/:id/docdemande/:docId', protect(['Gestion_administration']), demandeController.deleteDocumentById);
+router.delete('/:id/docdemande/:docId', demandeController.deleteDocumentById);
 
 
 module.exports = router;
