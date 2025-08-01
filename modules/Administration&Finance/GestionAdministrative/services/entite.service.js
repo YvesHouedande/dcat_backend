@@ -5,35 +5,41 @@ const { entites, partenaires } = require("../../../../core/database/models");
 const createEntite = async (data) => {
     try {
         // Validation des données d'entrée
-        if (!data.nom_entite || typeof data.nom_entite !== 'string') {
-            throw new Error("Le nom de l'entité est requis et doit être une chaîne de caractères");
+        if (!data.denomination || typeof data.denomination !== 'string') {
+            throw new Error("Le nom de l'entité (denomination) est requis et doit être une chaîne de caractères");
         }
+
+        // Préparer les données d'insertion
+        const insertData = { ...data, created_at: new Date(), updated_at: new Date() };
 
         // Validation de l'id_partenaire s'il est fourni
         if (data.id_partenaire !== undefined) {
-            if (isNaN(parseInt(data.id_partenaire))) {
-                throw new Error("id_partenaire doit être un entier valide");
-            }
-            
-            // Vérifier si le partenaire existe
-            const partenaire = await db
-                .select()
-                .from(partenaires)
-                .where(eq(partenaires.id_partenaire, parseInt(data.id_partenaire)))
-                .limit(1);
-            
-            if (partenaire.length === 0) {
-                throw new Error("Le partenaire spécifié n'existe pas");
+            // Si id_partenaire est null, undefined ou une chaîne vide, on le définit comme null
+            if (data.id_partenaire === null || data.id_partenaire === undefined || data.id_partenaire === '') {
+                insertData.id_partenaire = null;
+            } else {
+                if (isNaN(parseInt(data.id_partenaire))) {
+                    throw new Error("id_partenaire doit être un entier valide");
+                }
+                
+                // Vérifier si le partenaire existe
+                const partenaire = await db
+                    .select()
+                    .from(partenaires)
+                    .where(eq(partenaires.id_partenaire, parseInt(data.id_partenaire)))
+                    .limit(1);
+                
+                if (partenaire.length === 0) {
+                    throw new Error("Le partenaire spécifié n'existe pas");
+                }
+                
+                insertData.id_partenaire = parseInt(data.id_partenaire);
             }
         }
 
         const [result] = await db
             .insert(entites)
-            .values({
-                ...data,
-                created_at: new Date(),
-                updated_at: new Date()
-            })
+            .values(insertData)
             .returning();
         
         return result;
@@ -48,7 +54,7 @@ const getEntites = async () => {
         return await db
             .select()
             .from(entites)
-            .orderBy(entites.nom_entite);
+            .orderBy(entites.denomination);
     } catch (error) {
         console.error("Erreur lors de la récupération des entités:", error);
         throw error;
@@ -80,34 +86,41 @@ const updateEntite = async (id, data) => {
         }
 
         // Validation des données d'entrée
-        if (data.nom_entite !== undefined && typeof data.nom_entite !== 'string') {
-            throw new Error("Le nom de l'entité doit être une chaîne de caractères");
+        if (data.denomination !== undefined && typeof data.denomination !== 'string') {
+            throw new Error("Le nom de l'entité (denomination) doit être une chaîne de caractères");
         }
+
+        // Préparer les données de mise à jour
+        const updateData = { ...data, updated_at: new Date() };
 
         // Validation de l'id_partenaire s'il est fourni
         if (data.id_partenaire !== undefined) {
-            if (isNaN(parseInt(data.id_partenaire))) {
-                throw new Error("id_partenaire doit être un entier valide");
-            }
-            
-            // Vérifier si le partenaire existe
-            const partenaire = await db
-                .select()
-                .from(partenaires)
-                .where(eq(partenaires.id_partenaire, parseInt(data.id_partenaire)))
-                .limit(1);
-            
-            if (partenaire.length === 0) {
-                throw new Error("Le partenaire spécifié n'existe pas");
+            // Si id_partenaire est null, undefined ou une chaîne vide, on le définit comme null
+            if (data.id_partenaire === null || data.id_partenaire === undefined || data.id_partenaire === '') {
+                updateData.id_partenaire = null;
+            } else {
+                if (isNaN(parseInt(data.id_partenaire))) {
+                    throw new Error("id_partenaire doit être un entier valide");
+                }
+                
+                // Vérifier si le partenaire existe
+                const partenaire = await db
+                    .select()
+                    .from(partenaires)
+                    .where(eq(partenaires.id_partenaire, parseInt(data.id_partenaire)))
+                    .limit(1);
+                
+                if (partenaire.length === 0) {
+                    throw new Error("Le partenaire spécifié n'existe pas");
+                }
+                
+                updateData.id_partenaire = parseInt(data.id_partenaire);
             }
         }
 
         const [result] = await db
             .update(entites)
-            .set({
-                ...data,
-                updated_at: new Date()
-            })
+            .set(updateData)
             .where(eq(entites.id_entite, parseInt(id)))
             .returning();
         
@@ -146,7 +159,7 @@ const getEntitesByPartenaire = async (id_partenaire) => {
             .select()
             .from(entites)
             .where(eq(entites.id_partenaire, parseInt(id_partenaire)))
-            .orderBy(entites.nom_entite);
+            .orderBy(entites.denomination);
     } catch (error) {
         console.error("Erreur lors de la récupération des entités par partenaire:", error);
         throw error;

@@ -11,7 +11,7 @@ const createEntite = async (req, res) => {
     } catch (error) {
         console.error("Erreur lors de la création de l'entité:", error);
         
-        if (error.message.includes("nom de l'entité")) {
+        if (error.message.includes("denomination") || error.message.includes("nom de l'entité")) {
             return res.status(400).json({
                 success: false,
                 message: error.message
@@ -109,7 +109,7 @@ const updateEntite = async (req, res) => {
             });
         }
         
-        if (error.message.includes("nom de l'entité") || error.message.includes("partenaire")) {
+        if (error.message.includes("denomination") || error.message.includes("nom de l'entité") || error.message.includes("partenaire")) {
             return res.status(400).json({
                 success: false,
                 message: error.message
