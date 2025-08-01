@@ -105,7 +105,7 @@ const produitsService = {
   },
 
   // Récupérer tous les produits avec pagination, recherche et filtre de prix
-  getAllEquipementsWithPaginationParameter: async (
+  getAllEquipements: async (
     page = 1,
     limit = 20,
     familleId = null,
@@ -114,8 +114,7 @@ const produitsService = {
     prixMax = null
   ) => {
     try {
-      console.log("je fais mes tests de corrections");
-      console.log("Service getEquipementsWithPagination appelé avec:", {
+      console.log("Service getAllEquipements appelé avec:", {
         page,
         limit,
         familleId,
@@ -311,7 +310,7 @@ const produitsService = {
 
       return result;
     } catch (error) {
-      console.error("Erreur dans getEquipementsWithPagination:", {
+      console.error("Erreur dans getAllEquipements:", {
         message: error.message,
         stack: error.stack,
         params: { page, limit, familleId },

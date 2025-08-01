@@ -83,7 +83,7 @@ const produitsController = {
       });
 
       const result =
-        await produitsService.getAllEquipementsWithPaginationParameter(
+        await produitsService.getAllEquipements(
           page,
           limit,
           familleId,
