@@ -61,10 +61,7 @@ const getEntiteById = async (req, res) => {
             });
         }
         
-        res.status(200).json({
-            success: true,
-            data: entite
-        });
+        res.status(200).json(entite);
     } catch (error) {
         console.error("Erreur lors de la récupération de l'entité par ID:", error);
         
