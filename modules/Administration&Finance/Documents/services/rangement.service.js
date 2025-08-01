@@ -269,6 +269,68 @@ const getDocumentsByDossierIdAndLibelle = async (id, libelle = "", page = 1, lim
     }
 }
 
+const getDocumentsIntervention = async (page = 1, limit = 10, libelle = "") => {
+    const offset = (page - 1) * limit;
+    const { isNotNull, and, sql } = require("drizzle-orm");
+    
+    // Si libellé est fourni, filtrer par libellé du document (recherche partielle insensible à la casse)
+    if (libelle && libelle !== "" && libelle !== "undefined") {
+        const [totalCount] = await db
+            .select({ count: require("drizzle-orm").sql`count(*)` })
+            .from(documents)
+            .where(
+                and(
+                    isNotNull(documents.id_intervention),
+                    sql`LOWER(${documents.libelle_document}) LIKE LOWER(${'%' + libelle + '%'})`
+                )
+            );
+        
+        const results = await db
+            .select()
+            .from(documents)
+            .where(
+                and(
+                    isNotNull(documents.id_intervention),
+                    sql`LOWER(${documents.libelle_document}) LIKE LOWER(${'%' + libelle + '%'})`
+                )
+            )
+            .limit(limit)
+            .offset(offset);
+        
+        return {
+            data: results,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total: parseInt(totalCount.count),
+                totalPages: Math.ceil(totalCount.count / limit)
+            }
+        };
+    } else {
+        // Si libellé n'est pas fourni, récupérer tous les documents d'intervention
+        const [totalCount] = await db
+            .select({ count: require("drizzle-orm").sql`count(*)` })
+            .from(documents)
+            .where(isNotNull(documents.id_intervention));
+        
+        const results = await db
+            .select()
+            .from(documents)
+            .where(isNotNull(documents.id_intervention))
+            .limit(limit)
+            .offset(offset);
+        
+        return {
+            data: results,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total: parseInt(totalCount.count),
+                totalPages: Math.ceil(totalCount.count / limit)
+            }
+        };
+    }
+}
 
 module.exports = {
     getDossiers,
@@ -283,5 +345,6 @@ module.exports = {
     deleteDocumentById,
     getDossiersByTypeAndLibelle,
     getDocumentsByDossierIdAndLibelle,
-    createDocument
+    createDocument,
+    getDocumentsIntervention
 };

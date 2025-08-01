@@ -1,6 +1,7 @@
 const employeController = require('../controllers/employes.controller');
 const express = require('express');
 const router = express.Router();
+const upload = require('../../../utils/middleware/uploadMiddleware');
 
 /**
  * @swagger
@@ -385,5 +386,156 @@ router.delete('/:id', employeController.deleteEmploye);
  *         description: Erreur serveur
  */
 router.get('/:id/documents', employeController.getEmployeDocuments);
+
+/**
+ * @swagger
+ * /administration/employes/{id}/photo:
+ *   post:
+ *     summary: Ajoute une photo de profil à un employé
+ *     description: Upload une nouvelle photo de profil pour un employé. Si l'employé a déjà une photo, elle sera remplacée.
+ *     tags: [Employes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'employé
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               photo:
+ *                 type: string
+ *                 format: binary
+ *                 description: "Photo de profil (formats acceptés : JPEG, JPG, PNG, GIF, max 5MB)"
+ *     responses:
+ *       200:
+ *         description: Photo uploadée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Photo de profil uploadée avec succès"
+ *                 employe:
+ *                   type: object
+ *                   description: Informations de l'employé mises à jour
+ *                 photoPath:
+ *                   type: string
+ *                   description: Chemin vers la photo uploadée
+ *       400:
+ *         description: "Données invalides (ID invalide, fichier manquant, type non autorisé, taille excessive)"
+ *       404:
+ *         description: "Employé non trouvé"
+ *       500:
+ *         description: Erreur serveur
+ */
+router.post('/:id/photo', (req, res, next) => {
+    req.uploadPath = 'media/documents/administration/RH/employes';
+    next();
+}, upload.single('photo'), employeController.uploadPhoto);
+
+/**
+ * @swagger
+ * /administration/employes/{id}/photo:
+ *   put:
+ *     summary: Met à jour la photo de profil d'un employé
+ *     description: Remplace la photo de profil existante d'un employé par une nouvelle photo.
+ *     tags: [Employes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'employé
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               photo:
+ *                 type: string
+ *                 format: binary
+ *                 description: "Nouvelle photo de profil (formats acceptés : JPEG, JPG, PNG, GIF, max 5MB)"
+ *     responses:
+ *       200:
+ *         description: Photo mise à jour avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Photo de profil mise à jour avec succès"
+ *                 employe:
+ *                   type: object
+ *                   description: Informations de l'employé mises à jour
+ *                 photoPath:
+ *                   type: string
+ *                   description: Chemin vers la nouvelle photo
+ *                 oldPhoto:
+ *                   type: string
+ *                   description: Chemin vers l'ancienne photo (supprimée)
+ *       400:
+ *         description: "Données invalides (ID invalide, fichier manquant, type non autorisé, taille excessive)"
+ *       404:
+ *         description: "Employé non trouvé"
+ *       500:
+ *         description: Erreur serveur
+ */
+router.put('/:id/photo', (req, res, next) => {
+    req.uploadPath = 'media/documents/administration/RH/employes';
+    next();
+}, upload.single('photo'), employeController.updatePhoto);
+
+/**
+ * @swagger
+ * /administration/employes/{id}/photo:
+ *   delete:
+ *     summary: Supprime la photo de profil d'un employé
+ *     description: Supprime la photo de profil d'un employé (met à null dans la base de données et supprime le fichier physique).
+ *     tags: [Employes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'employé
+ *     responses:
+ *       200:
+ *         description: Photo supprimée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Photo de profil supprimée avec succès"
+ *                 employe:
+ *                   type: object
+ *                   description: Informations de l'employé mises à jour
+ *                 deletedPhoto:
+ *                   type: string
+ *                   description: Chemin vers la photo supprimée
+ *       400:
+ *         description: ID invalide
+ *       404:
+ *         description: Employé non trouvé ou aucune photo existante
+ *       500:
+ *         description: Erreur serveur
+ */
+router.delete('/:id/photo', employeController.deletePhoto);
 
 module.exports = router;

@@ -61,6 +61,7 @@ const employes = pgTable("employes", {
   date_embauche_employes: date("date_embauche_employes"),
   password_employes: varchar("password_employes", { length: 255 }),
   date_de_naissance: date("date_de_naissance"),
+  photo_employes: text("photo_employes"),
   contrat: varchar("contrat", { length: 100 }),
   id_fonction: integer("id_fonction").references(() => fonctions.id_fonction),
   created_at: timestamp("created_at").defaultNow().notNull(),
@@ -99,7 +100,7 @@ const entites = pgTable("entites", {
   contact: varchar("contact", { length: 25 }),
   adresse_postal: varchar("adresse_postal", { length: 50 }),
   localisation: text("localisation"),
-  id_partenaire: integer("id_partenaire").references(() => partenaires.id_partenaire),
+  id_partenaire: integer("id_partenaire").references(() => partenaires.id_partenaire, { onDelete: "set null" }),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });

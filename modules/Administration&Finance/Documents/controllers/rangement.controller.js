@@ -333,6 +333,27 @@ const getDocumentsByDossierIdAndLibelle = async (req, res) => {
     }
 };
 
+const getDocumentsIntervention = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const libelle = req.query.libelle || "";
+        
+        // Validation des paramètres de pagination
+        if (page < 1 || limit < 1 || limit > 100) {
+            return res.status(400).json({ 
+                message: "Paramètres de pagination invalides. page >= 1, limit >= 1 et limit <= 100" 
+            });
+        }
+        
+        const result = await dossierService.getDocumentsIntervention(page, limit, libelle);
+        res.status(200).json(result);
+    } catch (error) {
+        logger.error("Erreur lors de la récupération des documents d'intervention:", { error, route: req.originalUrl });
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+};
+
 module.exports = {
     createDossier,
     getDossiers,
@@ -343,6 +364,7 @@ module.exports = {
     createDocument,
     addDocumentToDossier,
     getDossiersByTypeAndLibelle,
-    getDocumentsByDossierIdAndLibelle
+    getDocumentsByDossierIdAndLibelle,
+    getDocumentsIntervention
 };
 

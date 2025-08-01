@@ -10,6 +10,7 @@ const { protect } = require("../../../../core/auth/middleware");
  *   description: Gestion des partenaires
  */
 
+
 /**
  * @swagger
  * /administration/partenaires:

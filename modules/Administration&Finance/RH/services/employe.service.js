@@ -130,6 +130,75 @@ const getEmployeDocuments = async (id, page = 1, limit = 10) => {
     };
 }
 
+// Fonction pour uploader une photo de profil
+const uploadPhoto = async (id, photoPath) => {
+    const [result] = await db
+        .update(employes)
+        .set({ 
+            photo_employes: photoPath,
+            updated_at: new Date()
+        })
+        .where(eq(employes.id_employes, id))
+        .returning();
+    return result;
+}
+
+// Fonction pour mettre à jour une photo de profil
+const updatePhoto = async (id, photoPath) => {
+    // Vérifier si l'employé existe et a déjà une photo
+    const [existingEmploye] = await db
+        .select({ photo_employes: employes.photo_employes })
+        .from(employes)
+        .where(eq(employes.id_employes, id));
+    
+    if (!existingEmploye) {
+        return null;
+    }
+    
+    // Mettre à jour la photo
+    const [result] = await db
+        .update(employes)
+        .set({ 
+            photo_employes: photoPath,
+            updated_at: new Date()
+        })
+        .where(eq(employes.id_employes, id))
+        .returning();
+    
+    return {
+        employe: result,
+        oldPhoto: existingEmploye.photo_employes
+    };
+}
+
+// Fonction pour supprimer une photo de profil
+const deletePhoto = async (id) => {
+    // Vérifier si l'employé existe et a une photo
+    const [existingEmploye] = await db
+        .select({ photo_employes: employes.photo_employes })
+        .from(employes)
+        .where(eq(employes.id_employes, id));
+    
+    if (!existingEmploye || !existingEmploye.photo_employes) {
+        return null;
+    }
+    
+    // Supprimer la photo (mettre à null)
+    const [result] = await db
+        .update(employes)
+        .set({ 
+            photo_employes: null,
+            updated_at: new Date()
+        })
+        .where(eq(employes.id_employes, id))
+        .returning();
+    
+    return {
+        employe: result,
+        deletedPhoto: existingEmploye.photo_employes
+    };
+}
+
 module.exports = {
     getEmployes,
     getEmployeById,
@@ -137,6 +206,9 @@ module.exports = {
     getEmployeByStatut,
     updateEmploye,
     deleteEmploye,
-    getEmployeDocuments
+    getEmployeDocuments,
+    uploadPhoto,
+    updatePhoto,
+    deletePhoto
 }
 

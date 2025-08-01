@@ -37,7 +37,7 @@ router.get("/:id", contratcontroller.getContratById);
 router.get("/type/:type", contratcontroller.getContratByType);
 router.get("/partenaire/:id", contratcontroller.getContratsByPartenaire);
 router.get("/entite/:id_entite", contratcontroller.getContratsByEntite);
-router.get("/sans/sans-entite", contratcontroller.getContratsPartenairesSansEntite);
+router.get("/sans-entite", contratcontroller.getContratsPartenairesSansEntite);
 
 router.put("/:id", contratcontroller.updateContrat);
 
@@ -299,7 +299,7 @@ module.exports = router;
 
 /**
  * @swagger
- * /administration/contrats/sans/sans-entite:
+ * /administration/contrats/sans-entite:
  *   get:
  *     summary: Liste les contrats dont le partenaire n'est rattaché à aucune entité
  *     description: Retourne la liste paginée de tous les contrats pour lesquels le partenaire associé n'a pas d'entité (partenaires sans entité).
@@ -499,7 +499,7 @@ module.exports = router;
 
 /**
  * @swagger
- * /administration/contrats/docContrat/{docId}:
+ * /administration/contrats/{id}/docContrat/{docId}:
  *   delete:
  *     summary: Supprimer un document lié à un contrat
  *     tags: [Contrats]
@@ -507,11 +507,15 @@ module.exports = router;
  *       - in: path
  *         name: id
  *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du contrat
  *       - in: path
  *         name: docId
  *         required: true
  *         schema:
  *           type: integer
+ *         description: ID du document à supprimer
  */
 
 /**
