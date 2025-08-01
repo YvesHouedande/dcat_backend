@@ -1,7 +1,7 @@
-const { eq, sql, and, inArray, isNull, count } = require("drizzle-orm");
+const { eq, sql, and, inArray, isNull, count, not } = require("drizzle-orm");
 const { db } = require("../../../core/database/config");
 // const db = require("../utils/drizzle-wrapper");
-const { exemplaires, produits, images } = require("../../../core/database/models");
+const { exemplaires, produits, images, type_produits } = require("../../../core/database/models");
 
 /**
  *
@@ -150,16 +150,20 @@ async function getExemplaires({
     .where(filters.length ? and(...filters) : undefined);
 
   // Récupération des exemplaires paginés avec jointures
+
   const exemplairesData = await db
     .select({
       ...exemplaires,
       nom_produit: produits.desi_produit,
+      type_produit: {
+        id_type_produit: type_produits.id_type_produit,
+        libelle: type_produits.libelle,
+      },
       image_produit: images.lien_image,
     })
     .from(exemplaires)
     .leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
-    // Pour éviter de dupliquer les exemplaires si un produit a plusieurs images,
-    // on ne fait la jointure qu'avec l'image principale (numero_image = 1)
+    .leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit))
     .leftJoin(
       images,
       and(
@@ -168,6 +172,7 @@ async function getExemplaires({
       )
     )
     .where(filters.length ? and(...filters) : undefined)
+    .where(not(eq(type_produits.libelle, "outil")))
     .limit(pageSize)
     .offset(offset);
 
@@ -180,7 +185,7 @@ async function getExemplaires({
       seen.add(ex.id_exemplaire);
     }
   }
-
+//test
   return {
     data: exemplairesUniques,
     total,
