@@ -197,7 +197,7 @@ async function getExemplaires({
       seen.add(ex.id_exemplaire);
     }
   }
-//test
+
   return {
     data: exemplairesUniques,
     total,

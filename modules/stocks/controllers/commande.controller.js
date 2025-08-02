@@ -71,12 +71,40 @@ const getCommandeById = async (req, res) => {
 
 const getAllCommandes = async (req, res) => {
   try {
-    const { page = 1, limit = 50, etat } = req.query;
+    const { 
+      page = 1, 
+      limit = 50, 
+      etat,
+      date_de_commande,
+      date_livraison,
+      date_livraison_lt,
+      date_livraison_lte,
+      date_livraison_gt,
+      date_livraison_gte,
+      lieu_de_livraison,
+      mode_de_paiement,
+      nb_articles_min,
+      nb_articles_max,
+      montant_total_min,
+      montant_total_max
+    } = req.query;
 
     const result = await commandeService.getAllCommandes({
       page: Number(page),
       limit: Number(limit),
       etat,
+      date_de_commande,
+      date_livraison,
+      date_livraison_lt,
+      date_livraison_lte,
+      date_livraison_gt,
+      date_livraison_gte,
+      lieu_de_livraison,
+      mode_de_paiement,
+      nb_articles_min: nb_articles_min ? Number(nb_articles_min) : null,
+      nb_articles_max: nb_articles_max ? Number(nb_articles_max) : null,
+      montant_total_min: montant_total_min ? Number(montant_total_min) : null,
+      montant_total_max: montant_total_max ? Number(montant_total_max) : null
     });
 
     res.status(200).json(result);
