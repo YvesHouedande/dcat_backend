@@ -351,6 +351,7 @@ const interventionsService = {
           throw new Error("Échec de la suppression en base de données");
         }
   
+        
         return true;
       } catch (error) {
         throw new Error(`Erreur lors de la suppression du document: ${error.message}`);
