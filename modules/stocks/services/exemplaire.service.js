@@ -72,6 +72,7 @@ async function getExemplaires({
   date_entree,
   etat_exemplaire,
   id_produit,
+  id_type_produit,
   id_livraison,
   id_commande,
   created_at,
@@ -101,6 +102,7 @@ async function getExemplaires({
   if (date_entree) filters.push(eq(exemplaires.date_entree, date_entree));
   if (etat_exemplaire) filters.push(eq(exemplaires.etat_exemplaire, etat_exemplaire));
   if (id_produit) filters.push(eq(exemplaires.id_produit, id_produit));
+  if (id_type_produit) filters.push(eq(produits.id_type_produit, id_type_produit));
   if (id_livraison) filters.push(eq(exemplaires.id_livraison, id_livraison));
   if (id_commande) filters.push(eq(exemplaires.id_commande, id_commande));
   if (created_at) filters.push(eq(exemplaires.created_at, created_at));
@@ -144,10 +146,21 @@ async function getExemplaires({
   });
 
   // Récupération du nombre total d'exemplaires correspondant aux filtres
-  const [{ count: total }] = await db
+  let countQuery = db
     .select({ count: sql`COUNT(*)::int` })
-    .from(exemplaires)
-    .where(filters.length ? and(...filters) : undefined);
+    .from(exemplaires);
+  
+
+  countQuery = countQuery.leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit));
+  
+  // Ajouter la jointure avec type_produits pour le filtrage par "outil"
+  countQuery = countQuery.leftJoin(type_produits, eq(produits.id_type_produit, type_produits.id_type_produit));
+  
+  // Combiner tous les filtres avec la condition "outil"
+  const allFilters = [...filters, not(eq(type_produits.libelle, "outil"))];
+  
+  const [{ count: total }] = await countQuery
+    .where(and(...allFilters));
 
   // Récupération des exemplaires paginés avec jointures
 
@@ -171,8 +184,7 @@ async function getExemplaires({
         eq(images.numero_image, 1)
       )
     )
-    .where(filters.length ? and(...filters) : undefined)
-    .where(not(eq(type_produits.libelle, "outil")))
+    .where(and(...allFilters))
     .limit(pageSize)
     .offset(offset);
 
@@ -185,7 +197,7 @@ async function getExemplaires({
       seen.add(ex.id_exemplaire);
     }
   }
-//test
+
   return {
     data: exemplairesUniques,
     total,
