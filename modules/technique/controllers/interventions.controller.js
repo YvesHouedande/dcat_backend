@@ -71,6 +71,7 @@ const interventionsController = {
         lieu: req.body.lieu,
         statut_intervention: req.body.statut_intervention || 'en_cours',
         recommandation: req.body.recommandation,
+        id_superviseur: req.body.id_superviseur ? parseInt(req.body.id_superviseur) : null,
         probleme_signale: req.body.probleme_signale,
         mode_intervention: req.body.mode_intervention,
         detail_cause: req.body.detail_cause,
@@ -92,6 +93,15 @@ const interventionsController = {
         }
       });
     } catch (error) {
+      // Vérifier si c'est une erreur de contrainte de clé étrangère pour le superviseur
+      if (error.message.includes('interventions_id_superviseur_employes_id_employes_fk')) {
+        return res.status(400).json({
+          success: false,
+          message: "Le superviseur spécifié n'existe pas dans la base de données",
+          error: "Le superviseur avec l'ID fourni n'est pas trouvé dans la table des employés"
+        });
+      }
+      
       res.status(500).json({
         success: false,
         message: "Erreur lors de la création de l'intervention",
@@ -107,6 +117,7 @@ const interventionsController = {
       if (updateData.date_intervention) updateData.date_intervention = new Date(updateData.date_intervention);
       if (updateData.id_partenaire) updateData.id_partenaire = parseInt(updateData.id_partenaire);
       if (updateData.id_contrat) updateData.id_contrat = parseInt(updateData.id_contrat);
+      if (updateData.id_superviseur) updateData.id_superviseur = parseInt(updateData.id_superviseur);
 
       const updatedIntervention = await interventionsService.updateIntervention(
         parseInt(id),
@@ -119,6 +130,15 @@ const interventionsController = {
 
       res.status(200).json({ success: true, data: updatedIntervention });
     } catch (error) {
+      // Vérifier si c'est une erreur de contrainte de clé étrangère pour le superviseur
+      if (error.message.includes('interventions_id_superviseur_employes_id_employes_fk')) {
+        return res.status(400).json({
+          success: false,
+          message: "Le superviseur spécifié n'existe pas dans la base de données",
+          error: "Le superviseur avec l'ID fourni n'est pas trouvé dans la table des employés"
+        });
+      }
+      
       res.status(500).json({ success: false, message: error.message });
     }
   },
@@ -321,6 +341,24 @@ const interventionsController = {
       res.status(200).json({
         success: true,
         message: "Interventions du partenaire récupérées avec succès",
+        data: interventions
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  },
+
+  getInterventionsBySuperviseur: async (req, res) => {
+    try {
+      const { superviseurId } = req.params;
+      const interventions = await interventionsService.getInterventionsBySuperviseur(parseInt(superviseurId));
+      
+      res.status(200).json({
+        success: true,
+        message: "Interventions du superviseur récupérées avec succès",
         data: interventions
       });
     } catch (error) {

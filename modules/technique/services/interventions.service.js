@@ -188,7 +188,7 @@ const interventionsService = {
 
   getInterventionsByPartenaire: async (partenaireId) => {
     try {
-      // Récupérer les interventions avec les informations du partenaire
+      // Récupérer les interventions avec les informations du partenaire et du superviseur
       const interventionsResult = await db
         .select({
           intervention: interventions,
@@ -201,6 +201,13 @@ const interventionsService = {
             localisation: partenaires.localisation,
             type_partenaire: partenaires.type_partenaire,
             statut: partenaires.statut
+          },
+          superviseur: {
+            id_employes: employes.id_employes,
+            nom_employes: employes.nom_employes,
+            prenom_employes: employes.prenom_employes,
+            email_employes: employes.email_employes,
+            contact_employes: employes.contact_employes
           },
           contrat: {
             id_contrat: contrats.id_contrat,
@@ -215,6 +222,7 @@ const interventionsService = {
         })
         .from(interventions)
         .leftJoin(partenaires, eq(interventions.id_partenaire, partenaires.id_partenaire))
+        .leftJoin(employes, eq(interventions.id_superviseur, employes.id_employes))
         .leftJoin(contrats, eq(interventions.id_contrat, contrats.id_contrat))
         .where(eq(interventions.id_partenaire, partenaireId));
 
@@ -244,6 +252,20 @@ const interventionsService = {
       return interventionsWithDetails;
     } catch (error) {
       throw new Error(`Erreur lors de la récupération des interventions par partenaire: ${error.message}`);
+    }
+  },
+
+  getInterventionsBySuperviseur: async (superviseurId) => {
+    try {
+      // Récupérer seulement les interventions du superviseur
+      const interventionsResult = await db
+        .select()
+        .from(interventions)
+        .where(eq(interventions.id_superviseur, superviseurId));
+
+      return interventionsResult;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des interventions par superviseur: ${error.message}`);
     }
   },
 
