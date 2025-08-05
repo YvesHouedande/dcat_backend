@@ -136,8 +136,6 @@ const commandes = pgTable("commandes", {
   etat_commande: varchar("etat_commande", { length: 50 }).default("en_attente"),
   //['en_cours', 'en_attente', 'livree', 'annulee', 'retournee'];
   date_livraison: date("date_livraison"),
-  date_retour: date("date_retour"),
-  motif_retour: varchar("motif_retour", { length: 50 }),
   lieu_de_livraison: varchar("lieu_de_livraison", { length: 200 }),
   mode_de_paiement: varchar("mode_de_paiement", { length: 50 }),
   commande_produits_reserves: boolean("commande_produits_reserves").default(
