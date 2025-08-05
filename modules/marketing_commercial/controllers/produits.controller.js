@@ -11,6 +11,7 @@ const produitsController = {
     }
   },
 
+  //recuperer tous les produits
   getAllEquipements: async (req, res) => {
     try {
       console.log("Requête de pagination reçue:", {
@@ -82,15 +83,14 @@ const produitsController = {
         prixMax,
       });
 
-      const result =
-        await produitsService.getAllEquipements(
-          page,
-          limit,
-          familleId,
-          searchQuery,
-          prixMin,
-          prixMax
-        );
+      const result = await produitsService.getAllEquipements(
+        page,
+        limit,
+        familleId,
+        searchQuery,
+        prixMin,
+        prixMax
+      );
 
       console.log("Résultat du service:", {
         productsCount: result.products.length,
