@@ -88,6 +88,11 @@ router.post("/", controller.createExemplaire);
  *           type: integer
  *         description: Filtrer par ID du produit
  *       - in: query
+ *         name: id_type_produit
+ *         schema:
+ *           type: integer
+ *         description: Filtrer par ID du type de produit
+ *       - in: query
  *         name: id_livraison
  *         schema:
  *           type: integer

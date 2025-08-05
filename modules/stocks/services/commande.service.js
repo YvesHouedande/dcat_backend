@@ -392,7 +392,23 @@ async function getCommandeById(id) {
 //   };
 // }
 
-async function getAllCommandes({ page = 1, limit = 50, etat = null } = {}) {
+async function getAllCommandes({ 
+  page = 1, 
+  limit = 50, 
+  etat = null,
+  date_de_commande = null,
+  date_livraison = null,
+  date_livraison_lt = null, // inférieur à
+  date_livraison_lte = null, // inférieur ou égal à
+  date_livraison_gt = null, // supérieur à
+  date_livraison_gte = null, // supérieur ou égal à
+  lieu_de_livraison = null,
+  mode_de_paiement = null,
+  nb_articles_min = null,
+  nb_articles_max = null,
+  montant_total_min = null,
+  montant_total_max = null
+} = {}) {
   const offset = (page - 1) * limit;
 
   // --- Requête principale (commandes + calculs) ---
@@ -418,14 +434,143 @@ async function getAllCommandes({ page = 1, limit = 50, etat = null } = {}) {
     query = query.where(eq(commandes.etat_commande, etat));
   }
 
+  // Filtrage par date de commande
+  if (date_de_commande) {
+    query = query.where(sql`DATE(${commandes.date_de_commande}) = ${date_de_commande}`);
+  }
+
+  // Filtrage par date de livraison (égalité exacte)
+  if (date_livraison) {
+    query = query.where(sql`DATE(${commandes.date_livraison}) = ${date_livraison}`);
+  }
+
+  // Filtrage par date de livraison (inférieur à)
+  if (date_livraison_lt) {
+    query = query.where(sql`DATE(${commandes.date_livraison}) < ${date_livraison_lt}`);
+  }
+
+  // Filtrage par date de livraison (inférieur ou égal à)
+  if (date_livraison_lte) {
+    query = query.where(sql`DATE(${commandes.date_livraison}) <= ${date_livraison_lte}`);
+  }
+
+  // Filtrage par date de livraison (supérieur à)
+  if (date_livraison_gt) {
+    query = query.where(sql`DATE(${commandes.date_livraison}) > ${date_livraison_gt}`);
+  }
+
+  // Filtrage par date de livraison (supérieur ou égal à)
+  if (date_livraison_gte) {
+    query = query.where(sql`DATE(${commandes.date_livraison}) >= ${date_livraison_gte}`);
+  }
+
+  // Filtrage par lieu de livraison (recherche partielle)
+  if (lieu_de_livraison) {
+    query = query.where(sql`LOWER(${commandes.lieu_de_livraison}) LIKE LOWER(${'%' + lieu_de_livraison + '%'})`);
+  }
+
+  // Filtrage par mode de paiement
+  if (mode_de_paiement) {
+    query = query.where(sql`LOWER(${commandes.mode_de_paiement}) LIKE LOWER(${'%' + mode_de_paiement + '%'})`);
+  }
+
+  // Filtrage par nombre d'articles (min/max)
+  if (nb_articles_min !== null) {
+    query = query.where(sql`(
+      SELECT COALESCE(SUM(cp.quantite), 0)
+      FROM commande_produits cp
+      WHERE cp.id_commande = commandes.id_commande
+    ) >= ${nb_articles_min}`);
+  }
+
+  if (nb_articles_max !== null) {
+    query = query.where(sql`(
+      SELECT COALESCE(SUM(cp.quantite), 0)
+      FROM commande_produits cp
+      WHERE cp.id_commande = commandes.id_commande
+    ) <= ${nb_articles_max}`);
+  }
+
+  // Filtrage par montant total (min/max)
+  if (montant_total_min !== null) {
+    query = query.where(sql`(
+      SELECT COALESCE(SUM(cp.quantite * cp.prix_unitaire), 0)
+      FROM commande_produits cp
+      WHERE cp.id_commande = commandes.id_commande
+    ) >= ${montant_total_min}`);
+  }
+
+  if (montant_total_max !== null) {
+    query = query.where(sql`(
+      SELECT COALESCE(SUM(cp.quantite * cp.prix_unitaire), 0)
+      FROM commande_produits cp
+      WHERE cp.id_commande = commandes.id_commande
+    ) <= ${montant_total_max}`);
+  }
+
   // --- Récupération des données paginées ---
   const data = await query.limit(limit).offset(offset);
 
   // --- Calcul du total pour la pagination ---
   let countQuery = db.select({ count: sql`count(*)` }).from(commandes);
+  
+  // Appliquer les mêmes filtres pour le count
   if (etat) {
     countQuery = countQuery.where(eq(commandes.etat_commande, etat));
   }
+  if (date_de_commande) {
+    countQuery = countQuery.where(sql`DATE(${commandes.date_de_commande}) = ${date_de_commande}`);
+  }
+  if (date_livraison) {
+    countQuery = countQuery.where(sql`DATE(${commandes.date_livraison}) = ${date_livraison}`);
+  }
+  if (date_livraison_lt) {
+    countQuery = countQuery.where(sql`DATE(${commandes.date_livraison}) < ${date_livraison_lt}`);
+  }
+  if (date_livraison_lte) {
+    countQuery = countQuery.where(sql`DATE(${commandes.date_livraison}) <= ${date_livraison_lte}`);
+  }
+  if (date_livraison_gt) {
+    countQuery = countQuery.where(sql`DATE(${commandes.date_livraison}) > ${date_livraison_gt}`);
+  }
+  if (date_livraison_gte) {
+    countQuery = countQuery.where(sql`DATE(${commandes.date_livraison}) >= ${date_livraison_gte}`);
+  }
+  if (lieu_de_livraison) {
+    countQuery = countQuery.where(sql`LOWER(${commandes.lieu_de_livraison}) LIKE LOWER(${'%' + lieu_de_livraison + '%'})`);
+  }
+  if (mode_de_paiement) {
+    countQuery = countQuery.where(sql`LOWER(${commandes.mode_de_paiement}) LIKE LOWER(${'%' + mode_de_paiement + '%'})`);
+  }
+  if (nb_articles_min !== null) {
+    countQuery = countQuery.where(sql`(
+      SELECT COALESCE(SUM(cp.quantite), 0)
+      FROM commande_produits cp
+      WHERE cp.id_commande = commandes.id_commande
+    ) >= ${nb_articles_min}`);
+  }
+  if (nb_articles_max !== null) {
+    countQuery = countQuery.where(sql`(
+      SELECT COALESCE(SUM(cp.quantite), 0)
+      FROM commande_produits cp
+      WHERE cp.id_commande = commandes.id_commande
+    ) <= ${nb_articles_max}`);
+  }
+  if (montant_total_min !== null) {
+    countQuery = countQuery.where(sql`(
+      SELECT COALESCE(SUM(cp.quantite * cp.prix_unitaire), 0)
+      FROM commande_produits cp
+      WHERE cp.id_commande = commandes.id_commande
+    ) >= ${montant_total_min}`);
+  }
+  if (montant_total_max !== null) {
+    countQuery = countQuery.where(sql`(
+      SELECT COALESCE(SUM(cp.quantite * cp.prix_unitaire), 0)
+      FROM commande_produits cp
+      WHERE cp.id_commande = commandes.id_commande
+    ) <= ${montant_total_max}`);
+  }
+
   const [{ count }] = await countQuery;
 
   return {

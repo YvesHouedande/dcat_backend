@@ -54,41 +54,162 @@ router.post("/", controller.createCommande);
  * @swagger
  * /stocks/commandes:
  *   get:
- *     summary: Récupère toutes les commandes
+ *     summary: Récupère toutes les commandes avec filtres avancés
+ *     description: |
+ *       Récupère la liste paginée des commandes avec possibilité de filtrer par :
+ *       - Champs de base : état, date de commande, date de livraison, lieu, mode de paiement
+ *       - Champs calculés : nombre d'articles (min/max), montant total (min/max)
+ *       - Filtres de date de livraison : égalité, inférieur/supérieur à, etc.
  *     tags: [Commandes]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de la page
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Nombre d'éléments par page
+ *       - in: query
+ *         name: etat
+ *         schema:
+ *           type: string
+ *         description: Filtrer par état de commande (en cours, livrée, annulée)
+ *       - in: query
+ *         name: date_de_commande
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer par date de commande (format YYYY-MM-DD)
+ *       - in: query
+ *         name: date_livraison
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer par date de livraison exacte (format YYYY-MM-DD)
+ *       - in: query
+ *         name: date_livraison_lt
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer par date de livraison inférieure à (format YYYY-MM-DD)
+ *       - in: query
+ *         name: date_livraison_lte
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer par date de livraison inférieure ou égale à (format YYYY-MM-DD)
+ *       - in: query
+ *         name: date_livraison_gt
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer par date de livraison supérieure à (format YYYY-MM-DD)
+ *       - in: query
+ *         name: date_livraison_gte
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer par date de livraison supérieure ou égale à (format YYYY-MM-DD)
+ *       - in: query
+ *         name: lieu_de_livraison
+ *         schema:
+ *           type: string
+ *         description: Filtrer par lieu de livraison (recherche partielle)
+ *       - in: query
+ *         name: mode_de_paiement
+ *         schema:
+ *           type: string
+ *         description: Filtrer par mode de paiement (recherche partielle)
+ *       - in: query
+ *         name: nb_articles_min
+ *         schema:
+ *           type: integer
+ *         description: Nombre minimum d'articles dans la commande
+ *       - in: query
+ *         name: nb_articles_max
+ *         schema:
+ *           type: integer
+ *         description: Nombre maximum d'articles dans la commande
+ *       - in: query
+ *         name: montant_total_min
+ *         schema:
+ *           type: number
+ *         description: Montant total minimum de la commande
+ *       - in: query
+ *         name: montant_total_max
+ *         schema:
+ *           type: number
+ *         description: Montant total maximum de la commande
  *     responses:
  *       200:
- *         description: Liste des commandes avec leurs partenaires
+ *         description: Liste des commandes avec leurs partenaires et informations calculées
  *         content:
  *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       commande:
+ *                         type: object
+ *                         properties:
+ *                           id_commande:
+ *                             type: integer
+ *                           date_de_commande:
+ *                             type: string
+ *                             format: date
+ *                           etat_commande:
+ *                             type: string
+ *                           date_livraison:
+ *                             type: string
+ *                             format: date
+ *                           lieu_de_livraison:
+ *                             type: string
+ *                           mode_de_paiement:
+ *                             type: string
+ *                       nb_articles:
+ *                         type: integer
+ *                         description: Nombre total d'articles dans la commande
+ *                       montant_total:
+ *                         type: number
+ *                         description: Montant total de la commande
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
  *             example:
- *               - commandes:
- *                   id_commande: 13
- *                   date_de_commande: "2025-04-28"
- *                   etat_commande: "en cours"
- *                   date_livraison: "2025-04-30"
- *                   lieu_de_livraison: "Hit radio"
- *                   mode_de_paiement: "espèce"
- *                   id_client: null
- *                   created_at: "2025-04-28T16:19:41.229Z"
- *                   updated_at: "2025-04-28T16:19:41.229Z"
- *                 partenaire_commandes:
- *                   id_partenaire: 3
- *                   id_commande: 13
- *                   created_at: "2025-04-28T16:19:41.241Z"
- *                   updated_at: "2025-04-28T16:19:41.241Z"
- *                 partenaires:
- *                   id_partenaire: 3
- *                   nom_partenaire: "Axo"
- *                   telephone_partenaire: "0303030303"
- *                   email_partenaire: "test-3@gmail.com"
- *                   specialite: "test-3"
- *                   localisation: "test-3"
- *                   type_partenaire: "test-3"
- *                   statut: "test-3"
- *                   id_entite: 1
- *                   created_at: "2025-04-23T11:12:51.310Z"
- *                   updated_at: "2025-04-23T11:12:51.310Z"
+ *               data:
+ *                 - commande:
+ *                     id_commande: 13
+ *                     date_de_commande: "2025-04-28"
+ *                     etat_commande: "en cours"
+ *                     date_livraison: "2025-04-30"
+ *                     lieu_de_livraison: "Hit radio"
+ *                     mode_de_paiement: "espèce"
+ *                   nb_articles: 5
+ *                   montant_total: 150000
+ *               pagination:
+ *                 total: 25
+ *                 page: 1
+ *                 limit: 50
+ *                 totalPages: 1
+ *       500:
+ *         description: Erreur serveur
  */
 router.get("/", controller.getAllCommandes);
 

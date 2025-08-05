@@ -449,6 +449,7 @@ const interventions = pgTable("interventions", {
   lieu: varchar("lieu", { length: 100 }),
   statut_intervention: varchar("statut_intervention", { length: 50 }),
   recommandation: text("recommandation"),
+  id_superviseur: integer("id_superviseur").references(() => employes.id_employes),
   probleme_signale: varchar("probleme_signale", { length: 50 }),
   mode_intervention: varchar("mode_intervention", { length: 50 }),
   detail_cause: text("detail_cause"),

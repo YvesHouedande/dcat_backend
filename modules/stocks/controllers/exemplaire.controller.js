@@ -27,7 +27,7 @@ const getExemplaires = async (req, res) => {
     // Construction des options de filtres simples
     const options = { page, pageSize };
     [
-      "num_serie", "date_entree", "etat_exemplaire", "id_produit", "id_livraison", "id_commande",
+      "num_serie", "date_entree", "etat_exemplaire", "id_produit", "id_type_produit", "id_livraison", "id_commande",
       "created_at", "updated_at", "frais_divers", "coef_divers", "marge_haute", "marge_basse",
       "prix_de_vente", "prix_de_revient", "prix_achat", "date_achat"
     ].forEach((champ) => {

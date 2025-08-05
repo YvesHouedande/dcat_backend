@@ -79,6 +79,9 @@ const handleUploadError = (err, req, res, next) => {
  *         id_contrat:
  *           type: integer
  *           description: ID du contrat lié à l'intervention
+ *         id_superviseur:
+ *           type: integer
+ *           description: ID de l'employé superviseur de l'intervention
  *         created_at:
  *           type: string
  *           format: date-time
@@ -336,6 +339,9 @@ router.get("/:id", interventionsController.getInterventionById);
  *               id_contrat:
  *                 type: integer
  *                 description: ID du contrat lié à l'intervention
+ *               id_superviseur:
+ *                 type: integer
+ *                 description: ID de l'employé superviseur de l'intervention
  *     responses:
  *       201:
  *         description: Intervention créée avec succès
@@ -423,6 +429,9 @@ router.post("/", interventionsController.createIntervention);
  *               id_contrat:
  *                 type: integer
  *                 description: ID du contrat lié
+ *               id_superviseur:
+ *                 type: integer
+ *                 description: ID de l'employé superviseur de l'intervention
  *     responses:
  *       200:
  *         description: Intervention mise à jour avec succès
@@ -769,7 +778,7 @@ router.delete("/:id/documents/:documentId", interventionsController.deleteDocume
  * /technique/interventions/partenaire/{partenaireId}:
  *   get:
  *     summary: Récupère toutes les interventions d'un partenaire
- *     description: Retourne la liste complète des interventions associées à un partenaire spécifique, incluant les détails du partenaire, du contrat et des employés
+ *     description: Retourne la liste complète des interventions associées à un partenaire spécifique, incluant les détails du partenaire, du contrat, du superviseur et des employés
  *     tags: [Interventions]
  *     parameters:
  *       - in: path
@@ -818,6 +827,19 @@ router.delete("/:id/documents/:documentId", interventionsController.deleteDocume
  *                             type: string
  *                           statut:
  *                             type: string
+ *                       superviseur:
+ *                         type: object
+ *                         properties:
+ *                           id_employes:
+ *                             type: integer
+ *                           nom_employes:
+ *                             type: string
+ *                           prenom_employes:
+ *                             type: string
+ *                           email_employes:
+ *                             type: string
+ *                           contact_employes:
+ *                             type: string
  *                       contrat:
  *                         type: object
  *                         properties:
@@ -847,6 +869,45 @@ router.delete("/:id/documents/:documentId", interventionsController.deleteDocume
  *         description: Erreur serveur
  */
 router.get("/partenaire/:partenaireId", interventionsController.getInterventionsByPartenaire);
+
+/**
+ * @swagger
+ * /technique/interventions/superviseur/{superviseurId}:
+ *   get:
+ *     summary: Récupère toutes les interventions d'un superviseur
+ *     description: Retourne la liste des interventions supervisées par un employé spécifique
+ *     tags: [Interventions]
+ *     parameters:
+ *       - in: path
+ *         name: superviseurId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du superviseur (employé)
+ *     responses:
+ *       200:
+ *         description: Liste des interventions récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Interventions du superviseur récupérées avec succès
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Intervention'
+ *       404:
+ *         description: Superviseur non trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get("/superviseur/:superviseurId", interventionsController.getInterventionsBySuperviseur);
 
 /**
  * @swagger
