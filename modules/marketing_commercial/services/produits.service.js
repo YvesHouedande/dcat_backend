@@ -195,6 +195,18 @@ const produitsService = {
         typesInDb.map((t) => t.libelle)
       );
 
+      // Debug: Vérifier les familles si un filtre est appliqué
+      if (familleId && !isNaN(parseInt(familleId))) {
+        const familleProductsCount = await db
+          .select({ count: sql`count(*)` })
+          .from(produits)
+          .where(eq(produits.id_famille, parseInt(familleId)));
+        console.log(
+          `Produits dans la famille ${familleId}:`,
+          familleProductsCount[0]?.count
+        );
+      }
+
       // Construire la requête avec toutes les jointures nécessaires
       let query = db
         .select({
@@ -229,7 +241,7 @@ const produitsService = {
 
       console.log(`Produits récupérés: ${productsData.length}`);
 
-      // Compter les produits avec les mêmes conditions et jointures
+      // Compter les produits avec les mêmes conditions et jointures que la requête principale
       let countQuery = db
         .select({ count: sql`count(*)` })
         .from(produits)
@@ -290,7 +302,7 @@ const produitsService = {
 
       // Calculer les informations de pagination
       const totalPages = Math.ceil(totalCount / validatedLimit);
-      const hasMore = validatedPage < totalPages;
+      const hasMore = validatedPage < totalPages && totalCount > validatedLimit;
 
       const result = {
         products: productsWithImages,
@@ -306,6 +318,16 @@ const produitsService = {
       console.log("Résultat final:", {
         productsCount: result.products.length,
         pagination: result.pagination,
+        hasMore: hasMore,
+        totalCount: totalCount,
+        currentPage: validatedPage,
+        limit: validatedLimit,
+        filters: {
+          familleId,
+          searchQuery,
+          prixMin,
+          prixMax,
+        },
       });
 
       return result;

@@ -529,12 +529,52 @@ const commandesService = {
           console.error("Erreur d'envoi notification WebSocket (status):", err)
         );
 
-      // Envoyer une notification aux admins pour les cas d'annulation et de retour (email)
-      if (
-        (newStatus === "annulee" || newStatus === "retournee") &&
-        admins &&
-        admins.length > 0
-      ) {
+      // Envoyer des notifications spéciales pour l'annulation
+      if (newStatus === "annulee" && client.length > 0) {
+        // Envoyer un email détaillé au client avec les produits
+        await emailNotificationService
+          .sendCommandeCancellationToClient(existingCommande[0], client[0])
+          .catch((err) =>
+            console.error("Erreur d'envoi email d'annulation au client:", err)
+          );
+
+        // Envoyer un email détaillé aux admins avec les produits
+        if (admins && admins.length > 0) {
+          await emailNotificationService
+            .sendCommandeCancellationToAdmin(
+              existingCommande[0],
+              client[0],
+              admins
+            )
+            .catch((err) =>
+              console.error(
+                "Erreur d'envoi email d'annulation aux admins:",
+                err
+              )
+            );
+        }
+      } else if (newStatus === "en_cours" && client.length > 0) {
+        // Envoyer un email détaillé au client avec les produits pour le statut "en cours"
+        await emailNotificationService
+          .sendCommandeInProgressToClient(existingCommande[0], client[0])
+          .catch((err) =>
+            console.error("Erreur d'envoi email en cours au client:", err)
+          );
+
+        // Envoyer un email détaillé aux admins avec les produits
+        if (admins && admins.length > 0) {
+          await emailNotificationService
+            .sendCommandeInProgressToAdmin(
+              existingCommande[0],
+              client[0],
+              admins
+            )
+            .catch((err) =>
+              console.error("Erreur d'envoi email en cours aux admins:", err)
+            );
+        }
+      } else if (newStatus === "retournee" && admins && admins.length > 0) {
+        // Pour les retours, utiliser l'ancienne méthode
         await emailNotificationService
           .sendStatusChangeNotificationToAdmin(
             existingCommande[0],

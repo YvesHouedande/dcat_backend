@@ -5,7 +5,7 @@ const http = require("http"); // Ajout pour créer un serveur HTTP
 const { keycloak } = require("./core/auth/keycloak.config");
 const { initKeycloak, protect } = require("./core/auth/middleware");
 const logger = require("./core/utils/logger");
-const swaggerRoutes = require('./core/utils/swagger.routes');
+const swaggerRoutes = require("./core/utils/swagger.routes");
 
 require("dotenv").config();
 
@@ -24,31 +24,37 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(initKeycloak());
 
 // =============== CORS ===============
-const cors = require('cors');
-app.use(cors({
-  origin: '*' // Permettre toutes les origines pour WebSocket et API
-}));
+const cors = require("cors");
+app.use(
+  cors({
+    origin: "*", // Permettre toutes les origines pour WebSocket et API
+  })
+);
 
 // =============== INITIALISATION WEBSOCKET fait pour la notification serveur ===============
 // Initialiser le serveur WebSocket AVANT le chargement des modules
-const { initializeWebSocket } = require('./modules/marketing_commercial/utils/websocket');
+const {
+  initializeWebSocket,
+} = require("./modules/marketing_commercial/utils/websocket");
 initializeWebSocket(server);
-logger.info('Serveur WebSocket initialisé');
+logger.info("Serveur WebSocket initialisé");
 
 // Tâche de maintenance automatique pour les notifications
-const notificationService = require('./modules/marketing_commercial/services/notification_websocket.service');
+const notificationService = require("./modules/marketing_commercial/services/notification_websocket.service");
 
 // Nettoyer les notifications anciennes toutes les heures
 setInterval(async () => {
   try {
     await notificationService.cleanupOldNotifications(7); // Supprimer celles de plus de 7 jours
-    console.log('✅ Maintenance automatique des notifications effectuée');
+    console.log("✅ Maintenance automatique des notifications effectuée");
   } catch (error) {
-    console.error('❌ Erreur lors de la maintenance des notifications:', error);
+    console.error("❌ Erreur lors de la maintenance des notifications:", error);
   }
 }, 60 * 60 * 1000); // 1 heure
 
-console.log('🔄 Tâche de maintenance des notifications programmée (toutes les heures)');
+console.log(
+  "🔄 Tâche de maintenance des notifications programmée (toutes les heures)"
+);
 
 // =============== CHARGEMENT DES MODULES ===============
 function loadModule(moduleName) {
@@ -69,15 +75,14 @@ function loadModule(moduleName) {
   }
 }
 
-// Swagger 
-app.use('/api', swaggerRoutes);
+// Swagger
+app.use("/api", swaggerRoutes);
 
 // Chargement des modules
 app.use("/api/stocks", loadModule("stocks"));
 app.use("/api/moyens-generaux", loadModule("moyens_generaux"));
 app.use("/api/administration", loadModule("Administration&Finance"));
 app.use("/api/ecommerceweb", loadModule("ecommerceweb"));
-
 
 // CHARGEMENT DES ENDPOINT DU MODULZ TECHNIQUES
 app.use("/api/technique", loadModule("technique"));
@@ -99,21 +104,21 @@ app.get("/health", (req, res) => {
 
 // Pour les fichiers
 // Pour les fichiers média (images, PDF, etc.)
-app.use('/media', (req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none'); // utile si tu utilises des iframes
-  res.setHeader('Content-Security-Policy',
+app.use("/media", (req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none"); // utile si tu utilises des iframes
+  res.setHeader(
+    "Content-Security-Policy",
     "default-src 'self' data: blob: *; " +
-    "img-src 'self' data: blob: *; " +
-    "script-src 'self' 'unsafe-inline'; " +
-    "style-src 'self' 'unsafe-inline';"
+      "img-src 'self' data: blob: *; " +
+      "script-src 'self' 'unsafe-inline'; " +
+      "style-src 'self' 'unsafe-inline';"
   );
   next();
 });
 
 app.use("/media", express.static(path.join(process.cwd(), "media")));
-
 
 // =============== ROUTES PROTÉGÉES ===============
 app.get("/api/protected", protect(), (req, res) => {
@@ -148,7 +153,7 @@ app.use((err, req, res, next) => {
 // DÉMARRAGE DU SERVEUR
 // =============================================
 // const PORT = process.env.PORT || 3000;
-const PORT = 2000;
+const PORT = 3000;
 server.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Keycloak configured for realm: ${keycloak.config.realm}`);
@@ -158,7 +163,9 @@ server.listen(PORT, () => {
     `- POST http://localhost:${PORT}/api/modules/chemin (protected, requires inventory-manager role)`
   );
   logger.info(`- WebSocket ws://localhost:${PORT} (authentication required)`);
-  logger.info(`- ###################NODE_ENV:${process.env.NODE_ENV}########################`);
+  logger.info(
+    `- ###################NODE_ENV:${process.env.NODE_ENV}########################`
+  );
 });
 
 // Exporter pour les tests
