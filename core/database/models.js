@@ -21,8 +21,6 @@ const familles = pgTable("familles", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-
-
 // Marque
 const marques = pgTable("marques", {
   id_marque: serial("id_marque").primaryKey(),
@@ -100,7 +98,10 @@ const entites = pgTable("entites", {
   contact: varchar("contact", { length: 25 }),
   adresse_postal: varchar("adresse_postal", { length: 50 }),
   localisation: text("localisation"),
-  id_partenaire: integer("id_partenaire").references(() => partenaires.id_partenaire, { onDelete: "set null" }),
+  id_partenaire: integer("id_partenaire").references(
+    () => partenaires.id_partenaire,
+    { onDelete: "set null" }
+  ),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -132,12 +133,14 @@ const refresh_tokens = pgTable("refresh_tokens", {
 const commandes = pgTable("commandes", {
   id_commande: serial("id_commande").primaryKey(),
   date_de_commande: date("date_de_commande"),
-  etat_commande: varchar("etat_commande", { length: 50 }).default("en_attente"), 
+  etat_commande: varchar("etat_commande", { length: 50 }).default("en_attente"),
   //['en_cours', 'en_attente', 'livree', 'annulee', 'retournee'];
   date_livraison: date("date_livraison"),
-  lieu_de_livraison: varchar("lieu_de_livraison", { length: 50 }),
+  lieu_de_livraison: varchar("lieu_de_livraison", { length: 200 }),
   mode_de_paiement: varchar("mode_de_paiement", { length: 50 }),
-  commande_produits_reserves: boolean("commande_produits_reserves").default(false), //0: non, 1: oui
+  commande_produits_reserves: boolean("commande_produits_reserves").default(
+    false
+  ), //0: non, 1: oui
   id_client: integer("id_client").references(() => clients_en_ligne.id_client),
   id_partenaire: integer("id_partenaire").references(
     () => partenaires.id_partenaire
@@ -184,7 +187,6 @@ const projets = pgTable("projets", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-
 // Operation
 const operations = pgTable("operations", {
   id_operation: serial("id_operation").primaryKey(),
@@ -208,11 +210,12 @@ const taches = pgTable("taches", {
   statut: varchar("statut", { length: 50 }),
   date_debut: date("date_debut"),
   date_fin: date("date_fin"),
-  id_operation: integer("id_operation").references(() => operations.id_operation),
+  id_operation: integer("id_operation").references(
+    () => operations.id_operation
+  ),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
-
 
 // Prestation
 const prestations = pgTable("prestations", {
@@ -255,16 +258,13 @@ const sections = pgTable("sections", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-
 // Moyens_de_travail
 const moyens_de_travail = pgTable("moyens_de_travail", {
   id_moyens_de_travail: serial("id_moyens_de_travail").primaryKey(),
   denomination: varchar("denomination", { length: 100 }),
   date_acquisition: date("date_acquisition"),
-  etat: varchar("etat", {length : 25}).default("Disponible"), //Disponible/En maintenance/Endommagé
-  id_section: integer("id_section").references(
-    () => sections.id_section
-  ),
+  etat: varchar("etat", { length: 25 }).default("Disponible"), //Disponible/En maintenance/Endommagé
+  id_section: integer("id_section").references(() => sections.id_section),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -370,9 +370,7 @@ const contrats = pgTable("contrats", {
   id_partenaire: integer("id_partenaire").references(
     () => partenaires.id_partenaire
   ),
-  id_entite: integer("id_entite").references(
-    () => entites.id_entite
-  ),
+  id_entite: integer("id_entite").references(() => entites.id_entite),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -404,9 +402,11 @@ const maintenances = pgTable("maintenances", {
   recurrence: varchar("recurrence", { length: 50 }), // unique : pour une seule fois ; hebdomadaire, mensuelle, trimestrielle, annuelle : pour plusieurs fois / avoir si la maintenance doit se répéter et à quelle fréquence.
   date_planifiee: date("date_planifiee"), // prochaine date prévue
   operations: text("operations"),
-  statut: varchar("statut", { length: 50 }).default("en_attente"), //en_attente(La maintenance est planifiée mais n’a pas encore commencé.), en_cours(La maintenance a débuté, elle est en train d’être réalisée), effectuee(La maintenance a été réalisée avec succès.), suspendue(La maintenance a été commencée mais est temporairement arrêtée (attente de pièces, indisponibilité, etc.).),  annulee(La maintenance a été annulée (plus nécessaire, erreur de planification, etc.).), 
+  statut: varchar("statut", { length: 50 }).default("en_attente"), //en_attente(La maintenance est planifiée mais n’a pas encore commencé.), en_cours(La maintenance a débuté, elle est en train d’être réalisée), effectuee(La maintenance a été réalisée avec succès.), suspendue(La maintenance a été commencée mais est temporairement arrêtée (attente de pièces, indisponibilité, etc.).),  annulee(La maintenance a été annulée (plus nécessaire, erreur de planification, etc.).),
   recommandations: text("recommandations"),
-  type_maintenance: varchar("type_maintenance", { length: 50 }).default("preventive"), // preventive, corrective ; Distinguer les maintenances planifiées (préventives) des interventions suite à un incident (correctives).
+  type_maintenance: varchar("type_maintenance", { length: 50 }).default(
+    "preventive"
+  ), // preventive, corrective ; Distinguer les maintenances planifiées (préventives) des interventions suite à un incident (correctives).
   autre_intervenant: varchar("autre_intervenant", { length: 50 }),
   id_partenaire: integer("id_partenaire").references(
     () => partenaires.id_partenaire
@@ -513,9 +513,7 @@ const exemplaires = pgTable("exemplaires", {
   id_livraison: integer("id_livraison").references(
     () => livraisons.id_livraison
   ),
-  id_commande: integer("id_commande").references(
-    () => commandes.id_commande
-  ),
+  id_commande: integer("id_commande").references(() => commandes.id_commande),
   id_produit: integer("id_produit").references(() => produits.id_produit),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
@@ -526,9 +524,7 @@ const sortie_exemplaires = pgTable("sortie_exemplaires", {
   id_sortie_exemplaire: serial("id_sortie_exemplaire").primaryKey(),
   type_sortie: varchar("type_sortie", { length: 50 }), // ["vente directe", "vente en ligne"]
   date_sortie: date("date_sortie"),
-  id_commande: integer("id_commande").references(
-    () => commandes.id_commande
-  ),
+  id_commande: integer("id_commande").references(() => commandes.id_commande),
   id_exemplaire: integer("id_exemplaire").references(
     () => exemplaires.id_exemplaire
   ),
