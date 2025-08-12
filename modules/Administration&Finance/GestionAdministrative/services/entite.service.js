@@ -87,15 +87,15 @@ const updateEntite = async (id, data) => {
             throw new Error("ID d'entité invalide");
         }
 
-        // Validation des données d'entrée
-        if (allowedFields.denomination !== undefined && typeof allowedFields.denomination !== 'string') {
-            throw new Error("Le nom de l'entité (denomination) doit être une chaîne de caractères");
-        }
-
         // Préparer les données de mise à jour
         // Filtrer les champs qui ne doivent pas être modifiés par l'utilisateur
         const { id_entite, created_at, updated_at, ...allowedFields } = data;
         const updateData = { ...allowedFields, updated_at: new Date() };
+
+        // Validation des données d'entrée
+        if (allowedFields.denomination !== undefined && typeof allowedFields.denomination !== 'string') {
+            throw new Error("Le nom de l'entité (denomination) doit être une chaîne de caractères");
+        }
 
         // Validation de l'id_partenaire s'il est fourni
         if (allowedFields.id_partenaire !== undefined) {
