@@ -87,6 +87,12 @@ const updateEntite = async (id, data) => {
             throw new Error("ID d'entité invalide");
         }
 
+        // Afficher le corps de la requête dans la console
+        console.log('=== CORPS DE LA REQUÊTE UPDATE ENTITE ===');
+        console.log('ID de l\'entité à mettre à jour:', id);
+        console.log('Données reçues (req.body):', JSON.stringify(data, null, 2));
+        console.log('==========================================');
+
         // Préparer les données de mise à jour
         // Filtrer les champs qui ne doivent pas être modifiés par l'utilisateur
         const { id_entite, created_at, updated_at, ...allowedFields } = data;
