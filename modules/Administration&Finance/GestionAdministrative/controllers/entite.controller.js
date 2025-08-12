@@ -115,7 +115,19 @@ const updateEntite = async (req, res) => {
         
         res.status(500).json({
             success: false,
-            message: "Erreur interne du serveur"
+            message: "Erreur interne du serveur",
+            details: {
+                error: error.message,
+                code: error.code || "UNKNOWN",
+                timestamp: new Date().toISOString(),
+                endpoint: `/administration/entites/${req.params.id}`,
+                method: req.method,
+                requestBody: req.body,
+                requestParams: req.params,
+                userAgent: req.get('User-Agent'),
+                ipAddress: req.ip,
+                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            }
         });
     }
 };
