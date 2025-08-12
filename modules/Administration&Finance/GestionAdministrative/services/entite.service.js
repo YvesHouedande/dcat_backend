@@ -10,15 +10,17 @@ const createEntite = async (data) => {
         }
 
         // Préparer les données d'insertion
-        const insertData = { ...data, created_at: new Date(), updated_at: new Date() };
+        // Filtrer les champs qui ne doivent pas être définis par l'utilisateur
+        const { id_entite, created_at, updated_at, ...allowedFields } = data;
+        const insertData = { ...allowedFields, created_at: new Date(), updated_at: new Date() };
 
         // Validation de l'id_partenaire s'il est fourni
-        if (data.id_partenaire !== undefined) {
+        if (allowedFields.id_partenaire !== undefined) {
             // Si id_partenaire est null, undefined ou une chaîne vide, on le définit comme null
-            if (data.id_partenaire === null || data.id_partenaire === undefined || data.id_partenaire === '') {
+            if (allowedFields.id_partenaire === null || allowedFields.id_partenaire === undefined || allowedFields.id_partenaire === '') {
                 insertData.id_partenaire = null;
             } else {
-                if (isNaN(parseInt(data.id_partenaire))) {
+                if (isNaN(parseInt(allowedFields.id_partenaire))) {
                     throw new Error("id_partenaire doit être un entier valide");
                 }
                 
@@ -26,14 +28,14 @@ const createEntite = async (data) => {
                 const partenaire = await db
                     .select()
                     .from(partenaires)
-                    .where(eq(partenaires.id_partenaire, parseInt(data.id_partenaire)))
+                    .where(eq(partenaires.id_partenaire, parseInt(allowedFields.id_partenaire)))
                     .limit(1);
                 
                 if (partenaire.length === 0) {
                     throw new Error("Le partenaire spécifié n'existe pas");
                 }
                 
-                insertData.id_partenaire = parseInt(data.id_partenaire);
+                insertData.id_partenaire = parseInt(allowedFields.id_partenaire);
             }
         }
 
@@ -86,20 +88,22 @@ const updateEntite = async (id, data) => {
         }
 
         // Validation des données d'entrée
-        if (data.denomination !== undefined && typeof data.denomination !== 'string') {
+        if (allowedFields.denomination !== undefined && typeof allowedFields.denomination !== 'string') {
             throw new Error("Le nom de l'entité (denomination) doit être une chaîne de caractères");
         }
 
         // Préparer les données de mise à jour
-        const updateData = { ...data, updated_at: new Date() };
+        // Filtrer les champs qui ne doivent pas être modifiés par l'utilisateur
+        const { id_entite, created_at, updated_at, ...allowedFields } = data;
+        const updateData = { ...allowedFields, updated_at: new Date() };
 
         // Validation de l'id_partenaire s'il est fourni
-        if (data.id_partenaire !== undefined) {
+        if (allowedFields.id_partenaire !== undefined) {
             // Si id_partenaire est null, undefined ou une chaîne vide, on le définit comme null
-            if (data.id_partenaire === null || data.id_partenaire === undefined || data.id_partenaire === '') {
+            if (allowedFields.id_partenaire === null || allowedFields.id_partenaire === undefined || allowedFields.id_partenaire === '') {
                 updateData.id_partenaire = null;
             } else {
-                if (isNaN(parseInt(data.id_partenaire))) {
+                if (isNaN(parseInt(allowedFields.id_partenaire))) {
                     throw new Error("id_partenaire doit être un entier valide");
                 }
                 
@@ -107,14 +111,14 @@ const updateEntite = async (id, data) => {
                 const partenaire = await db
                     .select()
                     .from(partenaires)
-                    .where(eq(partenaires.id_partenaire, parseInt(data.id_partenaire)))
+                    .where(eq(partenaires.id_partenaire, parseInt(allowedFields.id_partenaire)))
                     .limit(1);
                 
                 if (partenaire.length === 0) {
                     throw new Error("Le partenaire spécifié n'existe pas");
                 }
                 
-                updateData.id_partenaire = parseInt(data.id_partenaire);
+                updateData.id_partenaire = parseInt(allowedFields.id_partenaire);
             }
         }
 
