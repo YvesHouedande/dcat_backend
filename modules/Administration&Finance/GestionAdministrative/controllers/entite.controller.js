@@ -94,7 +94,14 @@ const updateEntite = async (req, res) => {
         res.status(200).json({
             success: true,
             data: updatedEntite,
-            message: "Entité mise à jour avec succès"
+            message: "Entité mise à jour avec succès",
+            debug: {
+                requestBody: req.body,
+                requestParams: req.params,
+                timestamp: new Date().toISOString(),
+                endpoint: `/administration/entites/${req.params.id}`,
+                method: req.method
+            }
         });
     } catch (error) {
         console.error("Erreur lors de la mise à jour de l'entité:", error);
