@@ -634,7 +634,7 @@ module.exports = router;
  * /administration/contrats/{id}:
  *   delete:
  *     summary: Supprimer un contrat et ses documents associés
- *     description: Supprime définitivement un contrat et tous les documents qui lui sont associés. Cette action est irréversible.
+ *     description: Supprime définitivement un contrat et tous les documents qui lui sont associés (s'il y en a). Si le contrat n'a pas de documents, seule la suppression du contrat est effectuée. Cette action est irréversible.
  *     tags: [Contrats]
  *     parameters:
  *       - in: path
@@ -658,11 +658,19 @@ module.exports = router;
  *                   example: "Suppression réussie."
  *                 documentsSupprimes:
  *                   type: integer
- *                   description: Nombre de documents supprimés avec le contrat
+ *                   description: Nombre de documents supprimés avec le contrat (peut être 0 si aucun document)
  *                   example: 3
- *             example:
- *               message: "Suppression réussie."
- *               documentsSupprimes: 3
+ *             examples:
+ *               withDocuments:
+ *                 summary: Contrat avec documents supprimés
+ *                 value:
+ *                   message: "Suppression réussie."
+ *                   documentsSupprimes: 3
+ *               withoutDocuments:
+ *                 summary: Contrat sans documents
+ *                 value:
+ *                   message: "Suppression réussie."
+ *                   documentsSupprimes: 0
  *       400:
  *         description: ID manquant ou invalide
  *         content:
