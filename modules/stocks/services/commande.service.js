@@ -133,6 +133,7 @@ async function createCommande({
         .update(exemplaires)
         .set({
           etat_exemplaire: etatExemplaire[5], // Réservé
+          id_commande: newCommande.id_commande,
           updated_at: new Date(),
         })
         .where(inArray(exemplaires.id_exemplaire, exemplairesIds));
@@ -791,79 +792,38 @@ const forceDeleteCommande = async (idCommande, type = "vente directe") => {
 
     const exemplairesIds = new Set();
 
-    if (sorties.length > 0) {
-      for (const sortie of sorties) {
-        const [ex] = await tx
-          .select()
-          .from(exemplaires)
-          .where(eq(exemplaires.id_exemplaire, sortie.id_exemplaire));
+    // Mettre à jour TOUS les exemplaires liés à cette commande, peu importe leur état
+    const exemplairesLies = await tx
+      .select()
+      .from(exemplaires)
+      .where(eq(exemplaires.id_commande, idCommande));
 
-        if (ex) {
-          exemplairesIds.add(ex.id_exemplaire);
+    for (const ex of exemplairesLies) {
+      exemplairesIds.add(ex.id_exemplaire);
 
-          // Remettre état et stock
-          await tx
-            .update(exemplaires)
-            .set({
-              etat_exemplaire: etatExemplaire[1],
-              updated_at: new Date(),
-            })
-            .where(eq(exemplaires.id_exemplaire, ex.id_exemplaire));
-
-          await tx
-            .update(produits)
-            .set({
-              qte_produit: sql`${produits.qte_produit} + 1`,
-              updated_at: new Date(),
-            })
-            .where(eq(produits.id_produit, ex.id_produit));
-        }
-      }
-
-      // Supprimer les sorties
+      // Remettre état et stock
       await tx
-        .delete(sortie_exemplaires)
-        .where(
-          and(
-            eq(sortie_exemplaires.id_commande, idCommande),
-            eq(sortie_exemplaires.type_sortie, type)
-          )
-        );
-    } else {
-      // Aucun enregistrement de sortie, trouver les exemplaires "Réservé"
-      for (const item of produitsCommande) {
-        const exemplairesTrouves = await tx
-          .select()
-          .from(exemplaires)
-          .where(
-            and(
-              eq(exemplaires.id_produit, item.id_produit),
-              eq(exemplaires.etat_exemplaire, etatExemplaire[5]) // "Réservé"
-            )
-          )
-          .limit(item.quantite);
+        .update(exemplaires)
+        .set({
+          etat_exemplaire: etatExemplaire[1],
+          id_commande: null,
+          updated_at: new Date(),
+        })
+        .where(eq(exemplaires.id_exemplaire, ex.id_exemplaire));
 
-        for (const ex of exemplairesTrouves) {
-          exemplairesIds.add(ex.id_exemplaire);
-
-          await tx
-            .update(exemplaires)
-            .set({
-              etat_exemplaire: etatExemplaire[1],
-              updated_at: new Date(),
-            })
-            .where(eq(exemplaires.id_exemplaire, ex.id_exemplaire));
-
-          await tx
-            .update(produits)
-            .set({
-              qte_produit: sql`${produits.qte_produit} + 1`,
-              updated_at: new Date(),
-            })
-            .where(eq(produits.id_produit, ex.id_produit));
-        }
-      }
+      await tx
+        .update(produits)
+        .set({
+          qte_produit: sql`${produits.qte_produit} + 1`,
+          updated_at: new Date(),
+        })
+        .where(eq(produits.id_produit, ex.id_produit));
     }
+
+        // Supprimer les sorties
+    await tx
+      .delete(sortie_exemplaires)
+      .where(eq(sortie_exemplaires.id_commande, idCommande));
 
     // 3. Supprimer les liaisons
     await tx
@@ -884,8 +844,8 @@ const forceDeleteCommande = async (idCommande, type = "vente directe") => {
  * ------------------
  * 🛡  Suppression **sécurisée** d'une commande :
  * • Refuse la suppression si la commande est déjà *livrée* ou *facturée*.
- * • Identifie tous les exemplaires liés ; qu’ils soient « Vend​u »,
- *   « Réservé » ou non sortis, ils sont remis à l’état "Disponible".
+ * • Identifie tous les exemplaires liés ; qu'ils soient « Vend​u »,
+ *   « Réservé » ou non sortis, ils sont remis à l'état "Disponible".
  * • Ré-incrémente la quantité de chaque produit concerné.
  * • Nettoie toutes les liaisons (sortie_exemplaires, commande_produits)
  *   et supprime la commande elle-même.
@@ -899,66 +859,53 @@ const forceDeleteCommande = async (idCommande, type = "vente directe") => {
 
 const safeDeleteCommande = async (idCommande, type = "vente directe") => {
   return await db.transaction(async (tx) => {
+    // 1. Vérifier que la commande existe
     const [commande] = await tx
       .select()
       .from(commandes)
       .where(eq(commandes.id_commande, idCommande));
 
-    if (!commande) throw new Error("Commande introuvable");
+    if (!commande) {
+      throw new Error("Commande introuvable");
+    }
 
-    // 🔒 Refuser suppression si l'etat fait partie de la liste
+    // 2. 🔒 Vérifier les restrictions de suppression
     if (etatCommande.includes(commande.etat_commande)) {
       throw new Error(
-        "Impossible de supprimer une commande livrée"
+        `Impossible de supprimer une commande avec l'état "${commande.etat_commande}". ` +
+        `Seules les commandes non livrées peuvent être supprimées.`
       );
     }
 
-    const produitsCommande = await tx
+    // 3. Récupérer tous les exemplaires liés à cette commande
+    const exemplairesLies = await tx
       .select()
-      .from(commande_produits)
-      .where(eq(commande_produits.id_commande, idCommande));
+      .from(exemplaires)
+      .where(eq(exemplaires.id_commande, idCommande));
 
-    const sorties = await tx
-      .select()
-      .from(sortie_exemplaires)
-      .where(
-        and(
-          eq(sortie_exemplaires.id_commande, idCommande),
-          eq(sortie_exemplaires.type_sortie, type)
-        )
+    if (exemplairesLies.length === 0) {
+      throw new Error(
+        "Aucun exemplaire trouvé pour cette commande. " +
+        "La commande ne peut pas être supprimée car elle n'a pas d'exemplaires associés."
       );
-
-    const exemplairesIds = sorties.map((s) => s.id_exemplaire);
-    const exemplairesSet = new Set(exemplairesIds);
-
-    for (const item of produitsCommande) {
-      const exemplairesPotentiels = await tx
-        .select()
-        .from(exemplaires)
-        .where(eq(exemplaires.id_produit, item.id_produit))
-        .limit(item.quantite);
-
-      for (const ex of exemplairesPotentiels) {
-        if (!exemplairesSet.has(ex.id_exemplaire)) {
-          exemplairesIds.push(ex.id_exemplaire);
-          exemplairesSet.add(ex.id_exemplaire);
-        }
-      }
     }
 
-    // 🔁 Réinitialisation des exemplaires
-    for (const id of exemplairesIds) {
-      const [ex] = await tx
-        .select()
-        .from(exemplaires)
-        .where(eq(exemplaires.id_exemplaire, id));
-      if (!ex) continue;
+    const exemplairesIds = exemplairesLies.map(ex => ex.id_exemplaire);
+    const produitsIds = [...new Set(exemplairesLies.map(ex => ex.id_produit))];
 
+    // 4. 🔁 Réinitialisation des exemplaires et mise à jour des stocks
+    for (const ex of exemplairesLies) {
+      // Remettre l'exemplaire à l'état disponible
       await tx
         .update(exemplaires)
-        .set({ etat_exemplaire: etatExemplaire[1], updated_at: new Date() })
-        .where(eq(exemplaires.id_exemplaire, id));
+        .set({ 
+          etat_exemplaire: etatExemplaire[1], // "Disponible"
+          id_commande: null, // Désassocier de la commande
+          updated_at: new Date() 
+        })
+        .where(eq(exemplaires.id_exemplaire, ex.id_exemplaire));
 
+      // Ré-incrémenter le stock du produit
       await tx
         .update(produits)
         .set({
@@ -968,7 +915,7 @@ const safeDeleteCommande = async (idCommande, type = "vente directe") => {
         .where(eq(produits.id_produit, ex.id_produit));
     }
 
-    // Suppression finale
+    // 5. Supprimer les sorties d'exemplaires
     await tx
       .delete(sortie_exemplaires)
       .where(
@@ -978,13 +925,133 @@ const safeDeleteCommande = async (idCommande, type = "vente directe") => {
         )
       );
 
+    // 6. Supprimer les liaisons commande-produits
     await tx
       .delete(commande_produits)
       .where(eq(commande_produits.id_commande, idCommande));
+
+    // 7. Supprimer la commande elle-même
     await tx.delete(commandes).where(eq(commandes.id_commande, idCommande));
 
-    return { success: true, removed_exemplaires: exemplairesIds };
+    return { 
+      success: true, 
+      removed_exemplaires: exemplairesIds,
+      message: `Commande supprimée avec succès. ${exemplairesIds.length} exemplaires remis en stock.`,
+      details: {
+        commande_id: idCommande,
+        exemplaires_liberes: exemplairesIds.length,
+        produits_affectes: produitsIds.length
+      }
+    };
   });
+};
+
+/**
+ * Valide si une commande peut être supprimée de manière sécurisée
+ * @param {number} idCommande - ID de la commande à valider
+ * @returns {Promise<{canDelete: boolean, reason?: string, details?: Object}>}
+ */
+const validateSafeDeleteCommande = async (idCommande) => {
+  try {
+    const [commande] = await db
+      .select()
+      .from(commandes)
+      .where(eq(commandes.id_commande, idCommande));
+
+    if (!commande) {
+      return {
+        canDelete: false,
+        reason: "Commande introuvable",
+        code: "COMMANDE_NOT_FOUND"
+      };
+    }
+
+    // Vérifier l'état de la commande
+    if (etatCommande.includes(commande.etat_commande)) {
+      return {
+        canDelete: false,
+        reason: `Impossible de supprimer une commande avec l'état "${commande.etat_commande}"`,
+        code: "COMMANDE_LIVREE_OR_FACTUREE",
+        details: {
+          etat_actuel: commande.etat_commande,
+          etats_interdits: etatCommande,
+          message: "Seules les commandes non livrées peuvent être supprimées"
+        }
+      };
+    }
+
+    // Vérifier s'il y a des exemplaires associés
+    const exemplairesLies = await db
+      .select()
+      .from(exemplaires)
+      .where(eq(exemplaires.id_commande, idCommande));
+
+    if (exemplairesLies.length === 0) {
+      return {
+        canDelete: false,
+        reason: "Aucun exemplaire associé à cette commande",
+        code: "NO_EXEMPLAIRES_ASSOCIATED",
+        details: {
+          message: "La commande ne peut pas être supprimée car elle n'a pas d'exemplaires associés"
+        }
+      };
+    }
+
+    // Vérifier les contraintes de stock
+    const produitsIds = [...new Set(exemplairesLies.map(ex => ex.id_produit))];
+    const produits = await db
+      .select()
+      .from(produits)
+      .where(inArray(produits.id_produit, produitsIds));
+
+    const stockIssues = [];
+    for (const produit of produits) {
+      const exemplairesDuProduit = exemplairesLies.filter(ex => ex.id_produit === produit.id_produit);
+      if (produit.qte_produit + exemplairesDuProduit.length > produit.qte_max) {
+        stockIssues.push({
+          produit_id: produit.id_produit,
+          nom_produit: produit.nom_produit,
+          stock_actuel: produit.qte_produit,
+          exemplaires_a_remettre: exemplairesDuProduit.length,
+          stock_max: produit.qte_max,
+          probleme: "Le stock maximum serait dépassé"
+        });
+      }
+    }
+
+    if (stockIssues.length > 0) {
+      return {
+        canDelete: false,
+        reason: "Problème de capacité de stock",
+        code: "STOCK_CAPACITY_EXCEEDED",
+        details: {
+          message: "La suppression de cette commande dépasserait la capacité de stock de certains produits",
+          produits_problematiques: stockIssues
+        }
+      };
+    }
+
+    return {
+      canDelete: true,
+      details: {
+        commande_id: idCommande,
+        exemplaires_associes: exemplairesLies.length,
+        produits_affectes: produitsIds.length,
+        message: "La commande peut être supprimée en toute sécurité"
+      }
+    };
+
+  } catch (error) {
+    return {
+      canDelete: false,
+      reason: "Erreur lors de la validation",
+      code: "VALIDATION_ERROR",
+      details: {
+        message: "Une erreur s'est produite lors de la validation",
+        error: error.message
+      }
+    };
+  }
 };
 
 /**
@@ -1286,6 +1353,7 @@ module.exports = {
   returnExemplaire,
   annulerReservationExemplaire,
   getExemplairesReservesParProduitPourCommande,
+  validateSafeDeleteCommande,
 
   etatCommande,
 };
