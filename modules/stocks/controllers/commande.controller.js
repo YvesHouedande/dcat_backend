@@ -165,14 +165,63 @@ const forceDeleteCommande = async (req, res) => {
 
 const safeDeleteCommande = async (req, res) => {
   try {
-    // const {id,type_sortie}=req.params;
+    const { id, type_sortie } = req.params;
+    
+    // Validation des paramètres
+    if (!id || isNaN(Number(id))) {
+      return res.status(400).json({ 
+        error: "ID de commande invalide",
+        details: "L'ID doit être un nombre valide"
+      });
+    }
+
+    if (!type_sortie || !["vente directe", "vente en ligne"].includes(type_sortie)) {
+      return res.status(400).json({ 
+        error: "Type de sortie invalide",
+        details: "Le type doit être 'vente directe' ou 'vente en ligne'",
+        valid_types: ["vente directe", "vente en ligne"]
+      });
+    }
+
     const result = await commandeService.safeDeleteCommande(
-      Number(req.params.id),
-      req.params.type_sortie
+      Number(id),
+      type_sortie
     );
+    
     res.status(200).json(result);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    // Gestion spécifique des erreurs selon leur type
+    if (err.message.includes("Impossible de supprimer une commande")) {
+      return res.status(403).json({ 
+        error: "Suppression interdite",
+        details: err.message,
+        code: "COMMANDE_LIVREE_OR_FACTUREE"
+      });
+    }
+    
+    if (err.message.includes("Commande introuvable")) {
+      return res.status(404).json({ 
+        error: "Commande introuvable",
+        details: err.message,
+        code: "COMMANDE_NOT_FOUND"
+      });
+    }
+    
+    if (err.message.includes("Aucun exemplaire trouvé")) {
+      return res.status(400).json({ 
+        error: "Suppression impossible",
+        details: err.message,
+        code: "NO_EXEMPLAIRES_ASSOCIATED"
+      });
+    }
+
+    // Erreur générique pour les autres cas
+    console.error("Erreur lors de la suppression sécurisée de commande:", err);
+    res.status(500).json({ 
+      error: "Erreur interne du serveur",
+      details: "Une erreur inattendue s'est produite lors de la suppression de la commande",
+      code: "INTERNAL_ERROR"
+    });
   }
 };
 
@@ -252,6 +301,48 @@ const getExemplairesReservesParProduitPourCommandeController = async (req, res) 
   }
 };
 
+/**
+ * Valide une commande avant suppression sécurisée
+ * @route GET /stocks/commandes/:id/validate-delete
+ */
+const validateCommandeForDelete = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Validation des paramètres
+    if (!id || isNaN(Number(id))) {
+      return res.status(400).json({ 
+        error: "ID de commande invalide",
+        details: "L'ID doit être un nombre valide"
+      });
+    }
+
+    const validation = await commandeService.validateSafeDeleteCommande(Number(id));
+    
+    if (validation.canDelete) {
+      res.status(200).json({
+        success: true,
+        message: "La commande peut être supprimée en toute sécurité",
+        ...validation.details
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: validation.reason,
+        code: validation.code,
+        ...validation.details
+      });
+    }
+  } catch (err) {
+    console.error("Erreur lors de la validation de commande:", err);
+    res.status(500).json({ 
+      error: "Erreur interne du serveur",
+      details: "Une erreur inattendue s'est produite lors de la validation",
+      code: "INTERNAL_ERROR"
+    });
+  }
+};
+
 
 module.exports = {
   getCommandeById,
@@ -266,5 +357,6 @@ module.exports = {
   returnExemplaire,
   annulerReservationExemplaireController,
   getExemplairesReservesParProduitPourCommandeController,
+  validateCommandeForDelete,
 
 };

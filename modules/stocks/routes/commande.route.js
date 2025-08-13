@@ -719,7 +719,7 @@ router.post("/reserver/:id/", controller.reserveExemplairesCommande); //:id de l
  *         required: false
  *         schema:
  *           type: string
- *           enum: [vente directe, vente en ligne, projet]
+ *           enum: [vente directe, vente en ligne]
  *           default: vente directe
  *         description: Type de sortie concerné
  *     responses:
@@ -759,7 +759,7 @@ router.delete("/:id/:type_sortie", controller.safeDeleteCommande);
  *         required: false
  *         schema:
  *           type: string
- *           enum: [vente directe, vente en ligne, projet]
+ *           enum: [vente directe, vente en ligne]
  *           default: vente directe
  *         description: Type de sortie concerné
  *     responses:
@@ -772,7 +772,7 @@ router.delete("/:id/:type_sortie", controller.safeDeleteCommande);
  *       500:
  *         description: Erreur serveur
  */
-router.delete("force/:id/:type_sortie", controller.forceDeleteCommande);
+router.delete("/force/:id/:type_sortie", controller.forceDeleteCommande);
 
 
 /**
@@ -981,6 +981,103 @@ router.get(
   "/commandes/:id/exemplaires-reserves",
   controller.getExemplairesReservesParProduitPourCommandeController
 );
+
+// Route pour valider une commande avant suppression sécurisée
+/**
+ * @swagger
+ * /stocks/commandes/{id}/validate-delete:
+ *   get:
+ *     summary: Valider la possibilité de suppression d'une commande
+ *     description: |
+ *       Cette route permet de vérifier **avant toute tentative de suppression** si une commande peut être supprimée en toute sécurité.
+ *       
+ *       **Pourquoi utiliser cette route ?**
+ *       - Pour éviter les suppressions accidentelles de commandes livrées ou facturées.
+ *       - Pour informer l'utilisateur des raisons empêchant la suppression (ex : commande déjà livrée, pas d'exemplaires associés, etc.).
+ *       - Pour afficher à l'avance les contraintes métier et améliorer l'expérience utilisateur (confirmation, alertes...).
+ *       
+ *       **Utilisation typique :**
+ *       - Avant d'afficher un bouton "Supprimer" dans l'interface, interroger cette route pour savoir si l'action est autorisée.
+ *       - Fournir un retour détaillé à l'utilisateur sur la faisabilité de la suppression.
+ *     tags:
+ *       - Commandes
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID numérique de la commande à valider pour suppression
+ *     responses:
+ *       200:
+ *         description: La commande peut être supprimée en toute sécurité
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: La commande peut être supprimée en toute sécurité
+ *                 commande_id:
+ *                   type: integer
+ *                   example: 42
+ *                 exemplaires_liberes:
+ *                   type: integer
+ *                   example: 3
+ *                 produits_affectes:
+ *                   type: integer
+ *                   example: 2
+ *       400:
+ *         description: La commande ne peut pas être supprimée (raison métier ou paramètre invalide)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Impossible de supprimer une commande avec l'état "livrée"
+ *                 code:
+ *                   type: string
+ *                   example: COMMANDE_LIVREE_OR_FACTUREE
+ *                 etat_actuel:
+ *                   type: string
+ *                   example: livrée
+ *                 etats_interdits:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: [livrée, facturée]
+ *                 message:
+ *                   type: string
+ *                   example: Seules les commandes non livrées peuvent être supprimées
+ *       404:
+ *         description: Commande introuvable
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Commande introuvable
+ *                 code:
+ *                   type: string
+ *                   example: COMMANDE_NOT_FOUND
+ *       500:
+ *         description: Erreur interne du serveur lors de la validation
+ */
+router.get("/:id/validate-delete", controller.validateCommandeForDelete);
 
 
 module.exports = router;
