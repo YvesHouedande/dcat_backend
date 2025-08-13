@@ -37,7 +37,7 @@ router.get("/:id", contratcontroller.getContratById);
 router.get("/type/:type", contratcontroller.getContratByType);
 router.get("/partenaire/:id", contratcontroller.getContratsByPartenaire);
 router.get("/entite/:id_entite", contratcontroller.getContratsByEntite);
-router.get("/sans-entite", contratcontroller.getContratsPartenairesSansEntite);
+router.get("/entites/sans-entite", contratcontroller.getContratsPartenairesSansEntite);
 
 router.put("/:id", contratcontroller.updateContrat);
 
@@ -299,7 +299,7 @@ module.exports = router;
 
 /**
  * @swagger
- * /administration/contrats/sans-entite:
+ * /administration/contrats/entites/sans-entite:
  *   get:
  *     summary: Liste les contrats dont le partenaire n'est rattaché à aucune entité
  *     description: Retourne la liste paginée de tous les contrats pour lesquels le partenaire associé n'a pas d'entité (partenaires sans entité).
@@ -436,7 +436,8 @@ module.exports = router;
  * @swagger
  * /administration/contrats/{id}:
  *   put:
- *     summary: Modifier un contrat
+ *     summary: Modifier un contrat existant
+ *     description: Met à jour les informations d'un contrat existant. Tous les champs sont optionnels, seuls les champs fournis seront mis à jour.
  *     tags: [Contrats]
  *     parameters:
  *       - in: path
@@ -444,6 +445,9 @@ module.exports = router;
  *         required: true
  *         schema:
  *           type: integer
+ *           minimum: 1
+ *         description: ID unique du contrat à modifier
+ *         example: 1
  *     requestBody:
  *       required: true
  *       content:
@@ -453,34 +457,176 @@ module.exports = router;
  *             properties:
  *               nom_contrat:
  *                 type: string
+ *                 maxLength: 50
+ *                 description: Nom du contrat (max 50 caractères)
+ *                 example: "Contrat maintenance"
  *               duree_contrat:
- *                type: string
+ *                 type: string
+ *                 maxLength: 50
+ *                 description: Durée du contrat (max 50 caractères)
+ *                 example: "12 mois"
  *               date_debut:
  *                 type: string
  *                 format: date
+ *                 description: Date de début du contrat (format YYYY-MM-DD)
+ *                 example: "2024-01-01"
  *               date_fin:
  *                 type: string
  *                 format: date
+ *                 description: Date de fin du contrat (format YYYY-MM-DD)
+ *                 example: "2024-12-31"
  *               reference:
  *                 type: string
+ *                 maxLength: 50
+ *                 description: Référence du contrat (max 50 caractères)
+ *                 example: "REF-2024-001"
  *               type_de_contrat:
  *                 type: string
+ *                 maxLength: 50
+ *                 description: Type du contrat (max 50 caractères)
+ *                 example: "Commercial"
  *               statut:
  *                 type: string
+ *                 maxLength: 50
+ *                 enum: [Actif, Inactif, En attente, Terminé]
+ *                 description: Statut du contrat (max 50 caractères)
+ *                 example: "Actif"
  *               id_partenaire:
  *                 type: integer
+ *                 minimum: 1
+ *                 description: ID du partenaire associé
+ *                 example: 5
  *               nom_interlocuteur:
  *                 type: string
+ *                 maxLength: 100
+ *                 description: Nom de l'interlocuteur principal (max 100 caractères)
+ *                 example: "Jean Dupont"
  *               contact_interlocuteur:
  *                 type: string
+ *                 maxLength: 30
+ *                 description: Contact de l'interlocuteur (max 30 caractères)
+ *                 example: "jean.dupont@entreprise.com"
  *               contenu_contrat:
  *                 type: string
+ *                 description: Contenu détaillé du contrat (texte libre)
+ *                 example: "Ce contrat couvre la maintenance préventive et corrective des équipements informatiques."
  *               cout:
  *                 type: string
+ *                 maxLength: 25
+ *                 description: Coût du contrat (max 25 caractères)
+ *                 example: "50000 EUR"
  *               modalite_paiement:
  *                 type: string
+ *                 maxLength: 50
+ *                 description: Modalités de paiement (max 50 caractères)
+ *                 example: "Paiement mensuel"
  *               id_entite:
  *                 type: integer
+ *                 minimum: 1
+ *                 description: ID de l'entité associée
+ *                 example: 3
+ *           example:
+ *             nom_contrat: "Contrat maintenance"
+ *             duree_contrat: "12 mois"
+ *             date_debut: "2024-01-01"
+ *             date_fin: "2024-12-31"
+ *             reference: "REF-2024-001"
+ *             type_de_contrat: "Commercial"
+ *             statut: "Actif"
+ *             id_partenaire: 5
+ *             nom_interlocuteur: "Jean Dupont"
+ *             contact_interlocuteur: "jean.dupont@entreprise.com"
+ *             contenu_contrat: "Ce contrat couvre la maintenance préventive et corrective des équipements informatiques."
+ *             cout: "50000 EUR"
+ *             modalite_paiement: "Paiement mensuel"
+ *             id_entite: 3
+ *     responses:
+ *       200:
+ *         description: Contrat mis à jour avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Contrat mis à jour"
+ *                 data:
+ *                   $ref: '#/components/schemas/Contrat'
+ *             example:
+ *               success: true
+ *               message: "Contrat mis à jour"
+ *               data:
+ *                 id_contrat: 1
+ *                 nom_contrat: "Contrat maintenance"
+ *                 duree_contrat: "12 mois"
+ *                 date_debut: "2024-01-01"
+ *                 date_fin: "2024-12-31"
+ *                 reference: "REF-2024-001"
+ *                 type_de_contrat: "Commercial"
+ *                 statut: "Actif"
+ *                 id_partenaire: 5
+ *                 id_entite: 3
+ *                 nom_interlocuteur: "Jean Dupont"
+ *                 contact_interlocuteur: "jean.dupont@entreprise.com"
+ *                 contenu_contrat: "Ce contrat couvre la maintenance préventive et corrective des équipements informatiques."
+ *                 cout: "50000 EUR"
+ *                 modalite_paiement: "Paiement mensuel"
+ *                 created_at: "2024-01-01T10:00:00Z"
+ *                 updated_at: "2024-01-15T14:30:00Z"
+ *       400:
+ *         description: Données de requête invalides
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "ID contrat requis"
+ *             examples:
+ *               missingId:
+ *                 summary: ID manquant
+ *                 value:
+ *                   message: "ID contrat requis"
+ *               invalidData:
+ *                 summary: Données invalides
+ *                 value:
+ *                   message: "Aucune donnée fournie"
+ *               invalidEntite:
+ *                 summary: ID entité invalide
+ *                 value:
+ *                   message: "id_entite doit être un entier si fourni."
+ *               invalidPartenaire:
+ *                 summary: ID partenaire invalide
+ *                 value:
+ *                   message: "id_partenaire doit être un entier si fourni."
+ *       404:
+ *         description: Contrat non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Contrat non trouvé"
+ *       500:
+ *         description: Erreur serveur interne
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Erreur mise à jour contrat"
+ *                 details:
+ *                   type: string
+ *                   example: "Erreur de base de données"
  */
 
 /**

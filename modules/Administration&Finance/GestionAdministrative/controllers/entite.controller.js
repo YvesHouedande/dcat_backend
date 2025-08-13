@@ -94,7 +94,14 @@ const updateEntite = async (req, res) => {
         res.status(200).json({
             success: true,
             data: updatedEntite,
-            message: "Entité mise à jour avec succès"
+            message: "Entité mise à jour avec succès",
+            debug: {
+                requestBody: req.body,
+                requestParams: req.params,
+                timestamp: new Date().toISOString(),
+                endpoint: `/administration/entites/${req.params.id}`,
+                method: req.method
+            }
         });
     } catch (error) {
         console.error("Erreur lors de la mise à jour de l'entité:", error);
@@ -115,7 +122,19 @@ const updateEntite = async (req, res) => {
         
         res.status(500).json({
             success: false,
-            message: "Erreur interne du serveur"
+            message: "Erreur interne du serveur",
+            details: {
+                error: error.message,
+                code: error.code || "UNKNOWN",
+                timestamp: new Date().toISOString(),
+                endpoint: `/administration/entites/${req.params.id}`,
+                method: req.method,
+                requestBody: req.body,
+                requestParams: req.params,
+                userAgent: req.get('User-Agent'),
+                ipAddress: req.ip,
+                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            }
         });
     }
 };
