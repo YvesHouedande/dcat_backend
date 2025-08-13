@@ -340,7 +340,10 @@ const deleteContrat = async (req, res) => {
         });
 
     } catch (e) {
-        res.status(500).json({ message: "Erreur lors de la suppression du contrat." });
+        res.status(500).json({
+            message: "Erreur lors de la suppression du contrat.",
+            details: e.message
+         });
     }
 };
 
