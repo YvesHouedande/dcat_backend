@@ -19,7 +19,7 @@ const { etatExemplaire } = require("./exemplaire.service");
 
 // const etatCommande= ['en_cours', 'en_attente', 'livree', 'annulee', 'retournee'];
 const etatCommande = ["livree"];
-//test
+
 const { typeSortie } = require("./sortieExemplaire.service");
 
 /**
@@ -243,7 +243,7 @@ async function createCommande({
 // 🔍 Lire une commande avec détails
 async function getCommandeById(id) {
   try {
-    // 1. Récupération de la commande avec le partenaire directement lié
+    // 1. Récupération de la commande avec le partenaire et le client liés
     const [row] = await db
       .select({
         commande: commandes,
@@ -269,7 +269,7 @@ async function getCommandeById(id) {
 
     if (!row) throw new Error("Commande introuvable");
 
-    // 2. Produits commandés avec quantités, prix et infos liées
+    // 2. Récupération des produits commandés avec détails
     const produitsCommandes = await db
       .select({
         produit: produits,
@@ -304,41 +304,52 @@ async function getCommandeById(id) {
       .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
       .where(eq(commande_produits.id_commande, id));
 
-    // 3. 💰 Calcul du montant total
+    // 3. Calcul du montant total
     const montant_total = produitsCommandes.reduce((total, item) => {
       const prix = parseFloat(item.prix_unitaire || 0);
       const quantite = parseInt(item.quantite || 0);
       return total + prix * quantite;
     }, 0);
 
-    // // 4. Récupération des exemplaires via sortie_exemplaires
-    // const exemplairesAssocies = await db
-    //   .select({
-    //     exemplaire: exemplaires,
-    //     sortie: sortie_exemplaires,
-    //   })
-    //   .from(sortie_exemplaires)
-    //   .leftJoin(
-    //     exemplaires,
-    //     eq(sortie_exemplaires.id_exemplaire, exemplaires.id_exemplaire)
-    //   )
-    //   .where(
-    //     and(
-    //       eq(sortie_exemplaires.id_commande, id),
-    //       eq(sortie_exemplaires.type_sortie, "vente directe")
-    //     )
-    //   );
+    // 4. Récupération des exemplaires associés à la commande
+    const exemplairesAssocies = await db
+      .select({
+        exemplaire: exemplaires,
+        id_produit: exemplaires.id_produit,
+      })
+      .from(exemplaires)
+      .where(eq(exemplaires.id_commande, id));
+
+    // On regroupe les exemplaires par produit
+    const exemplairesParProduit = {};
+    exemplairesAssocies.forEach((e) => {
+      const idProduit = e.id_produit;
+      if (!exemplairesParProduit[idProduit]) {
+        exemplairesParProduit[idProduit] = [];
+      }
+      exemplairesParProduit[idProduit].push(e.exemplaire);
+    });
+
+    // 5. Restructuration des données pour une meilleure cohérence
+    const produitsRestructures = produitsCommandes.map((item) => ({
+      ...item.produit,
+      quantite: item.quantite,
+      prix_unitaire: item.prix_unitaire,
+      categorie: item.categorie,
+      type: item.type,
+      modele: item.modele,
+      famille: item.famille,
+      marque: item.marque,
+      images: item.images,
+      exemplaires: exemplairesParProduit[item.produit.id_produit] || [],
+    }));
 
     return {
       ...row.commande,
       partenaire: row.partenaire || null,
       client: row.client || null,
-      produits: produitsCommandes,
+      produits: produitsRestructures,
       montant_total,
-      // exemplaires: exemplairesAssocies.map((e) => ({
-      //   ...e.exemplaire,
-      //   sortie: e.sortie,
-      // })),
     };
   } catch (error) {
     console.error("Erreur dans getCommandeById:", error);

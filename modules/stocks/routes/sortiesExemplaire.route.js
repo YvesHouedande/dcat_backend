@@ -533,4 +533,235 @@ router.delete("/:id", controller.deleteSortie);
 
 router.get("/Commandes/:id", controller.getExemplairesCommande);
 
+
+/**
+ * @swagger
+ * /stocks/sorties-exemplaires/Exemplaires/{id}:
+ *   get:
+ *     summary: Récupérer les informations de sortie d'un exemplaire par son ID
+ *     description: Retourne toutes les informations de sortie associées à un exemplaire donné, y compris les détails de l'exemplaire, du produit, de la commande ou du projet, ainsi que les images et les métadonnées.
+ *     tags:
+ *       - Sorties Exemplaire
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID de l'exemplaire pour lequel on souhaite obtenir les informations de sortie
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *     responses:
+ *       200:
+ *         description: Informations de sortie de l'exemplaire récupérées avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     sortie:
+ *                       type: object
+ *                       properties:
+ *                         id_sortie_exemplaire:
+ *                           type: integer
+ *                           example: 18
+ *                         type_sortie:
+ *                           type: string
+ *                           enum:
+ *                             - vente directe
+ *                             - vente en ligne
+ *                           example: vente directe
+ *                         date_sortie:
+ *                           type: string
+ *                           format: date
+ *                           example: "2025-07-03"
+ *                         id_commande:
+ *                           type: integer
+ *                           example: 10
+ *                         id_exemplaire:
+ *                           type: integer
+ *                           example: 10
+ *                         created_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-07-03T11:00:47.774Z"
+ *                         updated_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-07-03T11:00:47.774Z"
+ *                     exemplaire:
+ *                       type: object
+ *                       properties:
+ *                         id_exemplaire:
+ *                           type: integer
+ *                           example: 10
+ *                         num_serie:
+ *                           type: string
+ *                           example: "SN-123456"
+ *                         etat_exemplaire:
+ *                           type: string
+ *                           example: "Vendu"
+ *                         date_entree:
+ *                           type: string
+ *                           format: date
+ *                           example: "2025-06-20"
+ *                         created_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-06-20T10:00:00.000Z"
+ *                         updated_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-07-03T11:00:47.774Z"
+ *                     produit:
+ *                       type: object
+ *                       properties:
+ *                         id_produit:
+ *                           type: integer
+ *                           example: 5
+ *                         desi_produit:
+ *                           type: string
+ *                           example: "Radio Monitor"
+ *                         desc_produit:
+ *                           type: string
+ *                           example: "Récepteur FM professionnel"
+ *                         prix_produit:
+ *                           type: number
+ *                           format: float
+ *                           example: 1200.50
+ *                         qte_produit:
+ *                           type: integer
+ *                           example: 10
+ *                         seuil_min_produit:
+ *                           type: integer
+ *                           example: 2
+ *                         created_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-06-19T09:00:00.000Z"
+ *                         updated_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-07-03T11:00:47.774Z"
+ *                     categorie:
+ *                       type: object
+ *                       properties:
+ *                         id_categorie:
+ *                           type: integer
+ *                           example: 1
+ *                         libelle_categorie:
+ *                           type: string
+ *                           example: "Audio"
+ *                         created_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-06-18T08:00:00.000Z"
+ *                         updated_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-07-03T11:00:47.774Z"
+ *                     type:
+ *                       type: object
+ *                       properties:
+ *                         id_type_produit:
+ *                           type: integer
+ *                           example: 2
+ *                         libelle_type_produit:
+ *                           type: string
+ *                           example: "Récepteur"
+ *                         created_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-06-18T08:00:00.000Z"
+ *                         updated_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-07-03T11:00:47.774Z"
+ *                     modele:
+ *                       type: object
+ *                       properties:
+ *                         id_modele:
+ *                           type: integer
+ *                           example: 3
+ *                         libelle_modele:
+ *                           type: string
+ *                           example: "DB-44"
+ *                         created_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-06-18T08:00:00.000Z"
+ *                         updated_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-07-03T11:00:47.774Z"
+ *                     famille:
+ *                       type: object
+ *                       properties:
+ *                         id_famille:
+ *                           type: integer
+ *                           example: 4
+ *                         libelle_famille:
+ *                           type: string
+ *                           example: "Matériel Audio"
+ *                         created_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-06-18T08:00:00.000Z"
+ *                         updated_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-07-03T11:00:47.774Z"
+ *                     marque:
+ *                       type: object
+ *                       properties:
+ *                         id_marque:
+ *                           type: integer
+ *                           example: 1
+ *                         libelle_marque:
+ *                           type: string
+ *                           example: "Sony"
+ *                         created_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-06-18T08:00:00.000Z"
+ *                         updated_at:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-07-03T11:00:47.774Z"
+ *                     images:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id_image:
+ *                             type: integer
+ *                             example: 1
+ *                           libelle_image:
+ *                             type: string
+ *                             example: "Vue Avant"
+ *                           lien_image:
+ *                             type: string
+ *                             example: "media/images/stock_moyensgeneraux/produits/DEVA_FM_radio_monitor_Model_DB_44_receiver_1750767334816.jpg"
+ *                           numero_image:
+ *                             type: integer
+ *                             example: 1
+ *                           created_at:
+ *                             type: string
+ *                             format: date-time
+ *                             example: "2025-06-24T12:05:35.653Z"
+ *       400:
+ *         description: ID d'exemplaire invalide
+ *       404:
+ *         description: Aucune sortie trouvée pour cet exemplaire
+ *       500:
+ *         description: Erreur serveur lors de la récupération des informations de sortie
+ */
+
+router.get("/Exemplaires/:id", controller.getSortieByExemplaireId);
+
 module.exports = router;

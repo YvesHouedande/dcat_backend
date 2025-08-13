@@ -165,6 +165,40 @@ const getExemplairesCommande = async (req, res) => {
   }
 };
 
+// Récupérer les informations de sortie d'exemplaire à partir de l'ID de l'exemplaire
+const getSortieByExemplaireId = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({ 
+        error: "ID d'exemplaire invalide",
+        details: "L'ID d'exemplaire doit être un nombre valide"
+      });
+    }
+
+    const result = await sortieService.getSortieByExemplaireId(parseInt(id));
+
+    if (!result) {
+      return res.status(404).json({ 
+        error: "Aucune sortie trouvée pour cet exemplaire",
+        details: "Cet exemplaire n'a pas été sorti du stock ou n'existe pas"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error("Erreur dans getSortieByExemplaireId:", error);
+    res.status(500).json({
+      error: "Une erreur est survenue lors de la récupération des informations de sortie",
+      details: error.message,
+    });
+  }
+};
+
 module.exports = {
   createSortie,
   getSorties,
@@ -172,4 +206,5 @@ module.exports = {
   updateSortie,
   deleteSortie,
   getExemplairesCommande,
+  getSortieByExemplaireId,
 };

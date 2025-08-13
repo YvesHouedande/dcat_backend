@@ -226,6 +226,8 @@ async function getSortieDetails(id_sortie_exemplaire) {
 }
 
 //recuperer les exemplaires liées à une commande
+// Correction du problème de jointure sur les modèles, familles et marques
+// Il faut faire les jointures sur les colonnes du produit, pas de l'exemplaire
 async function getExemplairesCommande(idCommande) {
   return await db
     .select({
@@ -264,6 +266,72 @@ async function getExemplairesCommande(idCommande) {
     .where(eq(sortie_exemplaires.id_commande, idCommande));
 }
 
+// Récupérer les informations de sortie d'exemplaire à partir de l'ID de l'exemplaire
+async function getSortieByExemplaireId(id_exemplaire) {
+  const [sortie] = await db
+    .select({
+      sortie: sortie_exemplaires,
+      exemplaire: exemplaires,
+      produit: produits,
+      categorie: categories,
+      type: type_produits,
+      modele: modeles,
+      famille: familles,
+      marque: marques,
+      images: sql`(
+        SELECT json_agg(json_build_object(
+          'id_image', images.id_image,
+          'libelle_image', images.libelle_image,
+          'lien_image', images.lien_image,
+          'numero_image', images.numero_image,
+          'created_at', images.created_at
+        ))
+        FROM images
+        WHERE images.id_produit = produits.id_produit
+      )`.as("images"),
+    })
+    .from(sortie_exemplaires)
+    .leftJoin(
+      exemplaires,
+      eq(sortie_exemplaires.id_exemplaire, exemplaires.id_exemplaire)
+    )
+    .leftJoin(produits, eq(exemplaires.id_produit, produits.id_produit))
+    .leftJoin(categories, eq(produits.id_categorie, categories.id_categorie))
+    .leftJoin(
+      type_produits,
+      eq(produits.id_type_produit, type_produits.id_type_produit)
+    )
+    .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
+    .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+    .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
+    .where(eq(sortie_exemplaires.id_exemplaire, id_exemplaire));
+
+  if (!sortie) return null;
+
+  // Récupérer les détails de la commande ou du projet selon le type de sortie
+  let details;
+  switch (sortie.sortie.type_sortie) {
+    case typeSortie[0]: // vente directe
+    case typeSortie[1]: // vente en ligne
+      details = await db.query.commandes.findFirst({
+        where: eq(commandes.id_commande, sortie.sortie.id_commande),
+      });
+      break;
+    case typeSortie[2]: // projet (si ajouté plus tard)
+      details = await db.query.projets.findFirst({
+        where: eq(projets.id_projet, sortie.sortie.id_commande),
+      });
+      break;
+    default:
+      details = { message: "Type de sortie non géré" };
+  }
+
+  return {
+    ...sortie,
+    details,
+  };
+}
+
 module.exports = {
   createSortie,
   getSorties,
@@ -271,6 +339,7 @@ module.exports = {
   deleteSortie,
   getSortieDetails,
   getExemplairesCommande,
+  getSortieByExemplaireId,
 
   typeSortie,
 };

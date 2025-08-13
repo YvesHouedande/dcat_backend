@@ -518,6 +518,178 @@ router.get("/", controller.getAllCommandes);
  *           example: "2025-05-16T09:48:30.606102"
  */
 
+/**
+ * @swagger
+ * /stocks/commandes/{id}:
+ *   get:
+ *     summary: Récupère une commande par ID avec tous ses détails
+ *     description: |
+ *       Récupère une commande complète incluant :
+ *       • Informations de base de la commande
+ *       • Partenaire ou client associé
+ *       • Produits commandés avec quantités et prix
+ *       • Exemplaires associés avec leurs détails
+ *       • Montant total calculé
+ *     tags: [Commandes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID numérique de la commande à récupérer
+ *     responses:
+ *       200:
+ *         description: Commande trouvée avec tous ses détails
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id_commande:
+ *                   type: integer
+ *                   example: 7
+ *                 date_de_commande:
+ *                   type: string
+ *                   format: date-time
+ *                 etat_commande:
+ *                   type: string
+ *                   example: "en_cours"
+ *                 date_livraison:
+ *                   type: string
+ *                   format: date
+ *                 lieu_de_livraison:
+ *                   type: string
+ *                   example: "RTI plateaux"
+ *                 mode_de_paiement:
+ *                   type: string
+ *                   example: "espèce"
+ *                 partenaire:
+ *                   type: object
+ *                   nullable: true
+ *                   properties:
+ *                     id_partenaire:
+ *                       type: integer
+ *                     nom_partenaire:
+ *                       type: string
+ *                     telephone_partenaire:
+ *                       type: string
+ *                     email_partenaire:
+ *                       type: string
+ *                 client:
+ *                   type: object
+ *                   nullable: true
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     nom:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     contact:
+ *                       type: string
+ *                 produits:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       produit:
+ *                         type: object
+ *                         properties:
+ *                           id_produit:
+ *                             type: integer
+ *                           nom_produit:
+ *                             type: string
+ *                           reference_produit:
+ *                             type: string
+ *                           prix_produit:
+ *                             type: string
+ *                       quantite:
+ *                         type: integer
+ *                       prix_unitaire:
+ *                         type: string
+ *                       categorie:
+ *                         type: object
+ *                       marque:
+ *                         type: object
+ *                       modele:
+ *                         type: object
+ *                 exemplaires:
+ *                   type: array
+ *                   description: Liste des exemplaires associés à cette commande
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_exemplaire:
+ *                         type: integer
+ *                       etat_exemplaire:
+ *                         type: string
+ *                         example: "Réservé"
+ *                       produit:
+ *                         type: object
+ *                         properties:
+ *                           id_produit:
+ *                             type: integer
+ *                           nom_produit:
+ *                             type: string
+ *                           reference_produit:
+ *                             type: string
+ *                       sortie:
+ *                         type: object
+ *                         properties:
+ *                           id_sortie:
+ *                             type: integer
+ *                           type_sortie:
+ *                             type: string
+ *                           date_sortie:
+ *                             type: string
+ *                           format: date-time
+ *                 montant_total:
+ *                   type: number
+ *                   description: Montant total calculé de la commande
+ *             example:
+ *               id_commande: 7
+ *               date_de_commande: "2025-06-24T16:08:58.106Z"
+ *               etat_commande: "en_cours"
+ *               date_livraison: "2025-06-24"
+ *               lieu_de_livraison: "RTI plateaux"
+ *               mode_de_paiement: "espèce"
+ *               id_partenaire: 1
+ *               id_client: null
+ *               partenaire:
+ *                 id_partenaire: 1
+ *                 nom_partenaire: "Axel"
+ *                 telephone_partenaire: "010203040506"
+ *                 email_partenaire: "axel@gmail.com"
+ *               client: null
+ *               produits:
+ *                 - produit:
+ *                     id_produit: 1
+ *                     nom_produit: "Moniteur FM DEVA DB44"
+ *                     reference_produit: "AV0001"
+ *                     prix_produit: "75000.00"
+ *                   quantite: 2
+ *                   prix_unitaire: "75000.00"
+ *                   categorie:
+ *                     id_categorie: 1
+ *                     nom_categorie: "Audio-Visuel"
+ *               exemplaires:
+ *                 - id_exemplaire: 15
+ *                   etat_exemplaire: "Réservé"
+ *                   produit:
+ *                     id_produit: 1
+ *                     nom_produit: "Moniteur FM DEVA DB44"
+ *                     reference_produit: "AV0001"
+ *                   sortie:
+ *                     id_sortie: 8
+ *                     type_sortie: "vente directe"
+ *                     date_sortie: "2025-06-24T16:08:58.106Z"
+ *               montant_total: 150000
+ *       404:
+ *         description: Commande introuvable
+ *       500:
+ *         description: Erreur serveur interne
+ */
 router.get("/:id", controller.getCommandeById);
 
 /**
