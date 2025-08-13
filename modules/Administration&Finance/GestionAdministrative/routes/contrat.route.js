@@ -633,7 +633,8 @@ module.exports = router;
  * @swagger
  * /administration/contrats/{id}:
  *   delete:
- *     summary: Supprimer un contrat
+ *     summary: Supprimer un contrat et ses documents associés
+ *     description: Supprime définitivement un contrat et tous les documents qui lui sont associés. Cette action est irréversible.
  *     tags: [Contrats]
  *     parameters:
  *       - in: path
@@ -641,13 +642,65 @@ module.exports = router;
  *         required: true
  *         schema:
  *           type: integer
+ *           minimum: 1
+ *         description: ID unique du contrat à supprimer
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: Contrat supprimé avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Suppression réussie."
+ *                 documentsSupprimes:
+ *                   type: integer
+ *                   description: Nombre de documents supprimés avec le contrat
+ *                   example: 3
+ *             example:
+ *               message: "Suppression réussie."
+ *               documentsSupprimes: 3
+ *       400:
+ *         description: ID manquant ou invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "ID requis."
+ *       404:
+ *         description: Contrat non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Contrat introuvable."
+ *       500:
+ *         description: Erreur serveur interne
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Erreur lors de la suppression du contrat."
  */
 
 /**
  * @swagger
  * /administration/contrats/{id}/docContrat/{docId}:
  *   delete:
- *     summary: Supprimer un document lié à un contrat
+ *     summary: Supprimer un document spécifique d'un contrat
+ *     description: Supprime un document spécifique associé à un contrat. Le document est supprimé de la base de données et le fichier physique est également supprimé du serveur. Cette action est irréversible.
  *     tags: [Contrats]
  *     parameters:
  *       - in: path
@@ -655,13 +708,90 @@ module.exports = router;
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID du contrat
+ *           minimum: 1
+ *         description: ID du contrat auquel le document est associé
+ *         example: 1
  *       - in: path
  *         name: docId
  *         required: true
  *         schema:
  *           type: integer
+ *           minimum: 1
  *         description: ID du document à supprimer
+ *         example: 5
+ *     responses:
+ *       200:
+ *         description: Document supprimé avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Document supprimé avec succès"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     contrat_id:
+ *                       type: integer
+ *                       description: ID du contrat
+ *                       example: 1
+ *                     document_id:
+ *                       type: integer
+ *                       description: ID du document supprimé
+ *                       example: 5
+ *             example:
+ *               success: true
+ *               message: "Document supprimé avec succès"
+ *               data:
+ *                 contrat_id: 1
+ *                 document_id: 5
+ *       400:
+ *         description: ID de contrat ou de document invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "ID de contrat ou de document invalide"
+ *       404:
+ *         description: Document non trouvé ou n'appartenant pas au contrat
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Document non trouvé ou n'appartenant pas à ce contrat"
+ *       500:
+ *         description: Erreur serveur interne
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Erreur interne du serveur"
+ *                 details:
+ *                   type: string
+ *                   example: "Erreur de base de données"
  */
 
 /**
