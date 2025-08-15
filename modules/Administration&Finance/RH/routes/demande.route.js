@@ -158,6 +158,7 @@ module.exports = router;
  *         required: true
  *         schema:
  *           type: integer
+ *         description: ID de la demande RH
  *     requestBody:
  *       required: true
  *       content:
@@ -168,19 +169,58 @@ module.exports = router;
  *               document:
  *                 type: string
  *                 format: binary
+ *                 description: Le fichier document à uploader
  *               libelle_document:
  *                 type: string
+ *                 description: Libellé/description du document
  *               date_document:
  *                type: string
+ *                format: date
+ *                description: Date du document
  *               classification_document:
  *                 type: string
+ *                 description: "Classification du document (ex: confidentiel, public, etc.)"
  *               etat_document:
  *                 type: string
+ *                 description: "État du document (ex: actif, inactif, etc.)"
  *               id_nature_document:
  *                 type: integer
+ *                 description: Identifiant de la nature du document
+ *               id_dossier:
+ *                 type: integer
+ *                 description: Identifiant du dossier associé au document
+ *           example:
+ *             libelle_document: "Certificat médical"
+ *             date_document: "2024-01-15"
+ *             classification_document: "confidentiel"
+ *             etat_document: "actif"
+ *             id_nature_document: 1
+ *             id_dossier: 5
  *     responses:
  *       200:
  *         description: Document ajouté avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     document:
+ *                       type: object
+ *                     details:
+ *                       type: object
+ *                       properties:
+ *                         dateCreation:
+ *                           type: string
+ *                           format: date-time
+ *                         chemin:
+ *                           type: string
  *       400:
  *         description: Requête invalide
  *       500:

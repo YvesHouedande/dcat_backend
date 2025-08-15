@@ -70,6 +70,7 @@ const addDocumentToDemande = async (req, res) => {
             etat_document: req.body.etat_document || 'actif',
             date_document: req.body.date_document ? new Date(req.body.date_document) : new Date(),
             id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null,
+            id_dossier: req.body.id_dossier ? parseInt(req.body.id_dossier) : null,
             id_demandes: parseInt(id)
         };
 
