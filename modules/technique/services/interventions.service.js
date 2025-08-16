@@ -289,6 +289,24 @@ const interventionsService = {
     }
   },
 
+  getInterventionDocumentById: async (interventionId, documentId) => {
+    try {
+      const result = await db
+        .select()
+        .from(documents)
+        .where(
+          and(
+            eq(documents.id_intervention, interventionId),
+            eq(documents.id_documents, documentId)
+          )
+        );
+      
+      return result.length > 0 ? result[0] : null;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération du document de l'intervention: ${error.message}`);
+    }
+  },
+
   getAllInterventionDocuments: async () => {
     return await db
       .select()

@@ -735,6 +735,49 @@ router.get("/:id/documents", interventionsController.getInterventionDocuments);
 /**
  * @swagger
  * /technique/interventions/{id}/documents/{documentId}:
+ *   get:
+ *     summary: Récupère un document spécifique d'une intervention
+ *     description: Retourne les détails d'un document spécifique associé à une intervention
+ *     tags: [Interventions]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'intervention
+ *       - in: path
+ *         name: documentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du document à récupérer
+ *     responses:
+ *       200:
+ *         description: Document récupéré avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Document de l'intervention récupéré avec succès"
+ *                 data:
+ *                   $ref: '#/components/schemas/Document'
+ *       404:
+ *         description: Intervention ou document non trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get("/:id/documents/:documentId", interventionsController.getInterventionDocumentById);
+
+/**
+ * @swagger
+ * /technique/interventions/{id}/documents/{documentId}:
  *   delete:
  *     summary: Supprime un document d'une intervention
  *     description: Supprime un document associé à une intervention spécifique

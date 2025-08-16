@@ -239,6 +239,42 @@ const interventionsController = {
     }
   },
 
+  getInterventionDocumentById: async (req, res) => {
+    try {
+      const { id, documentId } = req.params;
+      
+      // Vérifier que l'intervention existe
+      const intervention = await interventionsService.getInterventionById(parseInt(id));
+      if (!intervention) {
+        return res.status(404).json({
+          success: false,
+          message: "Intervention non trouvée"
+        });
+      }
+
+      // Récupérer le document spécifique de cette intervention
+      const document = await interventionsService.getInterventionDocumentById(parseInt(id), parseInt(documentId));
+      
+      if (!document) {
+        return res.status(404).json({
+          success: false,
+          message: "Document non trouvé dans cette intervention"
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Document de l'intervention récupéré avec succès",
+        data: document
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  },
+
   deleteDocument: async (req, res) => {
     try {
       const { id, documentId } = req.params;
