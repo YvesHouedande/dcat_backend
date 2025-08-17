@@ -186,7 +186,7 @@ const interventionsController = {
         classification_document: req.body.classification_document,
         lien_document: relativePath,
         etat_document: req.body.etat_document || 'actif',
-        date_document: new Date(req.body.date_document),
+        date_document: new Date().toISOString(),
         id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null,
         id_intervention: parseInt(id)
       };
