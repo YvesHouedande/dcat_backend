@@ -538,4 +538,73 @@ router.put('/:id/photo', (req, res, next) => {
  */
 router.delete('/:id/photo', employeController.deletePhoto);
 
+/**
+ * @swagger
+ * /administration/employes/{id}/doc:
+ *   post:
+ *     summary: Ajoute un document à un employé
+ *     description: Télécharge et associe un document à un employé existant
+ *     tags: [Employes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'employé
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - document
+ *               - libelle_document
+ *             properties:
+ *               document:
+ *                 type: string
+ *                 format: binary
+ *                 description: Fichier à télécharger
+ *               libelle_document:
+ *                 type: string
+ *                 description: Nom du document
+ *               classification_document:
+ *                 type: string
+ *                 description: Classification du document
+ *               date_document:
+ *                 type: string
+ *                 description: Date du document
+ *               id_nature_document:
+ *                 type: integer
+ *                 description: ID de la nature du document
+ *     responses:
+ *       201:
+ *         description: Document ajouté avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Document ajouté à l'employé avec succès"
+ *                 data:
+ *                   type: object
+ *                   description: Document créé
+ *       400:
+ *         description: Données invalides ou erreur de téléchargement
+ *       404:
+ *         description: Employé non trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.post('/:id/doc', (req, res, next) => {
+    req.uploadPath = 'media/documents/administration/RH/employes/documents';
+    next();
+}, upload.single('document'), employeController.addDocumentToEmploye);
+
 module.exports = router;

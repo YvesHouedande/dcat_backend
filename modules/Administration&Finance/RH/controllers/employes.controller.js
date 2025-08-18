@@ -353,6 +353,81 @@ const deletePhoto = async (req, res) => {
     }
 };
 
+// Fonction pour ajouter un document à un employé
+const addDocumentToEmploye = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "Aucun fichier n'a été téléchargé"
+            });
+        }
+
+        const { id } = req.params;
+
+        // Nettoyage du chemin relatif
+        const relativePath = req.file.path
+            .replace(process.cwd(), '')
+            .replace(/\\/g, '/')
+            .replace(/^\//, '');
+
+        const documentData = {
+            libelle_document: req.body.libelle_document,
+            classification_document: req.body.classification_document,
+            lien_document: relativePath,
+            etat_document: req.body.etat_document || 'Actif',
+            date_document: req.body.date_document ? new Date(req.body.date_document) : new Date(),
+            id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null,
+            id_employes: parseInt(id)
+        };
+
+        let document;
+        try {
+            document = await employeservice.addDocumentToEmploye(documentData);
+
+            return res.status(201).json({
+                success: true,
+                message: "Document ajouté à l'employé avec succès",
+                data: document
+            });
+
+        } catch (dbError) {
+            // Supprimer le fichier en cas d'erreur d'enregistrement en base
+            await fs.promises.unlink(req.file.path).catch(() => {});
+
+            // Log technique (console ou fichier)
+            console.error("Erreur lors de l'enregistrement du document en base", {
+                message: dbError.message,
+                stack: dbError.stack,
+                ...dbError
+            });
+
+            return res.status(500).json({
+                success: false,
+                message: "Erreur lors de l'enregistrement du document en base",
+                error: dbError.message,
+                stack: dbError.stack,
+                details: dbError // ⚠️ À désactiver en production
+            });
+        }
+
+    } catch (error) {
+        console.error("Erreur interne dans addDocumentToEmploye", {
+            message: error.message,
+            stack: error.stack,
+            ...error
+        });
+
+        return res.status(500).json({
+            success: false,
+            message: "Erreur interne",
+            error: error.message,
+            stack: error.stack,
+            details: error // ⚠️ À désactiver en production
+        });
+    }
+};
+
 module.exports = {
     getEmployes,
     getEmployeById,
@@ -364,5 +439,6 @@ module.exports = {
     getEmployeDocuments,
     uploadPhoto,
     updatePhoto,
-    deletePhoto
+    deletePhoto,
+    addDocumentToEmploye
 };

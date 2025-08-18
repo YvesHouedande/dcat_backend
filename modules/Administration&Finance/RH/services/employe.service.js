@@ -199,6 +199,15 @@ const deletePhoto = async (id) => {
     };
 }
 
+// Fonction pour ajouter un document à un employé
+const addDocumentToEmploye = async (data) => {
+    const [result] = await db
+        .insert(documents)
+        .values(data)
+        .returning();
+    return result;
+};
+
 module.exports = {
     getEmployes,
     getEmployeById,
@@ -209,6 +218,7 @@ module.exports = {
     getEmployeDocuments,
     uploadPhoto,
     updatePhoto,
-    deletePhoto
+    deletePhoto,
+    addDocumentToEmploye
 }
 
