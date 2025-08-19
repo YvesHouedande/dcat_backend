@@ -181,7 +181,8 @@ const createDocument = async (req, res) => {
             id_contrat: req.body.id_contrat ? parseInt(req.body.id_contrat) : null,
             id_employes: req.body.id_employes ? parseInt(req.body.id_employes) : null,
             id_intervention: req.body.id_intervention ? parseInt(req.body.id_intervention) : null,
-            id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null
+            id_nature_document: req.body.id_nature_document ? parseInt(req.body.id_nature_document) : null,
+            id_dossier: req.body.id_dossier ? parseInt(req.body.id_dossier) : null
         };
         const newDocument = await dossierService.createDocument(documentData);
         res.status(201).json(newDocument);

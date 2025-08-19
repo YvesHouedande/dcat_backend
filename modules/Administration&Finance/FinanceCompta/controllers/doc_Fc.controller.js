@@ -105,6 +105,7 @@ const addDocument = async (req, res) => {
             lien_document: relativePath,
             etat_document: etat_document || "actif",
             id_employes: id_employes ? parseInt(id_employes) : null,
+            id_dossier: id_dossier ? parseInt(id_dossier) : null,
             id_nature_document: id_nature_document ? parseInt(id_nature_document) : null
         };
 

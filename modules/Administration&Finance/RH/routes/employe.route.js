@@ -578,6 +578,9 @@ router.delete('/:id/photo', employeController.deletePhoto);
  *               id_nature_document:
  *                 type: integer
  *                 description: ID de la nature du document
+ *               id_dossier:
+ *                 type: integer
+ *                 description: ID du dossier parent (optionnel)
  *     responses:
  *       201:
  *         description: Document ajouté avec succès
