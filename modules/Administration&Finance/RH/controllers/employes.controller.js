@@ -428,6 +428,57 @@ const addDocumentToEmploye = async (req, res) => {
     }
 };
 
+// Suppression sécurisée d’un fichier
+async function safeUnlink(filePath) {
+	try {
+		await fs.promises.unlink(filePath);
+	} catch (err) {
+		// ignore
+	}
+}
+
+// Supprimer un document d'un employé
+const deleteEmployeDocument = async (req, res) => {
+	try {
+		const { id, docId } = req.params;
+		const employeId = parseInt(id);
+		const documentId = parseInt(docId);
+
+		if (isNaN(employeId) || isNaN(documentId)) {
+			return res.status(400).json({
+				success: false,
+				message: "ID d'employé ou de document invalide",
+			});
+		}
+
+		const document = await employeservice.getDocumentById(documentId);
+		if (!document || document.id_employes !== employeId) {
+			return res.status(404).json({
+				success: false,
+				message: "Document non trouvé ou n'appartenant pas à cet employé",
+			});
+		}
+
+		await employeservice.deleteDocumentById(documentId);
+
+		if (document.lien_document) {
+			await safeUnlink(document.lien_document);
+		}
+
+		return res.status(200).json({
+			success: true,
+			message: "Document supprimé avec succès",
+			data: { employe_id: employeId, document_id: documentId }
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Erreur interne du serveur",
+			details: error.message,
+		});
+	}
+};
+
 module.exports = {
     getEmployes,
     getEmployeById,
@@ -440,5 +491,6 @@ module.exports = {
     uploadPhoto,
     updatePhoto,
     deletePhoto,
-    addDocumentToEmploye
+    addDocumentToEmploye,
+    deleteEmployeDocument
 };

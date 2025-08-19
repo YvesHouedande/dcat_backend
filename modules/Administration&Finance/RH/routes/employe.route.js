@@ -607,4 +607,35 @@ router.post('/:id/doc', (req, res, next) => {
     next();
 }, upload.single('document'), employeController.addDocumentToEmploye);
 
+/**
+ * @swagger
+ * /administration/employes/{id}/doc/{docId}:
+ *   delete:
+ *     summary: Supprime un document d'un employé
+ *     tags: [Employes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'employé
+ *       - in: path
+ *         name: docId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID du document à supprimer
+ *     responses:
+ *       200:
+ *         description: Document supprimé avec succès
+ *       400:
+ *         description: IDs invalides
+ *       404:
+ *         description: Document non trouvé ou n'appartenant pas à cet employé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.delete('/:id/doc/:docId', employeController.deleteEmployeDocument);
+
 module.exports = router;

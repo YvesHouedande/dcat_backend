@@ -208,6 +208,24 @@ const addDocumentToEmploye = async (data) => {
     return result;
 };
 
+// Récupérer un document par son ID
+const getDocumentById = async (id) => {
+    const [result] = await db
+        .select()
+        .from(documents)
+        .where(eq(documents.id_documents, id));
+    return result;
+};
+
+// Supprimer un document par son ID
+const deleteDocumentById = async (id) => {
+    const result = await db
+        .delete(documents)
+        .where(eq(documents.id_documents, id))
+        .returning();
+    return result;
+};
+
 module.exports = {
     getEmployes,
     getEmployeById,
@@ -219,6 +237,8 @@ module.exports = {
     uploadPhoto,
     updatePhoto,
     deletePhoto,
-    addDocumentToEmploye
+    addDocumentToEmploye,
+    getDocumentById,
+    deleteDocumentById
 }
 
