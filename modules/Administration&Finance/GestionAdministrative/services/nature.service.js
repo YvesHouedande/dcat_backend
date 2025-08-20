@@ -32,7 +32,7 @@ const getNaturebyId = async (id) => {
         const result = await db
         .select()
         .from(nature_documents)
-        .where(eq(nature_documents.id, id))
+        .where(eq(nature_documents.id_nature_document, id))
         return result;
     } catch (error) {
         console.error("Error fetching nature by ID:", error);
