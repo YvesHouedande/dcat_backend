@@ -1,0 +1,628 @@
+const { db } = require("../../../core/database/config");
+const {
+  produits,
+  type_produits,
+  familles,
+  marques,
+  modeles,
+  images,
+} = require("../../../core/database/models");
+const { eq, and, isNotNull, desc, asc, sql } = require("drizzle-orm");
+
+const produitsService = {
+  // Récupérer les images d'un produit
+  getProductImages: async (productId) => {
+    try {
+      return await db
+        .select({
+          id_image: images.id_image,
+          lien_image: images.lien_image,
+          numero_image: images.numero_image,
+        })
+        .from(images)
+        .where(eq(images.id_produit, productId))
+        .orderBy(asc(images.numero_image));
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération des images du produit:",
+        error
+      );
+      throw new Error("Impossible de récupérer les images du produit");
+    }
+  },
+
+  // Récupérer l'image principale d'un produit (numéro 1)
+  getProductMainImage: async (productId) => {
+    try {
+      const result = await db
+        .select({
+          id_image: images.id_image,
+          lien_image: images.lien_image,
+        })
+        .from(images)
+        .where(
+          and(eq(images.id_produit, productId), eq(images.numero_image, 1))
+        )
+        .limit(1);
+
+      return result.length > 0 ? result[0] : null;
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération de l'image principale:",
+        error
+      );
+      return null;
+    }
+  },
+
+  // Récupérer tous les produits de type équipement par famille
+  getEquipementsByFamille: async (familleId) => {
+    const productsData = await db
+      .select({
+        id: produits.id_produit,
+        designation: produits.desi_produit,
+        description: produits.desc_produit,
+        prix: produits.prix_produit,
+        caracteristiques: produits.caracteristiques_produit,
+        famille_id: familles.id_famille,
+        famille_libelle: familles.libelle_famille,
+      })
+      .from(produits)
+      .where(
+        and(
+          eq(produits.id_famille, familleId),
+          eq(type_produits.libelle, "equipement"),
+          isNotNull(produits.prix_produit)
+        )
+      )
+      .leftJoin(
+        type_produits,
+        eq(produits.id_type_produit, type_produits.id_type_produit)
+      )
+      .leftJoin(familles, eq(produits.id_famille, familles.id_famille));
+
+    // Pour chaque produit, récupérer ses images
+    const productsWithImages = [];
+    for (const product of productsData) {
+      const productImages = await produitsService.getProductImages(product.id);
+      const mainImage = await produitsService.getProductMainImage(product.id);
+
+      // Ajouter les images et l'image principale
+      const productWithImages = {
+        ...product,
+        images: productImages.map((img) => img.lien_image),
+        image: mainImage
+          ? mainImage.lien_image
+          : productImages.length > 0
+          ? productImages[0].lien_image
+          : null,
+      };
+
+      productsWithImages.push(productWithImages);
+    }
+
+    return productsWithImages;
+  },
+
+  // Récupérer tous les produits avec pagination, recherche et filtre de prix
+  getAllEquipements: async (
+    page = 1,
+    limit = 20,
+    familleId = null,
+    searchQuery = null,
+    prixMin = null,
+    prixMax = null
+  ) => {
+    try {
+      console.log("Service getAllEquipements appelé avec:", {
+        page,
+        limit,
+        familleId,
+        searchQuery,
+        prixMin,
+        prixMax,
+      });
+
+      // Validation des paramètres
+      const validatedPage = Math.max(1, parseInt(page) || 1);
+      const validatedLimit = Math.min(100, Math.max(1, parseInt(limit) || 20));
+
+      // Calculer l'offset
+      const offset = (validatedPage - 1) * validatedLimit;
+
+      console.log("Paramètres validés:", {
+        validatedPage,
+        validatedLimit,
+        offset,
+        familleId,
+        searchQuery,
+        prixMin,
+        prixMax,
+      });
+
+      // Conditions de base : produits avec prix ET de type equipement
+      const baseConditions = [
+        isNotNull(produits.prix_produit),
+        eq(type_produits.libelle, "equipement"),
+      ];
+
+      // Ajouter le filtre par famille si spécifié
+      if (familleId && !isNaN(parseInt(familleId))) {
+        baseConditions.push(eq(produits.id_famille, parseInt(familleId)));
+      }
+
+      // Ajouter la recherche si spécifiée (désignation et modèle uniquement)
+      if (searchQuery && searchQuery.trim().length > 0) {
+        const searchTerm = `%${searchQuery.trim().toLowerCase()}%`;
+        // Recherche dans la désignation et le modèle uniquement
+        baseConditions.push(
+          sql`(
+            LOWER(${produits.desi_produit}) LIKE ${searchTerm} OR 
+            LOWER(${modeles.libelle_modele}) LIKE ${searchTerm}
+          )`
+        );
+      }
+
+      // Ajouter le filtre de prix minimum si spécifié
+      if (prixMin !== null && !isNaN(parseFloat(prixMin))) {
+        baseConditions.push(
+          sql`${produits.prix_produit} >= ${parseFloat(prixMin)}`
+        );
+      }
+
+      // Ajouter le filtre de prix maximum si spécifié
+      if (prixMax !== null && !isNaN(parseFloat(prixMax))) {
+        baseConditions.push(
+          sql`${produits.prix_produit} <= ${parseFloat(prixMax)}`
+        );
+      }
+
+      console.log("Conditions de requête (simplifiées):", baseConditions);
+
+      // Debug: Vérifier s'il y a des produits en base
+      const totalProductsCount = await db
+        .select({ count: sql`count(*)` })
+        .from(produits);
+      console.log(
+        "Nombre total de produits en base:",
+        totalProductsCount[0]?.count
+      );
+
+      // Debug: Vérifier les types de produits
+      const typesInDb = await db.select().from(type_produits);
+      console.log(
+        "Types de produits en base:",
+        typesInDb.map((t) => t.libelle)
+      );
+
+      // Debug: Vérifier les familles si un filtre est appliqué
+      if (familleId && !isNaN(parseInt(familleId))) {
+        const familleProductsCount = await db
+          .select({ count: sql`count(*)` })
+          .from(produits)
+          .where(eq(produits.id_famille, parseInt(familleId)));
+        console.log(
+          `Produits dans la famille ${familleId}:`,
+          familleProductsCount[0]?.count
+        );
+      }
+
+      // Construire la requête avec toutes les jointures nécessaires
+      let query = db
+        .select({
+          id: produits.id_produit,
+          designation: produits.desi_produit,
+          description: produits.desc_produit,
+          prix: produits.prix_produit,
+          caracteristiques: produits.caracteristiques_produit,
+          famille_id: familles.id_famille,
+          famille_libelle: familles.libelle_famille,
+          marque_libelle: marques.libelle_marque,
+          modele_libelle: modeles.libelle_modele,
+        })
+        .from(produits)
+        .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+        .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
+        .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
+        .leftJoin(
+          type_produits,
+          eq(produits.id_type_produit, type_produits.id_type_produit)
+        );
+
+      // Ajouter les conditions seulement si il y en a
+      if (baseConditions.length > 0) {
+        query = query.where(and(...baseConditions));
+      }
+
+      const productsData = await query
+        .limit(validatedLimit)
+        .offset(offset)
+        .orderBy(desc(produits.id_produit));
+
+      console.log(`Produits récupérés: ${productsData.length}`);
+
+      // Compter les produits avec les mêmes conditions et jointures que la requête principale
+      let countQuery = db
+        .select({ count: sql`count(*)` })
+        .from(produits)
+        .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+        .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
+        .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
+        .leftJoin(
+          type_produits,
+          eq(produits.id_type_produit, type_produits.id_type_produit)
+        );
+
+      // Ajouter les conditions seulement si il y en a
+      if (baseConditions.length > 0) {
+        countQuery = countQuery.where(and(...baseConditions));
+      }
+
+      const totalCountResult = await countQuery;
+
+      const totalCount = parseInt(totalCountResult[0]?.count) || 0;
+      console.log(`Nombre total de produits: ${totalCount}`);
+
+      // Pour chaque produit, récupérer ses images
+      const productsWithImages = [];
+      for (const product of productsData) {
+        try {
+          const productImages = await produitsService.getProductImages(
+            product.id
+          );
+          const mainImage = await produitsService.getProductMainImage(
+            product.id
+          );
+
+          // Ajouter les images et l'image principale
+          const productWithImages = {
+            ...product,
+            images: productImages.map((img) => img.lien_image),
+            image: mainImage
+              ? mainImage.lien_image
+              : productImages.length > 0
+              ? productImages[0].lien_image
+              : null,
+          };
+
+          productsWithImages.push(productWithImages);
+        } catch (imageError) {
+          console.warn(
+            `Erreur lors de la récupération des images pour le produit ${product.id}:`,
+            imageError.message
+          );
+          // Ajouter le produit sans images plutôt que de faire échouer toute la requête
+          productsWithImages.push({
+            ...product,
+            images: [],
+            image: null,
+          });
+        }
+      }
+
+      // Calculer les informations de pagination
+      const totalPages = Math.ceil(totalCount / validatedLimit);
+      const hasMore = validatedPage < totalPages && totalCount > validatedLimit;
+
+      const result = {
+        products: productsWithImages,
+        pagination: {
+          page: validatedPage,
+          limit: validatedLimit,
+          total: totalCount,
+          totalPages,
+          hasMore,
+        },
+      };
+
+      console.log("Résultat final:", {
+        productsCount: result.products.length,
+        pagination: result.pagination,
+        hasMore: hasMore,
+        totalCount: totalCount,
+        currentPage: validatedPage,
+        limit: validatedLimit,
+        filters: {
+          familleId,
+          searchQuery,
+          prixMin,
+          prixMax,
+        },
+      });
+
+      return result;
+    } catch (error) {
+      console.error("Erreur dans getAllEquipements:", {
+        message: error.message,
+        stack: error.stack,
+        params: { page, limit, familleId },
+      });
+      throw new Error(
+        `Erreur lors de la récupération des produits paginés: ${error.message}`
+      );
+    }
+  },
+
+  // Récupérer les 5 derniers produits ajoutés (nouveautés)
+  getLatestProducts: async (limit = 5) => {
+    const productsData = await db
+      .select({
+        id: produits.id_produit,
+        designation: produits.desi_produit,
+        description: produits.desc_produit,
+        prix: produits.prix_produit,
+        caracteristiques: produits.caracteristiques_produit,
+        famille_id: familles.id_famille,
+        famille_libelle: familles.libelle_famille,
+      })
+      .from(produits)
+      .where(
+        and(
+          eq(type_produits.libelle, "equipement"),
+          isNotNull(produits.prix_produit)
+        )
+      )
+      .leftJoin(
+        type_produits,
+        eq(produits.id_type_produit, type_produits.id_type_produit)
+      )
+      .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+      .orderBy(desc(produits.id_produit)) // Supposons que les IDs plus élevés sont les plus récents
+      .limit(limit);
+
+    // Pour chaque produit, récupérer ses images
+    const productsWithImages = [];
+    for (const product of productsData) {
+      const productImages = await produitsService.getProductImages(product.id);
+      const mainImage = await produitsService.getProductMainImage(product.id);
+
+      // Ajouter les images et l'image principale
+      const productWithImages = {
+        ...product,
+        images: productImages.map((img) => img.lien_image),
+        image: mainImage
+          ? mainImage.lien_image
+          : productImages.length > 0
+          ? productImages[0].lien_image
+          : null,
+      };
+
+      productsWithImages.push(productWithImages);
+    }
+
+    return productsWithImages;
+  },
+
+  // Récupérer les détails d'un produit
+  getProductDetails: async (productId) => {
+    const details = await db
+      .select({
+        id: produits.id_produit,
+        designation: produits.desi_produit,
+        description: produits.desc_produit,
+        prix: produits.prix_produit,
+        caracteristiques: produits.caracteristiques_produit,
+        famille_id: familles.id_famille,
+        famille_libelle: familles.libelle_famille,
+        marque_id: marques.id_marque,
+        marque_libelle: marques.libelle_marque,
+        modele_id: modeles.id_modele,
+        modele_libelle: modeles.libelle_modele,
+        type_id: type_produits.id_type_produit,
+        type_libelle: type_produits.libelle,
+      })
+      .from(produits)
+      .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+      .leftJoin(marques, eq(produits.id_marque, marques.id_marque))
+      .leftJoin(modeles, eq(produits.id_modele, modeles.id_modele))
+      .leftJoin(
+        type_produits,
+        eq(produits.id_type_produit, type_produits.id_type_produit)
+      )
+      .where(eq(produits.id_produit, productId))
+      .limit(1);
+
+    if (details.length === 0) throw new Error("Produit non trouvé");
+
+    // Récupérer les images associées au produit avec leur numéro
+    const productImages = await produitsService.getProductImages(productId);
+    const mainImage = await produitsService.getProductMainImage(productId);
+
+    // Ajouter les images au résultat
+    const result = details[0];
+    result.images = productImages.map((img) => ({
+      id: img.id_image,
+      lien: img.lien_image,
+      numero: img.numero_image,
+    }));
+    result.imagesUrls = productImages.map((img) => img.lien_image); // Pour compatibilité
+    result.image = mainImage
+      ? mainImage.lien_image
+      : productImages.length > 0
+      ? productImages[0].lien_image
+      : null;
+
+    return result;
+  },
+
+  // Récupérer toutes les familles
+  getAllFamilles: async () => {
+    return await db
+      .select({
+        id: familles.id_famille,
+        libelle: familles.libelle_famille,
+      })
+      .from(familles);
+  },
+
+  // Récupérer des produits similaires en fonction du libellé
+  getSimilarProductsByLibelle: async (productId, limit = 4) => {
+    // D'abord, récupérer les détails du produit pour obtenir son libellé
+    const productDetails = await produitsService.getProductDetails(productId);
+
+    if (!productDetails) {
+      throw new Error("Produit non trouvé");
+    }
+
+    // Extraire les mots-clés significatifs du libellé
+    const designation = productDetails.designation.toLowerCase();
+    const descriptionWords = productDetails.description
+      ? productDetails.description.toLowerCase().split(/\s+/)
+      : [];
+
+    // Filtrer les mots-clés pour exclure les mots très courts ou non significatifs
+    const keywordsToExclude = [
+      "le",
+      "la",
+      "les",
+      "un",
+      "une",
+      "des",
+      "du",
+      "de",
+      "et",
+      "à",
+      "pour",
+      "avec",
+      "sur",
+      "dans",
+    ];
+
+    // Créer une liste de mots-clés à rechercher
+    const keywords = [...designation.split(/\s+/), ...descriptionWords]
+      .filter((word) => word.length > 2 && !keywordsToExclude.includes(word))
+      // Trier par longueur (mots plus longs d'abord) pour privilégier les termes spécifiques
+      .sort((a, b) => b.length - a.length)
+      // Prendre les 5 mots-clés les plus pertinents
+      .slice(0, 5);
+
+    // Si nous n'avons pas assez de mots-clés, utiliser la famille comme fallback
+    if (keywords.length < 2 && productDetails.famille_id) {
+      const productsData = await db
+        .select({
+          id: produits.id_produit,
+          designation: produits.desi_produit,
+          description: produits.desc_produit,
+          prix: produits.prix_produit,
+          caracteristiques: produits.caracteristiques_produit,
+          famille_id: familles.id_famille,
+          famille_libelle: familles.libelle_famille,
+        })
+        .from(produits)
+        .where(
+          and(
+            eq(produits.id_famille, productDetails.famille_id),
+            eq(type_produits.libelle, "equipement"),
+            produits.id_produit.notEquals(productId)
+          )
+        )
+        .leftJoin(
+          type_produits,
+          eq(produits.id_type_produit, type_produits.id_type_produit)
+        )
+        .leftJoin(familles, eq(produits.id_famille, familles.id_famille))
+        .limit(limit);
+
+      // Pour chaque produit, récupérer ses images
+      const productsWithImages = [];
+      for (const product of productsData) {
+        const productImages = await produitsService.getProductImages(
+          product.id
+        );
+        const mainImage = await produitsService.getProductMainImage(product.id);
+
+        // Ajouter les images et l'image principale
+        const productWithImages = {
+          ...product,
+          images: productImages.map((img) => img.lien_image),
+          image: mainImage
+            ? mainImage.lien_image
+            : productImages.length > 0
+            ? productImages[0].lien_image
+            : null,
+        };
+
+        productsWithImages.push(productWithImages);
+      }
+
+      return productsWithImages;
+    }
+
+    // Sinon, rechercher des produits avec des mots-clés similaires
+    let productsData = await db
+      .select({
+        id: produits.id_produit,
+        designation: produits.desi_produit,
+        description: produits.desc_produit,
+        prix: produits.prix_produit,
+        caracteristiques: produits.caracteristiques_produit,
+        famille_id: familles.id_famille,
+        famille_libelle: familles.libelle_famille,
+      })
+      .from(produits)
+      .where(
+        and(
+          // Ne pas inclure le produit lui-même
+          produits.id_produit.notEquals(productId),
+          eq(type_produits.libelle, "equipement"),
+          isNotNull(produits.prix_produit)
+        )
+      )
+      .leftJoin(
+        type_produits,
+        eq(produits.id_type_produit, type_produits.id_type_produit)
+      )
+      .leftJoin(familles, eq(produits.id_famille, familles.id_famille));
+
+    // Pour chaque produit, récupérer ses images puis calculer son score
+    const scoredProducts = [];
+    for (const product of productsData) {
+      const productImages = await produitsService.getProductImages(product.id);
+      const mainImage = await produitsService.getProductMainImage(product.id);
+
+      // Ajouter les images au produit
+      const productWithImages = {
+        ...product,
+        images: productImages.map((img) => img.lien_image),
+        image: mainImage
+          ? mainImage.lien_image
+          : productImages.length > 0
+          ? productImages[0].lien_image
+          : null,
+      };
+
+      // Calculer le score
+      let score = 0;
+      const productText = `${product.designation.toLowerCase()} ${
+        product.description ? product.description.toLowerCase() : ""
+      }`;
+
+      // Augmenter le score pour chaque mot-clé trouvé
+      keywords.forEach((keyword) => {
+        if (productText.includes(keyword)) {
+          // Donner plus de poids aux mots plus longs (plus spécifiques)
+          score += keyword.length * 2;
+        }
+      });
+
+      // Bonus si même famille
+      if (product.famille_id === productDetails.famille_id) {
+        score += 10;
+      }
+
+      scoredProducts.push({ ...productWithImages, score });
+    }
+
+    // Trier par score et prendre les meilleurs résultats
+    return (
+      scoredProducts
+        .sort((a, b) => b.score - a.score)
+        .filter((product) => product.score > 0) // Ne garder que les produits avec un score positif
+        .slice(0, limit)
+        // Supprimer le champ score avant de renvoyer les résultats
+        .map(({ score, ...product }) => product)
+    );
+  },
+};
+
+module.exports = produitsService;

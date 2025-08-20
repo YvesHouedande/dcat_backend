@@ -1,0 +1,1255 @@
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/commande.controller");
+
+/**
+ * @swagger
+ * /stocks/commandes:
+ *   post:
+ *     summary: Crée une nouvelle commande
+ *     description: Enregistre une nouvelle commande avec les produits associés
+ *     tags: [Commandes]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - produitsQuantites
+ *               - partenaireId
+ *             properties:
+ *               produitsQuantites:
+ *                 type: object
+ *                 description: Dictionnaire des ID produits avec leurs quantités
+ *                 example: {"3": 2}
+ *               partenaireId:
+ *                 type: integer
+ *                 description: ID du partenaire associé
+ *                 example: 2
+ *               lieuLivraison:
+ *                 type: string
+ *                 description: Lieu de livraison de la commande
+ *                 example: "Nakata"
+ *               dateLivraison:
+ *                 type: string
+ *                 format: date
+ *                 description: Date prévue de livraison - YYYY-MM-DD
+ *                 example: "2025-05-31"
+ *               modePaiement:
+ *                 type: string
+ *                 description: Mode de paiement utilisé
+ *                 example: "espèce"
+ *     responses:
+ *       201:
+ *         description: Commande créée avec succès
+ *       400:
+ *         description: Données invalides
+ *       500:
+ *         description: Erreur serveur
+ */
+router.post("/", controller.createCommande);
+
+/**
+ * @swagger
+ * /stocks/commandes:
+ *   get:
+ *     summary: Récupère toutes les commandes avec filtres avancés
+ *     description: |
+ *       Récupère la liste paginée des commandes avec possibilité de filtrer par :
+ *       - Champs de base : état, date de commande, date de livraison, lieu, mode de paiement
+ *       - Champs calculés : nombre d'articles (min/max), montant total (min/max)
+ *       - Filtres de date de livraison : égalité, inférieur/supérieur à, etc.
+ *     tags: [Commandes]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de la page
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Nombre d'éléments par page
+ *       - in: query
+ *         name: etat
+ *         schema:
+ *           type: string
+ *         description: Filtrer par état de commande (en cours, livrée, annulée)
+ *       - in: query
+ *         name: date_de_commande
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer par date de commande (format YYYY-MM-DD)
+ *       - in: query
+ *         name: date_livraison
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer par date de livraison exacte (format YYYY-MM-DD)
+ *       - in: query
+ *         name: date_livraison_lt
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer par date de livraison inférieure à (format YYYY-MM-DD)
+ *       - in: query
+ *         name: date_livraison_lte
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer par date de livraison inférieure ou égale à (format YYYY-MM-DD)
+ *       - in: query
+ *         name: date_livraison_gt
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer par date de livraison supérieure à (format YYYY-MM-DD)
+ *       - in: query
+ *         name: date_livraison_gte
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrer par date de livraison supérieure ou égale à (format YYYY-MM-DD)
+ *       - in: query
+ *         name: lieu_de_livraison
+ *         schema:
+ *           type: string
+ *         description: Filtrer par lieu de livraison (recherche partielle)
+ *       - in: query
+ *         name: mode_de_paiement
+ *         schema:
+ *           type: string
+ *         description: Filtrer par mode de paiement (recherche partielle)
+ *       - in: query
+ *         name: nb_articles_min
+ *         schema:
+ *           type: integer
+ *         description: Nombre minimum d'articles dans la commande
+ *       - in: query
+ *         name: nb_articles_max
+ *         schema:
+ *           type: integer
+ *         description: Nombre maximum d'articles dans la commande
+ *       - in: query
+ *         name: montant_total_min
+ *         schema:
+ *           type: number
+ *         description: Montant total minimum de la commande
+ *       - in: query
+ *         name: montant_total_max
+ *         schema:
+ *           type: number
+ *         description: Montant total maximum de la commande
+ *     responses:
+ *       200:
+ *         description: Liste des commandes avec leurs partenaires et informations calculées
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       commande:
+ *                         type: object
+ *                         properties:
+ *                           id_commande:
+ *                             type: integer
+ *                           date_de_commande:
+ *                             type: string
+ *                             format: date
+ *                           etat_commande:
+ *                             type: string
+ *                           date_livraison:
+ *                             type: string
+ *                             format: date
+ *                           lieu_de_livraison:
+ *                             type: string
+ *                           mode_de_paiement:
+ *                             type: string
+ *                       nb_articles:
+ *                         type: integer
+ *                         description: Nombre total d'articles dans la commande
+ *                       montant_total:
+ *                         type: number
+ *                         description: Montant total de la commande
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *             example:
+ *               data:
+ *                 - commande:
+ *                     id_commande: 13
+ *                     date_de_commande: "2025-04-28"
+ *                     etat_commande: "en cours"
+ *                     date_livraison: "2025-04-30"
+ *                     lieu_de_livraison: "Hit radio"
+ *                     mode_de_paiement: "espèce"
+ *                   nb_articles: 5
+ *                   montant_total: 150000
+ *               pagination:
+ *                 total: 25
+ *                 page: 1
+ *                 limit: 50
+ *                 totalPages: 1
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get("/", controller.getAllCommandes);
+
+/**
+ * @swagger
+ * /stocks/commandes/{id}:
+ *   get:
+ *     summary: Récupère une commande par son ID
+ *     description: Retourne les détails complets d'une commande incluant les informations sur le partenaire, les produits associés, leurs exemplaires et le montant total
+ *     tags: [Commandes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID de la commande à récupérer
+ *         schema:
+ *           type: integer
+ *           example: 9
+ *     responses:
+ *       200:
+ *         description: Détails de la commande récupérés avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id_commande:
+ *                   type: integer
+ *                   example: 9
+ *                 date_de_commande:
+ *                   type: string
+ *                   format: date
+ *                   example: "2025-05-22"
+ *                 etat_commande:
+ *                   type: string
+ *                   example: "en cours"
+ *                 date_livraison:
+ *                   type: string
+ *                   format: date
+ *                   example: "2025-05-31"
+ *                 lieu_de_livraison:
+ *                   type: string
+ *                   example: "Nakata"
+ *                 mode_de_paiement:
+ *                   type: string
+ *                   example: "espèce"
+ *                 id_client:
+ *                   type: integer
+ *                   nullable: true
+ *                   example: null
+ *                 created_at:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2025-05-22T16:53:56.596Z"
+ *                 updated_at:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2025-05-22T16:53:56.596Z"
+ *                 partenaire:
+ *                   $ref: '#/components/schemas/Partenaire'
+ *                 produits:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       produit:
+ *                         $ref: '#/components/schemas/Produit'
+ *                       quantite:
+ *                         type: integer
+ *                         example: 2
+ *                       prix_unitaire:
+ *                         type: string
+ *                         example: "180000.00"
+ *                       categorie:
+ *                         $ref: '#/components/schemas/Categorie'
+ *                       type:
+ *                         $ref: '#/components/schemas/TypeProduit'
+ *                       modele:
+ *                         $ref: '#/components/schemas/Modele'
+ *                       famille:
+ *                         $ref: '#/components/schemas/Famille'
+ *                       marque:
+ *                         $ref: '#/components/schemas/Marque'
+ *                       images:
+ *                         type: array
+ *                         items:
+ *                           $ref: '#/components/schemas/Image'
+ *                 montant_total:
+ *                   type: integer
+ *                   example: 360000
+ *                 exemplaires:
+ *                   type: array
+ *                   items: {}
+ *       404:
+ *         description: Commande non trouvée
+ *       500:
+ *         description: Erreur serveur
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Partenaire:
+ *       type: object
+ *       properties:
+ *         id_partenaire:
+ *           type: integer
+ *           example: 2
+ *         nom_partenaire:
+ *           type: string
+ *           example: "test-2"
+ *         telephone_partenaire:
+ *           type: string
+ *           example: "0202020202"
+ *         email_partenaire:
+ *           type: string
+ *           example: "test-2"
+ *         specialite:
+ *           type: string
+ *           example: "test-2"
+ *         localisation:
+ *           type: string
+ *           example: "test-2"
+ *         type_partenaire:
+ *           type: string
+ *           example: "test-2"
+ *         statut:
+ *           type: string
+ *           example: "test-2"
+ *         id_entite:
+ *           type: integer
+ *           nullable: true
+ *           example: null
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-22T16:52:15.555Z"
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-22T16:52:15.555Z"
+ *
+ *     Produit:
+ *       type: object
+ *       properties:
+ *         id_produit:
+ *           type: integer
+ *           example: 3
+ *         code_produit:
+ *           type: string
+ *           example: "AV001"
+ *         desi_produit:
+ *           type: string
+ *           example: "Caméra de surveillance intérieure Somfy"
+ *         desc_produit:
+ *           type: string
+ *           example: "Caméra WiFi avec détection de mouvement et sirène."
+ *         qte_produit:
+ *           type: integer
+ *           example: 7
+ *         emplacement_produit:
+ *           type: string
+ *           nullable: true
+ *           example: null
+ *         caracteristiques_produit:
+ *           type: string
+ *           example: "1080p, vision nocturne, app mobile"
+ *         prix_produit:
+ *           type: string
+ *           example: "180000.00"
+ *         id_categorie:
+ *           type: integer
+ *           example: 5
+ *         id_type_produit:
+ *           type: integer
+ *           example: 1
+ *         id_modele:
+ *           type: integer
+ *           example: 6
+ *         id_famille:
+ *           type: integer
+ *           example: 3
+ *         id_marque:
+ *           type: integer
+ *           example: 6
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-16T09:48:30.558Z"
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-22T16:53:56.614Z"
+ *
+ *     Categorie:
+ *       type: object
+ *       properties:
+ *         id_categorie:
+ *           type: integer
+ *           example: 5
+ *         libelle:
+ *           type: string
+ *           example: "haut de gamme"
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-16T09:34:02.509Z"
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-16T09:34:02.509Z"
+ *
+ *     TypeProduit:
+ *       type: object
+ *       properties:
+ *         id_type_produit:
+ *           type: integer
+ *           example: 1
+ *         libelle:
+ *           type: string
+ *           example: "equipement"
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-16T09:39:33.549Z"
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-16T09:39:33.549Z"
+ *
+ *     Modele:
+ *       type: object
+ *       properties:
+ *         id_modele:
+ *           type: integer
+ *           example: 6
+ *         libelle_modele:
+ *           type: string
+ *           example: "Tahoma Switch"
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-16T09:37:17.349Z"
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-16T09:37:17.349Z"
+ *
+ *     Famille:
+ *       type: object
+ *       properties:
+ *         id_famille:
+ *           type: integer
+ *           example: 3
+ *         libelle_famille:
+ *           type: string
+ *           example: "Domotique"
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-16T09:36:24.497Z"
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-16T09:36:24.497Z"
+ *
+ *     Marque:
+ *       type: object
+ *       properties:
+ *         id_marque:
+ *           type: integer
+ *           example: 6
+ *         libelle_marque:
+ *           type: string
+ *           example: "Somfy"
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-16T09:48:16.624Z"
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-16T09:48:16.624Z"
+ *
+ *     Image:
+ *       type: object
+ *       properties:
+ *         id_image:
+ *           type: integer
+ *           example: 1
+ *         libelle_image:
+ *           type: string
+ *           nullable: true
+ *           example: null
+ *         lien_image:
+ *           type: string
+ *           example: "media\\images\\stock_moyensgeneraux\\produits\\CameradesurveillanceinterieureSomfy_1747388910447.jpeg"
+ *         numero_image:
+ *           type: string
+ *           nullable: true
+ *           example: null
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           example: "2025-05-16T09:48:30.606102"
+ */
+
+/**
+ * @swagger
+ * /stocks/commandes/{id}:
+ *   get:
+ *     summary: Récupère une commande par ID avec tous ses détails
+ *     description: |
+ *       Récupère une commande complète incluant :
+ *       • Informations de base de la commande
+ *       • Partenaire ou client associé
+ *       • Produits commandés avec quantités et prix
+ *       • Exemplaires associés avec leurs détails
+ *       • Montant total calculé
+ *     tags: [Commandes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID numérique de la commande à récupérer
+ *     responses:
+ *       200:
+ *         description: Commande trouvée avec tous ses détails
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id_commande:
+ *                   type: integer
+ *                   example: 7
+ *                 date_de_commande:
+ *                   type: string
+ *                   format: date-time
+ *                 etat_commande:
+ *                   type: string
+ *                   example: "en_cours"
+ *                 date_livraison:
+ *                   type: string
+ *                   format: date
+ *                 lieu_de_livraison:
+ *                   type: string
+ *                   example: "RTI plateaux"
+ *                 mode_de_paiement:
+ *                   type: string
+ *                   example: "espèce"
+ *                 partenaire:
+ *                   type: object
+ *                   nullable: true
+ *                   properties:
+ *                     id_partenaire:
+ *                       type: integer
+ *                     nom_partenaire:
+ *                       type: string
+ *                     telephone_partenaire:
+ *                       type: string
+ *                     email_partenaire:
+ *                       type: string
+ *                 client:
+ *                   type: object
+ *                   nullable: true
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     nom:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     contact:
+ *                       type: string
+ *                 produits:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       produit:
+ *                         type: object
+ *                         properties:
+ *                           id_produit:
+ *                             type: integer
+ *                           nom_produit:
+ *                             type: string
+ *                           reference_produit:
+ *                             type: string
+ *                           prix_produit:
+ *                             type: string
+ *                       quantite:
+ *                         type: integer
+ *                       prix_unitaire:
+ *                         type: string
+ *                       categorie:
+ *                         type: object
+ *                       marque:
+ *                         type: object
+ *                       modele:
+ *                         type: object
+ *                 exemplaires:
+ *                   type: array
+ *                   description: Liste des exemplaires associés à cette commande
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_exemplaire:
+ *                         type: integer
+ *                       etat_exemplaire:
+ *                         type: string
+ *                         example: "Réservé"
+ *                       produit:
+ *                         type: object
+ *                         properties:
+ *                           id_produit:
+ *                             type: integer
+ *                           nom_produit:
+ *                             type: string
+ *                           reference_produit:
+ *                             type: string
+ *                       sortie:
+ *                         type: object
+ *                         properties:
+ *                           id_sortie:
+ *                             type: integer
+ *                           type_sortie:
+ *                             type: string
+ *                           date_sortie:
+ *                             type: string
+ *                           format: date-time
+ *                 montant_total:
+ *                   type: number
+ *                   description: Montant total calculé de la commande
+ *             example:
+ *               id_commande: 7
+ *               date_de_commande: "2025-06-24T16:08:58.106Z"
+ *               etat_commande: "en_cours"
+ *               date_livraison: "2025-06-24"
+ *               lieu_de_livraison: "RTI plateaux"
+ *               mode_de_paiement: "espèce"
+ *               id_partenaire: 1
+ *               id_client: null
+ *               partenaire:
+ *                 id_partenaire: 1
+ *                 nom_partenaire: "Axel"
+ *                 telephone_partenaire: "010203040506"
+ *                 email_partenaire: "axel@gmail.com"
+ *               client: null
+ *               produits:
+ *                 - produit:
+ *                     id_produit: 1
+ *                     nom_produit: "Moniteur FM DEVA DB44"
+ *                     reference_produit: "AV0001"
+ *                     prix_produit: "75000.00"
+ *                   quantite: 2
+ *                   prix_unitaire: "75000.00"
+ *                   categorie:
+ *                     id_categorie: 1
+ *                     nom_categorie: "Audio-Visuel"
+ *               exemplaires:
+ *                 - id_exemplaire: 15
+ *                   etat_exemplaire: "Réservé"
+ *                   produit:
+ *                     id_produit: 1
+ *                     nom_produit: "Moniteur FM DEVA DB44"
+ *                     reference_produit: "AV0001"
+ *                   sortie:
+ *                     id_sortie: 8
+ *                     type_sortie: "vente directe"
+ *                     date_sortie: "2025-06-24T16:08:58.106Z"
+ *               montant_total: 150000
+ *       404:
+ *         description: Commande introuvable
+ *       500:
+ *         description: Erreur serveur interne
+ */
+router.get("/:id", controller.getCommandeById);
+
+/**
+ * @swagger
+ * /stocks/commandes/{id}:
+ *   put:
+ *     summary: Met à jour une commande par ID
+ *     description: |
+ *       Modifie les informations d’une commande existante :
+ *       • dates, lieu, mode de paiement
+ *       • état commande (ex. « en_cours », « en_attente », « livree », « annulee », « retournee »)
+ *       • rattachement client ou partenaire
+ *       • (optionnel) mise à jour des produits / quantités si le service le gère
+ *     tags: [Commandes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID numérique de la commande à mettre à jour
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               date_de_commande:   { type: string, format: date }
+ *               etat_commande:      { type: string, example: "Validé" }
+ *               date_livraison:     { type: string, format: date }
+ *               lieu_de_livraison:  { type: string }
+ *               mode_de_paiement:   { type: string, example: "espèce" }
+ *               id_client:          { type: integer, nullable: true }
+ *               id_partenaire:      { type: integer, nullable: true }
+ *             example:
+ *               date_de_commande: "2025-06-24"
+ *               etat_commande: "Validé"
+ *               date_livraison: "2025-06-24"
+ *               lieu_de_livraison: "RTI plateaux"
+ *               mode_de_paiement: "espèce"
+ *               id_partenaire: 1
+ *               id_client: 1
+ *     responses:
+ *       200:
+ *         description: Commande mise à jour
+ *         content:
+ *           application/json:
+ *             example:
+ *               id_commande: 7
+ *               date_de_commande: "2025-06-24"
+ *               etat_commande: "Validé"
+ *               date_livraison: "2025-06-24"
+ *               lieu_de_livraison: "RTI plateaux"
+ *               mode_de_paiement: "espèce"
+ *               id_client: null
+ *               id_partenaire: 1
+ *               created_at: "2025-06-24T16:08:58.106Z"
+ *               updated_at: "2025-06-24T16:09:17.091Z"
+ *               partenaire:
+ *                 id_partenaire: 1
+ *                 nom_partenaire: "Axel"
+ *                 telephone_partenaire: "010203040506"
+ *                 email_partenaire: "axel@gmail.com"
+ *                 type_partenaire: "test"
+ *               produits:
+ *                 - produit:
+ *                     id_produit: 1
+ *                     code_produit: "AV0001"
+ *                     desi_produit: "Moniteur FM DEVA DB44"
+ *                     prix_produit: "75000.00"
+ *                   quantite: 2
+ *                   prix_unitaire: "75000.00"
+ *               montant_total: 150000
+ *               exemplaires: []
+ *       400:
+ *         description: Paramètres ou corps de requête invalides
+ *       404:
+ *         description: Commande introuvable
+ *       500:
+ *         description: Erreur serveur
+ */
+router.put("/:id", controller.updateCommande);
+
+/**
+ * @swagger
+ * /stocks/commandes/etat/{id}:
+ *   put:
+ *     summary: Modifier l'etat d'une commande
+ *     tags: [Commandes]
+ */
+router.put("/etat/:id", controller.updateEtatCommande);
+
+
+/**
+ * @swagger
+ * /stocks/commandes/reserver/{id}:
+ *   post:
+ *     summary: Réserver les exemplaires d’une commande
+ *     description: |
+ *       • Réserve les exemplaires **disponibles** pour chaque produit de la commande selon la quantité demandée.  
+ *       • Met à jour l’état de chaque exemplaire réservé (`"Réservé"`) et décrémente le stock du produit.  
+ *       • Si un produit n’a pas assez d’exemplaires disponibles, on le reserve ceux qui sont disponibles.  
+ *       • Retourne la commande mise à jour, avec la liste des exemplaires réservés et les produits concernés.
+ *     tags:
+ *       - Commandes
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Identifiant numérique de la commande à réserver
+ *         schema:
+ *           type: integer
+ *           example: 42
+ *     responses:
+ *       '200':
+ *         description: Réservation effectuée avec succès. Retourne la commande mise à jour, les produits et les exemplaires réservés.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id_commande:
+ *                   type: integer
+ *                 etat_commande:
+ *                   type: string
+ *                   example: Réservée
+ *                 produits:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_produit:
+ *                         type: integer
+ *                       quantite:
+ *                         type: integer
+ *                       images:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id_image:
+ *                               type: integer
+ *                             url:
+ *                               type: string
+ *                 exemplaires:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_exemplaire:
+ *                         type: integer
+ *                       etat_exemplaire:
+ *                         type: string
+ *                         example: Réservé
+ *       '400':
+ *         description: Stock insuffisant pour un ou plusieurs produits, ou paramètre invalide.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       '404':
+ *         description: Commande introuvable
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       '500':
+ *         description: Erreur serveur inattendue
+ */
+
+router.post("/reserver/:id/", controller.reserveExemplairesCommande); //:id de la commande
+
+/**
+ * @swagger
+ * /stocks/commandes/{id}/{type}:
+ *   delete:
+ *     summary: Supprime une commande (mode sécurisé)
+ *     description: |
+ *       • Remet tous les exemplaires associés à **Disponible**
+ *       • Réincrémente le stock produit
+ *       • Refuse la suppression si la commande est déjà **livrée** ou **facturée**
+ *     tags: [Commandes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID numérique de la commande
+ *       - in: query
+ *         name: type
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [vente directe, vente en ligne]
+ *           default: vente directe
+ *         description: Type de sortie concerné
+ *     responses:
+ *       200:
+ *         description: Commande supprimée avec succès
+ *       400:
+ *         description: Paramètre invalide
+ *       404:
+ *         description: Commande introuvable
+ *       409:
+ *         description: La commande est livrée ou facturée ; suppression refusée
+ *       500:
+ *         description: Erreur serveur
+ */
+router.delete("/:id/:type_sortie", controller.safeDeleteCommande);
+
+/**
+ * @swagger
+ * /stocks/commandes/force/{id}/{type}:
+ *   delete:
+ *     summary: Supprime une commande (mode forcé, admin)
+ *     description: |
+ *       **Action irréversible !**
+ *       Ignore l’état de la commande (en cours, livrée, facturée…).
+ *       Réinitialise tous les exemplaires (Vendu, Réservé…) → **Disponible**
+ *       et incrémente le stock produit.
+ *     tags: [Commandes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID numérique de la commande
+ *       - in: query
+ *         name: type
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [vente directe, vente en ligne]
+ *           default: vente directe
+ *         description: Type de sortie concerné
+ *     responses:
+ *       200:
+ *         description: Commande et données associées supprimées
+ *       400:
+ *         description: Paramètre invalide
+ *       404:
+ *         description: Commande introuvable
+ *       500:
+ *         description: Erreur serveur
+ */
+router.delete("/force/:id/:type_sortie", controller.forceDeleteCommande);
+
+
+/**
+ * @swagger
+ * /stocks/commandes/annuler/{id}:
+ *   post:
+ *     summary: Annuler une commande existante
+ *     description: |
+ *       - Change l’état de la commande à **“annulée”**.  
+ *       - Libère les exemplaires réservés/vendus et ré-incrémente le stock des produits.  
+ *       - Supprime les écritures de sortie de stock liées (`vente directe` ou `vente en ligne`).  
+ *       - Renvoie la commande mise à jour avec ses produits et exemplaires.
+ *     tags:
+ *       - Commandes
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Identifiant numérique de la commande à annuler
+ *         schema:
+ *           type: integer
+ *           example: 42
+ *     responses:
+ *       '200':
+ *         description: Commande annulée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id_commande:
+ *                   type: integer
+ *                   example: 42
+ *                 etat_commande:
+ *                   type: string
+ *                   example: annulée
+ *                 updated_at:
+ *                   type: string
+ *                   format: date-time
+ *                 produits:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_produit:
+ *                         type: integer
+ *                       designation_produit:
+ *                         type: string
+ *                       quantite:
+ *                         type: integer
+ *                       images:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id_image:
+ *                               type: integer
+ *                             url:
+ *                               type: string
+ *                 exemplaires:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id_exemplaire:
+ *                         type: integer
+ *                       etat_exemplaire:
+ *                         type: string
+ *                         example: disponible
+ *       '400':
+ *         description: Paramètre invalide ou annulation impossible - stock déjà vendu, etc.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       '404':
+ *         description: Commande introuvable
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       '500':
+ *         description: Erreur serveur inattendue
+ */
+
+router.post("/annuler/:id", controller.cancelCommande);
+
+
+/**
+ * @swagger
+ * /stocks/commandes/exemplaires/retour/{id}:
+ *   post:
+ *     summary: Retourner un exemplaire
+ *     description: |
+ *       Remet un exemplaire sorti en état **disponible**.  
+ *       Met à jour la `date_retour_sortie`, ré-incrémente le stock.
+ *     tags:
+ *       - Exemplaires
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID de l’exemplaire à retourner
+ *         schema:
+ *           type: integer
+ *           example: 13
+ *     responses:
+ *       200:
+ *         description: Exemplaire retourné avec succès
+ *       400:
+ *         description: Erreur de validation ou logique
+ */
+
+router.post("/exemplaires/retour/:id", controller.returnExemplaire);
+
+
+
+/**
+ * @swagger
+ * /stocks/commandes/exemplaires/annuler-reservation/{id}:
+ *   post:
+ *     summary: Annule la réservation d'un exemplaire (remet à l'état disponible, retire la commande, ré-incrémente le stock)
+ *     tags: [Exemplaires]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de l'exemplaire à annuler
+ *     responses:
+ *       200:
+ *         description: Réservation annulée avec succès
+ *         content:
+ *           application/json:
+ *             example:
+ *               id_exemplaire: 12
+ *               etat: "Disponible"
+ *               message: "Réservation annulée avec succès"
+ *       400:
+ *         description: ID invalide ou exemplaire non réservé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.post("/exemplaires/annuler-reservation/:id", controller.annulerReservationExemplaireController);
+
+/**
+ * @swagger
+ * /stocks/commandes/{id}/exemplaires-reserves:
+ *   get:
+ *     summary: Récupère les exemplaires réservés par produit pour une commande donnée, avec pagination.
+ *     tags: [Commandes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID de la commande
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Numéro de la page pour la pagination
+ *       - in: query
+ *         name: pageSize
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Nombre d'exemplaires par page
+ *     responses:
+ *       200:
+ *         description: Liste des exemplaires réservés regroupés par produit
+ *         content:
+ *           application/json:
+ *             example:
+ *               total: 5
+ *               page: 1
+ *               pageSize: 20
+ *               data:
+ *                 "1":
+ *                   - id_exemplaire: 12
+ *                     id_produit: 1
+ *                     etat_exemplaire: "Réservé"
+ *                     id_commande: 3
+ *                 "2":
+ *                   - id_exemplaire: 13
+ *                     id_produit: 2
+ *                     etat_exemplaire: "Réservé"
+ *                     id_commande: 3
+ *       400:
+ *         description: ID de commande invalide
+ *       500:
+ *         description: Erreur serveur lors de la récupération des exemplaires réservés
+ */
+router.get(
+  "/commandes/:id/exemplaires-reserves",
+  controller.getExemplairesReservesParProduitPourCommandeController
+);
+
+// Route pour valider une commande avant suppression sécurisée
+/**
+ * @swagger
+ * /stocks/commandes/{id}/validate-delete:
+ *   get:
+ *     summary: Valider la possibilité de suppression d'une commande
+ *     description: |
+ *       Cette route permet de vérifier **avant toute tentative de suppression** si une commande peut être supprimée en toute sécurité.
+ *       
+ *       **Pourquoi utiliser cette route ?**
+ *       - Pour éviter les suppressions accidentelles de commandes livrées ou facturées.
+ *       - Pour informer l'utilisateur des raisons empêchant la suppression (ex : commande déjà livrée, pas d'exemplaires associés, etc.).
+ *       - Pour afficher à l'avance les contraintes métier et améliorer l'expérience utilisateur (confirmation, alertes...).
+ *       
+ *       **Utilisation typique :**
+ *       - Avant d'afficher un bouton "Supprimer" dans l'interface, interroger cette route pour savoir si l'action est autorisée.
+ *       - Fournir un retour détaillé à l'utilisateur sur la faisabilité de la suppression.
+ *     tags:
+ *       - Commandes
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID numérique de la commande à valider pour suppression
+ *     responses:
+ *       200:
+ *         description: La commande peut être supprimée en toute sécurité
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: La commande peut être supprimée en toute sécurité
+ *                 commande_id:
+ *                   type: integer
+ *                   example: 42
+ *                 exemplaires_liberes:
+ *                   type: integer
+ *                   example: 3
+ *                 produits_affectes:
+ *                   type: integer
+ *                   example: 2
+ *       400:
+ *         description: La commande ne peut pas être supprimée (raison métier ou paramètre invalide)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Impossible de supprimer une commande avec l'état "livrée"
+ *                 code:
+ *                   type: string
+ *                   example: COMMANDE_LIVREE_OR_FACTUREE
+ *                 etat_actuel:
+ *                   type: string
+ *                   example: livrée
+ *                 etats_interdits:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: [livrée, facturée]
+ *                 message:
+ *                   type: string
+ *                   example: Seules les commandes non livrées peuvent être supprimées
+ *       404:
+ *         description: Commande introuvable
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Commande introuvable
+ *                 code:
+ *                   type: string
+ *                   example: COMMANDE_NOT_FOUND
+ *       500:
+ *         description: Erreur interne du serveur lors de la validation
+ */
+router.get("/:id/validate-delete", controller.validateCommandeForDelete);
+
+
+module.exports = router;
